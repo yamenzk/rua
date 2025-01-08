@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b">
       <div class="flex items-center gap-3 overflow-hidden">
-        <button @click="router.back()" class="flex-shrink-0 text-gray-500 hover:text-gray-700">
+        <button @click="router.push('/projects')" class="flex-shrink-0 text-gray-500 hover:text-gray-700">
           <FeatherIcon name="arrow-left" class="w-5 h-5" />
         </button>
         <Avatar
@@ -59,6 +59,22 @@
     :mini-map="true"
     @update:coords="updateProjectCoords"
   />
+  <div v-if="isManager" class="mt-2">
+    <Button
+      :variant="'solid'"
+      :ref_for="true"
+      theme="red"
+      size="lg"
+      label="Delete Project"
+      :loading="false"
+      :loadingText="null"
+      :disabled="false"
+      @click="showDeleteDialog = true"
+      class="w-full"
+    >
+      Delete Project
+    </Button>
+  </div>
 </div>
       </aside>
 
@@ -90,18 +106,38 @@
       </nav>
     </div>
   </div>
+  <Dialog
+    v-model="showDeleteDialog"
+    :options="dialogOptions"
+    style="z-index: 99999 !important;"
+  >
+    <template #body-content>
+      <div class="mt-4">
+        <input
+          type="text"
+          v-model="confirmProjectName"
+          class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+          placeholder="Type project name to confirm"
+        />
+        <p v-if="deleteError" class="mt-1 text-sm text-red-600">{{ deleteError }}</p>
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Avatar, FeatherIcon } from 'frappe-ui'
+import { Avatar, FeatherIcon, Button, Dialog } from 'frappe-ui'
 import { createDocumentResource } from 'frappe-ui'
 import { session } from '../data/session'
 import ProjectMap from '../pages/ProjectMap.vue'
 
 const router = useRouter()
 const route = useRoute()
+const showDeleteDialog = ref(false)
+const confirmProjectName = ref('')
+const deleteError = ref('')
 
 const projectResource = createDocumentResource({
   doctype: 'RUA Project',
@@ -134,6 +170,39 @@ const navigation = computed(() => [
   { name: 'Items', to: `/project/${route.params.id}/items`, icon: 'package' },
   { name: 'Transactions', to: `/project/${route.params.id}/transactions`, icon: 'dollar-sign' },
 ])
+
+const dialogOptions = computed(() => ({
+  title: 'Delete Project',
+  size: 'md',
+  icon: {
+    name: 'alert-triangle',
+    appearance: 'danger'
+  },
+  message: 'This action cannot be undone. Please type "' + projectData.value?.project_name + '" to confirm.',
+  actions: [
+    {
+      label: 'Delete Project',
+      variant: 'solid',
+      theme: 'red',
+      loading: projectResource.delete.loading,
+      onClick: deleteProject
+    }
+  ]
+}))
+
+async function deleteProject() {
+  if (confirmProjectName.value !== projectData.value?.project_name) {
+    deleteError.value = 'Project name does not match'
+    return
+  }
+  
+  try {
+    await projectResource.delete.submit()
+    router.push('/projects')
+  } catch (error) {
+    deleteError.value = error.message || 'Failed to delete project'
+  }
+}
 </script>
 
 <style>

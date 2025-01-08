@@ -16,7 +16,8 @@
   "description",
   "image",
   "tab_2_tab",
-  "coords"
+  "coords",
+  "parties"
  ],
  "fields": [
   {
@@ -72,13 +73,18 @@
    "fieldname": "coords",
    "fieldtype": "JSON",
    "label": "coords"
+  },
+  {
+   "fieldname": "parties",
+   "fieldtype": "JSON",
+   "label": "parties"
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2025-01-08 18:29:37.405498",
+ "modified": "2025-01-08 23:15:08.125248",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Project",
