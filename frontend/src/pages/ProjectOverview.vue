@@ -1,3 +1,4 @@
+# ProjectOverview.vue
 <template>
   <div class="space-y-8" v-if="projectResource">
     <!-- Hero Image Section -->
@@ -69,32 +70,116 @@
       </div>
 
       <!-- Key Details -->
-      <div class="bg-white rounded-lg p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Contract Value -->
-          <div>
-            <div class="text-sm font-medium text-gray-500 mb-1">Contract Value</div>
-            <div class="text-xl font-semibold text-gray-900">
-              {{ formatCurrency(project?.contract_value) }}
+      <div class="mb-8">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">Project Overview</h3>
+        <div class="flex overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6 space-x-4">
+          <!-- Contract Value Card -->
+          <div 
+            class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between"
+            :class="{ 'cursor-pointer hover:shadow-lg transition-shadow': isManager }"
+            @click="isManager && openContractValueDialog()"
+          >
+            <div class="text-sm font-bold text-blue-200">Contract Value</div>
+            <div>
+              <div class="text-2xl font-bold text-blue-100">
+                {{ formatCurrency(project?.contract_value) }}
+              </div>
+              <div class="text-xs text-blue-200 mt-1">Total Project Value</div>
             </div>
           </div>
 
-          <!-- Status -->
-          <div class="bg-gray-50 rounded-lg p-4">
-            <div class="text-sm font-medium text-gray-500 mb-1">Status</div>
-            <div class="flex items-center">
-              <div 
-                class="w-2 h-2 rounded-full mr-2"
-                :class="{
-                  'bg-purple-500': project?.status === 'Tender',
-                  'bg-blue-500': project?.status === 'Job In Hand',
-                  'bg-yellow-500': project?.status === 'In Progress',
-                  'bg-green-500': project?.status === 'Completed',
-                  'bg-red-500': project?.status === 'Cancelled'
-                }"
-              ></div>
-              <span class="text-gray-900">{{ project?.status || 'Not Set' }}</span>
+          <!-- Project Cost Card -->
+          <div class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-red-500 to-red-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between">
+            <div class="text-sm font-medium text-red-200">Project Cost</div>
+            <div>
+              <div class="text-2xl font-bold text-red-100">
+                {{ formatCurrency(450000) }}
+              </div>
+              <div class="text-xs text-red-200 mt-1">Estimated Cost</div>
             </div>
+          </div>
+
+          <!-- Additional Expenses Card -->
+          <div class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-orange-500 to-orange-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between">
+            <div class="text-sm font-medium text-orange-200">Additional Expenses</div>
+            <div>
+              <div class="text-2xl font-bold text-orange-100">
+                {{ formatCurrency(32000) }}
+              </div>
+              <div class="text-xs text-orange-200 mt-1">Extra Costs</div>
+            </div>
+          </div>
+
+          <!-- Project Profit Card -->
+          <div class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-green-500 to-green-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between">
+            <div class="text-sm font-medium text-green-200">Project Profit</div>
+            <div>
+              <div class="text-2xl font-bold text-green-100">
+                {{ formatCurrency(project?.contract_value - 450000 - 32000) }}
+              </div>
+              <div class="text-xs text-green-200 mt-1">Expected Profit</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client Section -->
+      <div class="mb-8">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">Client</h3>
+        <div class="w-full">
+          <div class="max-w-sm">
+            <PartyCard 
+              :party="client" 
+              :project-resource="projectResource"
+              :project="project"
+              party-type="Client"
+              :show-add-button="!client && isManager"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Suppliers Section -->
+      <div class="mb-8">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">Suppliers</h3>
+        <div class="flex overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6 space-x-4">
+          <template v-if="suppliers.length">
+            <div 
+              v-for="supplier in suppliers" 
+              :key="supplier.name"
+              class="min-w-[250px]"
+            >
+              <PartyCard 
+                :party="supplier"
+                :project-resource="projectResource"
+                :project="project"
+                party-type="Supplier"
+              />
+            </div>
+          </template>
+          <div v-if="isManager" class="min-w-[250px]">
+            <PartyCard 
+              :project-resource="projectResource"
+              :project="project"
+              party-type="Supplier"
+              :show-add-button="true"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Consultant Section -->
+      <div class="mb-8">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">Consultant</h3>
+        <div class="w-full">
+          <div class="max-w-sm">
+            <PartyCard 
+              :party="consultant" 
+              :project-resource="projectResource"
+              :project="project"
+              party-type="Consultant"
+              :show-add-button="!consultant && isManager"
+            />
           </div>
         </div>
       </div>
@@ -252,20 +337,52 @@
       </div>
     </template>
   </Dialog>
+
+  <!-- Contract Value Dialog -->
+  <Dialog
+    v-model="showContractValueDialog"
+    :options="{
+      title: 'Update Contract Value',
+      size: 'sm',
+    }"
+  >
+    <template #body-content>
+      <FormControl
+        type="number"
+        label="Contract Value"
+        v-model="newContractValue"
+      />
+    </template>
+    <template #actions>
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="subtle"
+          @click="showContractValueDialog = false"
+        >
+          Cancel
+        </Button>
+        <Button
+          :loading="projectResource.setValue.loading"
+          @click="updateContractValue"
+        >
+          Update Value
+        </Button>
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { 
   FeatherIcon, 
-  LoadingIndicator, 
   Dialog, 
   Button, 
   FormControl, 
-  FileUploader,
-  toast
+  FileUploader
 } from 'frappe-ui'
 import { session } from '../data/session'
+import PartyCard from './PartyCard.vue'
 
 const props = defineProps({
   project: {
@@ -287,15 +404,45 @@ const isManager = computed(() => {
 const showImageDialog = ref(false)
 const showNameDialog = ref(false)
 const showLocationDialog = ref(false)
+const showContractValueDialog = ref(false)
 
 // Form values
 const newImage = ref(null)
 const newName = ref('')
 const newLocation = ref('')
+const newContractValue = ref('')
 const nameError = ref('')
 const isUploading = ref(false)
 const uploadedResult = ref(null)
 
+// Computed properties for filtering parties
+const client = computed(() => {
+  if (!props.project?.parties) return null
+  const parties = typeof props.project.parties === 'string' 
+    ? JSON.parse(props.project.parties) 
+    : props.project.parties
+  return parties.find(p => p.type === 'Client')
+})
+
+const suppliers = computed(() => {
+  if (!props.project?.parties) return []
+  const parties = typeof props.project.parties === 'string' 
+    ? JSON.parse(props.project.parties) 
+    : props.project.parties
+  return parties.filter(p => 
+    ['Supplier: Glass', 'Supplier: Cladding', 'Supplier: Aluminum', 'Supplier'].includes(p.type)
+  )
+})
+
+const consultant = computed(() => {
+  if (!props.project?.parties) return null
+  const parties = typeof props.project.parties === 'string' 
+    ? JSON.parse(props.project.parties) 
+    : props.project.parties
+  return parties.find(p => p.type === 'Consultant')
+})
+
+// Dialog handlers
 async function handleUploadSuccess(result) {
   uploadedResult.value = result
 }
@@ -306,73 +453,16 @@ async function updateImage() {
   try {
     isUploading.value = true
     await props.projectResource.setValue.submit({
+      name: props.project.name,
       image: uploadedResult.value.file_url
     })
     await props.projectResource.reload()
     showImageDialog.value = false
     newImage.value = null
-    uploadedResult.value = null
   } catch (error) {
     console.error('Failed to update project image:', error)
   } finally {
     isUploading.value = false
-  }
-}
-
-// Dialog open handlers with initial values
-function openNameDialog() {
-  if (!isManager.value) {
-    toast.error('Only managers can edit project name')
-    return
-  }
-  newName.value = props.project?.project_name || ''
-  showNameDialog.value = true
-}
-
-function openLocationDialog() {
-  if (!isManager.value) {
-    toast.error('Only managers can edit project location')
-    return
-  }
-  newLocation.value = props.project?.location || ''
-  showLocationDialog.value = true
-}
-
-function handleImageClick() {
-  if (!isManager.value) {
-    return
-  }
-  showImageDialog.value = true
-}
-
-// Update handlers
-async function updateName() {
-  if (!newName.value.trim()) {
-    nameError.value = 'Project name is required'
-    return
-  }
-
-  try {
-    await props.projectResource.setValue.submit({
-      project_name: newName.value
-    })
-    showNameDialog.value = false
-    newName.value = ''
-    nameError.value = ''
-  } catch (error) {
-    console.error('Failed to update name:', error)
-  }
-}
-
-async function updateLocation() {
-  try {
-    await props.projectResource.setValue.submit({
-      location: newLocation.value
-    })
-    showLocationDialog.value = false
-    newLocation.value = ''
-  } catch (error) {
-    console.error('Failed to update location:', error)
   }
 }
 
@@ -390,11 +480,86 @@ function handleDrop(event, openFileSelector) {
   }
 }
 
+function handleImageClick() {
+  if (!isManager.value) {
+    return
+  }
+  showImageDialog.value = true
+}
+
+function openNameDialog() {
+  if (!isManager.value) {
+    return
+  }
+  newName.value = props.project?.project_name || ''
+  showNameDialog.value = true
+}
+
+function openLocationDialog() {
+  if (!isManager.value) {
+    return
+  }
+  newLocation.value = props.project?.location || ''
+  showLocationDialog.value = true
+}
+
+function openContractValueDialog() {
+  if (!isManager.value) {
+    return
+  }
+  newContractValue.value = props.project?.contract_value || ''
+  showContractValueDialog.value = true
+}
+
+async function updateName() {
+  if (!newName.value.trim()) {
+    nameError.value = 'Project name is required'
+    return
+  }
+
+  try {
+    await props.projectResource.setValue.submit({
+      name: props.project.name,
+      project_name: newName.value
+    })
+    showNameDialog.value = false
+    newName.value = ''
+    nameError.value = ''
+  } catch (error) {
+    console.error('Failed to update name:', error)
+  }
+}
+
+async function updateLocation() {
+  try {
+    await props.projectResource.setValue.submit({
+      name: props.project.name,
+      location: newLocation.value
+    })
+    showLocationDialog.value = false
+    newLocation.value = ''
+  } catch (error) {
+    console.error('Failed to update location:', error)
+  }
+}
+
+async function updateContractValue() {
+  if (!newContractValue.value) return
+
+  try {
+    await props.projectResource.setValue.submit({
+      name: props.project.name,
+      contract_value: newContractValue.value
+    })
+    showContractValueDialog.value = false
+    newContractValue.value = ''
+  } catch (error) {
+    console.error('Failed to update contract value:', error)
+  }
+}
+
 function formatCurrency(value) {
-  if (!value) return '-'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(value)
+  if (!value) return 'AED 0'
+  return `AED ${Math.floor(value).toLocaleString()}`
 }
 </script>

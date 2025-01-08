@@ -166,13 +166,6 @@
         size: 'sm',
         actions: [
           {
-            label: 'Cancel',
-            variant: 'subtle',
-            onClick: () => {
-              showFilterDialog = false
-            }
-          },
-          {
             label: 'Apply',
             variant: 'solid',
             onClick: () => {
@@ -326,7 +319,7 @@ const operatorOptions = [
   { label: 'Less Than', value: '<' },
   { label: 'Greater or Equal', value: '>=' },
   { label: 'Less or Equal', value: '<=' },
-  { label: 'Contains', value: 'like' }
+  { label: 'Like', value: 'like' }
 ]
 
 const statusOptions = [

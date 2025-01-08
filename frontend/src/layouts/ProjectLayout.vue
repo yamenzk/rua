@@ -32,9 +32,9 @@
       </div>
     </header>
 
-    <div class="flex-1 flex pt-16"> <!-- Added pt-16 to account for fixed header -->
+    <div class="flex-1 flex pt-16"> <!-- Account for fixed header -->
       <!-- Sidebar for desktop -->
-      <aside class="hidden md:flex w-64 flex-col bg-white border-r">
+      <aside class="hidden md:block md:fixed md:inset-y-16 md:w-64 bg-white border-r md:h-full relative">
         <nav class="flex-1 px-4 py-4 space-y-1">
           <router-link
             v-for="item in navigation"
@@ -52,34 +52,34 @@
         </nav>
         
        <!-- Sidebar Map -->
-<div class="px-4 pb-4 mt-auto">
-  <ProjectMap
-    :coords="projectData?.coords"
-    :is-manager="isManager"
-    :mini-map="true"
-    @update:coords="updateProjectCoords"
-  />
-  <div v-if="isManager" class="mt-2">
-    <Button
-      :variant="'solid'"
-      :ref_for="true"
-      theme="red"
-      size="lg"
-      label="Delete Project"
-      :loading="false"
-      :loadingText="null"
-      :disabled="false"
-      @click="showDeleteDialog = true"
-      class="w-full"
-    >
-      Delete Project
-    </Button>
-  </div>
-</div>
+      <div class="px-4 pb-4 mt-auto absolute bottom-20 w-full">
+        <ProjectMap
+          :coords="projectData?.coords"
+          :is-manager="isManager"
+          :mini-map="true"
+          @update:coords="updateProjectCoords"
+        />
+        <div v-if="isManager" class="mt-2">
+          <Button
+            :variant="'solid'"
+            :ref_for="true"
+            theme="red"
+            size="lg"
+            label="Delete Project"
+            :loading="false"
+            :loadingText="null"
+            :disabled="false"
+            @click="showDeleteDialog = true"
+            class="w-full"
+          >
+            Delete Project
+          </Button>
+        </div>
+      </div>
       </aside>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto bg-gray-50">
+      <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0">
         <router-view 
           :project="projectData"
           :projectResource="projectResource"
