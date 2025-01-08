@@ -8,24 +8,79 @@
       <div class="text-gray-600">No projects found</div>
     </div>
 
-    <div v-else class="grid gap-4">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="project in projects"
         :key="project.name"
-        class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+        class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden"
       >
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-medium text-lg text-gray-900">
+        <!-- Image Section with Overlay Content -->
+        <div class="relative h-48">
+          <img
+            v-if="project.image"
+            :src="project.image"
+            :alt="project.project_name"
+            class="h-full w-full object-cover"
+            @error="$event.target.style.display='none'"
+          />
+          <div v-else class="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
+            <FeatherIcon name="image" class="w-12 h-12" />
+          </div>
+
+          <!-- Dark Gradient -->
+          <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 pointer-events-none"></div>
+
+          <!-- Status Badge -->
+          <div class="absolute top-3 right-3 z-10">
+            <Badge
+              :variant="'solid'"
+              :ref_for="true"
+              :theme="getStatusTheme(project.status)"
+              size="sm"
+              :label="project.status"
+            >
+              {{ project.status }}
+            </Badge>
+          </div>
+
+          <!-- Project Info -->
+          <div class="absolute top-0 left-0 right-0 bottom-0 p-4 flex flex-col justify-between">
+            <h3 class="font-semibold text-lg text-white line-clamp-1 relative z-10">
               {{ project.project_name }}
             </h3>
-            <p class="text-sm text-gray-500 mt-1">
-              {{ project.description }}
+            <p class="text-sm text-gray-200 line-clamp-2 relative z-10">
+              {{ project.description || 'No description available' }}
             </p>
           </div>
-          <Badge :variant="getStatusVariant(project.status)">
-            {{ project.status }}
-          </Badge>
+        </div>
+
+        <!-- Details Section -->
+        <div class="p-4 space-y-3">
+          <!-- Progress Bar -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-gray-600">Completion</span>
+              <span class="font-medium">{{ project.completion || 0 }}%</span>
+            </div>
+            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                class="h-full bg-blue-500 rounded-full transition-all duration-300"
+                :style="{ width: (project.completion || 0) + '%' }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Location and Value -->
+          <div class="flex items-center justify-between text-xs text-gray-600 gap-2">
+            <div class="flex items-center min-w-0">
+              <FeatherIcon name="map-pin" class="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+              <span class="truncate">{{ project.location || 'Location not specified' }}</span>
+            </div>
+            <div class="flex items-center flex-shrink-0">
+              <FeatherIcon name="dollar-sign" class="w-3.5 h-3.5 mr-1" />
+              {{ formatCurrency(project.contract_value) }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -83,7 +138,7 @@
 
 <script setup>
 import { ref, computed, watch, inject, h } from 'vue'
-import { Button, Input, Textarea, Dialog, Badge, LoadingIndicator } from 'frappe-ui'
+import { Button, Input, Textarea, Dialog, Badge, FeatherIcon, LoadingIndicator } from 'frappe-ui'
 import { useFrappeFetch } from 'frappe-ui'
 
 const setHeaderAction = inject('setHeaderAction')
@@ -99,7 +154,7 @@ const newProject = ref({
 })
 
 const url = computed(() => {
-  const fields = ['name', 'project_name', 'description', 'status']
+  const fields = ['name', 'project_name', 'description', 'status', 'image', 'completion', 'location', 'contract_value']
   const params = new URLSearchParams({
     fields: JSON.stringify(fields),
     order_by: 'creation desc',
@@ -112,14 +167,8 @@ const url = computed(() => {
 const { data: projectsResponse, error, isFetching } = useFrappeFetch(url).get()
 
 const projects = computed(() => {
-  console.log('Raw response:', projectsResponse.value)
   return projectsResponse.value || []
 })
-
-// Watch for debugging
-watch(projectsResponse, (newData) => {
-  console.log('Projects response changed:', newData)
-}, { immediate: true })
 
 async function createProject() {
   try {
@@ -143,15 +192,20 @@ async function createProject() {
   }
 }
 
-function getStatusVariant(status) {
-  const variants = {
+function getStatusTheme(status) {
+  const themes = {
     'Not Started': 'gray',
     'In Progress': 'blue',
     'Completed': 'green',
     'On Hold': 'orange',
-    'Cancelled': 'red',
-    'Tender': 'purple',
+    'Cancelled': 'red'
   }
-  return variants[status] || 'gray'
+  return themes[status] || 'gray'
+}
+
+// Format currency in AED
+function formatCurrency(value) {
+  if (!value) return '0'
+  return `${Number(value).toLocaleString()}`
 }
 </script>
