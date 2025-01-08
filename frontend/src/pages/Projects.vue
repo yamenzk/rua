@@ -239,13 +239,6 @@
         size: 'md',
         actions: [
           {
-            label: 'Cancel',
-            variant: 'subtle',
-            onClick: () => {
-              showNewProject.value = false
-            }
-          },
-          {
             label: 'Create',
             variant: 'solid',
             loading: list.insert.loading,
@@ -263,9 +256,10 @@
             label="Project Name"
             required
           />
-          <Textarea
-            v-model="newProject.description"
-            label="Description"
+          <Input
+            v-model="newProject.location"
+            label="Location"
+            required
           />
         </div>
       </template>
@@ -417,17 +411,23 @@ function getFieldLabel(fieldValue) {
   return filterFieldOptions.find(option => option.value === fieldValue)?.label || fieldValue
 }
 
+import { generateProjectDescription } from '../utils/projectDescriptionGenerator'
 async function createProject() {
   try {
+    const description = await generateProjectDescription(
+      newProject.value.project_name,
+      newProject.value.location
+    )
     await list.insert.submit({
       project_name: newProject.value.project_name,
-      description: newProject.value.description,
+      location: newProject.value.location,
+      description: description
     })
     
     showNewProject.value = false
     newProject.value = {
       project_name: '',
-      description: '',
+      location: '',
     }
   } catch (error) {
     console.error('Error creating project:', error)
