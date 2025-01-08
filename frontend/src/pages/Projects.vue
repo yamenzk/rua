@@ -1,18 +1,87 @@
 <template>
   <div class="space-y-6">
-    <div v-if="isFetching" class="flex justify-center">
+    <!-- Search and Filters Section -->
+    <div class="flex items-center gap-2 overflow-x-auto p-2">
+      <!-- Search -->
+      <FormControl
+        type="search"
+        :ref_for="true"
+        size="sm"
+        variant="subtle"
+        placeholder="Search.."
+        :modelValue="searchQuery"
+        @update:modelValue="handleSearch"
+        class="w-40 min-w-[8rem] rua-project-search"
+      />
+
+      <!-- Sort Fields Dropdown -->
+      <FormControl
+        type="select"
+        :options="sortFieldOptions"
+        size="sm"
+        variant="subtle"
+        placeholder="Sort"
+        :modelValue="sortField"
+        @update:modelValue="handleSortFieldChange"
+        class="w-32 min-w-[6rem] flex-shrink-0"
+      />
+
+      <!-- Sort Direction Button -->
+      <Button
+        variant="subtle"
+        size="sm"
+        @click="toggleSortDirection"
+        class="flex-shrink-0"
+      >
+        <FeatherIcon
+          :name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
+          class="w-4 h-4"
+        />
+      </Button>
+
+      <!-- Add Filter Button -->
+      <Button
+        variant="subtle"
+        size="sm"
+        @click="showFilterDialog = true"
+        class="flex-shrink-0"
+      >
+        <FeatherIcon name="filter" class="w-4 h-4" />
+      </Button>
+
+      <!-- Active Filters Display -->
+      <div v-if="activeFilters.length" class="flex gap-1 overflow-x-auto flex-shrink-0">
+        <div
+          v-for="(filter, index) in activeFilters"
+          :key="index"
+          class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
+        >
+          <span>{{ getFieldLabel(filter.field) }}: {{ filter.value }}</span>
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            @click="removeFilter(index)"
+          >
+            <FeatherIcon name="x" class="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Cards Grid -->
+    <div v-if="list.list.loading" class="flex justify-center">
       <LoadingIndicator />
     </div>
 
-    <div v-else-if="!projects.length" class="text-center py-8">
+    <div v-else-if="!list.data?.length" class="text-center py-8">
       <div class="text-gray-600">No projects found</div>
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
-        v-for="project in projects"
+        v-for="project in list.data"
         :key="project.name"
-        class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden"
+        class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden cursor-pointer"
+        @click="router.push(`/project/${project.name}/overview`)"
       >
         <!-- Image Section with Overlay Content -->
         <div class="relative h-48">
@@ -85,10 +154,78 @@
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="projects.length" class="flex justify-between items-center">
-      <!-- Pagination buttons removed as they are not implemented with useFrappeFetch -->
-    </div>
+    <!-- Filter Dialog -->
+    <Dialog
+      v-model="showFilterDialog"
+      :options="{
+        title: 'Add Filter',
+        icon: {
+          name: 'filter',
+          appearance: 'primary'
+        },
+        size: 'sm',
+        actions: [
+          {
+            label: 'Cancel',
+            variant: 'subtle',
+            onClick: () => {
+              showFilterDialog = false
+            }
+          },
+          {
+            label: 'Apply',
+            variant: 'solid',
+            onClick: () => {
+              addFilter()
+              showFilterDialog = false
+            }
+          }
+        ]
+      }"
+    >
+      <template #body-content>
+        <div class="space-y-4">
+          <FormControl
+            type="select"
+            :options="filterFieldOptions"
+            label="Field"
+            required
+            v-model="newFilter.field"
+          />
+          
+          <FormControl
+            type="select"
+            :options="operatorOptions"
+            label="Operator"
+            required
+            v-model="newFilter.operator"
+          />
+          
+          <FormControl
+            v-if="newFilter.field === 'status'"
+            type="select"
+            :options="statusOptions"
+            label="Value"
+            required
+            v-model="newFilter.value"
+          />
+          <FormControl
+            v-else-if="newFilter.field === 'completion'"
+            type="number"
+            label="Value"
+            required
+            v-model="newFilter.value"
+          />
+          <FormControl
+            v-else
+            type="text"
+            label="Value"
+            required
+            v-model="newFilter.value"
+          />
+        </div>
+      </template>
+    </Dialog>
 
     <!-- New Project Dialog -->
     <Dialog
@@ -111,7 +248,7 @@
           {
             label: 'Create',
             variant: 'solid',
-            loading: isFetching,
+            loading: list.insert.loading,
             onClick: () => {
               return createProject()
             }
@@ -137,55 +274,161 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, inject, h } from 'vue'
-import { Button, Input, Textarea, Dialog, Badge, FeatherIcon, LoadingIndicator } from 'frappe-ui'
-import { useFrappeFetch } from 'frappe-ui'
+import { ref, computed, inject, h } from 'vue'
+import { Button, Input, Textarea, Dialog, Badge, FeatherIcon, LoadingIndicator, FormControl, debounce } from 'frappe-ui'
+import { createListResource } from 'frappe-ui'
+import { useRouter } from 'vue-router'
+import { userRolesResource, getUserRolesFromCookie } from '@/data/user'
 
+const router = useRouter()
+const isManager = computed(() => {
+  const roles = getUserRolesFromCookie()
+  return roles.includes('RUA Manager')
+})
 const setHeaderAction = inject('setHeaderAction')
-setHeaderAction(h(Button, {
-  variant: 'solid',
-  onClick: () => showNewProject.value = true,
-}, () => 'New Project'))
 
+if (isManager.value) {
+  setHeaderAction(h(Button, {
+    variant: 'solid',
+    onClick: () => showNewProject.value = true,
+  }, () => 'New Project'))
+}
+
+// State
+const searchQuery = ref('')
+const sortField = ref('creation')
+const sortDirection = ref('desc')
+const activeFilters = ref([])
+const showFilterDialog = ref(false)
 const showNewProject = ref(false)
+const newFilter = ref({
+  field: '',
+  operator: '=',
+  value: ''
+})
 const newProject = ref({
   project_name: '',
   description: '',
 })
 
-const url = computed(() => {
-  const fields = ['name', 'project_name', 'description', 'status', 'image', 'completion', 'location', 'contract_value']
-  const params = new URLSearchParams({
-    fields: JSON.stringify(fields),
-    order_by: 'creation desc',
-    start: '0',
-    limit: '10'
+// Field Options
+const fieldOptions = [
+  { label: 'Creation Date', value: 'creation', sortOnly: true },
+  { label: 'Project Name', value: 'project_name' },
+  { label: 'Status', value: 'status' },
+  { label: 'Location', value: 'location' },
+  { label: 'Completion', value: 'completion' },
+  { label: 'Contract Value', value: 'contract_value' }
+]
+
+// Derived options for filters and sorting
+const filterFieldOptions = fieldOptions.filter(field => !field.sortOnly)
+const sortFieldOptions = fieldOptions
+
+const operatorOptions = [
+  { label: 'Equals', value: '=' },
+  { label: 'Not Equals', value: '!=' },
+  { label: 'Greater Than', value: '>' },
+  { label: 'Less Than', value: '<' },
+  { label: 'Greater or Equal', value: '>=' },
+  { label: 'Less or Equal', value: '<=' },
+  { label: 'Contains', value: 'like' }
+]
+
+const statusOptions = [
+  { label: 'Not Started', value: 'Not Started' },
+  { label: 'In Progress', value: 'In Progress' },
+  { label: 'Completed', value: 'Completed' },
+  { label: 'On Hold', value: 'On Hold' },
+  { label: 'Cancelled', value: 'Cancelled' }
+]
+
+// Create list resource
+const list = createListResource({
+  doctype: 'RUA Project',
+  fields: ['name', 'project_name', 'description', 'status', 'image', 'completion', 'location', 'contract_value'],
+  filters: [],
+  orderBy: 'creation desc',
+  auto: true,
+  transform(data) {
+    return data
+  },
+  cache: ['RUA Project']
+})
+
+// Computed sort order
+const sortOrder = computed(() => `${sortField.value} ${sortDirection.value}`)
+
+// Handlers
+const handleSearch = debounce((value) => {
+  searchQuery.value = value
+  if (value) {
+    activeFilters.value = activeFilters.value.filter(f => f.field !== 'project_name')
+    activeFilters.value.push({
+      field: 'project_name',
+      operator: 'like',
+      value: value
+    })
+  } else {
+    activeFilters.value = activeFilters.value.filter(f => f.field !== 'project_name')
+  }
+  updateListFilters()
+}, 300)
+
+function handleSortFieldChange(value) {
+  sortField.value = value
+  list.orderBy = `${value} ${sortDirection.value}`
+  list.reload()
+}
+
+function toggleSortDirection() {
+  sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  list.orderBy = `${sortField.value} ${sortDirection.value}`
+  list.reload()
+}
+
+function addFilter() {
+  activeFilters.value.push({
+    field: newFilter.value.field,
+    operator: newFilter.value.operator,
+    value: newFilter.value.value
   })
-  return `http://localhost:8080/api/v2/document/RUA Project?${params}`
-})
+  updateListFilters()
+  newFilter.value = { field: '', operator: '=', value: '' }
+}
 
-const { data: projectsResponse, error, isFetching } = useFrappeFetch(url).get()
+function removeFilter(index) {
+  activeFilters.value.splice(index, 1)
+  updateListFilters()
+}
 
-const projects = computed(() => {
-  return projectsResponse.value || []
-})
+function updateListFilters() {
+  list.filters = activeFilters.value.map(filter => {
+    let value = filter.value
+    if (filter.operator === 'like') {
+      value = `%${value}%`
+    }
+    return [filter.field, filter.operator, value]
+  })
+  list.reload()
+}
+
+function getFieldLabel(fieldValue) {
+  return filterFieldOptions.find(option => option.value === fieldValue)?.label || fieldValue
+}
 
 async function createProject() {
   try {
-    const response = await useFrappeFetch('/api/v2/document/RUA Project')
-      .post({
-        project_name: newProject.value.project_name,
-        description: newProject.value.description,
-      })
+    await list.insert.submit({
+      project_name: newProject.value.project_name,
+      description: newProject.value.description,
+    })
     
     showNewProject.value = false
     newProject.value = {
       project_name: '',
       description: '',
     }
-    
-    // Refetch projects
-    projectsResponse.value = await useFrappeFetch(url.value).get().json()
   } catch (error) {
     console.error('Error creating project:', error)
     throw error
@@ -203,9 +446,8 @@ function getStatusTheme(status) {
   return themes[status] || 'gray'
 }
 
-// Format currency in AED
 function formatCurrency(value) {
   if (!value) return '0'
-  return `${Number(value).toLocaleString()}`
+  return `${Number(value).toLocaleString()}` // Changed from Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 }) to Number(value).toLocaleString()
 }
 </script>

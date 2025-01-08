@@ -2,7 +2,7 @@ import router from '@/router'
 import { computed, reactive } from 'vue'
 import { createResource } from 'frappe-ui'
 
-import { userResource } from './user'
+import { userResource, userRolesResource, setUserRolesCookie, getUserRolesFromCookie } from './user'
 
 export function sessionUser() {
   const cookies = new URLSearchParams(document.cookie.split('; ').join('&'))
@@ -22,9 +22,15 @@ export const session = reactive({
         pwd: password,
       }
     },
-    onSuccess(data) {
+    async onSuccess(data) {
       userResource.reload()
       session.user = sessionUser()
+      
+      // Fetch and store user roles
+      const rolesResponse = await userRolesResource.submit({ user: session.user })
+      setUserRolesCookie(rolesResponse)
+      session.userRoles = rolesResponse
+      
       session.login.reset()
       router.replace(data.default_route || '/')
     },
@@ -34,9 +40,12 @@ export const session = reactive({
     onSuccess() {
       userResource.reset()
       session.user = sessionUser()
+      session.userRoles = []
+      setUserRolesCookie([]) // Clear roles on logout
       router.replace({ name: 'Login' })
     },
   }),
   user: sessionUser(),
+  userRoles: getUserRolesFromCookie(),
   isLoggedIn: computed(() => !!session.user),
 })

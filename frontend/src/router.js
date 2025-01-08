@@ -36,6 +36,33 @@ const routes = [
     ],
   },
   {
+    path: '/project/:id',
+    component: () => import('@/layouts/ProjectLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'overview',
+        name: 'ProjectOverview',
+        component: () => import('@/pages/ProjectOverview.vue'),
+      },
+      {
+        path: 'tasks',
+        name: 'ProjectTasks',
+        component: () => import('@/pages/ProjectTasks.vue'),
+      },
+      {
+        path: 'items',
+        name: 'ProjectItems',
+        component: () => import('@/pages/ProjectItems.vue'),
+      },
+      {
+        path: 'transactions',
+        name: 'ProjectTransactions',
+        component: () => import('@/pages/ProjectTransactions.vue'),
+      },
+    ],
+  },
+  {
     name: 'Login',
     path: '/account/login',
     component: () => import('@/pages/Login.vue'),
