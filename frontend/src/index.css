@@ -1,6 +1,17 @@
 @import './assets/Inter/inter.css';
 @import 'frappe-ui/src/style.css';
 
-.rua-project-search{
-    flex-grow: 1;
+.rua-project-search {
+	flex-grow: 1;
+}
+.leaflet-default-icon-path {
+	background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png);
+}
+
+.leaflet-default-shadow-path {
+	background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png);
+}
+
+nav{
+	z-index: 9999 !important;
 }
