@@ -30,10 +30,8 @@
   "total_after_retention",
   "vat_after_retention",
   "grand_total_after_retention",
-  "totals_reference",
   "column_break_rjxe",
   "enable_2",
-  "items_log_2",
   "items_2",
   "total_items_2",
   "total_2",
@@ -43,10 +41,8 @@
   "total_after_retention_2",
   "vat_after_retention_2",
   "grand_total_after_retention_2",
-  "totals_reference_2",
   "column_break_ekom",
   "enable_3",
-  "items_log_3",
   "items_3",
   "total_items_3",
   "total_3",
@@ -56,10 +52,8 @@
   "total_after_retention_3",
   "vat_after_retention_3",
   "grand_total_after_retention_3",
-  "totals_reference_3",
   "column_break_wcfq",
   "enable_4",
-  "items_log_4",
   "items_4",
   "total_items_4",
   "total_4",
@@ -68,8 +62,7 @@
   "enable_retention_4",
   "total_after_retention_4",
   "vat_after_retention_4",
-  "grand_total_after_retention_4",
-  "totals_reference_4"
+  "grand_total_after_retention_4"
  ],
  "fields": [
   {
@@ -203,12 +196,6 @@
   },
   {
    "default": "[]",
-   "fieldname": "items_log_2",
-   "fieldtype": "JSON",
-   "label": "items_log 2"
-  },
-  {
-   "default": "[]",
    "fieldname": "items_2",
    "fieldtype": "JSON",
    "label": "items 2"
@@ -250,12 +237,6 @@
   },
   {
    "default": "[]",
-   "fieldname": "items_log_3",
-   "fieldtype": "JSON",
-   "label": "items_log 3"
-  },
-  {
-   "default": "[]",
    "fieldname": "items_3",
    "fieldtype": "JSON",
    "label": "items 3"
@@ -294,12 +275,6 @@
    "fieldname": "grand_total_after_retention_3",
    "fieldtype": "Currency",
    "label": "Grand Total After Retention 3"
-  },
-  {
-   "default": "[]",
-   "fieldname": "items_log_4",
-   "fieldtype": "JSON",
-   "label": "items_log 4"
   },
   {
    "default": "[]",
@@ -383,33 +358,13 @@
    "fieldname": "enable_retention_4",
    "fieldtype": "Check",
    "label": "Enable Retention 4"
-  },
-  {
-   "fieldname": "totals_reference",
-   "fieldtype": "JSON",
-   "label": "totals_reference"
-  },
-  {
-   "fieldname": "totals_reference_2",
-   "fieldtype": "JSON",
-   "label": "totals_reference 2"
-  },
-  {
-   "fieldname": "totals_reference_3",
-   "fieldtype": "JSON",
-   "label": "totals_reference 3"
-  },
-  {
-   "fieldname": "totals_reference_4",
-   "fieldtype": "JSON",
-   "label": "totals_reference 4"
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2025-01-09 14:55:08.011535",
+ "modified": "2025-01-09 19:51:59.678050",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Project",
