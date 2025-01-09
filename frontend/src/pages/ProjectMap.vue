@@ -203,7 +203,6 @@
   
   // Lifecycle hooks
   onMounted(() => {
-    console.log('ProjectMap mounted, isMobile:', isMobile.value, 'coords:', coords.value)
     if (!isMobile.value) {
       nextTick(() => {
         initializeMap()
