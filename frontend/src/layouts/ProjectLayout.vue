@@ -1,5 +1,9 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div v-if="isLoading" class="min-h-screen flex items-center justify-center">
+    <div class="text-gray-600">Loading project...</div>
+  </div>
+  
+  <div v-else class="min-h-screen flex flex-col">
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b">
       <div class="flex items-center gap-3 overflow-hidden">
@@ -51,31 +55,31 @@
           </router-link>
         </nav>
         
-       <!-- Sidebar Map -->
-      <div class="px-4 pb-4 mt-auto absolute bottom-20 w-full">
-        <ProjectMap
-          :coords="projectData?.coords"
-          :is-manager="isManager"
-          :mini-map="true"
-          @update:coords="updateProjectCoords"
-        />
-        <div v-if="isManager" class="mt-2">
-          <Button
-            :variant="'solid'"
-            :ref_for="true"
-            theme="red"
-            size="lg"
-            label="Delete Project"
-            :loading="false"
-            :loadingText="null"
-            :disabled="false"
-            @click="showDeleteDialog = true"
-            class="w-full"
-          >
-            Delete Project
-          </Button>
+        <!-- Sidebar Map -->
+        <div class="px-4 pb-4 mt-auto absolute bottom-20 w-full">
+          <ProjectMap
+            :coords="projectData?.coords"
+            :is-manager="isManager"
+            :mini-map="true"
+            @update:coords="updateProjectCoords"
+          />
+          <div v-if="isManager" class="mt-2">
+            <Button
+              :variant="'solid'"
+              :ref_for="true"
+              theme="red"
+              size="lg"
+              label="Delete Project"
+              :loading="false"
+              :loadingText="null"
+              :disabled="false"
+              @click="showDeleteDialog = true"
+              class="w-full"
+            >
+              Delete Project
+            </Button>
+          </div>
         </div>
-      </div>
       </aside>
 
       <!-- Main content -->
@@ -106,6 +110,7 @@
       </nav>
     </div>
   </div>
+
   <Dialog
     v-model="showDeleteDialog"
     :options="dialogOptions"
@@ -126,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Avatar, FeatherIcon, Button, Dialog } from 'frappe-ui'
 import { createDocumentResource } from 'frappe-ui'
@@ -138,27 +143,42 @@ const route = useRoute()
 const showDeleteDialog = ref(false)
 const confirmProjectName = ref('')
 const deleteError = ref('')
+const projectResource = ref(null)
+const isLoading = ref(true)
 
-const projectResource = createDocumentResource({
-  doctype: 'RUA Project',
-  name: route.params.id,
-  auto: true,
+// Wait for socket to be available before creating the resource
+onMounted(() => {
+  const initializeResource = () => {
+    if (window.socket) {
+      projectResource.value = createDocumentResource({
+        doctype: 'RUA Project',
+        name: route.params.id,
+        auto: true,
+        realtime: true
+      }, { $socket: window.socket })
+      isLoading.value = false
+    } else {
+      setTimeout(initializeResource, 100)
+    }
+  }
+  initializeResource()
 })
 
-const projectData = computed(() => projectResource.doc)
+const projectData = computed(() => projectResource.value?.doc)
 
 // Role-based access control
 const isManager = computed(() => {
-  return session.userRoles.some(role => ['RUA Manager', 'RUA Project Manager'].includes(role))
+  return session.userRoles?.some(role => ['RUA Manager', 'RUA Project Manager'].includes(role))
 })
 
 // Handle map coordinate updates
 async function updateProjectCoords(newCoords) {
+  if (!projectResource.value) return
   try {
-    await projectResource.setValue.submit({
+    await projectResource.value.setValue.submit({
       coords: JSON.stringify(newCoords)
     })
-    await projectResource.reload()
+    await projectResource.value.reload()
   } catch (error) {
     console.error('Failed to update coordinates:', error)
   }
@@ -184,20 +204,21 @@ const dialogOptions = computed(() => ({
       label: 'Delete Project',
       variant: 'solid',
       theme: 'red',
-      loading: projectResource.delete.loading,
+      loading: projectResource.value?.delete.loading,
       onClick: deleteProject
     }
   ]
 }))
 
 async function deleteProject() {
+  if (!projectResource.value) return
   if (confirmProjectName.value !== projectData.value?.project_name) {
     deleteError.value = 'Project name does not match'
     return
   }
   
   try {
-    await projectResource.delete.submit()
+    await projectResource.value.delete.submit()
     router.push('/projects')
   } catch (error) {
     deleteError.value = error.message || 'Failed to delete project'

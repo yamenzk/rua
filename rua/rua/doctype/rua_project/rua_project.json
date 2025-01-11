@@ -19,50 +19,8 @@
   "coords",
   "parties",
   "column_break_lipb",
-  "items_tab",
-  "items_log",
-  "items",
-  "total_items",
-  "total",
-  "vat_amount",
-  "grand_total",
-  "enable_retention",
-  "total_after_retention",
-  "vat_after_retention",
-  "grand_total_after_retention",
-  "column_break_rjxe",
-  "enable_2",
-  "items_2",
-  "total_items_2",
-  "total_2",
-  "vat_amount_2",
-  "grand_total_2",
-  "enable_retention_2",
-  "total_after_retention_2",
-  "vat_after_retention_2",
-  "grand_total_after_retention_2",
-  "column_break_ekom",
-  "enable_3",
-  "items_3",
-  "total_items_3",
-  "total_3",
-  "vat_amount_3",
-  "grand_total_3",
-  "enable_retention_3",
-  "total_after_retention_3",
-  "vat_after_retention_3",
-  "grand_total_after_retention_3",
-  "column_break_wcfq",
-  "enable_4",
-  "items_4",
-  "total_items_4",
-  "total_4",
-  "vat_amount_4",
-  "grand_total_4",
-  "enable_retention_4",
-  "total_after_retention_4",
-  "vat_after_retention_4",
-  "grand_total_after_retention_4"
+  "active_users",
+  "univer"
  ],
  "fields": [
   {
@@ -131,240 +89,21 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "[]",
-   "fieldname": "items_log",
+   "fieldname": "active_users",
+   "fieldtype": "Long Text",
+   "label": "Active Users"
+  },
+  {
+   "fieldname": "univer",
    "fieldtype": "JSON",
-   "label": "items_log"
-  },
-  {
-   "default": "[]",
-   "fieldname": "items",
-   "fieldtype": "JSON",
-   "label": "items"
-  },
-  {
-   "fieldname": "items_tab",
-   "fieldtype": "Tab Break",
-   "label": "Items"
-  },
-  {
-   "fieldname": "total_items",
-   "fieldtype": "Int",
-   "label": "Total Items"
-  },
-  {
-   "fieldname": "total",
-   "fieldtype": "Currency",
-   "label": "Total"
-  },
-  {
-   "fieldname": "vat_amount",
-   "fieldtype": "Currency",
-   "label": "VAT Amount"
-  },
-  {
-   "fieldname": "grand_total",
-   "fieldtype": "Currency",
-   "label": "Grand Total"
-  },
-  {
-   "fieldname": "total_after_retention",
-   "fieldtype": "Currency",
-   "label": "Total After Retention"
-  },
-  {
-   "fieldname": "vat_after_retention",
-   "fieldtype": "Currency",
-   "label": "VAT After Retention"
-  },
-  {
-   "fieldname": "grand_total_after_retention",
-   "fieldtype": "Currency",
-   "label": "Grand Total After Retention"
-  },
-  {
-   "fieldname": "column_break_rjxe",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_ekom",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_wcfq",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "[]",
-   "fieldname": "items_2",
-   "fieldtype": "JSON",
-   "label": "items 2"
-  },
-  {
-   "fieldname": "total_items_2",
-   "fieldtype": "Int",
-   "label": "Total Items 2"
-  },
-  {
-   "fieldname": "total_2",
-   "fieldtype": "Currency",
-   "label": "Total 2"
-  },
-  {
-   "fieldname": "vat_amount_2",
-   "fieldtype": "Currency",
-   "label": "VAT Amount 2"
-  },
-  {
-   "fieldname": "grand_total_2",
-   "fieldtype": "Currency",
-   "label": "Grand Total 2"
-  },
-  {
-   "fieldname": "total_after_retention_2",
-   "fieldtype": "Currency",
-   "label": "Total After Retention 2"
-  },
-  {
-   "fieldname": "vat_after_retention_2",
-   "fieldtype": "Currency",
-   "label": "VAT After Retention 2"
-  },
-  {
-   "fieldname": "grand_total_after_retention_2",
-   "fieldtype": "Currency",
-   "label": "Grand Total After Retention 2"
-  },
-  {
-   "default": "[]",
-   "fieldname": "items_3",
-   "fieldtype": "JSON",
-   "label": "items 3"
-  },
-  {
-   "fieldname": "total_items_3",
-   "fieldtype": "Int",
-   "label": "Total Items 3"
-  },
-  {
-   "fieldname": "total_3",
-   "fieldtype": "Currency",
-   "label": "Total 3"
-  },
-  {
-   "fieldname": "vat_amount_3",
-   "fieldtype": "Currency",
-   "label": "VAT Amount 3"
-  },
-  {
-   "fieldname": "grand_total_3",
-   "fieldtype": "Currency",
-   "label": "Grand Total 3"
-  },
-  {
-   "fieldname": "total_after_retention_3",
-   "fieldtype": "Currency",
-   "label": "Total After Retention 3"
-  },
-  {
-   "fieldname": "vat_after_retention_3",
-   "fieldtype": "Currency",
-   "label": "VAT After Retention 3"
-  },
-  {
-   "fieldname": "grand_total_after_retention_3",
-   "fieldtype": "Currency",
-   "label": "Grand Total After Retention 3"
-  },
-  {
-   "default": "[]",
-   "fieldname": "items_4",
-   "fieldtype": "JSON",
-   "label": "items 4"
-  },
-  {
-   "fieldname": "total_items_4",
-   "fieldtype": "Int",
-   "label": "Total Items 4"
-  },
-  {
-   "fieldname": "total_4",
-   "fieldtype": "Currency",
-   "label": "Total 4"
-  },
-  {
-   "fieldname": "vat_amount_4",
-   "fieldtype": "Currency",
-   "label": "VAT Amount 4"
-  },
-  {
-   "fieldname": "grand_total_4",
-   "fieldtype": "Currency",
-   "label": "Grand Total 4"
-  },
-  {
-   "fieldname": "total_after_retention_4",
-   "fieldtype": "Currency",
-   "label": "Total After Retention 4"
-  },
-  {
-   "fieldname": "vat_after_retention_4",
-   "fieldtype": "Currency",
-   "label": "VAT After Retention 4"
-  },
-  {
-   "fieldname": "grand_total_after_retention_4",
-   "fieldtype": "Currency",
-   "label": "Grand Total After Retention 4"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_retention",
-   "fieldtype": "Check",
-   "label": "Enable Retention"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_2",
-   "fieldtype": "Check",
-   "label": "Enable 2"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_retention_2",
-   "fieldtype": "Check",
-   "label": "Enable Retention 2"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_3",
-   "fieldtype": "Check",
-   "label": "Enable 3"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_retention_3",
-   "fieldtype": "Check",
-   "label": "Enable Retention 3"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_4",
-   "fieldtype": "Check",
-   "label": "Enable 4"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_retention_4",
-   "fieldtype": "Check",
-   "label": "Enable Retention 4"
+   "label": "Univer"
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2025-01-09 19:51:59.678050",
+ "modified": "2025-01-11 07:06:46.591957",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Project",
