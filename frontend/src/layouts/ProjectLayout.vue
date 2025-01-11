@@ -87,6 +87,7 @@
         <router-view 
           :project="projectData"
           :projectResource="projectResource"
+          
         ></router-view>
       </main>
 
