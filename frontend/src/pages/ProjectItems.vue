@@ -340,7 +340,7 @@ async function verifyGlobals() {
 			].filter((global) => window[global] !== undefined)
 
 			if (existingGlobals.length > 0) {
-				console.warn('⚠️ Found existing globals:', existingGlobals)
+				//console.warn('⚠️ Found existing globals:', existingGlobals)
 				cleanupResources() // Force cleanup if we find existing globals
 			}
 
@@ -366,7 +366,7 @@ async function verifyGlobals() {
 }
 
 async function loadUniverResources() {
-	console.log('🔄 Starting to load Univer resources...')
+	//console.log('🔄 Starting to load Univer resources...')
 
 	const resources = [
 		{
@@ -408,7 +408,7 @@ async function loadUniverResources() {
 	for (const resource of resources) {
 		loadingDetail.value = `Loading ${resource.type === 'link' ? 'styles' : 'script'}`
 		await loadResource(resource)
-		console.log(`✅ Loaded ${resource.src || resource.href}`)
+		//console.log(`✅ Loaded ${resource.src || resource.href}`)
 	}
 
 	loadingDetail.value = 'Verifying installation'
@@ -417,7 +417,7 @@ async function loadUniverResources() {
 
 // Univer Initialization
 async function initUniver() {
-	console.log(isLocked.value)
+	//console.log(isLocked.value)
 	if (isLocked.value) return
 	try {
 		isLoading.value = true
@@ -433,7 +433,7 @@ async function initUniver() {
 			throw new Error('Required Univer libraries not loaded')
 		}
 
-		console.log('🚀 Initializing Univer API...')
+		//console.log('🚀 Initializing Univer API...')
 		loadingDetail.value = 'Preparing spreadsheet'
 
 		const { createUniver, defaultTheme, LocaleType, merge } = window.UniverPresets
@@ -462,7 +462,7 @@ async function initUniver() {
 
 		isLoading.value = false
 	} catch (error) {
-		console.error('❌ Failed to initialize Univer:', error)
+		//console.error('❌ Failed to initialize Univer:', error)
 		initializationError.value = error
 		isLoading.value = false
 	}
@@ -479,10 +479,10 @@ function initializeSheetData(univerData) {
 				: Object.keys(parsedValue).length > 0)
 
 		if (hasData) {
-			console.log('📄 Found existing sheet data, initializing from saved data...')
+			//console.log('📄 Found existing sheet data, initializing from saved data...')
 			univerAPI.createUniverSheet(parsedValue)
 		} else {
-			console.log('📝 No meaningful data found, creating new sheets...')
+			//console.log('📝 No meaningful data found, creating new sheets...')
 
 			// Generate unique IDs for sheets
 			const mainSheetId = 'sheet1_' + Math.random().toString(36).substr(2, 9)
@@ -562,9 +562,9 @@ function initializeSheetData(univerData) {
 								0: { v: 'Item Name', t: 1, s: 'header_style' },
 								1: { v: 'Description', t: 1, s: 'header_style' },
 								2: { v: 'Qty', t: 1, s: 'header_style' },
-								3: { v: 'Width', t: 1, s: 'header_style' },
-								4: { v: 'Height', t: 1, s: 'header_style' },
-								5: { v: 'Area', t: 1, s: 'header_style' },
+								3: { v: 'Width [m]', t: 1, s: 'header_style' },
+								4: { v: 'Height [m]', t: 1, s: 'header_style' },
+								5: { v: 'Area [SQM]', t: 1, s: 'header_style' },
 								6: { v: 'Amount', t: 1, s: 'header_style' },
 								7: { v: 'Total', t: 1, s: 'header_style' },
 								8: { v: 'Vat Amount', t: 1, s: 'header_style' },
@@ -593,9 +593,9 @@ function initializeSheetData(univerData) {
 		}
 
 		isInitialized.value = true
-		console.log('✨ Sheet initialization complete!')
+		//console.log('✨ Sheet initialization complete!')
 	} catch (error) {
-		console.error('❌ Failed to create sheet:', error)
+		//console.error('❌ Failed to create sheet:', error)
 	}
 }
 
@@ -663,7 +663,7 @@ async function handleSave() {
 		try {
 			await forceSave()
 		} catch (error) {
-			console.error('Failed to save sheet data:', error)
+			//console.error('Failed to save sheet data:', error)
 			saveStatus.value = 'error'
 		}
 	}, 1000)
@@ -691,7 +691,7 @@ async function forceSave() {
 
 // Mode Management
 async function handleModeTransition(newMode) {
-	console.log(`🔄 Transitioning to ${newMode} mode`)
+	//console.log(`🔄 Transitioning to ${newMode} mode`)
 
 	if (unsavedChanges.value > 0) {
 		await forceSave()
@@ -705,12 +705,12 @@ async function handleModeTransition(newMode) {
 }
 
 function setupHotMode() {
-	console.log('🔥 Setting up hot mode')
+	//console.log('🔥 Setting up hot mode')
 	setupDocumentChangeWatcher()
 }
 
 function setupRelaxedMode() {
-	console.log('😌 Setting up relaxed mode')
+	//console.log('😌 Setting up relaxed mode')
 	clearDocumentChangeWatcher()
 }
 
@@ -729,11 +729,11 @@ function setupDocumentChangeWatcher() {
 
 				// Only update if the data is actually different
 				if (JSON.stringify(currentData) !== JSON.stringify(parsedData)) {
-					console.log('📥 External changes detected - updating sheet')
+					//console.log('📥 External changes detected - updating sheet')
 					await reinitializeWithData(parsedData)
 				}
 			} catch (error) {
-				console.error('❌ Failed to update from document change:', error)
+				//console.error('❌ Failed to update from document change:', error)
 			}
 		},
 		{ deep: true },
@@ -757,7 +757,7 @@ function parseActiveUsers(activeUsersStr) {
 	try {
 		return typeof activeUsersStr === 'string' ? JSON.parse(activeUsersStr) : []
 	} catch (error) {
-		console.error('Failed to parse active users:', error)
+		//console.error('Failed to parse active users:', error)
 		return []
 	}
 }
@@ -782,7 +782,7 @@ async function updateActiveUsers(users, operation = 'add') {
 			})
 		}
 	} catch (error) {
-		console.error('Failed to update active users:', error)
+		//console.error('Failed to update active users:', error)
 	}
 }
 
@@ -976,7 +976,7 @@ function extractPrintSheetData(univerData) {
 
 		return { headers, rows }
 	} catch (error) {
-		console.error('Error extracting print sheet data:', error)
+		//console.error('Error extracting print sheet data:', error)
 		return null
 	}
 }
@@ -1031,7 +1031,7 @@ async function handleLockConfirm() {
 
 // Cleanup
 async function cleanup() {
-	console.log('🧹 Starting cleanup process...')
+	//console.log('🧹 Starting cleanup process...')
 
 	// Clear all intervals and timeouts first
 	if (heartbeatInterval) {
@@ -1056,7 +1056,7 @@ async function cleanup() {
 			univerAPI.dispose()
 			univerAPI = null
 		} catch (error) {
-			console.error('Error disposing Univer API:', error)
+			//console.error('Error disposing Univer API:', error)
 		}
 	}
 
@@ -1066,7 +1066,7 @@ async function cleanup() {
 	// Clean up resources last
 	cleanupResources()
 
-	console.log('🏁 Cleanup complete')
+	//console.log('🏁 Cleanup complete')
 }
 
 function cleanupResources() {
@@ -1089,7 +1089,7 @@ function cleanupResources() {
 	// Remove all found elements
 	elementsToRemove.forEach((element) => {
 		element.remove()
-		console.log(`🧹 Cleaned up resource: ${element.src || element.href}`)
+		//console.log(`🧹 Cleaned up resource: ${element.src || element.href}`)
 	})
 
 	// Reset the global variables to ensure clean slate
@@ -1101,7 +1101,7 @@ function cleanupResources() {
 	window.UniverPresetSheetsCoreEnUS = undefined
 
 	isResourcesLoaded.value = false
-	console.log('🔄 Resources cleanup complete')
+	//console.log('🔄 Resources cleanup complete')
 }
 
 // Keyboard Shortcuts
@@ -1111,7 +1111,7 @@ function setupKeyboardShortcuts() {
 		if ((event.ctrlKey || event.metaKey) && event.key === 's') {
 			event.preventDefault()
 			if (unsavedChanges.value > 0) {
-				console.log('⌨️ Save shortcut detected - saving changes')
+				//console.log('⌨️ Save shortcut detected - saving changes')
 				handleSave()
 			}
 		}
@@ -1124,10 +1124,10 @@ function setupKeyboardShortcuts() {
 // Visibility Handling
 const handleVisibilityChange = async () => {
 	if (document.hidden) {
-		console.log('📤 Page hidden - handling departure')
+		//console.log('📤 Page hidden - handling departure')
 		await handleUserDeparture()
 	} else {
-		console.log('📥 Page visible - handling arrival')
+		//console.log('📥 Page visible - handling arrival')
 		await handleUserArrival()
 	}
 }
@@ -1175,7 +1175,7 @@ watch(
 			try {
 				lockedData.value = JSON.parse(newValue)
 			} catch (error) {
-				console.error('Error parsing locked data:', error)
+				//console.error('Error parsing locked data:', error)
 				lockedData.value = null
 			}
 		} else {
@@ -1187,7 +1187,7 @@ watch(
 
 // Separate onUnmounted hook to ensure it runs properly during navigation
 onUnmounted(async () => {
-	console.log('📤 Component unmounting - cleaning up user presence')
+	//console.log('📤 Component unmounting - cleaning up user presence')
 	document.removeEventListener('visibilitychange', handleVisibilityChange)
 
 	if (heartbeatInterval) {
@@ -1198,7 +1198,7 @@ onUnmounted(async () => {
 		// Make sure to handle user departure before other cleanup
 		await handleUserDeparture()
 	} catch (error) {
-		console.error('Error during user departure:', error)
+		//console.error('Error during user departure:', error)
 	} finally {
 		// Other cleanup tasks
 		cleanup()
