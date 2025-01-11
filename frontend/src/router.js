@@ -56,9 +56,9 @@ const routes = [
         component: () => import('@/pages/ProjectItems.vue'),
       },
       {
-        path: 'transactions',
-        name: 'ProjectTransactions',
-        component: () => import('@/pages/ProjectTransactions.vue'),
+        path: 'documents',
+        name: 'ProjectDocuments',
+        component: () => import('@/pages/ProjectDocuments.vue'),
       },
     ],
   },

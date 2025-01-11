@@ -189,7 +189,7 @@ const navigation = computed(() => [
   { name: 'Overview', to: `/project/${route.params.id}/overview`, icon: 'home' },
   { name: 'Tasks', to: `/project/${route.params.id}/tasks`, icon: 'check-square' },
   { name: 'Items', to: `/project/${route.params.id}/items`, icon: 'package' },
-  { name: 'Transactions', to: `/project/${route.params.id}/transactions`, icon: 'dollar-sign' },
+  { name: 'Documents', to: `/project/${route.params.id}/documents`, icon: 'file-text' },
 ])
 
 const dialogOptions = computed(() => ({
