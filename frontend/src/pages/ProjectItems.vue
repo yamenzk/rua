@@ -308,14 +308,112 @@ function initializeSheetData(univerData) {
       console.log('📄 Found existing sheet data, initializing from saved data...')
       univerAPI.createUniverSheet(parsedValue)
     } else {
-      console.log(
-        '📝 No meaningful data found (empty or {},[]), creating new empty sheet...',
-      )
-      univerAPI.createUniverSheet({
-        name: 'Project Items',
-        rowCount: 50,
-        columnCount: 26,
-      })
+      console.log('📝 No meaningful data found, creating new sheets...')
+      
+      // Generate unique IDs for sheets
+      const mainSheetId = 'sheet1_' + Math.random().toString(36).substr(2, 9)
+      const printSheetId = 'sheet2_' + Math.random().toString(36).substr(2, 9)
+      
+      // Define the workbook structure
+      const workbookData = {
+        id: 'workbook_' + Math.random().toString(36).substr(2, 9),
+        appVersion: '0.5.0',
+        locale: 'enUS',
+        name: 'Project Workbook',
+        sheetOrder: [mainSheetId, printSheetId],
+        styles: {
+          'header_style': {
+            bl: 1,           // Bold
+            bg: {            // Light gray background
+              rgb: '#f3f4f6'
+            },
+            ht: 2,          // Center align
+            vt: 2           // Vertical center
+          }
+        },
+        sheets: {
+          [mainSheetId]: {
+            id: mainSheetId,
+            name: 'Project Items',
+            rowCount: 50,
+            columnCount: 26,
+            tabColor: '',
+            hidden: 0,
+            freezeOptions: {
+              startRow: -1,
+              startColumn: -1,
+              ySplit: 0,
+              xSplit: 0
+            },
+            rowHeader: {
+              width: 46,
+              hidden: 0
+            },
+            columnHeader: {
+              height: 20,
+              hidden: 0
+            },
+            showGridlines: 1,
+            defaultColumnWidth: 73,
+            defaultRowHeight: 23,
+            zoomRatio: 1,
+            cellData: {},
+            rowData: {},
+            columnData: {}
+          },
+          [printSheetId]: {
+            id: printSheetId,
+            name: '_print',
+            rowCount: 50,
+            columnCount: 10,
+			freeze: { xSplit: 1, ySplit: 1, startRow: 1, startColumn: 1 },
+            tabColor: '#FBC418',
+            hidden: 0,
+            rowHeader: {
+              width: 46,
+              hidden: 0
+            },
+            columnHeader: {
+              height: 20,
+              hidden: 0
+            },
+            showGridlines: 1,
+            defaultColumnWidth: 73,
+            defaultRowHeight: 23,
+            zoomRatio: 1,
+            cellData: {
+              0: { // Header row
+                0: { v: 'Item Name', t: 1, s: 'header_style' },
+                1: { v: 'Description', t: 1, s: 'header_style' },
+                2: { v: 'Qty', t: 1, s: 'header_style' },
+                3: { v: 'Width', t: 1, s: 'header_style' },
+                4: { v: 'Height', t: 1, s: 'header_style' },
+                5: { v: 'Area', t: 1, s: 'header_style' },
+                6: { v: 'Amount', t: 1, s: 'header_style' },
+                7: { v: 'Total', t: 1, s: 'header_style' },
+                8: { v: 'Vat Amount', t: 1, s: 'header_style' },
+                9: { v: 'Grand Total', t: 1, s: 'header_style' }
+              }
+            },
+            rowData: {},
+            columnData: {
+              0: { w: 150, hd: 0 }, // Item Name
+              1: { w: 200, hd: 0 }, // Description
+              2: { w: 80, hd: 0 },  // Qty
+              3: { w: 80, hd: 0 },  // Width
+              4: { w: 80, hd: 0 },  // Height
+              5: { w: 80, hd: 0 },  // Area
+              6: { w: 100, hd: 0 }, // Amount
+              7: { w: 100, hd: 0 }, // Total
+              8: { w: 100, hd: 0 }, // Vat Amount
+              9: { w: 100, hd: 0 }  // Grand Total
+            }
+          }
+        }
+      }
+      
+      // Create the workbook with both sheets
+      univerAPI.createUniverSheet(workbookData)
     }
 
     isInitialized.value = true
