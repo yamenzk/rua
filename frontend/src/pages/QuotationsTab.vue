@@ -1,0 +1,454 @@
+<!-- QuotationsTab.vue -->
+<template>
+    <div class="bg-white rounded-lg border">
+      <!-- Dynamic Header -->
+      <div class="flex items-center justify-between mt-6 mb-4 px-6">
+        <h2 class="text-lg font-medium text-gray-900">Quotations</h2>
+        <Button
+          v-if="isManager"
+          variant="solid"
+          size="sm"
+          @click="handleNewQuotation"
+        >
+          <template #default>
+            <div class="flex items-center gap-2">
+              <FeatherIcon name="plus" class="w-4 h-4" />
+              <span>Add New Quotation</span>
+            </div>
+          </template>
+        </Button>
+      </div>
+  
+      <!-- Scrollable Container -->
+      <div class="overflow-x-auto">
+        <!-- Table Header -->
+        <div class="border-b min-w-[800px]">
+          <div class="flex items-center px-6 py-2">
+            <div class="flex-1 grid grid-cols-6 gap-4">
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="user" class="w-4 h-4" />
+                Party
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="calendar" class="w-4 h-4" />
+                Date
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="dollar-sign" class="w-4 h-4" />
+                Grand Total
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="check-circle" class="w-4 h-4" />
+                Status
+              </div>
+              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="info" class="w-4 h-4" />
+                Additional Info
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Table Body -->
+        <div class="divide-y">
+          <template v-for="status in ['Final', 'Submitted', 'Draft', 'Rejected']" :key="status">
+            <template v-if="quotationsByStatus[status]?.length">
+              <!-- Status Group Header -->
+              <div 
+                class="group bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer px-6 py-2 min-w-[800px]"
+                @click="toggleStatusCollapse(status)"
+              >
+                <div class="flex items-center gap-2">
+                  <FeatherIcon 
+                    :name="statusCollapsed[status] ? 'chevron-right' : 'chevron-down'" 
+                    class="w-4 h-4 text-gray-500"
+                  />
+                  <Badge
+                    :variant="getStatusVariant(status) === 'gray' ? 'solid' : 'subtle'"
+                    :theme="getStatusVariant(status)"
+                  >
+                    {{ status }}
+                  </Badge>
+                  <span class="text-sm text-gray-600">
+                    ({{ quotationsByStatus[status]?.length || 0 }})
+                  </span>
+                </div>
+              </div>
+  
+              <!-- Quotations in this status -->
+              <template v-if="!statusCollapsed[status]">
+                <div 
+                  v-for="quotation in quotationsByStatus[status]" 
+                  :key="quotation.name"
+                  class="hover:bg-gray-50 transition-colors cursor-pointer min-w-[800px]"
+                  @click="router.push({
+                    name: 'QuotationDetails',
+                    params: { quotationId: quotation.name }
+                  })"
+                >
+                  <div class="flex items-center px-6 py-3">
+                    <div class="flex-1 grid grid-cols-6 gap-4">
+                      <!-- Party -->
+                      <div class="flex items-center gap-2">
+                        <Avatar
+                          v-if="getPartyData(quotation.party)?.image"
+                          :image="getPartyData(quotation.party)?.image"
+                          size="sm"
+                          shape="circle"
+                        />
+                        <span class="text-sm text-gray-900">{{ quotation.party }}</span>
+                      </div>
+                      <!-- Date -->
+                      <div class="text-sm text-gray-600 flex items-center">
+                        {{ new Date(quotation.date).toLocaleDateString() }}
+                      </div>
+                      <!-- Grand Total -->
+                      <div class="text-sm text-gray-900 font-medium flex items-center">
+                        {{ formatCurrency(quotation.grand_total) }}
+                      </div>
+                      <!-- Status -->
+                      <div class="flex items-center">
+                        <Badge
+                          :variant="getStatusVariant(quotation.status) === 'gray' ? 'solid' : 'subtle'"
+                          :theme="getStatusVariant(quotation.status)"
+                        >
+                          {{ quotation.status }}
+                        </Badge>
+                      </div>
+                      <!-- Additional Info -->
+                      <div class="col-span-2 flex items-center">
+                        <div 
+                          v-if="quotation.status === 'Final' && quotation.signed_document" 
+                          class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                          @click="openSignedDocument(quotation.signed_document, $event)"
+                        >
+                          <FeatherIcon name="file-text" class="w-4 h-4" />
+                          View Signed Document
+                        </div>
+                        <div 
+                          v-if="quotation.status === 'Rejected' && quotation.reject_reason" 
+                          class="text-sm text-gray-600 italic"
+                        >
+                          {{ quotation.reject_reason }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </template>
+          </template>
+  
+          <!-- Empty State -->
+          <div 
+            v-if="!quotations?.data?.length" 
+            class="flex flex-col items-center justify-center py-12 min-w-[800px]"
+          >
+            <FeatherIcon 
+              name="file-text" 
+              class="w-12 h-12 text-gray-400 mb-4" 
+            />
+            <p class="text-base font-medium text-gray-900">No Quotations Found</p>
+            <p class="text-sm text-gray-600">There are no quotations created yet.</p>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Warning Dialogs -->
+      <Dialog
+        v-if="showNoClientDialog"
+        v-model="showNoClientDialog"
+        :options="{
+          title: 'Missing Client',
+          message: 'A client must be added to the project before creating a quotation. Please add a client from the project overview page.',
+          size: 'sm',
+          icon: {
+            name: 'alert-triangle',
+            appearance: 'warning'
+          },
+          actions: [
+            {
+              label: 'Go to Overview',
+              variant: 'solid',
+              theme: 'warning',
+              onClick: () => {
+                router.push(`/project/${projectResource.doc.name}/overview`)
+              }
+            },
+            {
+              label: 'Close',
+              variant: 'subtle',
+              onClick: () => showNoClientDialog = false
+            }
+          ]
+        }"
+      />
+  
+      <Dialog
+        v-if="showNotLockedDialog"
+        v-model="showNotLockedDialog"
+        :options="{
+          title: 'Items Not Locked',
+          message: 'The project items must be locked before creating a quotation. Please lock the items from the Items page.',
+          size: 'sm',
+          icon: {
+            name: 'alert-triangle',
+            appearance: 'warning'
+          },
+          actions: [
+            {
+              label: 'Go to Items',
+              variant: 'solid',
+              theme: 'warning',
+              onClick: () => {
+                router.push(`/project/${projectResource.doc.name}/items`)
+              }
+            },
+            {
+              label: 'Close',
+              variant: 'subtle',
+              onClick: () => showNotLockedDialog = false
+            }
+          ]
+        }"
+      />
+  
+      <!-- New Quotation Dialog -->
+      <Dialog
+        v-if="showNewQuotationDialog"
+        v-model="showNewQuotationDialog"
+        :options="{
+          title: 'New Quotation',
+          size: 'lg',
+          actions: [
+            {
+              label: 'Create',
+              variant: 'solid',
+              onClick: createQuotation,
+              loading: quotations?.insert.loading
+            },
+          ],
+        }"
+      >
+        <template #body-content>
+          <div class="space-y-4">
+            <DatePicker
+              v-model="newQuotation.date"
+              label="Date"
+              :default-value="new Date().toISOString().split('T')[0]"
+              :format="(date) => date.toISOString().split('T')[0]"
+            />
+          </div>
+        </template>
+      </Dialog>
+    </div>
+  </template>
+  
+  <script setup>
+  import { ref, computed, onMounted, watch } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { createListResource } from 'frappe-ui'
+  import { 
+    Avatar,
+    Badge,
+    FeatherIcon,
+    Button,
+    Dialog,
+    DatePicker
+  } from 'frappe-ui'
+  import { session } from '../data/session'
+  
+  const router = useRouter()
+  
+  const props = defineProps({
+    projectResource: {
+      type: Object,
+      required: true
+    }
+  })
+  
+  // State
+  const showNewQuotationDialog = ref(false)
+  const showNoClientDialog = ref(false)
+  const showNotLockedDialog = ref(false)
+  const newQuotation = ref({
+    date: new Date().toISOString().split('T')[0]
+  })
+  const statusCollapsed = ref({
+    Final: false,
+    Submitted: false,
+    Draft: false,
+    Rejected: false
+  })
+  
+  // List Resource
+  const quotations = ref(null)
+  
+  // Role-based access control
+  const isManager = computed(() => {
+    return session.userRoles?.some(role => ['RUA Manager', 'RUA Project Manager'].includes(role))
+  })
+  
+  // Computed properties
+  const quotationsByStatus = computed(() => {
+    if (!quotations.value?.data) return {}
+    
+    return quotations.value.data.reduce((acc, quotation) => {
+      const status = quotation.status || 'Draft'
+      if (!acc[status]) {
+        acc[status] = []
+      }
+      acc[status].push(quotation)
+      return acc
+    }, {})
+  })
+  
+  // Watch for dialog state changes
+  watch([showNoClientDialog, showNotLockedDialog, showNewQuotationDialog], ([noClient, notLocked, newQuotation]) => {
+    console.log('Dialog States:', { noClient, notLocked, newQuotation })
+  })
+  
+  // Initialize resources when project is ready
+  watch(() => props.projectResource.doc?.name, (newValue) => {
+    if (newValue) {
+      initializeResources()
+    }
+  }, { immediate: true })
+  
+  // Methods
+  function initializeResources() {
+    if (!props.projectResource.doc?.name) return
+    
+    quotations.value = createListResource({
+      doctype: 'RUA Quotation',
+      fields: ['*'],
+      filters: {
+        project: props.projectResource.doc.name
+      },
+      orderBy: 'creation desc',
+      pageLength: 20
+    })
+    
+    quotations.value.fetch()
+  }
+  
+  function formatCurrency(value) {
+    if (!value) return 'AED 0'
+    return `AED ${Number(value).toLocaleString()}`
+  }
+  
+  function getStatusVariant(status) {
+    switch (status?.toLowerCase()) {
+      case 'draft':
+        return 'orange'
+      case 'submitted':
+        return 'green'
+      case 'rejected':
+        return 'red'
+      case 'final':
+        return 'gray'
+      default:
+        return 'gray'
+    }
+  }
+  
+  function toggleStatusCollapse(status) {
+    statusCollapsed.value[status] = !statusCollapsed.value[status]
+  }
+  
+  function getPartyData(partyName) {
+    const parties = typeof props.projectResource.doc.parties === 'string'
+      ? JSON.parse(props.projectResource.doc.parties)
+      : props.projectResource.doc.parties
+      return parties?.find(p => p.name === partyName)
+  }
+  
+  function validateAndShowQuotationDialog() {
+    console.log('Validating quotation dialog...')
+    
+    let parties = []
+    try {
+      parties = props.projectResource.doc?.parties ? 
+        (typeof props.projectResource.doc.parties === 'string' ? 
+          JSON.parse(props.projectResource.doc.parties) : 
+          props.projectResource.doc.parties
+        ) : []
+    } catch (error) {
+      console.error('Error parsing parties:', error)
+      showNoClientDialog.value = true
+      return
+    }
+  
+    const hasClient = parties.some(party => party.type.toLowerCase() === 'client')
+    
+    if (!hasClient) {
+      showNoClientDialog.value = true
+      return
+    }
+  
+    const locked = props.projectResource.doc?.locked || ''
+    const isLocked = locked && 
+      locked !== '' && 
+      locked !== '[]' && 
+      locked !== '{}'
+      
+    if (!isLocked) {
+      showNotLockedDialog.value = true
+      return
+    }
+  
+    showNewQuotationDialog.value = true
+  }
+  
+  function handleNewQuotation() {
+    validateAndShowQuotationDialog()
+  }
+  
+  function openSignedDocument(url, event) {
+    event.preventDefault()
+    event.stopPropagation()
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+  
+  async function createQuotation() {
+    if (!props.projectResource.doc?.name || !quotations.value) return
+    
+    try {
+      const parties = typeof props.projectResource.doc.parties === 'string' 
+        ? JSON.parse(props.projectResource.doc.parties) 
+        : props.projectResource.doc.parties
+  
+      const clientParty = parties.find(party => party.type.toLowerCase() === 'client')
+      
+      if (!clientParty) {
+        console.error('Client party not found')
+        return
+      }
+  
+      const formattedDate = newQuotation.value.date
+      
+      await quotations.value.insert.submit({
+        project: props.projectResource.doc.name,
+        date: formattedDate,
+        party: clientParty.name,
+        doctype: 'RUA Quotation'
+      })
+      
+      showNewQuotationDialog.value = false
+      newQuotation.value = {
+        date: new Date()
+      }
+      
+      await quotations.value.fetch()
+    } catch (error) {
+      console.error('Failed to create quotation:', error)
+    }
+  }
+  
+  // Cleanup
+  onMounted(() => {
+    if (props.projectResource.doc?.name) {
+      initializeResources()
+    }
+  })
+  </script>

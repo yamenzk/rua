@@ -866,119 +866,129 @@ const lockedRows = computed(() => {
 
 // Function to extract necessary data from the spreadsheet
 function extractPrintSheetData(univerData) {
-	try {
-		const data = JSON.parse(univerData)
-		const printSheet = Object.values(data.sheets).find((sheet) => sheet.name === '_print')
-		if (!printSheet) return null
+    try {
+        const data = JSON.parse(univerData)
+        const printSheet = Object.values(data.sheets).find((sheet) => sheet.name === '_print')
+        if (!printSheet) return null
 
-		const headers = {}
-		const headerUnits = {}
-		const rows = []
+        const headers = {}
+        const headerUnits = {}
+        const rows = []
 
-		// Helper function to extract unit from header
-		function extractUnit(headerText) {
-			const match = headerText.match(/\[(.*?)\]/)
-			return match ? match[1] : null
-		}
+        // Helper function to extract unit from header
+        function extractUnit(headerText) {
+            const match = headerText.match(/\[(.*?)\]/)
+            return match ? match[1] : null
+        }
 
-		// Helper function to format number with commas and handle decimal zeros
-		function formatNumber(value, decimals = 0) {
-			if (typeof value !== 'number') return value
+        // Helper function to format number with commas and handle decimal zeros
+        function formatNumber(value, decimals = 0) {
+            if (typeof value !== 'number') return value
 
-			// First format with fixed decimals
-			const formatted = new Intl.NumberFormat('en-US', {
-				minimumFractionDigits: decimals,
-				maximumFractionDigits: decimals,
-			}).format(value)
+            // First format with fixed decimals
+            const formatted = new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals,
+            }).format(value)
 
-			// If decimals are all zeros, remove the decimal part
-			if (decimals > 0) {
-				const parts = formatted.split('.')
-				if (parts[1] && !parts[1].split('').some((digit) => digit !== '0')) {
-					return parts[0]
-				}
-			}
+            // If decimals are all zeros, remove the decimal part
+            if (decimals > 0) {
+                const parts = formatted.split('.')
+                if (parts[1] && !parts[1].split('').some((digit) => digit !== '0')) {
+                    return parts[0]
+                }
+            }
 
-			return formatted
-		}
+            return formatted
+        }
 
-		// Helper function to format value based on column type
-		function formatValue(value, header, unit) {
-			if (value === null || value === undefined) return ''
+        // Helper function to format value based on column type
+        function formatValue(value, header, unit) {
+            if (value === null || value === undefined) return ''
 
-			switch (header) {
-				case 'Qty':
-					return formatNumber(value, 0)
+            switch (header) {
+                case 'Qty':
+                    return formatNumber(value, 0)
 
-				case 'Width':
-				case 'Height':
-				case 'Area':
-					return unit ? `${formatNumber(value, 2)} ${unit}` : formatNumber(value, 2)
+                case 'Width':
+                case 'Height':
+                case 'Area':
+                    return unit ? `${formatNumber(value, 2)} ${unit}` : formatNumber(value, 2)
 
-				case 'Amount':
-				case 'Total':
-				case 'Vat Amount':
-				case 'Grand Total':
-					return `${formatNumber(value, 2)} AED`
+                case 'Amount':
+                case 'Total':
+                case 'Vat Amount':
+                case 'Grand Total':
+                    return `${formatNumber(value, 2)} AED`
 
-				default:
-					return value
-			}
-		}
+                default:
+                    return value
+            }
+        }
 
-		// Extract headers and their units
-		if (printSheet.cellData['0']) {
-			Object.entries(printSheet.cellData['0']).forEach(([col, cell]) => {
-				let headerText = ''
-				let headerUnit = null
+        // Extract headers and their units
+        if (printSheet.cellData['0']) {
+            Object.entries(printSheet.cellData['0']).forEach(([col, cell]) => {
+                let headerText = ''
+                let headerUnit = null
 
-				// Handle regular header cells
-				if (cell.v) {
-					headerText = cell.v
-				}
-				// Handle nested header cells (Width, Height, Area)
-				else if (cell.p?.body?.dataStream) {
-					headerText = cell.p.body.dataStream.trim()
-				}
+                // Handle regular header cells
+                if (cell.v) {
+                    headerText = cell.v
+                }
+                // Handle nested header cells (Width, Height, Area)
+                else if (cell.p?.body?.dataStream) {
+                    headerText = cell.p.body.dataStream.trim()
+                }
 
-				if (headerText) {
-					// Extract header name and unit for special columns
-					if (headerText.includes('[')) {
-						const baseName = headerText.split('[')[0].trim()
-						const unit = extractUnit(headerText)
-						headers[col] = baseName
-						headerUnits[baseName] = unit
-					} else {
-						headers[col] = headerText
-					}
-				}
-			})
-		}
+                if (headerText) {
+                    // Extract header name and unit for special columns
+                    if (headerText.includes('[')) {
+                        const baseName = headerText.split('[')[0].trim()
+                        const unit = extractUnit(headerText)
+                        headers[col] = baseName
+                        headerUnits[baseName] = unit
+                    } else {
+                        headers[col] = headerText
+                    }
+                }
+            })
+        }
 
-		// Extract and format rows
-		Object.entries(printSheet.cellData).forEach(([rowIndex, rowData]) => {
-			if (rowIndex === '0') return // Skip header row
+        // Extract and format rows
+        Object.entries(printSheet.cellData).forEach(([rowIndex, rowData]) => {
+            if (rowIndex === '0') return // Skip header row
 
-			const row = {}
-			Object.entries(rowData).forEach(([col, cell]) => {
-				const header = headers[col]
-				if (header) {
-					// Only process if we have a valid header
-					const unit = headerUnits[header]
-					row[header] = formatValue(cell.v, header, unit)
-				}
-			})
+            const row = {}
+            let hasValues = false
 
-			if (Object.keys(row).length > 0) {
-				rows.push(row)
-			}
-		})
+            Object.entries(rowData).forEach(([col, cell]) => {
+                const header = headers[col]
+                if (header) {
+                    const unit = headerUnits[header]
+                    const formattedValue = formatValue(cell.v, header, unit)
+                    row[header] = formattedValue
+                    
+                    // Check if this cell has a non-empty value
+                    if (formattedValue !== '') {
+                        hasValues = true
+                    }
+                }
+            })
 
-		return { headers, rows }
-	} catch (error) {
-		//console.error('Error extracting print sheet data:', error)
-		return null
-	}
+            // Check required fields and ensure row has actual content
+            const hasRequiredFields = Boolean(row['Item Name'] || row['Description'])
+            
+            if (Object.keys(row).length > 0 && hasRequiredFields && hasValues) {
+                rows.push(row)
+            }
+        })
+
+        return { headers, rows }
+    } catch (error) {
+        console.error('Error extracting print sheet data:', error)
+        return null
+    }
 }
 // Lock/Unlock handlers
 async function handleLockClick() {

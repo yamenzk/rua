@@ -85,9 +85,7 @@
       <!-- Main content -->
       <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0">
         <router-view 
-          :project="projectData"
           :projectResource="projectResource"
-          
         ></router-view>
       </main>
 

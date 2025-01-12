@@ -8,6 +8,7 @@
   "party",
   "project",
   "status",
+  "reject_reason",
   "column_break_njho",
   "date",
   "naming_series",
@@ -98,11 +99,16 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "Draft\nSubmitted\nRejected\nFinal"
+  },
+  {
+   "fieldname": "reject_reason",
+   "fieldtype": "Small Text",
+   "label": "Reject Reason"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-12 02:50:16.498757",
+ "modified": "2025-01-12 16:49:50.962712",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Quotation",

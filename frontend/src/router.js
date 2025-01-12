@@ -60,6 +60,33 @@ const routes = [
         name: 'ProjectDocuments',
         component: () => import('@/pages/ProjectDocuments.vue'),
       },
+      {
+        path: 'documents/quotation/:quotationId',
+        name: 'QuotationDetails',
+        component: () => import('@/pages/QuotationDetails.vue'),
+      },
+    ],
+  },
+  {
+    path: '/employee/:id',
+    component: () => import('@/layouts/EmployeeLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'overview',
+        name: 'EmployeeOverview',
+        component: () => import('@/pages/EmployeeOverview.vue'),
+      },
+      {
+        path: 'attendance',
+        name: 'EmployeeAttendance',
+        component: () => import('@/pages/EmployeeAttendance.vue'),
+      },
+      {
+        path: 'files',
+        name: 'EmployeeFiles',
+        component: () => import('@/pages/EmployeeFiles.vue'),
+      }
     ],
   },
   {

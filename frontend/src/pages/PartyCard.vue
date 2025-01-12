@@ -230,7 +230,8 @@ import { session } from '../data/session'
 const props = defineProps({
   party: {
     type: Object,
-    default: null
+    default: null,
+    required: false
   },
   partyType: {
     type: String,
@@ -239,11 +240,10 @@ const props = defineProps({
   },
   projectResource: {
     type: Object,
-    required: true
-  },
-  project: {
-    type: Object,
-    required: true
+    required: true,
+    validator: (value) => {
+      return value && typeof value === 'object' && 'setValue' in value
+    }
   },
   showAddButton: {
     type: Boolean,
@@ -278,7 +278,7 @@ const filteredParties = computed(() => {
   let filtered = partyList.data
 
   // Get current project parties
-  let currentParties = props.project.parties
+  let currentParties = props.projectResource.doc.parties
   if (typeof currentParties === 'string') {
     currentParties = JSON.parse(currentParties)
   }
@@ -314,6 +314,7 @@ const filteredParties = computed(() => {
   return filtered
 })
 
+
 const typeColorClasses = computed(() => {
   const colorMap = {
     'Supplier': 'bg-teal-500',
@@ -323,7 +324,7 @@ const typeColorClasses = computed(() => {
     'Client': 'bg-purple-500',
     'Consultant': 'bg-pink-500'
   }
-  return colorMap[props.party?.type] || 'bg-gray-500'
+  return props.party?.type ? colorMap[props.party.type] || 'bg-gray-500' : 'bg-gray-500'
 })
 
 function showDetails() {
@@ -349,7 +350,7 @@ async function removeParty() {
     removing.value = true
     
     // Get current parties
-    let currentParties = props.project.parties
+    let currentParties = props.projectResource.doc.parties
     if (typeof currentParties === 'string') {
       currentParties = JSON.parse(currentParties)
     }
@@ -361,7 +362,7 @@ async function removeParty() {
     
     // Update the project
     await props.projectResource.setValue.submit({
-      name: props.project.name,
+      name: props.projectResource.doc.name,
       parties: JSON.stringify(updatedParties)
     })
     
@@ -378,7 +379,7 @@ async function removeParty() {
 async function selectParty(party) {
   try {
     // Get current parties
-    let currentParties = props.project.parties
+    let currentParties = props.projectResource.doc.parties
     if (typeof currentParties === 'string') {
       currentParties = JSON.parse(currentParties)
     }
@@ -407,7 +408,7 @@ async function selectParty(party) {
     
     // Update project with stringified parties
     await props.projectResource.setValue.submit({
-      name: props.project.name,
+      name: props.projectResource.doc.name,
       parties: JSON.stringify(updatedParties)
     })
     
