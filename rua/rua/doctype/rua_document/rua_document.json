@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_copy": 1,
  "allow_rename": 1,
  "creation": "2025-01-13 01:31:19.990014",
  "doctype": "DocType",
@@ -51,9 +52,10 @@
    "label": "Category"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-13 01:32:59.108101",
+ "modified": "2025-01-13 18:04:58.835192",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Document",

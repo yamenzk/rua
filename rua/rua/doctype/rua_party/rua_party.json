@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_copy": 1,
  "allow_rename": 1,
  "autoname": "field:party",
  "creation": "2025-01-08 19:44:58.240502",
@@ -82,10 +83,11 @@
    "label": "Image"
   }
  ],
+ "hide_toolbar": 1,
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-08 20:33:29.900111",
+ "modified": "2025-01-13 18:05:37.865902",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Party",

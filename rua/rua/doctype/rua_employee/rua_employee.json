@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_copy": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
  "creation": "2025-01-13 01:26:43.769644",
@@ -64,9 +65,10 @@
    "label": "Salary"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-13 01:38:13.768274",
+ "modified": "2025-01-13 18:05:06.949692",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
