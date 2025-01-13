@@ -25,6 +25,7 @@ export const session = reactive({
     async onSuccess(data) {
       userResource.reload()
       session.user = sessionUser()
+      session.justLoggedIn = true  // Add this flag
       
       // Fetch and store user roles
       const rolesResponse = await userRolesResource.submit({ user: session.user })
@@ -41,6 +42,7 @@ export const session = reactive({
       userResource.reset()
       session.user = sessionUser()
       session.userRoles = []
+      session.justLoggedIn = false  // Reset the flag on logout
       setUserRolesCookie([]) // Clear roles on logout
       router.replace({ name: 'Login' })
     },
@@ -48,4 +50,5 @@ export const session = reactive({
   user: sessionUser(),
   userRoles: getUserRolesFromCookie(),
   isLoggedIn: computed(() => !!session.user),
+  justLoggedIn: false  // Add this new state
 })

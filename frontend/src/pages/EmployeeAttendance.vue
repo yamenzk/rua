@@ -254,7 +254,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { FeatherIcon, createListResource } from 'frappe-ui'
+import { FeatherIcon, createListResource, Badge } from 'frappe-ui'
 
 const props = defineProps({
   employee: {

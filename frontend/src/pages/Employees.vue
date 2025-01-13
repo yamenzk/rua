@@ -169,7 +169,7 @@
 			<div class="text-gray-600">No employees found</div>
 		</div>
 
-		<div v-else class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+		<div v-else class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			<div
 				v-for="employee in list.data"
 				:key="employee.name"
@@ -205,14 +205,14 @@
 							<FeatherIcon name="briefcase" class="w-4 h-4" />
 							<span>{{ employee.position }}</span>
 						</div>
-						<div class="flex items-center gap-2">
+						<!-- <div class="flex items-center gap-2">
 							<FeatherIcon name="flag" class="w-4 h-4" />
 							<span>{{ employee.nationality }}</span>
 						</div>
 						<div class="flex items-center gap-2">
 							<FeatherIcon name="dollar-sign" class="w-4 h-4" />
 							<span>{{ formatCurrency(employee.salary) }}</span>
-						</div>
+						</div> -->
 					</div>
 				</div>
 			</div>
@@ -458,7 +458,8 @@ const attendance = ref({})
 const todayAttendance = ref(null)
 const isReadOnly = computed(() => {
   const now = new Date()
-  return now.getHours() >= 20
+  const dubaiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
+  return dubaiTime.getHours() >= 20
 })
 
 const newEmployee = ref({
@@ -692,8 +693,18 @@ const computedActions = computed(() => {
 
 // Methods
 function getTodayDate() {
-  const today = new Date()
-  return today.toISOString().split('T')[0]
+  // Create date in current time
+  const now = new Date()
+
+  // Convert to Dubai time (GMT+4)
+  const dubaiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
+  
+  // Format as YYYY-MM-DD
+  const year = dubaiTime.getFullYear()
+  const month = String(dubaiTime.getMonth() + 1).padStart(2, '0')
+  const day = String(dubaiTime.getDate()).padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
 }
 
 function getInitials(name) {
@@ -741,6 +752,7 @@ async function loadExistingAttendance() {
 }
 
 async function showAttendanceDialog() {
+  console.log(getTodayDate())
   if (isReadOnly.value) {
     const exists = await loadExistingAttendance()
     if (!exists) {
