@@ -36,7 +36,7 @@
 					v-if="!isHotMode && !isLocked"
 					class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
 				>
-				😌 Relaxed Mode
+					😌 Relaxed Mode
 				</span>
 
 				<!-- Lock/Unlock Button -->
@@ -74,9 +74,14 @@
 
 		<!-- Locked State Message and ListView -->
 		<template v-if="isLocked">
-			<div class="p-4 bg-yellow-50" style="margin:0 !important">
+			<div class="p-4 bg-yellow-50" style="margin: 0 !important">
 				<p class="text-yellow-800">
-					Items have been locked by {{ lockedData?.user == session.user ? 'you' : lockedData?.user || 'an unknown user' }}.
+					Items have been locked by
+					{{
+						lockedData?.user == session.user
+							? 'you'
+							: lockedData?.user || 'an unknown user'
+					}}.
 					{{
 						session.user === lockedData?.user
 							? 'Click the unlock button to modify the data.'
@@ -86,17 +91,100 @@
 			</div>
 
 			<!-- Locked Data ListView -->
-			<ListView
-				class="mt-4 border border-gray-300 rounded-md"
-				:columns="lockedColumns"
-				:rows="lockedRows"
-				:options="{
-					showTooltip: false,
-					resizeColumn: true,
-					selectable: false,
-				}"
-				row-key="id"
-			/>
+			<div class="overflow-x-auto">
+  <!-- Table Header -->
+  <div class="border-b min-w-[800px]">
+    <div class="flex items-center px-6 py-2">
+      <div class="flex-1 grid grid-cols-9 gap-4">
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <FeatherIcon name="box" class="w-4 h-4" />
+          Item Name
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          Qty
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          Width
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          Height
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          Area
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          Amount
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          VAT
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          Total
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+          Grand Total
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Body -->
+  <div class="divide-y">
+    <template v-if="lockedRows.length">
+      <div 
+        v-for="row in lockedRows" 
+        :key="row.id"
+        class="hover:bg-gray-50 transition-colors min-w-[800px]"
+      >
+        <div class="flex items-center px-6 py-3">
+          <div class="flex-1 grid grid-cols-9 gap-4">
+            <!-- Item Name with Description Tooltip -->
+            <div>
+              <Tooltip
+                :text="row['Description']"
+                :hover-delay="1"
+                placement="top"
+              >
+                <div class="text-sm text-gray-900">
+                  {{ row['Item Name'] }}
+                </div>
+              </Tooltip>
+            </div>
+            <!-- Qty -->
+            <div class="text-sm text-gray-900 text-right">{{ row['Qty'] }}</div>
+            <!-- Width -->
+            <div class="text-sm text-gray-900 text-right">{{ row['Width'] }}</div>
+            <!-- Height -->
+            <div class="text-sm text-gray-900 text-right">{{ row['Height'] }}</div>
+            <!-- Area -->
+            <div class="text-sm text-gray-900 text-right">{{ row['Area'] }}</div>
+            <!-- Amount -->
+            <div class="text-sm text-gray-900 font-medium text-right">{{ row['Amount'] }}</div>
+            <!-- VAT -->
+            <div class="text-sm text-gray-900 font-medium text-right">{{ row['Vat Amount'] }}</div>
+            <!-- Total -->
+            <div class="text-sm text-gray-900 font-medium text-right">{{ row['Total'] }}</div>
+            <!-- Grand Total -->
+            <div class="text-sm text-gray-900 font-medium text-right">{{ row['Grand Total'] }}</div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Empty State -->
+    <div 
+      v-else
+      class="flex flex-col items-center justify-center py-12 min-w-[800px]"
+    >
+      <FeatherIcon 
+        name="box" 
+        class="w-12 h-12 text-gray-400 mb-4" 
+      />
+      <p class="text-base font-medium text-gray-900">No Items Found</p>
+      <p class="text-sm text-gray-600">There are no locked items to display.</p>
+    </div>
+  </div>
+</div>
 		</template>
 
 		<!-- Spreadsheet Container - Only initialize and show when not locked -->
@@ -105,7 +193,7 @@
 				class="relative w-full h-full"
 				style="height: calc(100vh - 12rem); margin: 0 !important"
 			>
-				<div ref="univerContainer" class="absolute inset-0"></div>
+				<div id="univer-container" class="absolute inset-0"></div>
 			</div>
 		</template>
 
@@ -214,9 +302,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import { session } from '../data/session'
 import { Avatar, Tooltip, Button, Dialog, debounce, FeatherIcon, ListView } from 'frappe-ui'
+
+// Import Univer modules
+import { createUniver, defaultTheme, LocaleType, merge } from '@univerjs/presets'
+import { UniverSheetsCorePreset } from '@univerjs/presets/preset-sheets-core'
+import UniverPresetSheetsCoreEnUS from '@univerjs/presets/preset-sheets-core/locales/en-US'
+
+// Import required CSS
+import '@univerjs/presets/lib/styles/preset-sheets-core.css'
 
 // Props
 const props = defineProps({
@@ -248,12 +344,13 @@ const SAVE_TIMEOUT = 3 * 60 * 1000 // 3 minutes
 const HEARTBEAT_INTERVAL = 30000 // 30 seconds
 const COMMAND_DEBOUNCE = 1000 // 1 second
 const showLockDialog = ref(false)
-const lockedData = ref(props.project?.locked ? JSON.parse(props.project.locked) : null)
+const lockedData = ref(
+	props.projectResource.doc?.locked ? JSON.parse(props.projectResource.doc.locked) : null,
+)
 const saveStatus = ref('')
 const activeUsers = ref([])
 const isInitialized = ref(false)
 const univerContainer = ref(null)
-const isResourcesLoaded = ref(false)
 const initializationError = ref(null)
 const isLoading = ref(true)
 const loadingMessage = ref('Initializing spreadsheet...')
@@ -269,11 +366,11 @@ const isManager = computed(() => {
 })
 const isLocked = computed(() => {
 	return (
-		props.project?.locked &&
-		typeof props.project.locked === 'string' &&
-		props.project.locked.trim() !== '' &&
-		props.project.locked !== '[]' &&
-		props.project.locked !== '{}'
+		props.projectResource.doc?.locked &&
+		typeof props.projectResource.doc.locked === 'string' &&
+		props.projectResource.doc.locked.trim() !== '' &&
+		props.projectResource.doc.locked !== '[]' &&
+		props.projectResource.doc.locked !== '{}'
 	)
 })
 
@@ -286,168 +383,24 @@ let documentWatcher = null
 // Computed Properties
 const isHotMode = computed(() => activeUsers.value.length > 1)
 
-// Resource Management
-async function loadResource(resource) {
-	return new Promise((resolve, reject) => {
-		const element = document.createElement(resource.type)
-
-		element.onload = () => {
-			if (resource.verify) {
-				setTimeout(() => {
-					try {
-						if (resource.verify()) {
-							resolve()
-						} else {
-							reject(new Error(`Verification failed for ${resource.src}`))
-						}
-					} catch (error) {
-						reject(error)
-					}
-				}, 100)
-			} else {
-				resolve()
-			}
-		}
-		element.onerror = () =>
-			reject(new Error(`Failed to load ${resource.src || resource.href}`))
-
-		if (resource.type === 'link') {
-			element.rel = resource.rel
-			element.href = resource.href
-		} else {
-			if (resource.defer) element.defer = true
-			if (resource.async) element.async = true
-			element.src = resource.src
-		}
-
-		document.head.appendChild(element)
-	})
-}
-
-async function verifyGlobals() {
-	return new Promise((resolve, reject) => {
-		let attempts = 0
-		const maxAttempts = 20 // 2 seconds maximum wait
-
-		const checkGlobals = () => {
-			// Check if any of our required globals already exist
-			const existingGlobals = [
-				'React',
-				'ReactDOM',
-				'rxjs',
-				'UniverPresets',
-				'UniverPresetSheetsCore',
-			].filter((global) => window[global] !== undefined)
-
-			if (existingGlobals.length > 0) {
-				//console.warn('⚠️ Found existing globals:', existingGlobals)
-				cleanupResources() // Force cleanup if we find existing globals
-			}
-
-			// Now check if all required globals are present
-			if (
-				window.React &&
-				window.ReactDOM &&
-				window.rxjs &&
-				window.UniverPresets &&
-				window.UniverPresetSheetsCore
-			) {
-				resolve()
-			} else if (attempts >= maxAttempts) {
-				reject(new Error('Timeout waiting for Univer libraries to load'))
-			} else {
-				attempts++
-				setTimeout(checkGlobals, 100)
-			}
-		}
-
-		checkGlobals()
-	})
-}
-
-async function loadUniverResources() {
-	//console.log('🔄 Starting to load Univer resources...')
-
-	const resources = [
-		{
-			type: 'script',
-			src: 'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
-			verify: () => window.React !== undefined,
-		},
-		{
-			type: 'script',
-			src: 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
-			verify: () => window.ReactDOM !== undefined,
-		},
-		{
-			type: 'script',
-			src: 'https://unpkg.com/rxjs/dist/bundles/rxjs.umd.min.js',
-			verify: () => window.rxjs !== undefined,
-		},
-		{
-			type: 'script',
-			src: 'https://unpkg.com/@univerjs/presets/lib/umd/index.js',
-			verify: () => window.UniverPresets !== undefined,
-		},
-		{
-			type: 'script',
-			src: 'https://unpkg.com/@univerjs/preset-sheets-core/lib/umd/index.js',
-			verify: () => window.UniverPresetSheetsCore !== undefined,
-		},
-		{
-			type: 'script',
-			src: 'https://unpkg.com/@univerjs/preset-sheets-core/lib/umd/locales/en-US.js',
-		},
-		{
-			type: 'link',
-			rel: 'stylesheet',
-			href: 'https://unpkg.com/@univerjs/preset-sheets-core/lib/index.css',
-		},
-	]
-
-	for (const resource of resources) {
-		loadingDetail.value = `Loading ${resource.type === 'link' ? 'styles' : 'script'}`
-		await loadResource(resource)
-		//console.log(`✅ Loaded ${resource.src || resource.href}`)
-	}
-
-	loadingDetail.value = 'Verifying installation'
-	await verifyGlobals()
-}
-
 // Univer Initialization
 async function initUniver() {
-	//console.log(isLocked.value)
 	if (isLocked.value) return
+
 	try {
 		isLoading.value = true
 		loadingMessage.value = 'Initializing spreadsheet...'
-
-		if (!isResourcesLoaded.value) {
-			await loadUniverResources()
-			isResourcesLoaded.value = true
-			await new Promise((resolve) => setTimeout(resolve, 200))
-		}
-
-		if (!window.UniverPresets || !window.UniverPresetSheetsCore) {
-			throw new Error('Required Univer libraries not loaded')
-		}
-
-		//console.log('🚀 Initializing Univer API...')
 		loadingDetail.value = 'Preparing spreadsheet'
 
-		const { createUniver, defaultTheme, LocaleType, merge } = window.UniverPresets
-		const { UniverSheetsCorePreset } = window.UniverPresetSheetsCore
-
-		const { univerAPI: api } = createUniver({
+		const { univer, univerAPI: api } = createUniver({
 			locale: LocaleType.EN_US,
 			locales: {
-				[LocaleType.EN_US]: merge({}, window.UniverPresetSheetsCoreEnUS),
+				[LocaleType.EN_US]: merge({}, UniverPresetSheetsCoreEnUS),
 			},
 			theme: defaultTheme,
 			presets: [
 				UniverSheetsCorePreset({
-					container: univerContainer.value,
+					container: 'univer-container',
 				}),
 			],
 		})
@@ -462,7 +415,6 @@ async function initUniver() {
 
 		isLoading.value = false
 	} catch (error) {
-		//console.error('❌ Failed to initialize Univer:', error)
 		initializationError.value = error
 		isLoading.value = false
 	}
@@ -479,10 +431,10 @@ function initializeSheetData(univerData) {
 				: Object.keys(parsedValue).length > 0)
 
 		if (hasData) {
-			//console.log('📄 Found existing sheet data, initializing from saved data...')
+			////console.log('📄 Found existing sheet data, initializing from saved data...')
 			univerAPI.createUniverSheet(parsedValue)
 		} else {
-			//console.log('📝 No meaningful data found, creating new sheets...')
+			////console.log('📝 No meaningful data found, creating new sheets...')
 
 			// Generate unique IDs for sheets
 			const mainSheetId = 'sheet1_' + Math.random().toString(36).substr(2, 9)
@@ -593,29 +545,26 @@ function initializeSheetData(univerData) {
 		}
 
 		isInitialized.value = true
-		//console.log('✨ Sheet initialization complete!')
+		////console.log('✨ Sheet initialization complete!')
 	} catch (error) {
-		//console.error('❌ Failed to create sheet:', error)
+		////console.error('❌ Failed to create sheet:', error)
 	}
 }
 
 async function reinitializeWithData(data) {
-	const { createUniver, defaultTheme, LocaleType, merge } = window.UniverPresets
-	const { UniverSheetsCorePreset } = window.UniverPresetSheetsCore
-
 	if (univerAPI) {
 		univerAPI.dispose()
 	}
 
-	const { univerAPI: api } = createUniver({
+	const { univer, univerAPI: api } = createUniver({
 		locale: LocaleType.EN_US,
 		locales: {
-			[LocaleType.EN_US]: merge({}, window.UniverPresetSheetsCoreEnUS),
+			[LocaleType.EN_US]: merge({}, UniverPresetSheetsCoreEnUS),
 		},
 		theme: defaultTheme,
 		presets: [
 			UniverSheetsCorePreset({
-				container: univerContainer.value,
+				container: 'univer-container',
 			}),
 		],
 	})
@@ -636,7 +585,7 @@ const debouncedHandleChange = debounce(() => {
 }, COMMAND_DEBOUNCE)
 
 function setupCommandHandler() {
-	if (!univerAPI) return
+	if (!univerAPI) return // Remove .value
 
 	const relevantCommands = new Set([
 		'formula.mutation.set-formula-calculation-notification',
@@ -645,6 +594,7 @@ function setupCommandHandler() {
 	])
 
 	univerAPI.onCommandExecuted((command) => {
+		// Remove .value
 		if (relevantCommands.has(command.id)) {
 			debouncedHandleChange()
 		}
@@ -663,7 +613,7 @@ async function handleSave() {
 		try {
 			await forceSave()
 		} catch (error) {
-			//console.error('Failed to save sheet data:', error)
+			////console.error('Failed to save sheet data:', error)
 			saveStatus.value = 'error'
 		}
 	}, 1000)
@@ -671,9 +621,9 @@ async function handleSave() {
 
 async function forceSave() {
 	try {
-		const sheetData = univerAPI.getActiveWorkbook().save()
+		const sheetData = univerAPI.getActiveWorkbook().save() // Remove .value
 		await props.projectResource.setValue.submit({
-			name: props.project.name,
+			name: props.projectResource.name,
 			univer: JSON.stringify(sheetData),
 		})
 
@@ -691,7 +641,7 @@ async function forceSave() {
 
 // Mode Management
 async function handleModeTransition(newMode) {
-	//console.log(`🔄 Transitioning to ${newMode} mode`)
+	////console.log(`🔄 Transitioning to ${newMode} mode`)
 
 	if (unsavedChanges.value > 0) {
 		await forceSave()
@@ -705,12 +655,12 @@ async function handleModeTransition(newMode) {
 }
 
 function setupHotMode() {
-	//console.log('🔥 Setting up hot mode')
+	////console.log('🔥 Setting up hot mode')
 	setupDocumentChangeWatcher()
 }
 
 function setupRelaxedMode() {
-	//console.log('😌 Setting up relaxed mode')
+	////console.log('😌 Setting up relaxed mode')
 	clearDocumentChangeWatcher()
 }
 
@@ -729,11 +679,11 @@ function setupDocumentChangeWatcher() {
 
 				// Only update if the data is actually different
 				if (JSON.stringify(currentData) !== JSON.stringify(parsedData)) {
-					//console.log('📥 External changes detected - updating sheet')
+					////console.log('📥 External changes detected - updating sheet')
 					await reinitializeWithData(parsedData)
 				}
 			} catch (error) {
-				//console.error('❌ Failed to update from document change:', error)
+				////console.error('❌ Failed to update from document change:', error)
 			}
 		},
 		{ deep: true },
@@ -757,16 +707,16 @@ function parseActiveUsers(activeUsersStr) {
 	try {
 		return typeof activeUsersStr === 'string' ? JSON.parse(activeUsersStr) : []
 	} catch (error) {
-		//console.error('Failed to parse active users:', error)
+		////console.error('Failed to parse active users:', error)
 		return []
 	}
 }
 
 async function updateActiveUsers(users, operation = 'add') {
-	if (!props.project) return
+	if (!props.projectResource.doc) return
 
 	try {
-		const currentUsers = parseActiveUsers(props.project.active_users)
+		const currentUsers = parseActiveUsers(props.projectResource.doc.active_users)
 
 		let updatedUsers
 		if (operation === 'add') {
@@ -777,12 +727,12 @@ async function updateActiveUsers(users, operation = 'add') {
 
 		if (JSON.stringify(currentUsers) !== JSON.stringify(updatedUsers)) {
 			await props.projectResource.setValue.submit({
-				name: props.project.name,
+				name: props.projectResource.doc.name,
 				active_users: JSON.stringify(updatedUsers),
 			})
 		}
 	} catch (error) {
-		//console.error('Failed to update active users:', error)
+		////console.error('Failed to update active users:', error)
 	}
 }
 
@@ -866,129 +816,129 @@ const lockedRows = computed(() => {
 
 // Function to extract necessary data from the spreadsheet
 function extractPrintSheetData(univerData) {
-    try {
-        const data = JSON.parse(univerData)
-        const printSheet = Object.values(data.sheets).find((sheet) => sheet.name === '_print')
-        if (!printSheet) return null
+	try {
+		const data = JSON.parse(univerData)
+		const printSheet = Object.values(data.sheets).find((sheet) => sheet.name === '_print')
+		if (!printSheet) return null
 
-        const headers = {}
-        const headerUnits = {}
-        const rows = []
+		const headers = {}
+		const headerUnits = {}
+		const rows = []
 
-        // Helper function to extract unit from header
-        function extractUnit(headerText) {
-            const match = headerText.match(/\[(.*?)\]/)
-            return match ? match[1] : null
-        }
+		// Helper function to extract unit from header
+		function extractUnit(headerText) {
+			const match = headerText.match(/\[(.*?)\]/)
+			return match ? match[1] : null
+		}
 
-        // Helper function to format number with commas and handle decimal zeros
-        function formatNumber(value, decimals = 0) {
-            if (typeof value !== 'number') return value
+		// Helper function to format number with commas and handle decimal zeros
+		function formatNumber(value, decimals = 0) {
+			if (typeof value !== 'number') return value
 
-            // First format with fixed decimals
-            const formatted = new Intl.NumberFormat('en-US', {
-                minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals,
-            }).format(value)
+			// First format with fixed decimals
+			const formatted = new Intl.NumberFormat('en-US', {
+				minimumFractionDigits: decimals,
+				maximumFractionDigits: decimals,
+			}).format(value)
 
-            // If decimals are all zeros, remove the decimal part
-            if (decimals > 0) {
-                const parts = formatted.split('.')
-                if (parts[1] && !parts[1].split('').some((digit) => digit !== '0')) {
-                    return parts[0]
-                }
-            }
+			// If decimals are all zeros, remove the decimal part
+			if (decimals > 0) {
+				const parts = formatted.split('.')
+				if (parts[1] && !parts[1].split('').some((digit) => digit !== '0')) {
+					return parts[0]
+				}
+			}
 
-            return formatted
-        }
+			return formatted
+		}
 
-        // Helper function to format value based on column type
-        function formatValue(value, header, unit) {
-            if (value === null || value === undefined) return ''
+		// Helper function to format value based on column type
+		function formatValue(value, header, unit) {
+			if (value === null || value === undefined) return ''
 
-            switch (header) {
-                case 'Qty':
-                    return formatNumber(value, 0)
+			switch (header) {
+				case 'Qty':
+					return formatNumber(value, 0)
 
-                case 'Width':
-                case 'Height':
-                case 'Area':
-                    return unit ? `${formatNumber(value, 2)} ${unit}` : formatNumber(value, 2)
+				case 'Width':
+				case 'Height':
+				case 'Area':
+					return unit ? `${formatNumber(value, 2)} ${unit}` : formatNumber(value, 2)
 
-                case 'Amount':
-                case 'Total':
-                case 'Vat Amount':
-                case 'Grand Total':
-                    return `${formatNumber(value, 2)} AED`
+				case 'Amount':
+				case 'Total':
+				case 'Vat Amount':
+				case 'Grand Total':
+					return `${formatNumber(value, 2)} AED`
 
-                default:
-                    return value
-            }
-        }
+				default:
+					return value
+			}
+		}
 
-        // Extract headers and their units
-        if (printSheet.cellData['0']) {
-            Object.entries(printSheet.cellData['0']).forEach(([col, cell]) => {
-                let headerText = ''
-                let headerUnit = null
+		// Extract headers and their units
+		if (printSheet.cellData['0']) {
+			Object.entries(printSheet.cellData['0']).forEach(([col, cell]) => {
+				let headerText = ''
+				let headerUnit = null
 
-                // Handle regular header cells
-                if (cell.v) {
-                    headerText = cell.v
-                }
-                // Handle nested header cells (Width, Height, Area)
-                else if (cell.p?.body?.dataStream) {
-                    headerText = cell.p.body.dataStream.trim()
-                }
+				// Handle regular header cells
+				if (cell.v) {
+					headerText = cell.v
+				}
+				// Handle nested header cells (Width, Height, Area)
+				else if (cell.p?.body?.dataStream) {
+					headerText = cell.p.body.dataStream.trim()
+				}
 
-                if (headerText) {
-                    // Extract header name and unit for special columns
-                    if (headerText.includes('[')) {
-                        const baseName = headerText.split('[')[0].trim()
-                        const unit = extractUnit(headerText)
-                        headers[col] = baseName
-                        headerUnits[baseName] = unit
-                    } else {
-                        headers[col] = headerText
-                    }
-                }
-            })
-        }
+				if (headerText) {
+					// Extract header name and unit for special columns
+					if (headerText.includes('[')) {
+						const baseName = headerText.split('[')[0].trim()
+						const unit = extractUnit(headerText)
+						headers[col] = baseName
+						headerUnits[baseName] = unit
+					} else {
+						headers[col] = headerText
+					}
+				}
+			})
+		}
 
-        // Extract and format rows
-        Object.entries(printSheet.cellData).forEach(([rowIndex, rowData]) => {
-            if (rowIndex === '0') return // Skip header row
+		// Extract and format rows
+		Object.entries(printSheet.cellData).forEach(([rowIndex, rowData]) => {
+			if (rowIndex === '0') return // Skip header row
 
-            const row = {}
-            let hasValues = false
+			const row = {}
+			let hasValues = false
 
-            Object.entries(rowData).forEach(([col, cell]) => {
-                const header = headers[col]
-                if (header) {
-                    const unit = headerUnits[header]
-                    const formattedValue = formatValue(cell.v, header, unit)
-                    row[header] = formattedValue
-                    
-                    // Check if this cell has a non-empty value
-                    if (formattedValue !== '') {
-                        hasValues = true
-                    }
-                }
-            })
+			Object.entries(rowData).forEach(([col, cell]) => {
+				const header = headers[col]
+				if (header) {
+					const unit = headerUnits[header]
+					const formattedValue = formatValue(cell.v, header, unit)
+					row[header] = formattedValue
 
-            // Check required fields and ensure row has actual content
-            const hasRequiredFields = Boolean(row['Item Name'] || row['Description'])
-            
-            if (Object.keys(row).length > 0 && hasRequiredFields && hasValues) {
-                rows.push(row)
-            }
-        })
+					// Check if this cell has a non-empty value
+					if (formattedValue !== '') {
+						hasValues = true
+					}
+				}
+			})
 
-        return { headers, rows }
-    } catch (error) {
-        console.error('Error extracting print sheet data:', error)
-        return null
-    }
+			// Check required fields and ensure row has actual content
+			const hasRequiredFields = Boolean(row['Item Name'] || row['Description'])
+
+			if (Object.keys(row).length > 0 && hasRequiredFields && hasValues) {
+				rows.push(row)
+			}
+		})
+
+		return { headers, rows }
+	} catch (error) {
+		//console.error('Error extracting print sheet data:', error)
+		return null
+	}
 }
 // Lock/Unlock handlers
 async function handleLockClick() {
@@ -1016,14 +966,14 @@ async function handleLockConfirm() {
 	if (isLocked.value) {
 		// Unlocking
 		await props.projectResource.setValue.submit({
-			name: props.project.name,
+			name: props.projectResource.doc.name,
 			locked: '',
 		})
 		// Reload page after unlocking
 		window.location.reload()
 	} else {
 		// Locking
-		const printData = extractPrintSheetData(props.project.univer)
+		const printData = extractPrintSheetData(props.projectResource.doc.univer)
 		const lockData = {
 			user: session.user,
 			timestamp: new Date().toISOString(),
@@ -1031,7 +981,7 @@ async function handleLockConfirm() {
 		}
 
 		await props.projectResource.setValue.submit({
-			name: props.project.name,
+			name: props.projectResource.doc.name,
 			locked: JSON.stringify(lockData),
 		})
 	}
@@ -1041,27 +991,29 @@ async function handleLockConfirm() {
 
 // Cleanup
 async function cleanup() {
-	//console.log('🧹 Starting cleanup process...')
-
 	// Clear all intervals and timeouts first
 	if (heartbeatInterval) {
+		// Removed .value since it's not a ref
 		clearInterval(heartbeatInterval)
 		heartbeatInterval = null
 	}
 
 	if (saveTimeout) {
+		// Removed .value since it's not a ref
 		clearTimeout(saveTimeout)
 		saveTimeout = null
 	}
 
 	// Clear the document watcher
 	if (documentWatcher) {
+		// Removed .value since it's not a ref
 		documentWatcher()
 		documentWatcher = null
 	}
 
 	// Dispose of Univer API
 	if (univerAPI) {
+		// Removed .value since it's not a ref
 		try {
 			univerAPI.dispose()
 			univerAPI = null
@@ -1069,49 +1021,6 @@ async function cleanup() {
 			//console.error('Error disposing Univer API:', error)
 		}
 	}
-
-	// Wait a small moment to ensure dispose completes
-	await new Promise((resolve) => setTimeout(resolve, 100))
-
-	// Clean up resources last
-	cleanupResources()
-
-	//console.log('🏁 Cleanup complete')
-}
-
-function cleanupResources() {
-	if (!isResourcesLoaded.value) return
-
-	// Track elements to remove
-	const elementsToRemove = []
-
-	// Find all relevant scripts and styles
-	const resourceUrls = ['univerjs', 'react@18.3.1', 'react-dom@18.3.1', 'rxjs', '@univerjs']
-
-	// Find scripts and links that match our URLs
-	resourceUrls.forEach((url) => {
-		const scripts = document.querySelectorAll(`script[src*="${url}"]`)
-		const links = document.querySelectorAll(`link[href*="${url}"]`)
-		scripts.forEach((script) => elementsToRemove.push(script))
-		links.forEach((link) => elementsToRemove.push(link))
-	})
-
-	// Remove all found elements
-	elementsToRemove.forEach((element) => {
-		element.remove()
-		//console.log(`🧹 Cleaned up resource: ${element.src || element.href}`)
-	})
-
-	// Reset the global variables to ensure clean slate
-	window.React = undefined
-	window.ReactDOM = undefined
-	window.rxjs = undefined
-	window.UniverPresets = undefined
-	window.UniverPresetSheetsCore = undefined
-	window.UniverPresetSheetsCoreEnUS = undefined
-
-	isResourcesLoaded.value = false
-	//console.log('🔄 Resources cleanup complete')
 }
 
 // Keyboard Shortcuts
@@ -1121,7 +1030,7 @@ function setupKeyboardShortcuts() {
 		if ((event.ctrlKey || event.metaKey) && event.key === 's') {
 			event.preventDefault()
 			if (unsavedChanges.value > 0) {
-				//console.log('⌨️ Save shortcut detected - saving changes')
+				////console.log('⌨️ Save shortcut detected - saving changes')
 				handleSave()
 			}
 		}
@@ -1134,10 +1043,10 @@ function setupKeyboardShortcuts() {
 // Visibility Handling
 const handleVisibilityChange = async () => {
 	if (document.hidden) {
-		//console.log('📤 Page hidden - handling departure')
+		////console.log('📤 Page hidden - handling departure')
 		await handleUserDeparture()
 	} else {
-		//console.log('📥 Page visible - handling arrival')
+		////console.log('📥 Page visible - handling arrival')
 		await handleUserArrival()
 	}
 }
@@ -1154,7 +1063,7 @@ watch(
 )
 
 watch(
-	() => props.project?.active_users,
+	() => props.projectResource.doc?.active_users,
 	(newValue) => {
 		if (newValue !== undefined) {
 			activeUsers.value = parseActiveUsers(newValue)
@@ -1168,24 +1077,20 @@ onMounted(async () => {
 	document.addEventListener('visibilitychange', handleVisibilityChange)
 	const cleanupKeyboardShortcuts = setupKeyboardShortcuts()
 
+	// Added this line
+	await new Promise((resolve) => setTimeout(resolve, 100))
+
 	await initUniver()
 	await handleUserArrival()
-
-	heartbeatInterval = setInterval(async () => {
-		if (!document.hidden) {
-			await handleUserArrival()
-		}
-	}, HEARTBEAT_INTERVAL)
 })
 
 watch(
-	() => props.project?.locked,
+	() => props.projectResource.doc?.locked,
 	(newValue) => {
 		if (newValue) {
 			try {
 				lockedData.value = JSON.parse(newValue)
 			} catch (error) {
-				//console.error('Error parsing locked data:', error)
 				lockedData.value = null
 			}
 		} else {
@@ -1195,9 +1100,20 @@ watch(
 	{ immediate: true },
 )
 
+onBeforeUnmount(async () => {
+	document.removeEventListener('visibilitychange', handleVisibilityChange)
+	try {
+		await handleUserDeparture()
+	} catch (error) {
+		//console.error('Error during user departure:', error)
+	} finally {
+		await cleanup()
+	}
+})
+
 // Separate onUnmounted hook to ensure it runs properly during navigation
 onUnmounted(async () => {
-	//console.log('📤 Component unmounting - cleaning up user presence')
+	////console.log('📤 Component unmounting - cleaning up user presence')
 	document.removeEventListener('visibilitychange', handleVisibilityChange)
 
 	if (heartbeatInterval) {
@@ -1208,7 +1124,7 @@ onUnmounted(async () => {
 		// Make sure to handle user departure before other cleanup
 		await handleUserDeparture()
 	} catch (error) {
-		//console.error('Error during user departure:', error)
+		////console.error('Error during user departure:', error)
 	} finally {
 		// Other cleanup tasks
 		cleanup()
