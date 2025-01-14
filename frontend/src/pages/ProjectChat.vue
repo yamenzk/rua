@@ -8,7 +8,7 @@
 		</div>
 
 		<!-- Scrollable Messages Container -->
-		<div class="flex-1 overflow-y-auto px-4 py-4 pb-[120px] md:pb-[120px]" ref="chatContainer">
+		<div class="flex-1 overflow-y-auto px-4 py-4 pb-[130px] md:pb-[130px]" ref="chatContainer">
 			<template v-if="messages?.data?.length">
 				<div v-for="message in messages.data" :key="message.name">
 					<!-- System Messages -->
@@ -33,6 +33,7 @@
 										"
 									></span>
 								</div>
+                
 							</div>
 						</div>
 					</template>
