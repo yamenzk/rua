@@ -3,82 +3,80 @@
  "allow_copy": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2025-01-13 01:26:43.769644",
+ "creation": "2025-01-14 12:44:46.070994",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "employee_name",
-  "date_of_birth",
-  "gender",
-  "nationality",
-  "position",
-  "column_break_ouxq",
+  "date",
+  "assigned_to",
+  "related_doctype",
+  "related_docname",
+  "project",
+  "column_break_bxzv",
+  "status",
   "naming_series",
-  "image",
-  "salary",
-  "user"
+  "details"
  ],
  "fields": [
   {
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "Employee Name"
-  },
-  {
-   "fieldname": "date_of_birth",
+   "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Date of Birth"
+   "label": "Date"
   },
   {
-   "fieldname": "gender",
-   "fieldtype": "Select",
-   "label": "Gender",
-   "options": "\nMale\nFemale"
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
   },
   {
-   "fieldname": "nationality",
-   "fieldtype": "Data",
-   "label": "Nationality"
+   "fieldname": "related_doctype",
+   "fieldtype": "Link",
+   "label": "Related Doctype",
+   "options": "DocType"
   },
   {
-   "fieldname": "position",
-   "fieldtype": "Data",
-   "label": "Position"
+   "fieldname": "related_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Related Docname",
+   "options": "related_doctype"
   },
   {
-   "fieldname": "column_break_ouxq",
+   "fieldname": "column_break_bxzv",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nCompleted"
   },
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "RC-EMP-"
+   "options": "RC-TDO-"
   },
   {
-   "fieldname": "image",
-   "fieldtype": "Attach Image",
-   "label": "Image"
+   "fieldname": "details",
+   "fieldtype": "Small Text",
+   "label": "Details"
   },
   {
-   "fieldname": "salary",
-   "fieldtype": "Currency",
-   "label": "Salary"
-  },
-  {
-   "fieldname": "user",
+   "fieldname": "project",
    "fieldtype": "Link",
-   "label": "User",
-   "options": "User"
+   "label": "Project",
+   "options": "RUA Project"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-14 13:10:33.610088",
+ "modified": "2025-01-14 12:49:17.369638",
  "modified_by": "Administrator",
  "module": "Rua",
- "name": "RUA Employee",
+ "name": "RUA Todo",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
@@ -96,38 +94,6 @@
   },
   {
    "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "RUA Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "RUA Project Employee",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "RUA Project Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
    "email": 1,
    "export": 1,
    "print": 1,
@@ -145,6 +111,40 @@
    "read": 1,
    "report": 1,
    "role": "RUA Employee Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Project Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Project Manager",
    "share": 1,
    "write": 1
   }

@@ -83,7 +83,7 @@
       </aside>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0">
+      <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0 relative">
         <router-view 
           :projectResource="projectResource"
         ></router-view>
@@ -185,7 +185,7 @@ async function updateProjectCoords(newCoords) {
 
 const navigation = computed(() => [
   { name: 'Overview', to: `/project/${route.params.id}/overview`, icon: 'home' },
-  { name: 'Tasks', to: `/project/${route.params.id}/tasks`, icon: 'check-square' },
+  { name: 'Chat', to: `/project/${route.params.id}/chat`, icon: 'message-square' },
   { name: 'Items', to: `/project/${route.params.id}/items`, icon: 'package' },
   { name: 'Documents', to: `/project/${route.params.id}/documents`, icon: 'file-text' },
 ])

@@ -46,9 +46,9 @@ const routes = [
         component: () => import('@/pages/ProjectOverview.vue'),
       },
       {
-        path: 'tasks',
-        name: 'ProjectTasks',
-        component: () => import('@/pages/ProjectTasks.vue'),
+        path: 'chat',
+        name: 'ProjectChat',
+        component: () => import('@/pages/ProjectChat.vue'),
       },
       {
         path: 'items',
