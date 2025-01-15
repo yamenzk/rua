@@ -13,7 +13,7 @@
     <div id="popovers"></div>
 
     <script>
-			window.csrf_token = "{{ csrf_token }}"
+			window.csrf_token = "{{ window.session.csrf_token }}"
 			window.site_name = '{{ site_name }}'
 			if (!window.frappe) window.frappe = {}
 			frappe.boot = {{ boot }}
