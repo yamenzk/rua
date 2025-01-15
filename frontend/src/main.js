@@ -1,9 +1,9 @@
 import './index.css'
-
 import { createApp } from 'vue'
 import router from './router'
 import App from './App.vue'
 import { initSocket } from './socket'
+import { session } from "@/data/session"
 
 import {
   Button,
@@ -14,7 +14,7 @@ import {
   frappeRequest,
 } from 'frappe-ui'
 
-let app = createApp(App)
+const app = createApp(App)
 
 setConfig('resourceFetcher', frappeRequest)
 
@@ -25,20 +25,22 @@ app.component('Button', Button)
 app.component('Card', Card)
 app.component('Input', Input)
 
-let socket
+// Initialize app based on environment
 if (import.meta.env.DEV) {
-  frappeRequest({ url: '/api/method/rua.www.rua.get_context_for_dev' }).then((values) => {
-    for (let key in values) {
-      window[key] = values[key]
-    }
-    socket = initSocket()
-    app.config.globalProperties.$socket = socket
-    window.socket = socket
-    app.mount('#app')
-  })
+  frappeRequest({ url: '/api/method/rua.www.rua.get_context_for_dev' })
+    .then((values) => {
+      for (let key in values) {
+        window[key] = values[key]
+      }
+      const socket = initSocket()
+      console.log('Socket initialized:', socket)
+      window.$socket = socket  // Add this line
+      app.provide('$socket', socket)
+      app.mount('#app')
+    })
 } else {
-  socket = initSocket()
-  app.config.globalProperties.$socket = socket
-  window.socket = socket
+  const socket = initSocket()
+  window.$socket = socket  // Add this line
+  app.provide('$socket', socket)
   app.mount('#app')
 }

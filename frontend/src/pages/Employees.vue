@@ -428,6 +428,8 @@ import {
 import { createListResource } from 'frappe-ui'
 import countries from '../data/countries.json'
 import flags from '../data/flags.json'
+const $socket = inject('$socket')
+
 
 // Router setup
 const router = useRouter()
@@ -538,32 +540,35 @@ const positionOptions = [
 
 // Create list resource
 const list = createListResource({
-	doctype: 'RUA Employee',
-	fields: [
-		'name',
-		'employee_name',
-		'date_of_birth',
-		'gender',
-		'nationality',
-		'position',
-		'salary',
-		'image',
-	],
-	filters: [],
-	orderBy: 'creation desc',
-	auto: true,
-	transform(data) {
-		return data
-	},
-	cache: ['RUA Employee'],
-})
+  doctype: 'RUA Employee',
+  fields: [
+    'name',
+    'employee_name',
+    'date_of_birth',
+    'gender',
+    'nationality',
+    'position',
+    'salary',
+    'image',
+  ],
+  filters: [],
+  orderBy: 'creation desc',
+  auto: true,
+  transform(data) {
+    return data
+  },
+  cache: ['RUA Employee'],
+  realtime: true, // Add realtime
+}, { $socket }) // Pass vm context with socket
 
+// Update the attendance list resource
 const attendanceList = createListResource({
   doctype: 'RUA Attendance',
   fields: ['name', 'date', 'attendance_log'],
   filters: [['date', '=', getTodayDate()]],
-  auto: true
-})
+  auto: true,
+  realtime: true, // Add realtime
+}, { $socket }) // Pass vm context with socket
 
 // Handlers
 const handleSearch = debounce((value) => {

@@ -596,6 +596,9 @@ import {
 	Textarea,
 	FileUploader,
 } from 'frappe-ui'
+import { inject } from 'vue'
+
+const $socket = inject('$socket')
 
 const props = defineProps({
 	projectResource: {
@@ -962,41 +965,88 @@ const printQuotation = () => {
 }
 
 // Watch for route changes to reload data
+// Watch for route changes to reload data
 watch(
-	() => route.params.quotationId,
-	(newId) => {
-		if (newId) {
-			quotationResource.value = createDocumentResource(
-				{
-					doctype: 'RUA Quotation',
-					name: newId,
-					auto: true,
-					realtime: true,
-				},
-				{ $socket: window.socket },
-			)
-			//console.log('Quotation Resource:', quotationResource.value)
-		}
-	},
-	{ immediate: true },
+  () => route.params.quotationId,
+  (newId) => {
+    if (newId && $socket?.connected) {
+      console.log('Initializing quotation resource with socket connection')
+      quotationResource.value = createDocumentResource(
+        {
+          doctype: 'RUA Quotation',
+          name: newId,
+          auto: true,
+          realtime: true,
+          socket: $socket // Pass socket in options
+        },
+        { $socket } // Pass vm context with socket
+      )
+      console.log('Quotation Resource:', quotationResource.value)
+    }
+  },
+  { immediate: true }
 )
+
+// Watch for party changes
 watch(
-	() => quotationResource.value?.doc?.party,
-	(newParty) => {
-		if (newParty) {
-			partyResource.value = createDocumentResource({
-				doctype: 'RUA Party',
-				name: newParty,
-				auto: true,
-				fields: ['name', 'image'],
-				transform(doc) {
-					return doc
-				},
-			})
-		} else {
-			partyResource.value = null
-		}
-	},
-	{ immediate: true },
+  () => quotationResource.value?.doc?.party,
+  (newParty) => {
+    if (newParty && $socket?.connected) {
+      console.log('Initializing party resource with socket connection')
+      partyResource.value = createDocumentResource({
+        doctype: 'RUA Party',
+        name: newParty,
+        auto: true,
+        fields: ['name', 'image'],
+        realtime: true, // Enable realtime updates
+        socket: $socket, // Pass socket in options
+        transform(doc) {
+          return doc
+        }
+      }, 
+      { $socket }) // Pass vm context with socket
+    } else {
+      partyResource.value = null
+    }
+  },
+  { immediate: true }
+)
+
+// Add socket connection watcher to reinitialize resources when socket connects
+watch(
+  () => $socket?.connected,
+  (isConnected) => {
+    if (isConnected) {
+      // Reinitialize quotation resource if we have an ID
+      if (route.params.quotationId) {
+        quotationResource.value = createDocumentResource(
+          {
+            doctype: 'RUA Quotation',
+            name: route.params.quotationId,
+            auto: true,
+            realtime: true,
+            socket: $socket
+          },
+          { $socket }
+        )
+      }
+      
+      // Reinitialize party resource if we have a party
+      if (quotationResource.value?.doc?.party) {
+        partyResource.value = createDocumentResource({
+          doctype: 'RUA Party',
+          name: quotationResource.value.doc.party,
+          auto: true,
+          fields: ['name', 'image'],
+          realtime: true,
+          socket: $socket,
+          transform(doc) {
+            return doc
+          }
+        }, 
+        { $socket })
+      }
+    }
+  }
 )
 </script>

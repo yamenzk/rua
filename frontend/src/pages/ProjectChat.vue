@@ -229,6 +229,9 @@ import { createListResource, createResource } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { session } from '../data/session'
 import { Avatar, Button, Input, FeatherIcon, Badge } from 'frappe-ui'
+import { inject } from 'vue'
+
+const $socket = inject('$socket')
 
 // Props
 const props = defineProps({
@@ -559,58 +562,26 @@ function scrollToBottom() {
 
 // Initialize messages resource
 function initializeResource() {
-	console.log('🚀 Initializing chat resource...')
-	if (window.socket && props.projectResource.doc?.name) {
-		console.log('✅ Socket connection found, creating list resource')
-		messages.value = createListResource(
-			{
-				doctype: 'RUA Chat',
-				fields: ['*'],
-				filters: { project: props.projectResource.doc.name },
-				orderBy: 'timestamp asc',
-				auto: true,
-				realtime: true,
-				pageLength: 50,
-				onSocketMessage: (data) => {
-					console.log('🔔 Socket message received:', data)
-					if (data.doctype === 'RUA Chat') {
-						console.log('📩 New chat message detected, reloading messages')
-						messages.value.reload()
-					}
-				},
-			},
-			{ $socket: window.socket },
-		)
-
-		// Watch for changes in the messages data
-		watch(
-			() => messages.value.data,
-			(newData, oldData) => {
-				console.log('📨 Messages data changed:', {
-					oldLength: oldData?.length || 0,
-					newLength: newData?.length || 0,
-					newMessages: newData?.slice(-1)[0], // Show last message for debugging
-				})
-				scrollToBottom()
-			},
-			{ deep: true },
-		)
-
-		// Set up realtime updates
-		if (window.socket) {
-			console.log('🔌 Setting up socket event handlers')
-			window.socket.on('list_update', (data) => {
-				console.log('📝 List update received:', data)
-				if (data.doctype === 'RUA Chat') {
-					console.log('🔄 Reloading messages due to list update')
-					messages.value.reload()
-				}
-			})
-		}
-	} else {
-		console.log('⏳ Socket not ready, retrying in 100ms...')
-		setTimeout(initializeResource, 100)
-	}
+  console.log('🚀 Initializing chat resource...')
+  if ($socket?.connected && props.projectResource.doc?.name) {
+    console.log('✅ Socket connection found, creating list resource')
+    messages.value = createListResource({
+      doctype: 'RUA Chat',
+      fields: ['*'],
+      filters: { project: props.projectResource.doc.name },
+      orderBy: 'timestamp asc',
+      auto: true,
+      realtime: true,
+    }, 
+    { $socket }) // Pass vm context with socket
+  } else {
+    console.log('⏳ Socket not ready, retrying in 100ms...', {
+      socketExists: !!$socket,
+      socketConnected: $socket?.connected,
+      projectName: props.projectResource.doc?.name
+    })
+    setTimeout(initializeResource, 100)
+  }
 }
 
 // Initialize references resource

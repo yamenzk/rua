@@ -65,6 +65,10 @@ const descriptionTemplates = [
 export function generateProjectDescription(projectName, location) {
   const randomIndex = Math.floor(Math.random() * descriptionTemplates.length)
   const template = descriptionTemplates[randomIndex]
-  const area = location // Map location to area variable
-  return eval('`' + template + '`')
+  
+  // Replace the template variables directly using replace
+  return template
+    .replace(/\${projectName}/g, projectName)
+    .replace(/\${area}/g, location)
+    .replace(/\${city}/g, location) // Also replacing city with location since it's used in some templates
 }

@@ -81,33 +81,64 @@
   
   <script setup>
   import { ref, computed, onMounted } from 'vue'
-  import { useRouter, useRoute } from 'vue-router'
-  import { Avatar, FeatherIcon } from 'frappe-ui'
-  import { createDocumentResource } from 'frappe-ui'
-  import { session } from '../data/session'
+import { useRouter, useRoute } from 'vue-router'
+import { Avatar, FeatherIcon } from 'frappe-ui'
+import { createDocumentResource } from 'frappe-ui'
+import { session } from '../data/session'
+import { inject } from 'vue'
+
+const $socket = inject('$socket')
+console.log('Injected socket in employee component:', $socket)
+console.log('Socket ID:', $socket?.id)
+console.log('Socket connected status:', $socket?.connected)
+
+const router = useRouter()
+const route = useRoute()
+const employeeResource = ref(null)
+const isLoading = ref(true)
+
+// Add socket event listeners
+$socket?.on('connect', () => {
+  console.log('Socket connected in employee component')
+  console.log('New socket ID:', $socket.id)
+})
+
+$socket?.on('disconnect', (reason) => {
+  console.log('Socket disconnected in employee component:', reason)
+})
+
   
-  const router = useRouter()
-  const route = useRoute()
-  const employeeResource = ref(null)
-  const isLoading = ref(true)
-  
-  // Wait for socket to be available before creating the resource
-  onMounted(() => {
-    const initializeResource = () => {
-      if (window.socket) {
+onMounted(() => {
+  const initializeResource = () => {
+    console.log('Checking for injected $socket:', $socket)
+    if ($socket?.connected) {
+      console.log('Socket is connected, initializing employee resource')
+      try {
         employeeResource.value = createDocumentResource({
           doctype: 'RUA Employee',
           name: route.params.id,
           auto: true,
-          realtime: true
-        }, { $socket: window.socket })
+          realtime: true,
+        }, 
+        { $socket } // Pass vm context with socket
+        )
+        console.log('Employee resource created:', employeeResource.value)
         isLoading.value = false
-      } else {
-        setTimeout(initializeResource, 100)
+      } catch (error) {
+        console.error('Error creating resource:', error)
       }
+    } else {
+      console.log('Socket not connected, retrying in 100ms')
+      console.log('Current socket status:', {
+        exists: !!$socket,
+        connected: $socket?.connected,
+        id: $socket?.id
+      })
+      setTimeout(initializeResource, 100)
     }
-    initializeResource()
-  })
+  }
+  initializeResource()
+})
   
   const employeeData = computed(() => employeeResource.value?.doc)
   

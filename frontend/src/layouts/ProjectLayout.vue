@@ -136,6 +136,8 @@ import { Avatar, FeatherIcon, Button, Dialog } from 'frappe-ui'
 import { createDocumentResource } from 'frappe-ui'
 import { session } from '../data/session'
 import ProjectMap from '../pages/ProjectMap.vue'
+import { inject } from 'vue'
+const $socket = inject('$socket')
 
 const router = useRouter()
 const route = useRoute()
@@ -146,17 +148,33 @@ const projectResource = ref(null)
 const isLoading = ref(true)
 
 // Wait for socket to be available before creating the resource
+// In the script setup section
 onMounted(() => {
   const initializeResource = () => {
-    if (window.socket) {
-      projectResource.value = createDocumentResource({
-        doctype: 'RUA Project',
-        name: route.params.id,
-        auto: true,
-        realtime: true
-      }, { $socket: window.socket })
-      isLoading.value = false
+    console.log('Checking for injected $socket:', $socket)
+    if ($socket?.connected) {
+      console.log('Socket is connected, initializing project resource')
+      try {
+        projectResource.value = createDocumentResource({
+          doctype: 'RUA Project',
+          name: route.params.id,
+          auto: true,
+          realtime: true,
+        }, 
+        { $socket } // Pass vm context with socket
+        )
+        console.log('Project resource created:', projectResource.value)
+        isLoading.value = false
+      } catch (error) {
+        console.error('Error creating project resource:', error)
+      }
     } else {
+      console.log('Socket not connected, retrying in 100ms')
+      console.log('Current socket status:', {
+        exists: !!$socket,
+        connected: $socket?.connected,
+        id: $socket?.id
+      })
       setTimeout(initializeResource, 100)
     }
   }
