@@ -64,10 +64,10 @@
 			variant="outline"
 			theme="blue"
 			size="sm"
-			label="Setup Attendance"
+			:label="attendanceButtonLabel"
 			@click="showAttendanceDialog"
 		>
-			Setup Attendance
+			{{ attendanceButtonLabel }}
 		</Button>
 
 		<!-- Attendance Dialog -->
@@ -419,22 +419,19 @@ import {
 	Button,
 	FormControl,
 	Dialog,
-  Avatar,
+	Avatar,
 	FeatherIcon,
 	LoadingIndicator,
 	debounce,
 	Autocomplete,
 } from 'frappe-ui'
-import { createListResource } from 'frappe-ui'
 import countries from '../data/countries.json'
 import flags from '../data/flags.json'
-const $socket = inject('$socket')
+import { employeeResource } from '../data/employee'
+import { attendanceResource } from '../data/attendance'
 
-
-// Router setup
 const router = useRouter()
 
-// Setup header action
 const setHeaderAction = inject('setHeaderAction')
 setHeaderAction(
 	h(
@@ -447,7 +444,6 @@ setHeaderAction(
 	),
 )
 
-// State
 const sortField = ref('creation')
 const sortDirection = ref('desc')
 const activeFilters = ref([])
@@ -458,10 +454,29 @@ const showDialog = ref(false)
 const searchQuery = ref('')
 const attendance = ref({})
 const todayAttendance = ref(null)
+
+function getDubaiDateTime() {
+	const now = new Date()
+	return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
+}
+
+const attendanceButtonLabel = computed(() => {
+  const currentDate = formatDate(getDubaiDateTime());
+  const todayRecord = findAttendanceRecord(currentDate);
+  return todayRecord ? 'Edit Attendance' : 'Setup Attendance';
+});
+
+
+function formatDate(date) {
+	const year = date.getFullYear()
+	const month = String(date.getMonth() + 1).padStart(2, '0')
+	const day = String(date.getDate()).padStart(2, '0')
+	return `${year}-${month}-${day}`
+}
+
 const isReadOnly = computed(() => {
-  const now = new Date()
-  const dubaiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
-  return dubaiTime.getHours() >= 20
+	const dubaiTime = getDubaiDateTime()
+	return dubaiTime.getHours() >= 20
 })
 
 const newEmployee = ref({
@@ -508,13 +523,11 @@ const operatorOptions = [
 	{ label: 'Like', value: 'like' },
 ]
 
-// Transform countries data for Autocomplete
 const countryOptions = countries.map((country) => ({
 	label: country.name,
 	value: country.alpha2,
 }))
 
-// Position suggestions
 const positionOptions = [
 	'CEO',
 	'Operations Manager',
@@ -538,39 +551,10 @@ const positionOptions = [
 	value: position,
 }))
 
-// Create list resource
-const list = createListResource({
-  doctype: 'RUA Employee',
-  fields: [
-    'name',
-    'employee_name',
-    'date_of_birth',
-    'gender',
-    'nationality',
-    'position',
-    'salary',
-    'image',
-  ],
-  filters: [],
-  orderBy: 'creation desc',
-  auto: true,
-  transform(data) {
-    return data
-  },
-  cache: ['RUA Employee'],
-  realtime: true, // Add realtime
-}, { $socket }) // Pass vm context with socket
+const list = employeeResource
 
-// Update the attendance list resource
-const attendanceList = createListResource({
-  doctype: 'RUA Attendance',
-  fields: ['name', 'date', 'attendance_log'],
-  filters: [['date', '=', getTodayDate()]],
-  auto: true,
-  realtime: true, // Add realtime
-}, { $socket }) // Pass vm context with socket
+const attendanceList = attendanceResource
 
-// Handlers
 const handleSearch = debounce((value) => {
 	searchQuery.value = value
 	if (value) {
@@ -673,131 +657,183 @@ async function createEmployee() {
 	}
 }
 
-function formatCurrency(value) {
-	if (!value) return '0'
-	return Number(value).toLocaleString()
-}
-
 const filteredEmployees = computed(() => {
-  if (!list.data) return []
-  
-  return list.data.filter(employee => 
-    employee.employee_name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+	if (!list.data) return []
+
+	return list.data.filter((employee) =>
+		employee.employee_name.toLowerCase().includes(searchQuery.value.toLowerCase()),
+	)
 })
 
 const computedActions = computed(() => {
-  if (isReadOnly.value) return []
-  
-  return [{
-    label: todayAttendance.value ? 'Update' : 'Save',
-    variant: 'solid',
-    onClick: () => saveAttendance()
-  }]
+	if (isReadOnly.value) {
+		return [
+			{
+				label: 'Close',
+				variant: 'subtle',
+				onClick: () => (showDialog.value = false),
+			},
+		]
+	}
+
+	return [
+		{
+			label: todayAttendance.value ? 'Update' : 'Save',
+			variant: 'solid',
+			onClick: () => saveAttendance(),
+		},
+	]
 })
 
-// Methods
-function getTodayDate() {
-  // Create date in current time
-  const now = new Date()
-
-  // Convert to Dubai time (GMT+4)
-  const dubaiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
-  
-  // Format as YYYY-MM-DD
-  const year = dubaiTime.getFullYear()
-  const month = String(dubaiTime.getMonth() + 1).padStart(2, '0')
-  const day = String(dubaiTime.getDate()).padStart(2, '0')
-  
-  return `${year}-${month}-${day}`
-}
-
 function getInitials(name) {
-  return name
-    .split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-}
-
-function initializeAttendance() {
-  attendance.value = {}
-  list.data?.forEach(employee => {
-    attendance.value[employee.name] = {
-      present: true,
-      late: false,
-      absent: false,
-      overtime: 0
-    }
-  })
+	return name
+		.split(' ')
+		.map((word) => word[0])
+		.join('')
+		.toUpperCase()
 }
 
 function handleAttendanceChange(employeeId, type) {
-  const emp = attendance.value[employeeId]
-  
-  // Mutual exclusivity logic
-  if (type === 'present' && emp.present) {
-    emp.late = false
-    emp.absent = false
-  } else if (type === 'late' && emp.late) {
-    emp.present = false
-    emp.absent = false
-  } else if (type === 'absent' && emp.absent) {
-    emp.present = false
-    emp.late = false
-  }
+	if (!attendance.value[employeeId]) {
+		console.error(`No attendance record found for employee ${employeeId}`)
+		return
+	}
+
+	// Don't allow changes in read-only mode
+	if (isReadOnly.value) {
+		console.warn('Attendance is in read-only mode after 8 PM')
+		return
+	}
+
+	const emp = attendance.value[employeeId]
+
+	// Mutual exclusivity logic
+	if (type === 'present' && emp.present) {
+		emp.late = false
+		emp.absent = false
+	} else if (type === 'late' && emp.late) {
+		emp.present = false
+		emp.absent = false
+	} else if (type === 'absent' && emp.absent) {
+		emp.present = false
+		emp.late = false
+	}
 }
 
-async function loadExistingAttendance() {
-  if (!attendanceList.data?.length) return false
-  
-  todayAttendance.value = attendanceList.data[0]
-  attendance.value = JSON.parse(todayAttendance.value.attendance_log)
-  return true
+function findAttendanceRecord(date) {
+	return attendanceList.data?.find((record) => record.date === date)
+}
+
+async function initializeAttendanceData() {
+	if (!list.data?.length) {
+		console.warn('Employee list is not loaded yet')
+		return false
+	}
+
+	attendance.value = {}
+	list.data.forEach((employee) => {
+		attendance.value[employee.name] = {
+			present: true,
+			late: false,
+			absent: false,
+			overtime: 0,
+		}
+	})
+	return true
+}
+
+async function loadExistingAttendance(date) {
+	try {
+		const record = findAttendanceRecord(date)
+		if (!record) {
+			return false
+		}
+
+		todayAttendance.value = record
+		const attendanceLog = JSON.parse(record.attendance_log || '{}')
+
+		// Initialize attendance with existing data
+		attendance.value = {}
+		list.data?.forEach((employee) => {
+			attendance.value[employee.name] = attendanceLog[employee.name] || {
+				present: true,
+				late: false,
+				absent: false,
+				overtime: 0,
+			}
+		})
+
+		return true
+	} catch (error) {
+		console.error('Error loading attendance:', error)
+		return false
+	}
 }
 
 async function showAttendanceDialog() {
-  console.log(getTodayDate())
-  if (isReadOnly.value) {
-    const exists = await loadExistingAttendance()
-    if (!exists) {
-      // Show message that no attendance was created
-      return
-    }
-  } else {
-    // Initialize with all present if no existing record
-    await loadExistingAttendance() || initializeAttendance()
-  }
-  
-  showDialog.value = true
+	try {
+		// Ensure employee list is loaded
+		if (!list.data?.length) {
+			console.error('Employee list is not loaded')
+			return
+		}
+
+		const dubaiTime = getDubaiDateTime()
+		const currentDate = formatDate(dubaiTime)
+
+		if (isReadOnly.value) {
+			// After 8 PM, only allow viewing of existing records
+			const exists = await loadExistingAttendance(currentDate)
+			if (!exists) {
+				console.warn('No attendance record found for today')
+				return
+			}
+		} else {
+			// Before 8 PM, allow creating/editing today's attendance
+			const exists = await loadExistingAttendance(currentDate)
+			if (!exists) {
+				const initialized = await initializeAttendanceData()
+				if (!initialized) {
+					console.error('Failed to initialize attendance data')
+					return
+				}
+			}
+		}
+
+		showDialog.value = true
+	} catch (error) {
+		console.error('Error showing attendance dialog:', error)
+	}
 }
 
 async function saveAttendance() {
-  if (isReadOnly.value) return
-  
-  const attendanceData = JSON.stringify(attendance.value)
-  
-  try {
-    if (todayAttendance.value) {
-      // Update existing record
-      await attendanceList.setValue.submit({
-        name: todayAttendance.value.name,
-        attendance_log: attendanceData
-      })
-    } else {
-      // Create new record
-      await attendanceList.insert.submit({
-        date: getTodayDate(),
-        attendance_log: attendanceData
-      })
-    }
-    
-    showDialog.value = false
-    await attendanceList.reload()
-  } catch (error) {
-    console.error('Error saving attendance:', error)
-  }
+	if (isReadOnly.value) {
+		console.warn('Cannot save attendance after 8 PM')
+		return
+	}
+
+	const currentDate = formatDate(getDubaiDateTime())
+	const attendanceData = JSON.stringify(attendance.value)
+
+	try {
+		if (todayAttendance.value) {
+			// Update existing record
+			await attendanceList.setValue.submit({
+				name: todayAttendance.value.name,
+				attendance_log: attendanceData,
+			})
+		} else {
+			// Create new record
+			await attendanceList.insert.submit({
+				date: currentDate,
+				attendance_log: attendanceData,
+			})
+		}
+
+		showDialog.value = false
+		await attendanceList.reload()
+	} catch (error) {
+		console.error('Error saving attendance:', error)
+	}
 }
-
-
 </script>

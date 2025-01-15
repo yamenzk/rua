@@ -2,12 +2,22 @@
 # For license information, please see license.txt
 
 import frappe
+import rua
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 import re
 
 
 class RUAChat(Document):
+    def publish_update(self):
+        rua.refetch_resource("rua:chat")
+
+    def on_update(self):
+        self.publish_update()
+
+    def on_trash(self):
+        self.publish_update()
+
     def before_insert(self):
         if self.user:
             employee = frappe.get_all('RUA Employee', filters={
@@ -19,6 +29,7 @@ class RUAChat(Document):
                 self.employee_image = employee[0].image
 
     def after_insert(self):
+        self.publish_update()
         if self.message and self.message.startswith('!'):
             # Handle !todo command
             if self.message.startswith('!todo @'):
@@ -47,7 +58,7 @@ class RUAChat(Document):
                         # Check for quotation reference in the message
                         qtn_pattern = r'#(RC-QTN-\d+)'
                         qtn_match = re.search(qtn_pattern, todo_details)
-                        
+
                         if qtn_match:
                             quotation_id = qtn_match.group(1)
                             # Set related document fields if it's a quotation
@@ -61,5 +72,5 @@ class RUAChat(Document):
                         todo = frappe.get_doc(todo_doc)
                         todo.insert(ignore_permissions=True)
                         frappe.db.commit()
-        
+
             self.delete()

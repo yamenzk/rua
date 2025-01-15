@@ -1,21 +1,21 @@
 # ProjectOverview.vue
 <template>
   <!-- Loading State -->
-  <div v-if="!props.projectResource?.doc" class="flex items-center justify-center min-h-[60vh]">
+  <div v-if="!projectResource?.doc" class="flex items-center justify-center min-h-[60vh]">
     <LoadingIndicator />
   </div>
-  <div class="space-y-8" v-if="projectResource">
+  <div class="space-y-8" v-else>
     <!-- Hero Image Section -->
     <div class="relative h-64 md:h-96">
       <div 
-        class="w-full h-full"
+        class="w-full h-full group"
         :class="{ 'cursor-pointer': isManager }"
         @click.stop="isManager && handleImageClick()"
       >
         <img
-          v-if="props.projectResource.doc?.image"
-          :src="props.projectResource.doc.image"
-          :alt="props.projectResource.doc?.project_name"
+          v-if="projectResource.doc?.image"
+          :src="projectResource.doc.image"
+          :alt="projectResource.doc?.project_name"
           class="w-full h-full object-cover"
           @error="$event.target.style.display='none'"
         />
@@ -44,7 +44,7 @@
                   :class="{ 'cursor-pointer': isManager }"
                   @click="isManager && openNameDialog()"
                 >
-                  {{ props.projectResource.doc?.project_name }}
+                  {{ projectResource.doc?.project_name }}
                 </h1>
                 <div 
                   class="flex items-center mt-2 text-white/80"
@@ -52,11 +52,11 @@
                   @click="isManager && openLocationDialog()"
                 >
                   <FeatherIcon name="map-pin" class="w-4 h-4 mr-1" />
-                  <span class="text-sm">{{ props.projectResource.doc?.location || 'Add location' }}</span>
+                  <span class="text-sm">{{ projectResource.doc?.location || 'Add location' }}</span>
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-3xl font-bold">{{ props.projectResource.doc?.completion_percentage || 0 }}%</div>
+                <div class="text-3xl font-bold">{{ projectResource.doc?.completion_percentage || 0 }}%</div>
                 <div class="text-sm text-white/80">Completed</div>
               </div>
             </div>
@@ -70,7 +70,7 @@
       <!-- Description -->
       <div class="mb-8">
         <h3 class="text-sm font-medium text-gray-500 mb-2">About this Project</h3>
-        <p class="text-gray-900 whitespace-pre-wrap">{{ props.projectResource.doc?.description || 'No description available' }}</p>
+        <p class="text-gray-900 whitespace-pre-wrap">{{ projectResource.doc?.description || 'No description available' }}</p>
       </div>
 
       <!-- Key Details -->
@@ -86,7 +86,7 @@
             <div class="text-sm font-bold text-blue-200">Contract Value</div>
             <div>
               <div class="text-2xl font-bold text-blue-100">
-                {{ formatCurrency(props.projectResource.doc?.contract_value) }}
+                {{ formatCurrency(projectResource.doc?.contract_value) }}
               </div>
               <div class="text-xs text-blue-200 mt-1">Total Project Value</div>
             </div>
@@ -119,7 +119,7 @@
             <div class="text-sm font-medium text-green-200">Project Profit</div>
             <div>
               <div class="text-2xl font-bold text-green-100">
-                {{ formatCurrency(props.projectResource.doc?.contract_value - 450000 - 32000) }}
+                {{ formatCurrency(projectResource.doc?.contract_value - 450000 - 32000) }}
               </div>
               <div class="text-xs text-green-200 mt-1">Expected Profit</div>
             </div>
@@ -134,7 +134,7 @@
           <div class="max-w-sm">
             <PartyCard 
               :party="client" 
-              :project-resource="props.projectResource"
+              :project-resource="projectResource"
               party-type="Client"
               :show-add-button="!client && isManager"
             />
@@ -154,14 +154,14 @@
             >
               <PartyCard 
                 :party="supplier"
-                :project-resource="props.projectResource"
+                :project-resource="projectResource"
                 party-type="Supplier"
               />
             </div>
           </template>
           <div v-if="isManager" class="min-w-[250px]">
             <PartyCard 
-              :project-resource="props.projectResource"
+              :project-resource="projectResource"
               party-type="Supplier"
               :show-add-button="true"
             />
@@ -176,8 +176,7 @@
           <div class="max-w-sm">
             <PartyCard 
               :party="consultant" 
-              :project-resource="props.projectResource"
-              :project="props.projectResource.doc"
+              :project-resource="projectResource"
               party-type="Consultant"
               :show-add-button="!consultant && isManager"
             />
@@ -203,7 +202,7 @@
           :max-size="5000000"
           :upload-args="{
             doctype: 'RUA Project',
-            docname: props.projectResource.doc?.name,
+            docname: projectResource.doc?.name,
             fieldname: 'image',
             private: false
           }"
@@ -215,7 +214,7 @@
             @click="openFileSelector"
             @dragover.prevent="$event.currentTarget.classList.add('border-blue-500')"
             @dragleave.prevent="$event.currentTarget.classList.remove('border-blue-500')"
-            @drop.prevent="handleDrop($event, openFileSelector)"
+            @drop.prevent="handleDrop($event)"
           >
             <div class="flex flex-col items-center justify-center space-y-2">
               <div v-if="!file" class="text-center">
@@ -255,10 +254,7 @@
     </template>
     <template #actions>
       <div class="flex justify-end gap-2">
-        <Button
-          variant="subtle"
-          @click="showImageDialog = false"
-        >
+        <Button variant="subtle" @click="showImageDialog = false">
           Cancel
         </Button>
         <Button
@@ -290,10 +286,7 @@
     </template>
     <template #actions>
       <div class="flex justify-end gap-2">
-        <Button
-          variant="subtle"
-          @click="showNameDialog = false"
-        >
+        <Button variant="subtle" @click="showNameDialog = false">
           Cancel
         </Button>
         <Button
@@ -323,10 +316,7 @@
     </template>
     <template #actions>
       <div class="flex justify-end gap-2">
-        <Button
-          variant="subtle"
-          @click="showLocationDialog = false"
-        >
+        <Button variant="subtle" @click="showLocationDialog = false">
           Cancel
         </Button>
         <Button
@@ -356,10 +346,7 @@
     </template>
     <template #actions>
       <div class="flex justify-end gap-2">
-        <Button
-          variant="subtle"
-          @click="showContractValueDialog = false"
-        >
+        <Button variant="subtle" @click="showContractValueDialog = false">
           Cancel
         </Button>
         <Button
@@ -383,7 +370,7 @@ import {
   FormControl, 
   FileUploader
 } from 'frappe-ui'
-import { session } from '../data/session'
+import { hasRole } from '@/data/roles'
 import PartyCard from './PartyCard.vue'
 
 const props = defineProps({
@@ -397,9 +384,7 @@ const props = defineProps({
 })
 
 // Role-based access control
-const isManager = computed(() => {
-  return session.userRoles.some(role => ['RUA Manager', 'RUA Project Manager'].includes(role))
-})
+const isManager = hasRole('RUA Project Manager')
 
 // Dialog states
 const showImageDialog = ref(false)
@@ -467,7 +452,7 @@ async function updateImage() {
   }
 }
 
-function handleDrop(event, openFileSelector) {
+function handleDrop(event) {
   const file = event.dataTransfer?.files?.[0]
   if (file && file.type.startsWith('image/')) {
     event.currentTarget.classList.remove('border-blue-500')
@@ -482,32 +467,24 @@ function handleDrop(event, openFileSelector) {
 }
 
 function handleImageClick() {
-  if (!isManager.value) {
-    return
-  }
+  if (!isManager) return
   showImageDialog.value = true
 }
 
 function openNameDialog() {
-  if (!isManager.value) {
-    return
-  }
+  if (!isManager) return
   newName.value = props.projectResource.doc?.project_name || ''
   showNameDialog.value = true
 }
 
 function openLocationDialog() {
-  if (!isManager.value) {
-    return
-  }
+  if (!isManager) return
   newLocation.value = props.projectResource.doc?.location || ''
   showLocationDialog.value = true
 }
 
 function openContractValueDialog() {
-  if (!isManager.value) {
-    return
-  }
+  if (!isManager) return
   newContractValue.value = props.projectResource.doc?.contract_value || ''
   showContractValueDialog.value = true
 }
@@ -528,6 +505,7 @@ async function updateName() {
     nameError.value = ''
   } catch (error) {
     console.error('Failed to update name:', error)
+    nameError.value = error.message || 'Failed to update project name'
   }
 }
 

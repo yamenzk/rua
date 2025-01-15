@@ -1,3 +1,4 @@
+// ProjectLayout.vue
 <template>
   <div v-if="isLoading" class="min-h-screen flex items-center justify-center">
     <div class="text-gray-600">Loading project...</div>
@@ -13,30 +14,30 @@
         <Avatar
           :shape="'square'"
           :ref_for="true"
-          :image="projectData?.image"
-          :label="projectData?.project_name?.substring(0, 2)"
+          :image="selectedProject?.image"
+          :label="selectedProject?.project_name?.substring(0, 2)"
           size="md"
           class="flex-shrink-0"
         />
         <div class="flex items-center gap-3 min-w-0">
-          <h1 class="text-xl font-bold text-gray-900 truncate">{{ projectData?.project_name }}</h1>
+          <h1 class="text-xl font-bold text-gray-900 truncate">{{ selectedProject?.project_name }}</h1>
           <div 
             class="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium"
             :class="{
-              'bg-purple-100 text-purple-800': projectData?.status === 'Tender',
-              'bg-blue-100 text-blue-800': projectData?.status === 'Job In Hand',
-              'bg-yellow-100 text-yellow-800': projectData?.status === 'In Progress',
-              'bg-green-100 text-green-800': projectData?.status === 'Completed',
-              'bg-red-100 text-red-800': projectData?.status === 'Cancelled'
+              'bg-purple-100 text-purple-800': selectedProject?.status === 'Tender',
+              'bg-blue-100 text-blue-800': selectedProject?.status === 'Job In Hand',
+              'bg-yellow-100 text-yellow-800': selectedProject?.status === 'In Progress',
+              'bg-green-100 text-green-800': selectedProject?.status === 'Completed',
+              'bg-red-100 text-red-800': selectedProject?.status === 'Cancelled'
             }"
           >
-            {{ projectData?.status }}
+            {{ selectedProject?.status }}
           </div>
         </div>
       </div>
     </header>
 
-    <div class="flex-1 flex pt-16"> <!-- Account for fixed header -->
+    <div class="flex-1 flex pt-16">
       <!-- Sidebar for desktop -->
       <aside class="hidden md:block md:fixed md:inset-y-16 md:w-64 bg-white border-r md:h-full relative">
         <nav class="flex-1 px-4 py-4 space-y-1">
@@ -47,10 +48,7 @@
             class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100"
             :class="{ 'bg-gray-100': route.path === item.to }"
           >
-            <FeatherIcon
-              :name="item.icon"
-              class="h-5 w-5 mr-3 text-gray-500"
-            />
+            <FeatherIcon :name="item.icon" class="h-5 w-5 mr-3 text-gray-500" />
             {{ item.name }}
           </router-link>
         </nav>
@@ -58,7 +56,7 @@
         <!-- Sidebar Map -->
         <div class="px-4 pb-4 mt-auto absolute bottom-20 w-full">
           <ProjectMap
-            :coords="projectData?.coords"
+            :coords="selectedProject?.coords"
             :is-manager="isManager"
             :mini-map="true"
             @update:coords="updateProjectCoords"
@@ -66,12 +64,10 @@
           <div v-if="isManager" class="mt-2">
             <Button
               :variant="'solid'"
-              :ref_for="true"
               theme="red"
               size="lg"
               label="Delete Project"
               :loading="false"
-              :loadingText="null"
               :disabled="false"
               @click="showDeleteDialog = true"
               class="w-full"
@@ -85,7 +81,7 @@
       <!-- Main content -->
       <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0 relative">
         <router-view 
-          :projectResource="projectResource"
+          :projectResource="selectedProjectResource"
         ></router-view>
       </main>
 
@@ -99,10 +95,7 @@
             class="flex flex-col items-center px-2 py-1 text-gray-700"
             :class="{ 'text-blue-600': route.path === item.to }"
           >
-            <FeatherIcon
-              :name="item.icon"
-              class="h-6 w-6"
-            />
+            <FeatherIcon :name="item.icon" class="h-6 w-6" />
             <span class="text-xs mt-1">{{ item.name }}</span>
           </router-link>
         </div>
@@ -110,6 +103,7 @@
     </div>
   </div>
 
+  <!-- Delete Dialog -->
   <Dialog
     v-model="showDeleteDialog"
     :options="dialogOptions"
@@ -130,72 +124,88 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Avatar, FeatherIcon, Button, Dialog } from 'frappe-ui'
-import { createDocumentResource } from 'frappe-ui'
-import { session } from '../data/session'
+import { Avatar, FeatherIcon, Button, Dialog, createDocumentResource } from 'frappe-ui'
+import { projectResource } from '@/data/project'
+import { hasRole } from '@/data/roles'
 import ProjectMap from '../pages/ProjectMap.vue'
 import { inject } from 'vue'
-const $socket = inject('$socket')
 
+const $socket = inject('$socket')
 const router = useRouter()
 const route = useRoute()
+
+// State
+const isLoading = ref(true)
 const showDeleteDialog = ref(false)
 const confirmProjectName = ref('')
 const deleteError = ref('')
-const projectResource = ref(null)
-const isLoading = ref(true)
+const selectedProjectResource = ref(null)
 
-// Wait for socket to be available before creating the resource
-// In the script setup section
+// Get selected project from the list resource
+const selectedProject = computed(() => {
+  return projectResource.data?.find(proj => proj.name === route.params.id)
+})
+
+// Watch for changes in project ID and recreate document resource
+watch(() => route.params.id, (newId) => {
+  if (newId && $socket?.connected) {
+    initializeProjectResource(newId)
+  }
+})
+
+// Initialize document resource for selected project
+function initializeProjectResource(projectId) {
+  try {
+    selectedProjectResource.value = createDocumentResource({
+      doctype: 'RUA Project',
+      name: projectId,
+      auto: true,
+      realtime: true,
+    }, { $socket })
+    
+    isLoading.value = false
+  } catch (error) {
+    console.error('Error creating project resource:', error)
+  }
+}
+
 onMounted(() => {
+  // Check if we have both the list data and socket connection
   const initializeResource = () => {
-    console.log('Checking for injected $socket:', $socket)
-    if ($socket?.connected) {
-      console.log('Socket is connected, initializing project resource')
-      try {
-        projectResource.value = createDocumentResource({
-          doctype: 'RUA Project',
-          name: route.params.id,
-          auto: true,
-          realtime: true,
-        }, 
-        { $socket } // Pass vm context with socket
-        )
-        console.log('Project resource created:', projectResource.value)
-        isLoading.value = false
-      } catch (error) {
-        console.error('Error creating project resource:', error)
+    if ($socket?.connected && projectResource.data?.length > 0) {
+      if (selectedProject.value) {
+        initializeProjectResource(route.params.id)
+      } else {
+        router.push('/projects')
       }
     } else {
-      console.log('Socket not connected, retrying in 100ms')
-      console.log('Current socket status:', {
-        exists: !!$socket,
-        connected: $socket?.connected,
-        id: $socket?.id
-      })
       setTimeout(initializeResource, 100)
     }
   }
-  initializeResource()
-})
 
-const projectData = computed(() => projectResource.value?.doc)
+  initializeResource()
+
+  // Cleanup timeout after 5 seconds
+  setTimeout(() => {
+    if (isLoading.value) {
+      router.push('/projects')
+    }
+  }, 5000)
+})
 
 // Role-based access control
-const isManager = computed(() => {
-  return session.userRoles?.some(role => ['RUA Manager', 'RUA Project Manager'].includes(role))
-})
+const isManager = hasRole('RUA Project Manager')
 
 // Handle map coordinate updates
 async function updateProjectCoords(newCoords) {
-  if (!projectResource.value) return
+  if (!selectedProjectResource.value) return
   try {
-    await projectResource.value.setValue.submit({
+    await selectedProjectResource.value.setValue.submit({
       coords: JSON.stringify(newCoords)
     })
-    await projectResource.value.reload()
+    await selectedProjectResource.value.reload()
   } catch (error) {
     console.error('Failed to update coordinates:', error)
   }
@@ -215,27 +225,27 @@ const dialogOptions = computed(() => ({
     name: 'alert-triangle',
     appearance: 'danger'
   },
-  message: 'This action cannot be undone. Please type "' + projectData.value?.project_name + '" to confirm.',
+  message: 'This action cannot be undone. Please type "' + selectedProject.value?.project_name + '" to confirm.',
   actions: [
     {
       label: 'Delete Project',
       variant: 'solid',
       theme: 'red',
-      loading: projectResource.value?.delete.loading,
+      loading: selectedProjectResource.value?.delete.loading,
       onClick: deleteProject
     }
   ]
 }))
 
 async function deleteProject() {
-  if (!projectResource.value) return
-  if (confirmProjectName.value !== projectData.value?.project_name) {
+  if (!selectedProjectResource.value) return
+  if (confirmProjectName.value !== selectedProject.value?.project_name) {
     deleteError.value = 'Project name does not match'
     return
   }
   
   try {
-    await projectResource.value.delete.submit()
+    await selectedProjectResource.value.delete.submit()
     router.push('/projects')
   } catch (error) {
     deleteError.value = error.message || 'Failed to delete project'

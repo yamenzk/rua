@@ -261,24 +261,23 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, h } from 'vue'
-import { Button, Input, Textarea, Dialog, Badge, FeatherIcon, LoadingIndicator, FormControl, debounce } from 'frappe-ui'
-import { createListResource } from 'frappe-ui'
+import { ref, inject, h } from 'vue'
+import { Button, Input, Dialog, Badge, FeatherIcon, LoadingIndicator, FormControl, debounce } from 'frappe-ui'
 import { useRouter } from 'vue-router'
-import { userRolesResource, getUserRolesFromCookie } from '@/data/user'
+import { projectResource } from '@/data/project'
+import { hasRole } from '@/data/roles'
 
 const router = useRouter()
-const isManager = computed(() => {
-  const roles = getUserRolesFromCookie()
-  return roles.includes('RUA Manager')
-})
+const isManager = hasRole('RUA Manager')
 const setHeaderAction = inject('setHeaderAction')
 
-if (isManager.value) {
+if (isManager) {
   setHeaderAction(h(Button, {
     variant: 'solid',
     onClick: () => showNewProject.value = true,
   }, () => 'New Project'))
+} else {
+  setHeaderAction(null)
 }
 
 // State
@@ -330,21 +329,7 @@ const statusOptions = [
   { label: 'Cancelled', value: 'Cancelled' }
 ]
 
-// Create list resource
-const list = createListResource({
-  doctype: 'RUA Project',
-  fields: ['name', 'project_name', 'description', 'status', 'image', 'completion', 'location', 'contract_value'],
-  filters: [],
-  orderBy: 'creation desc',
-  auto: true,
-  transform(data) {
-    return data
-  },
-  cache: ['RUA Project']
-})
-
-// Computed sort order
-const sortOrder = computed(() => `${sortField.value} ${sortDirection.value}`)
+const list = projectResource
 
 // Handlers
 const handleSearch = debounce((value) => {

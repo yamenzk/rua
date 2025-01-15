@@ -1,29 +1,43 @@
 import frappe
 import json
 from frappe.model.document import Document
+import rua
 
 
 class RUAQuotation(Document):
+    def publish_update(self):
+        rua.refetch_resource("rua:quotation")
+
+    def on_update(self):
+        self.publish_update()
+
+    def on_trash(self):
+        self.publish_update()
+
+    def after_insert(self):
+        self.publish_update()
+
     def before_insert(self):
         if not self.project:
             frappe.throw("Project is required")
         project = frappe.get_doc('RUA Project', self.project)
 
         try:
-            locked = json.loads(project.locked) if isinstance(project.locked, str) else project.locked
+            locked = json.loads(project.locked) if isinstance(
+                project.locked, str) else project.locked
             if not locked or locked == {} or locked == []:
                 frappe.throw("Items are not locked")
-                
+
             # Get the rows data from the locked JSON
             rows = locked.get('data', {}).get('rows', [])
             if not rows:
                 frappe.throw("No items found in locked data")
-                
+
             # Initialize summary values
             total_amount = 0
             total_vat = 0
             total_grand = 0
-                
+
             # Process each row and add to items child table
             for row in rows:
                 # Helper function to clean currency values
@@ -32,7 +46,7 @@ class RUAQuotation(Document):
                         # Remove currency symbol and commas, then convert to float
                         return float(value.replace('AED', '').replace(',', '').strip())
                     return float(value)
-                
+
                 # Helper function to clean and format unit values
                 def clean_unit_value(value):
                     if isinstance(value, str):
@@ -56,25 +70,24 @@ class RUAQuotation(Document):
                     'vat_amount': clean_currency(row['Vat Amount']),
                     'grand_total': clean_currency(row['Grand Total'])
                 }
-                
+
                 # Add to summary totals
                 total_amount += clean_currency(row['Total'])
                 total_vat += clean_currency(row['Vat Amount'])
                 total_grand += clean_currency(row['Grand Total'])
-                
+
                 # Append the item to the child table
                 self.append('items', item)
-            
+
             # Set document summary fields
             self.total_items = len(rows)
             self.total = total_amount
             self.vat_amount = total_vat
             self.grand_total = total_grand
-                
+
         except json.JSONDecodeError:
             frappe.throw("Invalid JSON format in locked data")
         except KeyError as e:
             frappe.throw(f"Missing required field in locked data: {str(e)}")
         except Exception as e:
             frappe.throw(f"Error processing locked items: {str(e)}")
-

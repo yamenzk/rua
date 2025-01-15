@@ -254,14 +254,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { FeatherIcon, createListResource, Badge } from 'frappe-ui'
+import { FeatherIcon, Badge } from 'frappe-ui'
+import { attendanceResource } from '@/data/attendance'
 
 const props = defineProps({
   employee: {
-    type: Object,
-    default: null
-  },
-  employeeResource: {
     type: Object,
     required: true
   }
@@ -270,25 +267,29 @@ const props = defineProps({
 // State
 const yearCollapsed = ref({})
 const monthCollapsed = ref({})
-const attendanceList = createListResource({
-  doctype: 'RUA Attendance',
-  fields: ['name', 'date', 'attendance_log'],
-  orderBy: 'date desc',
-  auto: true
-})
+const attendanceList = attendanceResource
 
 // Process attendance records
 const processedRecords = computed(() => {
-  if (!attendanceList.data || !props.employee?.name) return []
+  if (!attendanceResource.data?.length || !props.employee?.name) return []
   
-  return attendanceList.data.map(record => {
-    const attendanceLog = JSON.parse(record.attendance_log || '{}')
-    const employeeLog = attendanceLog[props.employee.name] || {}
-    
-    return {
-      date: record.date,
-      status: employeeLog.absent ? 'absent' : (employeeLog.late ? 'late' : 'present'),
-      overtime: employeeLog.overtime || 0
+  return attendanceResource.data.map(record => {
+    try {
+      const attendanceLog = JSON.parse(record.attendance_log || '{}')
+      const employeeLog = attendanceLog[props.employee.name] || {}
+      
+      return {
+        date: record.date,
+        status: employeeLog.absent ? 'absent' : (employeeLog.late ? 'late' : 'present'),
+        overtime: employeeLog.overtime || 0
+      }
+    } catch (error) {
+      console.error('Error processing attendance record:', error)
+      return {
+        date: record.date,
+        status: 'present',
+        overtime: 0
+      }
     }
   })
 })
@@ -395,6 +396,12 @@ function formatDate(date) {
 
 // Initialize
 onMounted(async () => {
-  await attendanceList.reload()
+  if (!attendanceResource.data?.length) {
+    try {
+      await attendanceResource.reload()
+    } catch (error) {
+      console.error('Failed to load attendance data:', error)
+    }
+  }
 })
 </script>

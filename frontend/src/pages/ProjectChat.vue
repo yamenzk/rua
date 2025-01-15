@@ -9,8 +9,8 @@
 
 		<!-- Scrollable Messages Container -->
 		<div class="flex-1 overflow-y-auto px-4 py-4 pb-[130px] md:pb-[130px]" ref="chatContainer">
-			<template v-if="messages?.data?.length">
-				<div v-for="message in messages.data" :key="message.name">
+			<template v-if="messages?.length">
+				<div v-for="message in messages" :key="message.name">
 					<!-- System Messages -->
 					<template v-if="message.type !== 'Chat Message'">
 						<div class="flex justify-center my-4">
@@ -108,10 +108,10 @@
 
 			<!-- Empty State -->
 			<div v-else class="flex flex-col items-center justify-center h-full text-center">
-				<FeatherIcon name="message-circle" class="w-12 h-12 text-gray-400 mb-4" />
-				<p class="text-base font-medium text-gray-900">No Messages Yet</p>
-				<p class="text-sm text-gray-600">Start the conversation by sending a message.</p>
-			</div>
+        <FeatherIcon name="message-circle" class="w-12 h-12 text-gray-400 mb-4" />
+        <p class="text-base font-medium text-gray-900">No Messages Yet</p>
+        <p class="text-sm text-gray-600">Start the conversation by sending a message.</p>
+      </div>
 		</div>
 
 		<!-- Fixed Input Area -->
@@ -225,42 +225,27 @@
 
 <script setup>
 import { ref, onMounted, nextTick, watch, computed } from 'vue'
-import { createListResource, createResource } from 'frappe-ui'
-import { useRouter } from 'vue-router'
-import { session } from '../data/session'
-import { Avatar, Button, Input, FeatherIcon, Badge } from 'frappe-ui'
-import { inject } from 'vue'
+import { createResource } from 'frappe-ui'
+import { session } from '@/data/session'
+import { Avatar, Button, FeatherIcon, Badge } from 'frappe-ui'
+import { chatResource } from '@/data/chat'
+import { hasRole } from '@/data/roles'
 
-const $socket = inject('$socket')
 
 // Props
 const props = defineProps({
-	projectResource: {
-		type: Object,
-		required: true,
-	},
+  projectResource: {
+    type: Object,
+    required: true,
+    validator: (value) => {
+      return value && typeof value === 'object' && 'doc' in value
+    }
+  },
 })
 
-// Router
-const router = useRouter()
-
-// Constants
-const USER_BUBBLE_COLORS = [
-	{ bg: 'bg-blue-100', text: 'text-blue-900' },
-	{ bg: 'bg-green-100', text: 'text-green-900' },
-	{ bg: 'bg-purple-100', text: 'text-purple-900' },
-	{ bg: 'bg-orange-100', text: 'text-orange-900' },
-	{ bg: 'bg-pink-100', text: 'text-pink-900' },
-	{ bg: 'bg-teal-100', text: 'text-teal-900' },
-	{ bg: 'bg-indigo-100', text: 'text-indigo-900' },
-	{ bg: 'bg-amber-100', text: 'text-amber-900' },
-]
-
 // State
-const messages = ref(null)
 const newMessage = ref('')
 const chatContainer = ref(null)
-const userColorIndices = ref(new Map())
 const showReferencesList = ref(false)
 const showUsersList = ref(false)
 const filteredUsers = ref([])
@@ -271,24 +256,12 @@ const inputRef = ref(null)
 const users = ref(null)
 
 // Computed
-const isMessageEmpty = computed(() => !newMessage.value || !newMessage.value.trim())
-const isSubmitDisabled = computed(() => isMessageEmpty.value || messages.value?.insert?.loading)
-const messageColors = computed(() => {
-	const colors = {}
-	if (messages.value?.data) {
-		messages.value.data.forEach((message) => {
-			if (message.type === 'Chat Message' && message.user && !colors[message.user]) {
-				if (!userColorIndices.value.has(message.user)) {
-					userColorIndices.value.set(message.user, userColorIndices.value.size)
-				}
-				const colorIndex =
-					userColorIndices.value.get(message.user) % USER_BUBBLE_COLORS.length
-				colors[message.user] = USER_BUBBLE_COLORS[colorIndex]
-			}
-		})
-	}
-	return colors
+const messages = computed(() => {
+  return chatResource.data?.filter(msg => msg.project === props.projectResource.doc?.name) || []
 })
+
+const isMessageEmpty = computed(() => !newMessage.value || !newMessage.value.trim())
+const isSubmitDisabled = computed(() => isMessageEmpty.value || chatResource.insert?.loading)
 
 // Methods
 function getMessageTypeClasses(type) {
@@ -349,22 +322,24 @@ function formatDate(dateString) {
 }
 
 async function sendMessage() {
-	if (!newMessage.value.trim() || !messages.value) return
+  if (!newMessage.value.trim() || !chatResource) return
 
-	try {
-		await messages.value.insert.submit({
-			project: props.projectResource.doc.name,
-			user: session.user,
-			message: newMessage.value.trim(),
-			type: 'Chat Message',
-			timestamp: formatDateForFrappe(new Date()),
-		})
+  try {
+    await chatResource.insert.submit({
+      project: props.projectResource.doc.name,
+      user: session.user,
+      message: newMessage.value.trim(),
+      type: 'Chat Message',
+      timestamp: formatDateForFrappe(new Date()),
+    })
 
-		newMessage.value = ''
-	} catch (error) {
-		console.error('Failed to send message:', error)
-	}
+    newMessage.value = ''
+    scrollToBottom()
+  } catch (error) {
+    console.error('Failed to send message:', error)
+  }
 }
+
 
 function filterUsers(searchTerm) {
   const userData = users.value?.data || []
@@ -428,7 +403,6 @@ function selectUserMention(user) {
     inputRef.value.focus()
   })
 }
-
 
 function handleKeydown(event) {
   // Handle references autocomplete
@@ -560,141 +534,58 @@ function scrollToBottom() {
 	})
 }
 
-// Initialize messages resource
-function initializeResource() {
-  console.log('🚀 Initializing chat resource...')
-  if ($socket?.connected && props.projectResource.doc?.name) {
-    console.log('✅ Socket connection found, creating list resource')
-    messages.value = createListResource({
-      doctype: 'RUA Chat',
-      fields: ['*'],
-      filters: { project: props.projectResource.doc.name },
-      orderBy: 'timestamp asc',
-      auto: true,
-      realtime: true,
-    }, 
-    { $socket }) // Pass vm context with socket
-  } else {
-    console.log('⏳ Socket not ready, retrying in 100ms...', {
-      socketExists: !!$socket,
-      socketConnected: $socket?.connected,
-      projectName: props.projectResource.doc?.name
-    })
-    setTimeout(initializeResource, 100)
-  }
+function initializeResources() {
+  if (!props.projectResource?.doc?.name) return
+
+  // Initialize users resource
+  users.value = createResource({
+    url: 'rua.api.get_all_users',
+    method: 'GET',
+    params: {
+      project: props.projectResource.doc.name,
+    },
+    transform(response) {
+      return response.data || response || []
+    }
+  })
+
+  // Initialize references resource
+  references.value = createResource({
+    url: 'rua.api.get_project_refs',
+    method: 'GET',
+    params: {
+      project: props.projectResource.doc.name,
+    },
+    transform(response) {
+      return response.data || response || []
+    }
+  })
+
+  // Fetch initial data
+  users.value.fetch()
+  references.value.fetch()
 }
 
-// Initialize references resource
-
-const initUsers = () => {
-	if (!props.projectResource?.doc?.name) {
-		console.log('⚠️ Project name not available yet')
-		return
-	}
-
-	console.log('👥 Initializing users list')
-	users.value = createResource({
-		url: 'rua.api.get_all_users',
-		method: 'GET',
-		params: {
-			project: props.projectResource.doc.name, // Optional, depending on your API
-		},
-		initialData: [], // Set initial data to an empty array
-		transform(response) {
-			console.log('👤 Raw users response:', response)
-			return response.data || response || []
-		},
-		onSuccess(response) {
-			console.log('✅ Users fetched successfully:', response)
-		},
-		onError(error) {
-			console.error('❌ Failed to fetch users:', error)
-		},
-	})
-
-	// Fetch initial data
-	users.value.fetch()
-}
-
-const initReferences = () => {
-	if (!props.projectResource?.doc?.name) {
-		console.log('⚠️ Project name not available yet')
-		return
-	}
-
-	console.log('📚 Initializing references for project:', props.projectResource.doc.name)
-	references.value = createResource({
-		url: 'rua.api.get_project_refs',
-		method: 'GET',
-		params: {
-			project: props.projectResource.doc.name,
-		},
-		initialData: [], // Set initial data to an empty array
-		transform(response) {
-			console.log('📝 Raw response:', response)
-			// Assuming the API returns the array directly or in a 'data' property
-			return response.data || response || []
-		},
-		onSuccess(response) {
-			console.log('✅ References fetched successfully:', response)
-		},
-		onError(error) {
-			console.error('❌ Failed to fetch references:', error)
-		},
-	})
-
-	// Fetch initial data
-	references.value.fetch()
-}
-
-// References Debug Watcher
 watch(
-	() => references.value,
-	(newRef) => {
-		console.log('📊 Full References object:', newRef)
-		console.log('📊 References data:', newRef?.data)
-	},
-	{ deep: true },
+  () => props.projectResource.doc?.name,
+  (projectName) => {
+    if (projectName) {
+      initializeResources()
+    }
+  },
+  { immediate: true }
 )
 
-// Watch for project changes
+// Watch for new messages to scroll
 watch(
-	() => props.projectResource.doc?.name,
-	(projectName) => {
-		console.log('📁 Project name changed:', projectName)
-		if (projectName) {
-			initializeResource()
-			initReferences()
-			initUsers() // Add this line
-		}
-	},
-	{ immediate: true },
+  () => messages.value?.length,
+  () => scrollToBottom(),
+  { flush: 'post' }
 )
 
-// Watch for realtime updates from the server
-watch(
-	() => props.projectResource.doc,
-	(newDoc, oldDoc) => {
-		console.log('📄 Project document changed:', {
-			hasOldDoc: !!oldDoc,
-			hasNewDoc: !!newDoc,
-			hasMessages: !!messages.value,
-		})
-		if (newDoc && oldDoc && messages.value) {
-			console.log('🔄 Reloading messages due to project update')
-			messages.value.reload()
-		}
-	},
-	{ deep: true },
-)
 
 // Initial setup
 onMounted(() => {
 	scrollToBottom()
-
-	// Only initialize references if project is already available
-	if (props.projectResource?.doc?.name) {
-		initReferences()
-	}
 })
 </script>

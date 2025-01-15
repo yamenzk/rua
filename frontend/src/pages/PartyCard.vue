@@ -222,10 +222,9 @@ import {
   Button, 
   FormControl, 
   LoadingIndicator,
-  Card,
-  createListResource
 } from 'frappe-ui'
 import { session } from '../data/session'
+import { partyResource } from '../data/party'
 
 const props = defineProps({
   party: {
@@ -264,12 +263,7 @@ const isManager = computed(() => {
 })
 
 // Party list resource
-const partyList = createListResource({
-  doctype: 'RUA Party',
-  fields: ['name', 'type', 'phone', 'email', 'trn', 'emirate', 'image'],
-  pageLength: 50,
-  auto: true
-})
+const partyList = partyResource
 
 // Filter parties based on search and type
 const filteredParties = computed(() => {

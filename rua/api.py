@@ -4,6 +4,25 @@ import frappe
 def get_user_roles(user):
     return frappe.get_roles(user)
 
+@frappe.whitelist(allow_guest=True)
+def get_server_time(date=None, time=None, datetime=None):
+    current_date = frappe.utils.getdate(frappe.utils.nowdate())
+    current_time = frappe.utils.get_time(frappe.utils.nowtime())
+    current_datetime = frappe.utils.now_datetime()
+    if date:
+        return current_date
+    if time:
+        return current_time
+    if datetime:
+        return current_datetime
+    else:
+        return {
+            'current_date': current_date,
+            'current_time': current_time,
+            'current_datetime': current_datetime
+        }
+
+
 @frappe.whitelist()
 def get_project_refs(project):
     references = []
