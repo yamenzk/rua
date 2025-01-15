@@ -5,7 +5,7 @@ import { getCachedResource } from "frappe-ui/src/resources/resources"
 
 export function initSocket() {
   let host = window.location.hostname
-  let siteName = window.site_name
+  let siteName = window.site_name || 'ruabeta.frappe.cloud'
   let port = window.location.port ? `:${socketio_port}` : ''
   let protocol = port ? 'http' : 'https'
   let url = `${protocol}://${host}${port}/${siteName}`
@@ -21,7 +21,6 @@ export function initSocket() {
   let socket = io(url, {
     withCredentials: true,
     reconnectionAttempts: 5,
-    transports: ['websocket', 'polling'] // explicitly specify transports
   })
 
   // Add connection event listeners
