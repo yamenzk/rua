@@ -62,4 +62,4 @@ class RUAChat(Document):
                         todo.insert(ignore_permissions=True)
                         frappe.db.commit()
         
-        self.delete()
+            self.delete()
