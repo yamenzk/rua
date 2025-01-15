@@ -9,8 +9,9 @@
     "copy-html-entry": "cp ../rua/public/frontend/index.html ../rua/www/frontend.html"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.9.14",
+    "@grpc/grpc-js": "1.9.14",
     "@tiptap/core": "^2.0.0",
+    "@tiptap/pm": "^2.7.0",
     "@univerjs/presets": "^0.5.4",
     "@vueuse/core": "^12.3.0",
     "feather-icons": "^4.29.2",
