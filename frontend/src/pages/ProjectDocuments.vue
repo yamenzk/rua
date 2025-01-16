@@ -1,66 +1,85 @@
 # ProjectDocuments.vue
 <template>
-  <div class="space-y-8 px-6" v-if="projectResource?.doc">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="fixed inset-0 bg-white bg-opacity-75 z-50 flex items-center justify-center">
-      <div class="text-center space-y-4">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-        <div class="text-gray-700">
-          <p class="font-medium">Loading documents...</p>
+  <div v-if="!projectResource?.doc" class="flex items-center justify-center min-h-[60vh]">
+    <LoadingIndicator />
+  </div>
+
+  <div v-else class="space-y-8 px-6">
+    <!-- Tabs in scrollable container -->
+    <div class="relative">
+      <div class="overflow-x-auto scrollbar-hide">
+        <div class="flex space-x-2 py-2 min-w-max">
+          <TabButtons
+            :buttons="documentTabs"
+            v-model="currentTab"
+            class="w-full"
+          >
+            <template #button="{ button, active }">
+              <div class="flex items-center gap-2">
+                <FeatherIcon 
+                  :name="button.icon" 
+                  class="w-4 h-4"
+                />
+                <span>{{ button.label }}</span>
+                <Badge 
+                  v-if="getTabCount(button.value)"
+                  :variant="active ? 'solid' : 'subtle'"
+                  theme="blue"
+                  size="sm"
+                >
+                  {{ getTabCount(button.value) }}
+                </Badge>
+              </div>
+            </template>
+          </TabButtons>
         </div>
       </div>
     </div>
 
-    <template v-else>
-      <!-- Tabs in scrollable container -->
-      <div class="relative">
-        <div class="overflow-x-auto scrollbar-hide">
-          <div class="flex space-x-2 py-2 min-w-max">
-            <TabButtons
-              :buttons="documentTabs"
-              v-model="currentTab"
-              class="w-full"
-            >
-              <template #button="{ button, active }">
-                <div class="flex items-center gap-2">
-                  <FeatherIcon 
-                    :name="button.icon" 
-                    class="w-4 h-4"
-                  />
-                  <span>{{ button.label }}</span>
-                </div>
-              </template>
-            </TabButtons>
+    <!-- Tab Content with Transition -->
+    <Transition
+      enter-active-class="transition-opacity duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div>
+        <!-- Dynamic Content Based on Tab -->
+        <QuotationsTab 
+          v-if="currentTab === 'quotations'"
+          :projectResource="projectResource"
+          :key="'quotations'"
+        />
+        
+        <!-- Placeholder components for other tabs -->
+        <template v-else>
+          <div class="bg-white rounded-lg border p-6">
+            <div class="flex flex-col items-center justify-center py-12">
+              <FeatherIcon 
+                :name="getCurrentTabIcon" 
+                class="w-12 h-12 text-gray-400 mb-4" 
+              />
+              <p class="text-base font-medium text-gray-900">{{ getCurrentTabLabel }} Coming Soon</p>
+              <p class="text-sm text-gray-600">This feature is under development.</p>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
-
-      <!-- Dynamic Content Based on Tab -->
-      <QuotationsTab 
-        v-if="currentTab === 'quotations'"
-        :projectResource="projectResource"
-      />
-      
-      <!-- Placeholder components for other tabs -->
-      <template v-else>
-        <div class="bg-white rounded-lg border p-6">
-          <div class="flex flex-col items-center justify-center py-12">
-            <FeatherIcon 
-              :name="getCurrentTabIcon" 
-              class="w-12 h-12 text-gray-400 mb-4" 
-            />
-            <p class="text-base font-medium text-gray-900">{{ getCurrentTabLabel }} Coming Soon</p>
-            <p class="text-sm text-gray-600">This feature is under development.</p>
-          </div>
-        </div>
-      </template>
-    </template>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { FeatherIcon, TabButtons } from 'frappe-ui'
+import { ref, computed } from 'vue'
+import { 
+  FeatherIcon, 
+  TabButtons, 
+  LoadingIndicator,
+  Badge
+} from 'frappe-ui'
+import { quotationResource } from '@/data/quotation'
 import QuotationsTab from './QuotationsTab.vue'
 
 const props = defineProps({
@@ -74,10 +93,9 @@ const props = defineProps({
 })
 
 // State
-const isLoading = ref(true)
 const currentTab = ref('quotations')
 
-// Computed
+// Tab Definitions
 const documentTabs = [
   { 
     label: 'Quotations', 
@@ -111,6 +129,7 @@ const documentTabs = [
   },
 ]
 
+// Computed Properties
 const getCurrentTabIcon = computed(() => {
   const tab = documentTabs.find(tab => tab.value === currentTab.value)
   return tab?.icon || 'file'
@@ -121,13 +140,13 @@ const getCurrentTabLabel = computed(() => {
   return tab?.label || 'Tab'
 })
 
-// Initialize component
-onMounted(() => {
-  // Better loading state management
-  if (props.projectResource.doc) {
-    setTimeout(() => {
-      isLoading.value = false
-    }, 500) // Keep short loading for UX
+// Get count for badges
+function getTabCount(tabValue) {
+  if (tabValue === 'quotations') {
+    return quotationResource.data?.filter(q => 
+      q.project === props.projectResource.doc?.name
+    )?.length || 0
   }
-})
+  return 0
+}
 </script>

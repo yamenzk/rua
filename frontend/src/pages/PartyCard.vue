@@ -225,6 +225,8 @@ import {
 } from 'frappe-ui'
 import { session } from '../data/session'
 import { partyResource } from '../data/party'
+import { hasRole } from '../data/roles'
+
 
 const props = defineProps({
   party: {
@@ -258,9 +260,7 @@ const removing = ref(false)
 const searchQuery = ref('')
 
 // Role-based access control
-const isManager = computed(() => {
-  return session.userRoles.some(role => ['RUA Manager', 'RUA Project Manager'].includes(role))
-})
+const isManager = computed(() => hasRole('RUA Manager'))
 
 // Party list resource
 const partyList = partyResource
@@ -326,9 +326,12 @@ function showDetails() {
 }
 
 function openPartyDialog() {
+  //console.log('Open Party Dialog called')
+  //console.log('Is Manager:', isManager.value)
   if (!isManager.value) {
     return
   }
+  //console.log('Opening party dialog')
   showPartyDialog.value = true
 }
 
@@ -364,7 +367,7 @@ async function removeParty() {
     showConfirmDialog.value = false
     showDialog.value = false
   } catch (error) {
-    console.error('Failed to remove party:', error)
+    //console.error('Failed to remove party:', error)
   } finally {
     removing.value = false
   }
@@ -410,7 +413,7 @@ async function selectParty(party) {
     showPartyDialog.value = false
     searchQuery.value = ''
   } catch (error) {
-    console.error('Failed to add party:', error)
+    //console.error('Failed to add party:', error)
   }
 }
 </script>

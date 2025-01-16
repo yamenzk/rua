@@ -23,7 +23,7 @@ export const reloadResources = async () => {
   try {
     // Log initial state
     Object.entries(resources).forEach(([key, resource]) => {
-      console.log(`Current ${key} data:`, resource.data)
+      //console.log(`Current ${key} data:`, resource.data)
     })
 
     // Reload all resources
@@ -33,12 +33,12 @@ export const reloadResources = async () => {
 
     // Log updated state
     Object.entries(resources).forEach(([key, resource]) => {
-      console.log(`Updated ${key} data:`, resource.data)
+      //console.log(`Updated ${key} data:`, resource.data)
     })
 
-    console.log('Resources reloaded successfully!')
+    //console.log('Resources reloaded successfully!')
   } catch (error) {
-    console.error('Failed to reload resources:', error)
+    //console.error('Failed to reload resources:', error)
   }
 }
 

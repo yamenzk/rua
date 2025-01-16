@@ -81,6 +81,7 @@
       <!-- Main content -->
       <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0 relative">
         <router-view 
+          v-if="selectedProjectResource"
           :projectResource="selectedProjectResource"
         ></router-view>
       </main>
@@ -142,6 +143,7 @@ const showDeleteDialog = ref(false)
 const confirmProjectName = ref('')
 const deleteError = ref('')
 const selectedProjectResource = ref(null)
+const initializationTimeout = ref(null)
 
 // Get selected project from the list resource
 const selectedProject = computed(() => {
@@ -156,7 +158,7 @@ watch(() => route.params.id, (newId) => {
 })
 
 // Initialize document resource for selected project
-function initializeProjectResource(projectId) {
+async function initializeProjectResource(projectId) {
   try {
     selectedProjectResource.value = createDocumentResource({
       doctype: 'RUA Project',
@@ -165,34 +167,60 @@ function initializeProjectResource(projectId) {
       realtime: true,
     }, { $socket })
     
+    // Wait for the initial fetch to complete
+    await selectedProjectResource.value.promise
     isLoading.value = false
   } catch (error) {
     console.error('Error creating project resource:', error)
+    router.push('/projects')
   }
 }
 
-onMounted(() => {
-  // Check if we have both the list data and socket connection
-  const initializeResource = () => {
+// Handle initialization with timeout
+async function waitForInitialization() {
+  const maxAttempts = 50 // 5 seconds with 100ms intervals
+  let attempts = 0
+
+  while (attempts < maxAttempts) {
     if ($socket?.connected && projectResource.data?.length > 0) {
       if (selectedProject.value) {
-        initializeProjectResource(route.params.id)
+        await initializeProjectResource(route.params.id)
+        return true
       } else {
         router.push('/projects')
+        return false
       }
-    } else {
-      setTimeout(initializeResource, 100)
     }
+    
+    await new Promise(resolve => setTimeout(resolve, 100))
+    attempts++
   }
 
-  initializeResource()
+  return false
+}
 
-  // Cleanup timeout after 5 seconds
-  setTimeout(() => {
-    if (isLoading.value) {
-      router.push('/projects')
+onMounted(async () => {
+  try {
+    // Set a timeout for the entire initialization process
+    const timeoutPromise = new Promise((_, reject) => {
+      initializationTimeout.value = setTimeout(() => {
+        reject(new Error('Initialization timeout'))
+      }, 5000)
+    })
+
+    // Race between initialization and timeout
+    await Promise.race([
+      waitForInitialization(),
+      timeoutPromise
+    ])
+  } catch (error) {
+    console.error('Failed to initialize project:', error)
+    router.push('/projects')
+  } finally {
+    if (initializationTimeout.value) {
+      clearTimeout(initializationTimeout.value)
     }
-  }, 5000)
+  }
 })
 
 // Role-based access control

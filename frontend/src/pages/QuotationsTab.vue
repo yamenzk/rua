@@ -19,8 +19,12 @@
       </Button>
     </div>
 
-    <!-- Scrollable Container -->
-    <div class="overflow-x-auto">
+    <!-- Quotations Table -->
+    <div v-if="quotationResource.loading" class="flex justify-center py-12">
+      <LoadingIndicator />
+    </div>
+    
+    <div v-else class="overflow-x-auto">
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
@@ -81,10 +85,7 @@
                 v-for="quotation in quotationsByStatus[status]" 
                 :key="quotation.name"
                 class="hover:bg-gray-50 transition-colors cursor-pointer min-w-[800px]"
-                @click="router.push({
-                  name: 'QuotationDetails',
-                  params: { quotationId: quotation.name }
-                })"
+                @click="navigateToQuotation(quotation)"
               >
                 <div class="flex items-center px-6 py-3">
                   <div class="flex-1 grid grid-cols-6 gap-4">
@@ -100,7 +101,7 @@
                     </div>
                     <!-- Date -->
                     <div class="text-sm text-gray-600 flex items-center">
-                      {{ new Date(quotation.date).toLocaleDateString() }}
+                      {{ formatDate(quotation.date) }}
                     </div>
                     <!-- Grand Total -->
                     <div class="text-sm text-gray-900 font-medium flex items-center">
@@ -158,76 +159,19 @@
     <Dialog
       v-if="showNoClientDialog"
       v-model="showNoClientDialog"
-      :options="{
-        title: 'Missing Client',
-        message: 'A client must be added to the project before creating a quotation. Please add a client from the project overview page.',
-        size: 'sm',
-        icon: {
-          name: 'alert-triangle',
-          appearance: 'warning'
-        },
-        actions: [
-          {
-            label: 'Go to Overview',
-            variant: 'solid',
-            theme: 'warning',
-            onClick: () => {
-              router.push(`/project/${projectResource.doc.name}/overview`)
-            }
-          },
-          {
-            label: 'Close',
-            variant: 'subtle',
-            onClick: () => showNoClientDialog = false
-          }
-        ]
-      }"
+      :options="noClientDialogOptions"
     />
 
     <Dialog
       v-if="showNotLockedDialog"
       v-model="showNotLockedDialog"
-      :options="{
-        title: 'Items Not Locked',
-        message: 'The project items must be locked before creating a quotation. Please lock the items from the Items page.',
-        size: 'sm',
-        icon: {
-          name: 'alert-triangle',
-          appearance: 'warning'
-        },
-        actions: [
-          {
-            label: 'Go to Items',
-            variant: 'solid',
-            theme: 'warning',
-            onClick: () => {
-              router.push(`/project/${projectResource.doc.name}/items`)
-            }
-          },
-          {
-            label: 'Close',
-            variant: 'subtle',
-            onClick: () => showNotLockedDialog = false
-          }
-        ]
-      }"
+      :options="notLockedDialogOptions"
     />
 
     <!-- New Quotation Dialog -->
     <Dialog
       v-model="showNewQuotationDialog"
-      :options="{
-        title: 'New Quotation',
-        size: 'lg',
-        actions: [
-          {
-            label: 'Create',
-            variant: 'solid',
-            onClick: createQuotation,
-            loading: quotationResource.insert?.loading
-          },
-        ],
-      }"
+      :options="newQuotationDialogOptions"
     >
       <template #body-content>
         <div class="space-y-4">
@@ -235,7 +179,7 @@
             v-model="newQuotation.date"
             label="Date"
             :default-value="newQuotation.date"
-            :format="(date) => date.toISOString().split('T')[0]"
+            :format="formatDate"
           />
         </div>
       </template>
@@ -244,7 +188,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   Avatar,
@@ -253,10 +197,12 @@ import {
   Button,
   Dialog,
   DatePicker,
-  createResource
+  createResource,
+  LoadingIndicator
 } from 'frappe-ui'
 import { hasRole } from '@/data/roles'
 import { quotationResource } from '@/data/quotation'
+import { partyResource } from '@/data/party'
 
 const router = useRouter()
 
@@ -275,7 +221,7 @@ const showNewQuotationDialog = ref(false)
 const showNoClientDialog = ref(false)
 const showNotLockedDialog = ref(false)
 const newQuotation = ref({
-  date: ''  // Will be set after getting server date
+  date: new Date().toISOString().split('T')[0]
 })
 const statusCollapsed = ref({
   Final: false,
@@ -293,13 +239,11 @@ const serverDateResource = createResource({
 // Role-based access control
 const isManager = hasRole('RUA Project Manager')
 
-// Filter quotations for current project
+// Computed
 const filteredQuotations = computed(() => {
   return quotationResource.data?.filter(q => q.project === props.projectResource.doc?.name) || []
 })
 
-
-// Group quotations by status
 const quotationsByStatus = computed(() => {
   if (!filteredQuotations.value?.length) return {}
   
@@ -313,7 +257,76 @@ const quotationsByStatus = computed(() => {
   }, {})
 })
 
+// Dialog Options
+const noClientDialogOptions = computed(() => ({
+  title: 'Missing Client',
+  message: 'A client must be added to the project before creating a quotation. Please add a client from the project overview page.',
+  size: 'sm',
+  icon: {
+    name: 'alert-triangle',
+    appearance: 'warning'
+  },
+  actions: [
+    {
+      label: 'Go to Overview',
+      variant: 'solid',
+      theme: 'warning',
+      onClick: () => {
+        router.push(`/project/${props.projectResource.doc.name}/overview`)
+      }
+    },
+    {
+      label: 'Close',
+      variant: 'subtle',
+      onClick: () => showNoClientDialog.value = false
+    }
+  ]
+}))
+
+const notLockedDialogOptions = computed(() => ({
+  title: 'Items Not Locked',
+  message: 'The project items must be locked before creating a quotation. Please lock the items from the Items page.',
+  size: 'sm',
+  icon: {
+    name: 'alert-triangle',
+    appearance: 'warning'
+  },
+  actions: [
+    {
+      label: 'Go to Items',
+      variant: 'solid',
+      theme: 'warning',
+      onClick: () => {
+        router.push(`/project/${props.projectResource.doc.name}/items`)
+      }
+    },
+    {
+      label: 'Close',
+      variant: 'subtle',
+      onClick: () => showNotLockedDialog.value = false
+    }
+  ]
+}))
+
+const newQuotationDialogOptions = computed(() => ({
+  title: 'New Quotation',
+  size: 'lg',
+  actions: [
+    {
+      label: 'Create',
+      variant: 'solid',
+      onClick: createQuotation,
+      loading: quotationResource.insert?.loading
+    },
+  ],
+}))
+
 // Methods
+function formatDate(date) {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString()
+}
+
 function formatCurrency(value) {
   if (!value) return 'AED 0'
   return `AED ${Number(value).toLocaleString()}`
@@ -339,27 +352,21 @@ function toggleStatusCollapse(status) {
 }
 
 function getPartyData(partyName) {
-  const parties = typeof props.projectResource.doc.parties === 'string'
-    ? JSON.parse(props.projectResource.doc.parties)
-    : props.projectResource.doc.parties
-  return parties?.find(p => p.name === partyName)
+  return partyResource.data?.find(p => p.name === partyName)
+}
+
+function navigateToQuotation(quotation) {
+  router.push({
+    name: 'QuotationDetails',
+    params: {
+      id: props.projectResource.doc.name,
+      quotationId: quotation.name
+    }
+  })
 }
 
 function validateAndShowQuotationDialog() {
-  let parties = []
-  try {
-    parties = props.projectResource.doc?.parties ? 
-      (typeof props.projectResource.doc.parties === 'string' ? 
-        JSON.parse(props.projectResource.doc.parties) : 
-        props.projectResource.doc.parties
-      ) : []
-  } catch (error) {
-    
-    console.error('Error parsing parties:', error)
-    showNoClientDialog.value = true
-    return
-  }
-
+  const parties = getProjectParties()
   const hasClient = parties.some(party => party.type.toLowerCase() === 'client')
   
   if (!hasClient) {
@@ -367,18 +374,34 @@ function validateAndShowQuotationDialog() {
     return
   }
 
-  const locked = props.projectResource.doc?.locked || ''
-  const isLocked = locked && 
-    locked !== '' && 
-    locked !== '[]' && 
-    locked !== '{}'
-    
+  const isLocked = checkProjectLocked()
   if (!isLocked) {
     showNotLockedDialog.value = true
     return
   }
 
   showNewQuotationDialog.value = true
+}
+
+function getProjectParties() {
+  try {
+    return props.projectResource.doc?.parties ? 
+      (typeof props.projectResource.doc.parties === 'string' ? 
+        JSON.parse(props.projectResource.doc.parties) : 
+        props.projectResource.doc.parties
+      ) : []
+  } catch (error) {
+    console.error('Error parsing parties:', error)
+    return []
+  }
+}
+
+function checkProjectLocked() {
+  const locked = props.projectResource.doc?.locked || ''
+  return locked && 
+    locked !== '' && 
+    locked !== '[]' && 
+    locked !== '{}'
 }
 
 function handleNewQuotation() {
@@ -395,10 +418,7 @@ async function createQuotation() {
   if (!props.projectResource.doc?.name) return
   
   try {
-    const parties = typeof props.projectResource.doc.parties === 'string' 
-      ? JSON.parse(props.projectResource.doc.parties) 
-      : props.projectResource.doc.parties
-
+    const parties = getProjectParties()
     const clientParty = parties.find(party => party.type.toLowerCase() === 'client')
     
     if (!clientParty) {
@@ -426,19 +446,4 @@ async function createQuotation() {
     console.error('Failed to create quotation:', error)
   }
 }
-
-// Initialize
-onMounted(async () => {
-  // Get initial server date
-  try {
-    await serverDateResource.fetch()
-    if (serverDateResource.data) {
-      newQuotation.value.date = serverDateResource.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch server date:', error)
-    // Fallback to client date if server date fails
-    newQuotation.value.date = new Date().toISOString().split('T')[0]
-  }
-})
 </script>

@@ -637,7 +637,7 @@ async function createEmployee() {
 			salary: Number(newEmployee.value.salary),
 		}
 
-		console.log('Submitting employee data:', employeeData)
+		//console.log('Submitting employee data:', employeeData)
 		await list.insert.submit(employeeData)
 
 		showNewEmployeeDialog.value = false
@@ -653,7 +653,7 @@ async function createEmployee() {
 
 		await list.reload()
 	} catch (error) {
-		console.error('Error creating employee:', error)
+		//console.error('Error creating employee:', error)
 	}
 }
 
@@ -695,13 +695,13 @@ function getInitials(name) {
 
 function handleAttendanceChange(employeeId, type) {
 	if (!attendance.value[employeeId]) {
-		console.error(`No attendance record found for employee ${employeeId}`)
+		//console.error(`No attendance record found for employee ${employeeId}`)
 		return
 	}
 
 	// Don't allow changes in read-only mode
 	if (isReadOnly.value) {
-		console.warn('Attendance is in read-only mode after 8 PM')
+		//console.warn('Attendance is in read-only mode after 8 PM')
 		return
 	}
 
@@ -726,7 +726,7 @@ function findAttendanceRecord(date) {
 
 async function initializeAttendanceData() {
 	if (!list.data?.length) {
-		console.warn('Employee list is not loaded yet')
+		//console.warn('Employee list is not loaded yet')
 		return false
 	}
 
@@ -765,7 +765,7 @@ async function loadExistingAttendance(date) {
 
 		return true
 	} catch (error) {
-		console.error('Error loading attendance:', error)
+		//console.error('Error loading attendance:', error)
 		return false
 	}
 }
@@ -774,7 +774,7 @@ async function showAttendanceDialog() {
 	try {
 		// Ensure employee list is loaded
 		if (!list.data?.length) {
-			console.error('Employee list is not loaded')
+			//console.error('Employee list is not loaded')
 			return
 		}
 
@@ -785,7 +785,7 @@ async function showAttendanceDialog() {
 			// After 8 PM, only allow viewing of existing records
 			const exists = await loadExistingAttendance(currentDate)
 			if (!exists) {
-				console.warn('No attendance record found for today')
+				//console.warn('No attendance record found for today')
 				return
 			}
 		} else {
@@ -794,7 +794,7 @@ async function showAttendanceDialog() {
 			if (!exists) {
 				const initialized = await initializeAttendanceData()
 				if (!initialized) {
-					console.error('Failed to initialize attendance data')
+					//console.error('Failed to initialize attendance data')
 					return
 				}
 			}
@@ -802,13 +802,13 @@ async function showAttendanceDialog() {
 
 		showDialog.value = true
 	} catch (error) {
-		console.error('Error showing attendance dialog:', error)
+		//console.error('Error showing attendance dialog:', error)
 	}
 }
 
 async function saveAttendance() {
 	if (isReadOnly.value) {
-		console.warn('Cannot save attendance after 8 PM')
+		//console.warn('Cannot save attendance after 8 PM')
 		return
 	}
 
@@ -833,7 +833,7 @@ async function saveAttendance() {
 		showDialog.value = false
 		await attendanceList.reload()
 	} catch (error) {
-		console.error('Error saving attendance:', error)
+		//console.error('Error saving attendance:', error)
 	}
 }
 </script>

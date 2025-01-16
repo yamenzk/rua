@@ -49,6 +49,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { FeatherIcon } from 'frappe-ui'
+import rua_pin from '../assets/rua_pin.png'
 import { useMediaQuery } from '@vueuse/core'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -131,6 +132,7 @@ function initializeMap() {
     zoomControl: false,
     dragging: true,
     scrollWheelZoom: true,
+    doubleClickZoom: false, // Disable default double-click zoom
     maxBoundsViscosity: 1.0,
     attributionControl: false
   }
@@ -153,9 +155,18 @@ function initializeMap() {
     initialZoom = 13
   }
 
-  // Initialize marker
+  // Create custom icon using imported pin image
+  const customIcon = L.icon({
+    iconUrl: rua_pin,
+    iconSize: [35, 50], // Maintaining aspect ratio (198:282) but scaled down
+    iconAnchor: [17.5, 50], // Half width and full height for bottom center anchoring
+    popupAnchor: [0, -50] // Open popup above the point
+  })
+
+  // Initialize marker with custom icon
   marker.value = L.marker(initialCoords, {
-    draggable: props.isManager
+    draggable: props.isManager,
+    icon: customIcon
   }).addTo(map.value)
 
   // Handle marker drag events for managers
@@ -165,7 +176,7 @@ function initializeMap() {
       emit('update:coords', { lat, lng })
     })
 
-    map.value.on('click', handleMapClick)
+    map.value.on('dblclick', handleMapClick)
   }
 
   map.value.setView(initialCoords, initialZoom)
@@ -176,17 +187,29 @@ function initializeMap() {
   }, 0)
 }
 
-// Handle map click for managers
+// Update handleMapClick to use custom icon
 function handleMapClick(e) {
   const { lat, lng } = e.latlng
   
   if (marker.value) {
     marker.value.setLatLng([lat, lng])
+  } else {
+    // Create marker with custom icon if it doesn't exist
+    const customIcon = L.icon({
+      iconUrl: rua_pin,
+      iconSize: [35, 50], // Maintaining aspect ratio (198:282) but scaled down
+      iconAnchor: [17.5, 50], // Half width and full height for bottom center anchoring
+      popupAnchor: [0, -50] // Open popup above the point
+    })
+    
+    marker.value = L.marker([lat, lng], {
+      draggable: props.isManager,
+      icon: customIcon
+    }).addTo(map.value)
   }
   
   emit('update:coords', { lat, lng })
 }
-
 // Watch for coordinate changes
 watch(() => coords.value, (newCoords) => {
   if (!map.value || !newCoords) return
