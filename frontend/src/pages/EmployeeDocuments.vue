@@ -1,5 +1,17 @@
 <template>
 	<div class="space-y-6 p-4">
+		<div 
+  v-if="isDraggingFile" 
+  class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-50 pointer-events-none"
+>
+  <div class="absolute inset-0 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+      <FeatherIcon name="upload-cloud" class="w-12 h-12 text-gray-400 mx-auto mb-2" />
+      <h3 class="text-lg font-medium text-gray-900">Drop your file here</h3>
+      <p class="text-sm text-gray-500">to upload a new document</p>
+    </div>
+  </div>
+</div>
 		<!-- Header with tabs -->
 		<div class="border-b">
 			<div class="flex items-center justify-between mb-4">
@@ -409,6 +421,7 @@
 				<div class="space-y-4">
 					<!-- File Upload -->
 					<FileUploader
+					
 						v-model="newDocument.file"
 						:upload-args="{
 							is_private: 0,
@@ -417,7 +430,7 @@
 						v-slot="{ openFileSelector, file, uploading, progress, error }"
 					>
 						<div
-							class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer"
+							class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
 							@click="openFileSelector"
 						>
 							<div class="flex flex-col items-center justify-center space-y-2">
@@ -676,7 +689,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick  } from 'vue'
 import { Button, Dialog, FileUploader, FormControl, FeatherIcon } from 'frappe-ui'
 import { documentResource } from '@/data/document'
 import { hasRole } from '@/data/roles'
@@ -755,6 +768,7 @@ const selectedDocuments = ref([])
 const showEditDialog = ref(false)
 const editingDocument = ref(null)
 const isLongPress = ref(false)
+const isDraggingFile = ref(false)
 const touchStartPosition = ref({ x: 0, y: 0 })
 const touchMoved = ref(false)
 const mergeFileName = ref('')
@@ -1131,6 +1145,72 @@ function handleCardInteraction(doc, event) {
     openEditDialog(doc)
   }
 }
+function setupDragDropHandlers() {
+  const container = document.querySelector('.space-y-6')
+  if (!container) return
+
+  const handleDragEnter = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.types.includes('Files')) {
+      isDraggingFile.value = true
+    }
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Only reset if we're leaving the main container, not entering a child
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      isDraggingFile.value = false
+    }
+  }
+
+  async function handleDrop(e) {
+  e.preventDefault()
+  e.stopPropagation()
+  isDraggingFile.value = false
+
+  const files = Array.from(e.dataTransfer.files)
+  if (files.length > 0) {
+    const file = files[0]
+    
+    showUploadDialog.value = true
+    
+    await nextTick()
+
+    const fileInput = document.querySelector('input[type="file"].hidden')
+    
+    if (fileInput) {
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(file)
+      
+      fileInput.files = dataTransfer.files
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+    
+    newDocument.value.document_name = file.name.split('.')[0]
+  }
+}
+
+  container.addEventListener('dragenter', handleDragEnter)
+  container.addEventListener('dragover', handleDragOver)
+  container.addEventListener('dragleave', handleDragLeave)
+  container.addEventListener('drop', handleDrop)
+
+  // Cleanup
+  onUnmounted(() => {
+    container.removeEventListener('dragenter', handleDragEnter)
+    container.removeEventListener('dragover', handleDragOver)
+    container.removeEventListener('dragleave', handleDragLeave)
+    container.removeEventListener('drop', handleDrop)
+  })
+}
 
 function setupTouchHandlers() {
   // Get the container element that holds all cards
@@ -1350,6 +1430,7 @@ watch(
 
 onMounted(() => {
   setupTouchHandlers()
+  setupDragDropHandlers()
 })
 
 </script>
