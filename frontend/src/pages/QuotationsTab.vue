@@ -24,7 +24,7 @@
       <LoadingIndicator />
     </div>
     
-    <div v-else class="overflow-x-auto">
+    <div v-else class="overflow-x-auto min-h-[60vh]">
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">

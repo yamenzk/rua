@@ -14,23 +14,38 @@ const routes = [
         component: () => import('@/pages/Home.vue'),
       },
       {
-        name: 'Projects',
         path: 'projects',
+        name: 'Projects',
         component: () => import('@/pages/Projects.vue'),
       },
       {
-        name: 'Inventory',
+        // Redirect /project to /projects
+        path: 'project',
+        redirect: { name: 'Projects' }
+      },
+      {
         path: 'inventory',
+        name: 'Inventory',
         component: () => import('@/pages/Inventory.vue'),
       },
       {
-        name: 'Employees',
         path: 'employees',
+        name: 'Employees',
         component: () => import('@/pages/Employees.vue'),
       },
       {
-        name: 'Settings',
+        // Redirect /employee to /employees
+        path: 'employee',
+        redirect: { name: 'Employees' }
+      },
+      {
+        path: 'parties',
+        name: 'Parties',
+        component: () => import('@/pages/Parties.vue'),
+      },
+      {
         path: 'settings',
+        name: 'Settings',
         component: () => import('@/pages/Settings.vue'),
       },
     ],
@@ -40,6 +55,11 @@ const routes = [
     component: () => import('@/layouts/ProjectLayout.vue'),
     meta: { requiresAuth: true },
     children: [
+      {
+        // Redirect /project/:id to /project/:id/overview
+        path: '',
+        redirect: to => ({ name: 'ProjectOverview', params: { id: to.params.id }})
+      },
       {
         path: 'overview',
         name: 'ProjectOverview',
@@ -73,6 +93,11 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
+        // Redirect /employee/:id to /employee/:id/overview
+        path: '',
+        redirect: to => ({ name: 'EmployeeOverview', params: { id: to.params.id }})
+      },
+      {
         path: 'overview',
         name: 'EmployeeOverview',
         component: () => import('@/pages/EmployeeOverview.vue'),
@@ -83,9 +108,9 @@ const routes = [
         component: () => import('@/pages/EmployeeAttendance.vue'),
       },
       {
-        path: 'files',
-        name: 'EmployeeFiles',
-        component: () => import('@/pages/EmployeeFiles.vue'),
+        path: 'documents',
+        name: 'EmployeeDocuments',
+        component: () => import('@/pages/EmployeeDocuments.vue'),
       }
     ],
   },
@@ -94,6 +119,13 @@ const routes = [
     path: '/account/login',
     component: () => import('@/pages/Login.vue'),
   },
+  // 404 route - must be last
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/pages/NotFound.vue'),
+    // No requiresAuth meta to ensure 404 is shown even when not logged in
+  }
 ]
 
 let router = createRouter({
@@ -107,6 +139,12 @@ router.beforeEach(async (to, from, next) => {
     await userResource.promise
   } catch (error) {
     isLoggedIn = false
+  }
+
+  // Allow NotFound page to be accessed regardless of auth status
+  if (to.name === 'NotFound') {
+    next()
+    return
   }
 
   if (to.name === 'Login' && isLoggedIn) {

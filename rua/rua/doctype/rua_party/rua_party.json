@@ -42,8 +42,9 @@
   },
   {
    "fieldname": "phone",
-   "fieldtype": "Phone",
-   "label": "Phone"
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
   },
   {
    "fieldname": "email",
@@ -87,7 +88,7 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-13 18:05:37.865902",
+ "modified": "2025-01-16 15:16:27.041006",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Party",

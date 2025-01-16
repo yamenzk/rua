@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "1.9.14",
+    "@pdf-lib/upng": "^1.0.1",
     "@tiptap/core": "^2.0.0",
     "@tiptap/pm": "^2.7.0",
     "@univerjs/presets": "^0.5.4",
-    "@vueuse/core": "^12.3.0",
+    "@vueuse/core": "^12.4.0",
     "feather-icons": "^4.29.2",
     "frappe-ui": "^0.1.98",
     "leaflet": "^1.9.4",
@@ -21,12 +22,14 @@
     "ol": "^10.0.0",
     "ol-contextmenu": "^5.4.0",
     "ol-ext": "^4.0.21",
+    "pdf-lib": "^1.17.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "rxjs": "^7.8.1",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5",
-    "vue3-openlayers": "^11.3.0"
+    "vue3-openlayers": "^11.3.0",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.4",

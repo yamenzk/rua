@@ -7,6 +7,7 @@ import { projectResource } from "./project"
 import { userResource } from "./user"
 import { userRoles } from "./roles"
 import { quotationResource } from "./quotation"
+import { documentResource } from "./document"
 
 export const resources = {
   user: userResource,
@@ -16,7 +17,8 @@ export const resources = {
   employee: employeeResource,
   attendance: attendanceResource,
   chat: chatResource,
-  quotation: quotationResource
+  quotation: quotationResource,
+  document: documentResource
 }
 
 export const reloadResources = async () => {

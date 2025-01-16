@@ -1,10 +1,10 @@
 import router from "@/router"
 import { createListResource } from "frappe-ui"
 
-export const attendanceResource = createListResource({
-    doctype: 'RUA Attendance',
+export const documentResource = createListResource({
+    doctype: 'RUA Document',
     fields: ['*'],
-	cache: ['rua:attendance'],
+	cache: ['rua:document'],
 	start: 0,
 	pageLength: 99999999,
 	onError(error) {

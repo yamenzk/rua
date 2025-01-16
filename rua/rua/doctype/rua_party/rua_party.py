@@ -2,12 +2,13 @@
 # For license information, please see license.txt
 
 # import frappe
+import rua
 from frappe.model.document import Document
 
 
 class RUAParty(Document):
 	def publish_update(self):
-		rua.refetch_resource("rua:party", self.name)
+		rua.refetch_resource("rua:party")
 
 	def on_update(self):
 		self.publish_update()

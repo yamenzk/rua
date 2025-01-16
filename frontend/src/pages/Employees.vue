@@ -73,6 +73,7 @@
 		<!-- Attendance Dialog -->
 		<Dialog
 			v-model="showDialog"
+			style="z-index: 999999 !important"
 			:options="{
 				title: 'Daily Attendance',
 				size: 'xl',
@@ -221,6 +222,7 @@
 		<!-- New Employee Dialog -->
 		<Dialog
 			v-model="showNewEmployeeDialog"
+			style="z-index: 999999 !important"
 			:options="{
 				title: 'Add New Employee',
 				size: 'lg',
@@ -347,6 +349,7 @@
 		<!-- Filter Dialog -->
 		<Dialog
 			v-model="showFilterDialog"
+			style="z-index: 999999 !important"
 			:options="{
 				title: 'Add Filter',
 				icon: {
@@ -429,6 +432,8 @@ import countries from '../data/countries.json'
 import flags from '../data/flags.json'
 import { employeeResource } from '../data/employee'
 import { attendanceResource } from '../data/attendance'
+import { partyResource } from '../data/party'
+import { genderOptions, positionOptions } from '../data/employeeOptions'
 
 const router = useRouter()
 
@@ -494,11 +499,6 @@ const newFilter = ref({
 	value: '',
 })
 
-// Options
-const genderOptions = [
-	{ label: 'Male', value: 'Male' },
-	{ label: 'Female', value: 'Female' },
-]
 
 const fieldOptions = [
 	{ label: 'Creation Date', value: 'creation', sortOnly: true },
@@ -528,28 +528,6 @@ const countryOptions = countries.map((country) => ({
 	value: country.alpha2,
 }))
 
-const positionOptions = [
-	'CEO',
-	'Operations Manager',
-	'Production Supervisor',
-	'Glass Fabricator',
-	'Aluminum Fabricator',
-	'CNC Operator',
-	'Quality Control Inspector',
-	'Installation Team Leader',
-	'Installer',
-	'Driver',
-	'Sales Manager',
-	'Sales Representative',
-	'Accountant',
-	'HR Manager',
-	'Warehouse Supervisor',
-	'Warehouse Worker',
-	'Maintenance Technician',
-].map((position) => ({
-	label: position,
-	value: position,
-}))
 
 const list = employeeResource
 
@@ -771,6 +749,7 @@ async function loadExistingAttendance(date) {
 }
 
 async function showAttendanceDialog() {
+	console.log(partyResource)
 	try {
 		// Ensure employee list is loaded
 		if (!list.data?.length) {

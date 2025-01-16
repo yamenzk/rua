@@ -46,8 +46,8 @@
             v-for="item in navigation"
             :key="item.name"
             :to="item.to"
-            class="flex flex-col items-center px-2 py-1 text-gray-700"
-            :class="{ 'text-blue-600': $route.path === item.to }"
+            class="flex flex-col items-center px-2 py-1"
+            :class="{ 'text-gray-900': $route.path === item.to, 'text-gray-500': $route.path !== item.to }"
           >
             <FeatherIcon
               :name="item.icon"
@@ -82,6 +82,7 @@ const navigation = [
   { name: 'Projects', to: '/projects', icon: 'briefcase' },
   { name: 'Inventory', to: '/inventory', icon: 'box' },
   { name: 'Employees', to: '/employees', icon: 'users' },
+  { name: 'Parties', to: '/parties', icon: 'truck' },
   { name: 'Settings', to: '/settings', icon: 'settings' },
 ]
 </script>

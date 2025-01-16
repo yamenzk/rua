@@ -93,8 +93,8 @@
             v-for="item in navigation"
             :key="item.name"
             :to="item.to"
-            class="flex flex-col items-center px-2 py-1 text-gray-700"
-            :class="{ 'text-blue-600': route.path === item.to }"
+            class="flex flex-col items-center px-2 py-1"
+            :class="{ 'text-gray-900': route.path === item.to, 'text-gray-500': route.path !== item.to }"
           >
             <FeatherIcon :name="item.icon" class="h-6 w-6" />
             <span class="text-xs mt-1">{{ item.name }}</span>
