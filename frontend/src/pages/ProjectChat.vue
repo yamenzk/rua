@@ -230,6 +230,10 @@ import { session } from '@/data/session'
 import { Avatar, Button, FeatherIcon, Badge } from 'frappe-ui'
 import { chatResource } from '@/data/chat'
 import { hasRole } from '@/data/roles'
+import { quotationResource } from '@/data/quotation'
+import { rfqResource } from '@/data/rfq'
+import { lpoResource } from '@/data/lpo'
+import { employeeResource } from '@/data/employee'
 
 
 // Props
@@ -249,15 +253,61 @@ const chatContainer = ref(null)
 const showReferencesList = ref(false)
 const showUsersList = ref(false)
 const filteredUsers = ref([])
-const references = ref(null)
 const filteredReferences = ref([])
 const cursorPosition = ref(0)
 const inputRef = ref(null)
-const users = ref(null)
 
 // Computed
 const messages = computed(() => {
   return chatResource.data?.filter(msg => msg.project === props.projectResource.doc?.name) || []
+})
+
+const references = computed(() => {
+  const projectName = props.projectResource.doc?.name
+  if (!projectName) return []
+
+  const quotations = (quotationResource.data || [])
+    .filter(q => q.project === projectName)
+    .map(q => ({
+      name: q.name,
+      doctype: 'RUA Quotation',
+      party: q.party,
+      date: q.date,
+      link: `/project/${projectName}/documents/quotation/${q.name}`
+    }))
+
+  const rfqs = (rfqResource.data || [])
+    .filter(r => r.project === projectName)
+    .map(r => ({
+      name: r.name,
+      doctype: 'RUA RFQ',
+      party: r.party,
+      date: r.date,
+      link: `/project/${projectName}/documents/rfq/${r.name}`
+    }))
+
+  const lpos = (lpoResource.data || [])
+    .filter(l => l.project === projectName)
+    .map(l => ({
+      name: l.name,
+      doctype: 'RUA LPO',
+      party: l.party,
+      date: l.date,
+      link: `/project/${projectName}/documents/lpo/${l.name}`
+    }))
+
+  return [...quotations, ...rfqs, ...lpos]
+})
+
+const users = computed(() => {
+  return (employeeResource.data || [])
+    .filter(u => u.user && u.user !== session.user)
+    .map(u => ({
+      name: u.user,
+      employee_name: u.employee_name,
+      image: u.image,
+      user: u.user
+    }))
 })
 
 const isMessageEmpty = computed(() => !newMessage.value || !newMessage.value.trim())
@@ -342,14 +392,12 @@ async function sendMessage() {
 
 
 function filterUsers(searchTerm) {
-  const userData = users.value?.data || []
-  
-  filteredUsers.value = userData.filter(
-    (user) =>
+  filteredUsers.value = users.value
+    .filter(user => 
       user.employee_name.toLowerCase().includes(searchTerm) ||
       user.name.toLowerCase().includes(searchTerm) ||
       user.user.toLowerCase().includes(searchTerm)
-  )
+    )
 }
 
 function handleInput(event) {
@@ -433,15 +481,12 @@ function handleKeydown(event) {
 }
 
 function filterReferences(searchTerm) {
-	// Adjust how we access references data
-	const refData = references.value?.data || []
-
-	filteredReferences.value = refData.filter(
-		(ref) =>
-			ref.name.toLowerCase().includes(searchTerm) ||
-			ref.party.toLowerCase().includes(searchTerm) ||
-			ref.doctype.toLowerCase().includes(searchTerm),
-	)
+  filteredReferences.value = references.value
+    .filter(ref =>
+      ref.name.toLowerCase().includes(searchTerm) ||
+      ref.party.toLowerCase().includes(searchTerm) ||
+      ref.doctype.toLowerCase().includes(searchTerm)
+    )
 }
 
 function selectReference(ref) {
@@ -473,10 +518,10 @@ function formatReferenceDate(dateString) {
 }
 
 function formatMessageWithReferences(message, isUserMessage = false, isSystemMessage = false) {
-	if (!message) return ''
+  if (!message) return ''
 
-	const refData = references.value?.data || []
-	const userData = users.value?.data || []
+  const refData = references.value || []
+  const userData = users.value || []
 
 	// Replace references first
 	let formattedMessage = message.replace(/#([A-Z0-9-]+)/g, (match, reference) => {
@@ -534,47 +579,7 @@ function scrollToBottom() {
 	})
 }
 
-function initializeResources() {
-  if (!props.projectResource?.doc?.name) return
 
-  // Initialize users resource
-  users.value = createResource({
-    url: 'rua.api.get_all_users',
-    method: 'GET',
-    params: {
-      project: props.projectResource.doc.name,
-    },
-    transform(response) {
-      return response.data || response || []
-    }
-  })
-
-  // Initialize references resource
-  references.value = createResource({
-    url: 'rua.api.get_project_refs',
-    method: 'GET',
-    params: {
-      project: props.projectResource.doc.name,
-    },
-    transform(response) {
-      return response.data || response || []
-    }
-  })
-
-  // Fetch initial data
-  users.value.fetch()
-  references.value.fetch()
-}
-
-watch(
-  () => props.projectResource.doc?.name,
-  (projectName) => {
-    if (projectName) {
-      initializeResources()
-    }
-  },
-  { immediate: true }
-)
 
 // Watch for new messages to scroll
 watch(

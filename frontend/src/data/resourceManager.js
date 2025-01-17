@@ -8,6 +8,8 @@ import { userResource } from "./user"
 import { userRoles } from "./roles"
 import { quotationResource } from "./quotation"
 import { documentResource } from "./document"
+import { rfqResource } from "./rfq"
+import { lpoResource } from "./lpo"
 
 export const resources = {
   user: userResource,
@@ -18,7 +20,9 @@ export const resources = {
   attendance: attendanceResource,
   chat: chatResource,
   quotation: quotationResource,
-  document: documentResource
+  document: documentResource,
+  rfq: rfqResource,
+  lpo: lpoResource
 }
 
 export const reloadResources = async () => {

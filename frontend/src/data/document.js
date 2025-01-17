@@ -6,10 +6,5 @@ export const documentResource = createListResource({
     fields: ['*'],
 	cache: ['rua:document'],
 	start: 0,
-	pageLength: 99999999,
-	onError(error) {
-		if (error && error.exc_type === "AuthenticationError") {
-			router.push("/login")
-		}
-	},
+	pageLength: 99999999
 })

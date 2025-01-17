@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-01-17 20:11:04.801855",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "party",
+  "remarks",
+  "column_break_zswp",
+  "date",
+  "naming_series",
+  "status",
+  "type",
+  "final_lpo",
+  "section_break_vrot",
+  "items",
+  "section_break_gtgw",
+  "total_items",
+  "column_break_bazd",
+  "total_amount",
+  "vat_amount",
+  "grand_total"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "RUA Project"
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "label": "Party",
+   "options": "RUA Party"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "column_break_zswp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "default": "RC-LPO-.YY.",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "RC-LPO-.YY."
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nFinal\nCancelled"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nAluminum\nGlass\nMaterial"
+  },
+  {
+   "fieldname": "section_break_vrot",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "final_lpo",
+   "fieldtype": "Attach",
+   "label": "Final LPO"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "RUA LPO Items"
+  },
+  {
+   "fieldname": "section_break_gtgw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_items",
+   "fieldtype": "Int",
+   "label": "Total Items"
+  },
+  {
+   "fieldname": "column_break_bazd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "precision": "2"
+  },
+  {
+   "fieldname": "vat_amount",
+   "fieldtype": "Currency",
+   "label": "VAT Amount",
+   "precision": "2"
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "label": "Grand Total",
+   "precision": "2"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-01-17 21:17:11.339287",
+ "modified_by": "Administrator",
+ "module": "Rua",
+ "name": "RUA LPO",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

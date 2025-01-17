@@ -1,0 +1,119 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-01-17 20:03:33.880164",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "column_break_ndlv",
+  "party",
+  "project",
+  "date",
+  "remarks",
+  "column_break_rcin",
+  "type",
+  "status",
+  "naming_series",
+  "supplier_quotation",
+  "link",
+  "section_break_eqjh",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "column_break_ndlv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_rcin",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nAluminum\nGlass\nMaterial\nLink"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nQuotation Received\nCancelled"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "RC-RFQ-.YY."
+  },
+  {
+   "fieldname": "section_break_eqjh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "RUA RFQ Items"
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "label": "Party",
+   "options": "RUA Party"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "RUA Project"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "supplier_quotation",
+   "fieldtype": "Attach",
+   "label": "Supplier Quotation"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "link",
+   "fieldtype": "Data",
+   "label": "Link"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-01-17 20:15:13.619863",
+ "modified_by": "Administrator",
+ "module": "Rua",
+ "name": "RUA RFQ",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

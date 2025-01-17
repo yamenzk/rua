@@ -79,11 +79,59 @@ const routes = [
         path: 'documents',
         name: 'ProjectDocuments',
         component: () => import('@/pages/ProjectDocuments.vue'),
+        children: [
+          {
+            path: '',
+            name: 'ProjectDocumentsDefault',
+            redirect: to => ({ name: 'ProjectDocumentsQuotations', params: { id: to.params.id }})
+          },
+          {
+            path: 'quotations',
+            name: 'ProjectDocumentsQuotations',
+            component: () => import('@/pages/ProjectDocuments.vue'),
+            props: { defaultTab: 'quotations' }
+          },
+          {
+            path: 'proformas',
+            name: 'ProjectDocumentsProformas',
+            component: () => import('@/pages/ProjectDocuments.vue'),
+            props: { defaultTab: 'proformas' }
+          },
+          {
+            path: 'invoices',
+            name: 'ProjectDocumentsInvoices',
+            component: () => import('@/pages/ProjectDocuments.vue'),
+            props: { defaultTab: 'invoices' }
+          },
+          {
+            path: 'rfqs',
+            name: 'ProjectDocumentsRFQs',
+            component: () => import('@/pages/ProjectDocuments.vue'),
+            props: { defaultTab: 'rfqs' }
+          },
+          {
+            path: 'purchase-orders',
+            name: 'ProjectDocumentsPurchaseOrders',
+            component: () => import('@/pages/ProjectDocuments.vue'),
+            props: { defaultTab: 'purchaseOrders' }
+          },
+          {
+            path: 'payments',
+            name: 'ProjectDocumentsPayments',
+            component: () => import('@/pages/ProjectDocuments.vue'),
+            props: { defaultTab: 'payments' }
+          }
+        ]
       },
       {
         path: 'documents/quotation/:quotationId',
         name: 'QuotationDetails',
         component: () => import('@/pages/QuotationDetails.vue'),
+      },
+      {
+        path: 'documents/lpo/:lpoId',
+        name: 'LPODetails',
+        component: () => import('@/pages/LPODetails.vue'),
       },
     ],
   },

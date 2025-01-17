@@ -11,7 +11,8 @@
         <div class="flex space-x-2 py-2 min-w-max">
           <TabButtons
             :buttons="documentTabs"
-            v-model="currentTab"
+            :modelValue="currentTab"
+            @update:modelValue="handleTabChange"
             class="w-full"
           >
             <template #button="{ button, active }">
@@ -46,33 +47,19 @@
       leave-to-class="opacity-0"
     >
       <div>
-        <!-- Dynamic Content Based on Tab -->
-        <QuotationsTab 
-          v-if="currentTab === 'quotations'"
+        <component 
+          :is="getCurrentTabComponent"
           :projectResource="projectResource"
-          :key="'quotations'"
+          :key="currentTab"
         />
-        
-        <!-- Placeholder components for other tabs -->
-        <template v-else>
-          <div class="bg-white rounded-lg border p-6">
-            <div class="flex flex-col items-center justify-center py-12">
-              <FeatherIcon 
-                :name="getCurrentTabIcon" 
-                class="w-12 h-12 text-gray-400 mb-4" 
-              />
-              <p class="text-base font-medium text-gray-900">{{ getCurrentTabLabel }} Coming Soon</p>
-              <p class="text-sm text-gray-600">This feature is under development.</p>
-            </div>
-          </div>
-        </template>
       </div>
     </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, defineComponent, h } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { 
   FeatherIcon, 
   TabButtons, 
@@ -81,6 +68,11 @@ import {
 } from 'frappe-ui'
 import { quotationResource } from '@/data/quotation'
 import QuotationsTab from './QuotationsTab.vue'
+import PurchaseOrdersTab from './PurchaseOrdersTab.vue'
+import ComingSoon from '../components/ComingSoon.vue'
+
+const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
   projectResource: {
@@ -89,45 +81,75 @@ const props = defineProps({
     validator: (value) => {
       return value && typeof value === 'object' && 'doc' in value
     }
+  },
+  defaultTab: {
+    type: String,
+    default: 'quotations'
   }
 })
-
-// State
-const currentTab = ref('quotations')
 
 // Tab Definitions
 const documentTabs = [
   { 
     label: 'Quotations', 
     value: 'quotations',
-    icon: 'file-text'
+    icon: 'file-text',
+    route: 'ProjectDocumentsQuotations'
   },
   { 
     label: 'Proformas', 
     value: 'proformas',
-    icon: 'clipboard'
+    icon: 'clipboard',
+    route: 'ProjectDocumentsProformas'
   },
   { 
     label: 'Invoices', 
     value: 'invoices',
-    icon: 'file'
+    icon: 'file',
+    route: 'ProjectDocumentsInvoices'
   },
   { 
     label: 'RFQs', 
     value: 'rfqs',
-    icon: 'help-circle'
+    icon: 'help-circle',
+    route: 'ProjectDocumentsRFQs'
   },
   { 
     label: 'Purchase Orders', 
     value: 'purchaseOrders',
-    icon: 'shopping-cart'
+    icon: 'shopping-cart',
+    route: 'ProjectDocumentsPurchaseOrders'
   },
   { 
     label: 'Payments', 
     value: 'payments',
-    icon: 'credit-card'
+    icon: 'credit-card',
+    route: 'ProjectDocumentsPayments'
   },
 ]
+
+// Initialize currentTab based on route
+const initialTab = computed(() => {
+  const currentRoute = route.name
+  const matchingTab = documentTabs.find(tab => tab.route === currentRoute)
+  return matchingTab ? matchingTab.value : props.defaultTab
+})
+
+// State
+const currentTab = ref(initialTab.value)
+
+// Watch for route changes
+watch(() => route.name, (newRouteName) => {
+  const tab = documentTabs.find(tab => tab.route === newRouteName)
+  if (tab) {
+    currentTab.value = tab.value
+  }
+})
+
+// Watch for prop changes
+watch(() => props.defaultTab, (newTab) => {
+  currentTab.value = newTab
+})
 
 // Computed Properties
 const getCurrentTabIcon = computed(() => {
@@ -139,6 +161,40 @@ const getCurrentTabLabel = computed(() => {
   const tab = documentTabs.find(tab => tab.value === currentTab.value)
   return tab?.label || 'Tab'
 })
+
+const getCurrentTabComponent = computed(() => {
+  const components = {
+    quotations: QuotationsTab,
+    purchaseOrders: PurchaseOrdersTab
+  }
+
+  const component = components[currentTab.value]
+  if (component) {
+    return component
+  }
+
+  // Return ComingSoon component with current tab props
+  return defineComponent({
+    setup() {
+      return () => h(ComingSoon, {
+        icon: getCurrentTabIcon.value,
+        label: getCurrentTabLabel.value,
+        projectResource: props.projectResource
+      })
+    }
+  })
+})
+
+// Methods
+function handleTabChange(newTab) {
+  const tab = documentTabs.find(tab => tab.value === newTab)
+  if (tab) {
+    router.push({
+      name: tab.route,
+      params: { id: route.params.id }
+    })
+  }
+}
 
 // Get count for badges
 function getTabCount(tabValue) {

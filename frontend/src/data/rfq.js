@@ -1,10 +1,10 @@
 import router from "@/router"
 import { createListResource } from "frappe-ui"
 
-export const quotationResource = createListResource({
-    doctype: 'RUA Quotation',
+export const rfqResource = createListResource({
+    doctype: 'RUA RFQ',
     fields: ['*'],
-	cache: ['rua:quotation'],
+	cache: ['rua:rfq'],
 	start: 0,
 	pageLength: 99999999
 })

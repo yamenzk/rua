@@ -6,10 +6,5 @@ export const attendanceResource = createListResource({
     fields: ['*'],
 	cache: ['rua:attendance'],
 	start: 0,
-	pageLength: 99999999,
-	onError(error) {
-		if (error && error.exc_type === "AuthenticationError") {
-			router.push("/login")
-		}
-	},
+	pageLength: 99999999
 })

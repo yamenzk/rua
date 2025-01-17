@@ -1,7 +1,7 @@
-# QuotationDetails.vue
+# LPODetails.vue
 <template>
   <!-- Loading State -->
-  <div v-if="!quotationResource?.doc || quotationResource?.loading" class="flex items-center justify-center min-h-[60vh]">
+  <div v-if="!lpoResource?.doc || lpoResource?.loading" class="flex items-center justify-center min-h-[60vh]">
     <LoadingIndicator />
   </div>
 
@@ -11,21 +11,21 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
           <!-- Back Button -->
-          <Button @click="router.push(`/project/${projectResource.doc.name}/documents/quotations`)">
+          <Button @click="router.push(`/project/${projectResource.doc.name}/documents/purchase-orders`)">
             <template #prefix>
               <FeatherIcon name="arrow-left" class="w-4 h-4" />
             </template>
-            <span class="hidden md:inline">Back to Quotations</span>
+            <span class="hidden md:inline">Back to Purchase Orders</span>
           </Button>
 
           <!-- Document Info -->
           <div class="flex flex-col">
             <h1 class="text-xl font-bold text-gray-900">
-              {{ quotationResource.doc.name }}
+              {{ lpoResource.doc.name }}
             </h1>
             <p class="text-sm text-gray-600">
-              Created on {{ formatDate(quotationResource.doc.creation) }} by
-              {{ quotationResource.doc.owner }}
+              Created on {{ formatDate(lpoResource.doc.creation) }} by
+              {{ lpoResource.doc.owner }}
             </p>
           </div>
         </div>
@@ -34,12 +34,12 @@
         <div class="flex items-center gap-3">
           <!-- Status Badge -->
           <Badge
-            :variant="quotationResource.doc.status === 'Final' ? 'solid' : 'subtle'"
-            :theme="getStatusVariant(quotationResource.doc.status)"
+            :variant="lpoResource.doc.status === 'Final' ? 'solid' : 'subtle'"
+            :theme="getStatusVariant(lpoResource.doc.status)"
             class="cursor-pointer"
             @click="showStatusDialog = true"
           >
-            {{ quotationResource.doc.status }}
+            {{ lpoResource.doc.status }}
           </Badge>
 
           <!-- Actions Dropdown -->
@@ -59,10 +59,10 @@
       <!-- Summary Section -->
       <div class="space-y-6">
         <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Quotation Details</h2>
+          <h2 class="text-xl font-semibold">Purchase Order Details</h2>
           <div class="text-sm text-gray-600">
-            Last modified: {{ formatDate(quotationResource.doc.modified) }} by
-            {{ quotationResource.doc.modified_by }}
+            Last modified: {{ formatDate(lpoResource.doc.modified) }} by
+            {{ lpoResource.doc.modified_by }}
           </div>
         </div>
 
@@ -76,7 +76,7 @@
                 <img
                   v-if="partyData?.image"
                   :src="partyData.image"
-                  :alt="quotationResource.doc.party"
+                  :alt="lpoResource.doc.party"
                   class="w-16 h-16 rounded-lg object-cover"
                 />
                 <div
@@ -92,11 +92,13 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <h3 class="text-lg font-medium text-gray-900">
-                      {{ quotationResource.doc.party }}
+                      {{ lpoResource.doc.party }}
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                      Quotation Date:
-                      {{ formatDate(quotationResource.doc.date, true) }}
+                      LPO Date: {{ formatDate(lpoResource.doc.date, true) }}
+                    </p>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Type: {{ lpoResource.doc.type }}
                     </p>
                   </div>
                 </div>
@@ -110,7 +112,7 @@
               <label class="text-sm font-medium text-gray-600">Total Items</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ quotationResource.doc.total_items }}
+                  {{ lpoResource.doc.total_items }}
                 </span>
               </div>
             </div>
@@ -118,7 +120,7 @@
               <label class="text-sm font-medium text-gray-600">Net Total</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(quotationResource.doc.total) }}
+                  {{ formatCurrency(lpoResource.doc.total_amount) }}
                 </span>
               </div>
             </div>
@@ -126,15 +128,15 @@
               <label class="text-sm font-medium text-gray-600">Grand Total</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(quotationResource.doc.grand_total) }}
+                  {{ formatCurrency(lpoResource.doc.grand_total) }}
                 </span>
               </div>
             </div>
           </div>
 
-          <!-- Rejection Notice -->
+          <!-- Cancellation Notice -->
           <div
-            v-if="quotationResource.doc.status === 'Rejected'"
+            v-if="lpoResource.doc.status === 'Cancelled'"
             class="p-6 bg-red-50 border-t"
           >
             <div class="flex items-start">
@@ -142,23 +144,23 @@
                 <FeatherIcon name="alert-circle" class="w-5 h-5 text-red-400" />
               </div>
               <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Rejection Reason</h3>
+                <h3 class="text-sm font-medium text-red-800">Cancellation Remarks</h3>
                 <div class="mt-2 text-sm text-red-700">
-                  {{ quotationResource.doc.reject_reason }}
+                  {{ lpoResource.doc.remarks }}
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Signed Document Preview -->
+          <!-- Final LPO Preview -->
           <div
-            v-if="quotationResource.doc.status === 'Final' && quotationResource.doc.signed_document"
+            v-if="lpoResource.doc.status === 'Final' && lpoResource.doc.final_lpo"
             class="border-t"
           >
             <div class="p-6">
-              <h3 class="text-sm font-medium text-gray-900 mb-4">Signed Document</h3>
+              <h3 class="text-sm font-medium text-gray-900 mb-4">Final LPO Document</h3>
               <iframe
-                :src="quotationResource.doc.signed_document"
+                :src="lpoResource.doc.final_lpo"
                 class="w-full h-[1200px] border rounded-lg"
                 frameborder="0"
               ></iframe>
@@ -168,14 +170,17 @@
       </div>
 
       <!-- Items List -->
-      <QuotationItems 
-        :items="quotationResource.doc.items"
-        :totals="{
-          net: quotationResource.doc.total,
-          vat: quotationResource.doc.vat_amount,
-          grand: quotationResource.doc.grand_total
-        }"
-      />
+      <LPOItems 
+  :items="lpoResource.doc.items"
+  :type="lpoResource.doc.type"
+  :status="lpoResource.doc.status"
+  :lpo-name="lpoResource.doc.name"
+  :totals="{
+    net: lpoResource.doc.total_amount,
+    vat: lpoResource.doc.vat_amount,
+    grand: lpoResource.doc.grand_total
+  }"
+/>
     </div>
   </div>
 
@@ -190,11 +195,11 @@
         <!-- Status Selection -->
         <div class="space-y-4">
           <label class="block text-sm font-medium text-gray-700">
-            {{ hasAvailableStatuses ? 'Change Status' : 'Status' }}
+            {{ hasAvailableStatuses ? 'Change Status' : 'Cancelled' }}
           </label>
 
           <div v-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
-            Reason: {{ quotationResource.doc.reject_reason }}.
+            {{ lpoResource.doc.remarks }}
           </div>
 
           <div v-else class="space-y-3">
@@ -218,12 +223,12 @@
             </div>
           </div>
 
-          <!-- Rejection Reason -->
-          <div v-if="newStatus === 'Rejected'" class="mt-4">
+          <!-- Cancellation Remarks -->
+          <div v-if="newStatus === 'Cancelled'" class="mt-4">
             <Textarea
-              v-model="rejectReason"
-              label="Rejection Reason"
-              placeholder="Please provide a reason for rejection"
+              v-model="remarks"
+              label="Cancellation Remarks"
+              placeholder="Please provide a reason for cancellation"
               variant="outline"
               size="sm"
               class="w-full"
@@ -236,11 +241,11 @@
           </div>
         </div>
 
-        <!-- Signed Document Upload -->
+        <!-- Final LPO Upload -->
         <div v-if="newStatus === 'Final'" class="space-y-4">
-          <div class="text-sm font-medium text-gray-700">Signed Document</div>
+          <div class="text-sm font-medium text-gray-700">Final LPO Document</div>
           <FileUploader
-            v-model="signedDocument"
+            v-model="finalLPO"
             :accept="['application/pdf']"
             :max-size="5000000"
             :upload-args="uploadArgs"
@@ -269,7 +274,7 @@
                     <button
                       v-if="!uploading"
                       class="text-sm text-red-500 hover:text-red-700"
-                      @click.stop="signedDocument = null"
+                      @click.stop="finalLPO = null"
                     >
                       Remove
                     </button>
@@ -298,6 +303,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createDocumentResource } from 'frappe-ui'
+import { partyResource } from '@/data/party'
 import {
   Button,
   Badge,
@@ -305,17 +311,14 @@ import {
   Tooltip,
   Dropdown,
   Dialog,
-  FormControl,
   Textarea,
   FileUploader,
   LoadingIndicator
 } from 'frappe-ui'
 import { inject } from 'vue'
-import { partyResource } from '@/data/party'
-import QuotationItems from './QuotationItems.vue'
-import { formatDate, formatCurrency, formatNumber } from '@/utils/format'
+import LPOItems from './LPOItems.vue'
+import { formatDate, formatCurrency } from '@/utils/format'
 
-const $socket = inject('$socket')
 const props = defineProps({
   projectResource: {
     type: Object,
@@ -330,22 +333,22 @@ const route = useRoute()
 const router = useRouter()
 
 // State Management
-const quotationResource = ref(null)
+const lpoResource = ref(null)
 const showStatusDialog = ref(false)
 const newStatus = ref('')
 const statusError = ref('')
-const signedDocument = ref(null)
+const finalLPO = ref(null)
 const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
-const rejectReason = ref('')
+const remarks = ref('')
 
 // Computed Properties
 const partyData = computed(() => {
-  return partyResource.data?.find(p => p.name === quotationResource.value?.doc?.party)
+  return partyResource.data?.find(p => p.name === lpoResource.value?.doc?.party)
 })
 
 const availableStatuses = computed(() => 
-  getAvailableStatuses(quotationResource.value?.doc?.status)
+  getAvailableStatuses(lpoResource.value?.doc?.status)
 )
 
 const hasAvailableStatuses = computed(() => 
@@ -361,12 +364,12 @@ const actionDropdownOptions = computed(() => [
   {
     label: 'Print',
     icon: 'printer',
-    onClick: printQuotation
+    onClick: printLPO
   }
 ])
 
 const statusDialogOptions = computed(() => ({
-  title: hasAvailableStatuses.value ? 'Update Quotation Status' : 'Quotation Status',
+  title: hasAvailableStatuses.value ? 'Update LPO Status' : 'LPO Status',
   size: 'sm',
   actions: hasAvailableStatuses.value ? [
     {
@@ -383,9 +386,9 @@ const statusDialogOptions = computed(() => ({
 }))
 
 const uploadArgs = computed(() => ({
-  doctype: 'RUA Quotation',
-  docname: quotationResource.value?.doc?.name,
-  fieldname: 'signed_document',
+  doctype: 'RUA LPO',
+  docname: lpoResource.value?.doc?.name,
+  fieldname: 'final_lpo',
   private: true
 }))
 
@@ -404,7 +407,7 @@ function getStatusVariant(status) {
       return 'orange'
     case 'submitted':
       return 'green'
-    case 'rejected':
+    case 'cancelled':
       return 'red'
     case 'final':
       return 'gray'
@@ -416,13 +419,13 @@ function getStatusVariant(status) {
 function getAvailableStatuses(currentStatus) {
   switch (currentStatus?.toLowerCase()) {
     case 'draft':
-      return ['Submitted']
+      return ['Submitted', 'Cancelled']
     case 'submitted':
-      return ['Final', 'Rejected']
+      return ['Final', 'Cancelled']
     case 'final':
-      return ['Rejected']
-    case 'rejected':
-      return [] // No transitions allowed from rejected
+      return ['Cancelled']
+    case 'cancelled':
+      return []
     default:
       return []
   }
@@ -443,9 +446,9 @@ function resetStatusDialog() {
   showStatusDialog.value = false
   newStatus.value = ''
   statusError.value = ''
-  signedDocument.value = null
+  finalLPO.value = null
   uploadedResult.value = null
-  rejectReason.value = ''
+  remarks.value = ''
 }
 
 async function updateStatus() {
@@ -462,33 +465,33 @@ async function updateStatus() {
     return
   }
 
-  if (newStatus.value === 'Rejected' && !rejectReason.value.trim()) {
-    statusError.value = 'Please provide a rejection reason'
+  if (newStatus.value === 'Cancelled' && !remarks.value.trim()) {
+    statusError.value = 'Please provide cancellation remarks'
     return
   }
 
   if (newStatus.value === 'Final' && !uploadedResult.value?.file_url) {
-    statusError.value = 'Please upload the signed document'
+    statusError.value = 'Please upload the final LPO document'
     return
   }
 
   try {
     isUpdatingStatus.value = true
     const updateData = {
-      name: quotationResource.value.doc.name,
+      name: lpoResource.value.doc.name,
       status: newStatus.value,
     }
 
     if (newStatus.value === 'Final') {
-      updateData.signed_document = uploadedResult.value.file_url
+      updateData.final_lpo = uploadedResult.value.file_url
     }
 
-    if (newStatus.value === 'Rejected') {
-      updateData.reject_reason = rejectReason.value
+    if (newStatus.value === 'Cancelled') {
+      updateData.remarks = remarks.value
     }
 
-    await quotationResource.value.setValue.submit(updateData)
-    await quotationResource.value.reload()
+    await lpoResource.value.setValue.submit(updateData)
+    await lpoResource.value.reload()
     resetStatusDialog()
   } catch (error) {
     statusError.value = 'Failed to update status'
@@ -505,8 +508,8 @@ async function downloadPDF() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        doctype: 'RUA Quotation',
-        name: quotationResource.value.doc.name,
+        doctype: 'RUA LPO',
+        name: lpoResource.value.doc.name,
         format: 'Standard',
         no_letterhead: 0,
       }),
@@ -518,7 +521,7 @@ async function downloadPDF() {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${quotationResource.value.doc.name}.pdf`
+    a.download = `${lpoResource.value.doc.name}.pdf`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -528,37 +531,36 @@ async function downloadPDF() {
   }
 }
 
-function printQuotation() {
+function printLPO() {
   let baseUrl = window.location.origin
 
   if (window.location.hostname === 'localhost' && window.location.port === '8080') {
     baseUrl = `http://${window.location.hostname}:8000`
   }
 
-  const url = `${baseUrl}/printview?doctype=RUA Quotation&name=${quotationResource.value.doc.name}&format=Standard&no_letterhead=0&_lang=en`
+  const url = `${baseUrl}/printview?doctype=RUA LPO&name=${lpoResource.value.doc.name}&format=Standard&no_letterhead=0&_lang=en`
   window.open(url, '_blank')
 }
 
 // Initialize and watch resources
 onMounted(() => {
-  if (route.params.quotationId) {
-    quotationResource.value = createDocumentResource({
-      doctype: 'RUA Quotation',
-      name: route.params.quotationId,
+  if (route.params.lpoId) {
+    lpoResource.value = createDocumentResource({
+      doctype: 'RUA LPO',
+      name: route.params.lpoId,
       auto: true
     })
   }
 })
 
 // Watch for route changes
-watch(() => route.params.quotationId, (newId) => {
+watch(() => route.params.lpoId, (newId) => {
   if (newId) {
-    quotationResource.value = createDocumentResource({
-      doctype: 'RUA Quotation', 
+    lpoResource.value = createDocumentResource({
+      doctype: 'RUA LPO',
       name: newId,
       auto: true
     })
   }
 })
-
 </script>

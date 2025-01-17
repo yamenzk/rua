@@ -1,4 +1,8 @@
 import frappe
+from frappe.utils import cint, flt
+from frappe.model.document import Document
+from frappe.utils.response import build_response
+
 
 @frappe.whitelist()
 def get_user_roles(user):
@@ -24,57 +28,59 @@ def get_server_time(date=None, time=None, datetime=None):
 
 
 @frappe.whitelist()
-def get_project_refs(project):
-    references = []
-
-    # Query for RUA Quotation
-    quotations = frappe.get_all('RUA Quotation', filters={'project': project}, fields=['name', 'party', 'date'])
-    for ref in quotations:
-        references.append({
-            'doctype': 'RUA Quotation',
-            'name': ref['name'],
-            'party': ref['party'],
-            'date': ref['date'],
-            'link': f'/project/{project}/documents/quotation/{ref["name"]}'
-        })
-
-    # # Query for RUA Invoice   
-    # invoices = frappe.get_all('RUA Invoice', filters={'project': project}, fields=['name', 'party', 'date'])
-    # for ref in invoices:
-    #     references.append({
-    #         'doctype': 'RUA Invoice',
-    #         'name': ref['name'],
-    #         'party': ref['party'],
-    #         'date': ref['date'],
-    #         'link': f'/project/{project}/documents/invoice/{ref["name"]}'
-    #     })
-
-    # # Query for RUA Purchase Order
-    # purchase_orders = frappe.get_all('RUA Purchase Order', filters={'project': project}, fields=['name', 'party', 'date'])
-    # for ref in purchase_orders:
-    #     references.append({
-    #         'doctype': 'RUA Purchase Order',
-    #         'name': ref['name'],
-    #         'party': ref['party'],
-    #         'date': ref['date'],
-    #         'link': f'/project/{project}/documents/purchase-order/{ref["name"]}'
-    #     })
-
-    # You can add more queries for other doctypes as needed
-
-    return references
-
-@frappe.whitelist()
-def get_all_users():
-    references = []
-    employees = frappe.get_all('RUA Employee', fields=['name', 'user', 'employee_name', 'image'])
-    for employee in employees:
-        if employee.user:
-            references.append({
-                'name': employee.name,
-                'user': employee.user,
-                'employee_name': employee.employee_name,
-                'image': employee.image,
+def update_lpo_items(lpo_name, items):
+    """
+    Update items in RUA LPO document
+    
+    Args:
+        lpo_name (str): Name of the LPO document
+        items (list): List of item dictionaries containing:
+            - item: str
+            - description: str (optional)
+            - area: float (for Glass type)
+            - qty: float
+            - unit_price: float
+    """
+    if not frappe.has_permission("RUA LPO", "write"):
+        frappe.throw(_("Not permitted to update LPO items"))
+        
+    # Convert items from string to list if needed
+    if isinstance(items, str):
+        items = frappe.parse_json(items)
+    
+    try:
+        doc = frappe.get_doc("RUA LPO", lpo_name)
+        
+        # Clear existing items
+        doc.items = []
+        
+        # Add new items
+        for item_data in items:
+            item = doc.append("items", {
+                "item": item_data.get("item"),
+                "description": item_data.get("description"),
+                "qty": flt(item_data.get("qty")),
+                "unit_price": flt(item_data.get("unit_price")),
+                "total_amount": flt(item_data.get("qty")) * flt(item_data.get("unit_price")),
+                "vat_amount": (flt(item_data.get("qty")) * flt(item_data.get("unit_price"))) * 0.05,
+                "grand_total": flt(item_data.get("qty")) * flt(item_data.get("unit_price")) * 1.05,
             })
-
-    return references
+            
+            # Add area field for Glass type items
+            if doc.type == "Glass" and "area" in item_data:
+                item.area = flt(item_data.get("area"))
+        
+        # Save the document
+        doc.save()
+        
+        frappe.db.commit()
+        
+        return {
+            "status": "success",
+            "message": "Items updated successfully"
+        }
+        
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.log_error("Error updating LPO items", str(e))
+        frappe.throw(_("Error updating LPO items: {0}").format(str(e)))
