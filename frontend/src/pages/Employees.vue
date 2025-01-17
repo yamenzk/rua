@@ -62,13 +62,194 @@
 		<!-- Attendance Setup Button -->
 		<Button
 			variant="outline"
-			theme="blue"
 			size="sm"
 			:label="attendanceButtonLabel"
 			@click="showAttendanceDialog"
 		>
 			{{ attendanceButtonLabel }}
 		</Button>
+
+		<!-- Expiring Documents Button -->
+		<Button
+			variant="outline"
+			class="ml-2"
+			size="sm"
+			@click="showExpiringDocumentsDialog = true"
+		>
+			Check Document Status
+		</Button>
+
+		<!-- Expiring Documents Dialog -->
+		<Dialog
+			v-model="showExpiringDocumentsDialog"
+			style="z-index: 9999999 !important;"
+			:options="{
+				title: 'Document Status',
+				size: 'xl',
+			}"
+		>
+			<template #body-content>
+				<div class="space-y-6">
+					<!-- Search Bar -->
+					<FormControl
+						type="search"
+						size="sm"
+						variant="subtle"
+						placeholder="Search employees..."
+						v-model="expiringDocumentsSearch"
+						class="w-full"
+					/>
+
+					<!-- Tabs for Expiring and Expired Documents -->
+					<div class="border-b flex">
+						<button
+							@click="activeDocumentTab = 'expiring'"
+							class="px-4 py-2 border-b-2 transition-colors"
+							:class="
+								activeDocumentTab === 'expiring'
+									? 'border-blue-500 text-blue-600'
+									: 'border-transparent text-gray-500 hover:text-gray-700'
+							"
+						>
+							Documents Expiring Soon
+						</button>
+						<button
+							@click="activeDocumentTab = 'expired'"
+							class="px-4 py-2 border-b-2 transition-colors"
+							:class="
+								activeDocumentTab === 'expired'
+									? 'border-red-500 text-red-600'
+									: 'border-transparent text-gray-500 hover:text-gray-700'
+							"
+						>
+							Recently Expired Documents
+						</button>
+					</div>
+
+					<!-- Expiring Documents Section -->
+					<div v-if="activeDocumentTab === 'expiring'">
+						<div
+							v-if="groupedExpiringDocuments.length"
+							class="space-y-4 max-h-[60vh] overflow-y-auto"
+						>
+							<div
+								v-for="employeeGroup in groupedExpiringDocuments"
+								:key="employeeGroup.employeeName"
+								class="bg-gray-50 rounded-lg p-4 space-y-3"
+							>
+								<div class="flex items-center gap-3">
+									<Avatar
+										:image="employeeGroup.employeeImage"
+										:label="getInitials(employeeGroup.employeeName)"
+										shape="circle"
+										size="md"
+									/>
+									<h3 class="font-semibold text-lg">
+										{{ employeeGroup.employeeName }}
+									</h3>
+								</div>
+
+								<div class="space-y-2">
+									<div
+										v-for="doc in employeeGroup.documents"
+										:key="doc.name"
+										class="flex items-center justify-between p-3 bg-white rounded-lg border"
+										:class="getExpiryAlertClass(doc.daysUntilExpiry)"
+									>
+										<div class="flex items-center gap-3">
+											<FeatherIcon
+												:name="getFileIcon(doc.document)"
+												class="w-6 h-6 text-gray-400"
+											/>
+											<div>
+												<div class="font-medium">
+													{{ doc.document_name }}
+												</div>
+												<div class="text-sm text-gray-500">
+													Expires on {{ formatDate(doc.expiry_date) }}
+												</div>
+											</div>
+										</div>
+										<div
+											class="font-semibold px-3 py-1 rounded-full text-sm"
+											:class="getExpiryAlertClass(doc.daysUntilExpiry)"
+										>
+											{{ formatExpiryText(doc.daysUntilExpiry) }}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Empty State for Expiring Documents -->
+						<div v-else class="text-center py-12 text-gray-500">
+							<FeatherIcon name="file" class="mx-auto h-12 w-12 text-gray-400" />
+							<p class="mt-4">No documents are expiring soon</p>
+						</div>
+					</div>
+
+					<!-- Expired Documents Section -->
+					<div v-else-if="activeDocumentTab === 'expired'">
+						<div
+							v-if="groupedExpiredDocuments.length"
+							class="space-y-4 max-h-[60vh] overflow-y-auto"
+						>
+							<div
+								v-for="employeeGroup in groupedExpiredDocuments"
+								:key="employeeGroup.employeeName"
+								class="bg-red-50 rounded-lg p-4 space-y-3"
+							>
+								<div class="flex items-center gap-3">
+									<Avatar
+										:image="employeeGroup.employeeImage"
+										:label="getInitials(employeeGroup.employeeName)"
+										shape="circle"
+										size="md"
+									/>
+									<h3 class="font-semibold text-lg text-red-800">
+										{{ employeeGroup.employeeName }}
+									</h3>
+								</div>
+
+								<div class="space-y-2">
+									<div
+										v-for="doc in employeeGroup.documents"
+										:key="doc.name"
+										class="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200"
+									>
+										<div class="flex items-center gap-3">
+											<FeatherIcon
+												:name="getFileIcon(doc.document)"
+												class="w-6 h-6 text-red-400"
+											/>
+											<div>
+												<div class="font-medium">
+													{{ doc.document_name }}
+												</div>
+												<div class="text-sm text-gray-500">
+													Expired on {{ formatDate(doc.expiry_date) }}
+												</div>
+											</div>
+										</div>
+										<div
+											class="font-semibold px-3 py-1 rounded-full text-sm bg-red-100 text-red-700"
+										>
+											{{ formatDaysSinceExpiry(doc.daysUntilExpiry) }}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Empty State for Expired Documents -->
+						<div v-else class="text-center py-12 text-gray-500">
+							<FeatherIcon name="file" class="mx-auto h-12 w-12 text-gray-400" />
+							<p class="mt-4">No recently expired documents</p>
+						</div>
+					</div>
+				</div>
+			</template>
+		</Dialog>
 
 		<!-- Attendance Dialog -->
 		<Dialog
@@ -434,6 +615,7 @@ import { employeeResource } from '../data/employee'
 import { attendanceResource } from '../data/attendance'
 import { partyResource } from '../data/party'
 import { genderOptions, positionOptions } from '../data/employeeOptions'
+import { documentResource } from '@/data/document'
 
 const router = useRouter()
 
@@ -459,6 +641,9 @@ const showDialog = ref(false)
 const searchQuery = ref('')
 const attendance = ref({})
 const todayAttendance = ref(null)
+const showExpiringDocumentsDialog = ref(false)
+const expiringDocumentsSearch = ref('')
+const activeDocumentTab = ref('expiring')
 
 function getDubaiDateTime() {
 	const now = new Date()
@@ -466,17 +651,27 @@ function getDubaiDateTime() {
 }
 
 const attendanceButtonLabel = computed(() => {
-  const currentDate = formatDate(getDubaiDateTime());
-  const todayRecord = findAttendanceRecord(currentDate);
-  return todayRecord ? 'Edit Attendance' : 'Setup Attendance';
-});
-
+	const currentDate = formatDate(getDubaiDateTime())
+	const todayRecord = findAttendanceRecord(currentDate)
+	return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
+})
 
 function formatDate(date) {
-	const year = date.getFullYear()
-	const month = String(date.getMonth() + 1).padStart(2, '0')
-	const day = String(date.getDate()).padStart(2, '0')
-	return `${year}-${month}-${day}`
+	// Handle different input types
+	if (!(date instanceof Date)) {
+		date = new Date(date)
+	}
+
+	// Check if date is valid
+	if (isNaN(date.getTime())) {
+		return 'N/A'
+	}
+
+	return date.toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+	})
 }
 
 const isReadOnly = computed(() => {
@@ -498,7 +693,6 @@ const newFilter = ref({
 	operator: '=',
 	value: '',
 })
-
 
 const fieldOptions = [
 	{ label: 'Creation Date', value: 'creation', sortOnly: true },
@@ -527,7 +721,6 @@ const countryOptions = countries.map((country) => ({
 	label: country.name,
 	value: country.alpha2,
 }))
-
 
 const list = employeeResource
 
@@ -600,6 +793,170 @@ function validateForm() {
 		newEmployee.value.position &&
 		newEmployee.value.salary
 	)
+}
+
+const groupedExpiringDocuments = computed(() => {
+	try {
+		if (!documentResource.data || !list.data) return []
+
+		// Group documents by employee, filter for expiring documents
+		const expiringDocs = documentResource.data.filter((doc) => {
+			const daysUntilExpiry = getDaysUntilExpiry(doc.expiry_date)
+			return daysUntilExpiry <= 40 && daysUntilExpiry > 0
+		})
+
+		// Create a grouped structure
+		const grouped = expiringDocs
+			.map((doc) => {
+				// Find corresponding employee
+				const employee = list.data.find((emp) => emp.name === doc.for_docname)
+
+				return {
+					...doc,
+					daysUntilExpiry: getDaysUntilExpiry(doc.expiry_date),
+					employeeName: employee?.employee_name || 'Unknown',
+					employeeImage: employee?.image || null,
+				}
+			})
+			// Filter by search query
+			.filter(
+				(doc) =>
+					doc.employeeName
+						.toLowerCase()
+						.includes(expiringDocumentsSearch.value.toLowerCase()) ||
+					doc.document_name
+						.toLowerCase()
+						.includes(expiringDocumentsSearch.value.toLowerCase()),
+			)
+			// Group by employee
+			.reduce((acc, doc) => {
+				const existingGroup = acc.find((group) => group.employeeName === doc.employeeName)
+				if (existingGroup) {
+					existingGroup.documents.push(doc)
+				} else {
+					acc.push({
+						employeeName: doc.employeeName,
+						employeeImage: doc.employeeImage,
+						documents: [doc],
+					})
+				}
+				return acc
+			}, [])
+			// Sort by earliest expiring document
+			.sort(
+				(a, b) =>
+					Math.min(...a.documents.map((d) => d.daysUntilExpiry)) -
+					Math.min(...b.documents.map((d) => d.daysUntilExpiry)),
+			)
+
+		return grouped
+	} catch (error) {
+		console.error('Error processing expiring documents:', error)
+		return []
+	}
+})
+const groupedExpiredDocuments = computed(() => {
+  try {
+    if (!documentResource.data || !list.data) return []
+
+    // Group documents by employee, filter for expired documents
+    const expiredDocs = documentResource.data.filter(doc => {
+      const daysUntilExpiry = getDaysUntilExpiry(doc.expiry_date)
+      return daysUntilExpiry < 0 && daysUntilExpiry > -30
+    })
+
+    // Create a grouped structure similar to groupedExpiringDocuments
+    const grouped = expiredDocs
+      .map(doc => {
+        // Find corresponding employee
+        const employee = list.data.find(emp => emp.name === doc.for_docname)
+        
+        return {
+          ...doc,
+          daysUntilExpiry: getDaysUntilExpiry(doc.expiry_date),
+          employeeName: employee?.employee_name || 'Unknown',
+          employeeImage: employee?.image || null
+        }
+      })
+      // Filter by search query
+      .filter(doc => 
+        doc.employeeName.toLowerCase().includes(expiringDocumentsSearch.value.toLowerCase()) ||
+        doc.document_name.toLowerCase().includes(expiringDocumentsSearch.value.toLowerCase())
+      )
+      // Group by employee
+      .reduce((acc, doc) => {
+        const existingGroup = acc.find(group => group.employeeName === doc.employeeName)
+        if (existingGroup) {
+          existingGroup.documents.push(doc)
+        } else {
+          acc.push({
+            employeeName: doc.employeeName,
+            employeeImage: doc.employeeImage,
+            documents: [doc]
+          })
+        }
+        return acc
+      }, [])
+      // Sort by most recently expired
+      .sort((a, b) => 
+        Math.min(...a.documents.map(d => d.daysUntilExpiry)) - 
+        Math.min(...b.documents.map(d => d.daysUntilExpiry))
+      )
+
+    return grouped
+  } catch (error) {
+    console.error('Error processing expired documents:', error)
+    return []
+  }
+})
+
+// Add this new formatting function
+function formatDaysSinceExpiry(days) {
+  const absDays = Math.abs(Math.floor(days))
+  if (absDays === 1) return 'Expired yesterday'
+  return `Expired ${absDays} days ago`
+}
+
+function getDaysUntilExpiry(date) {
+	if (!date) return Infinity
+	const today = new Date().setHours(0, 0, 0, 0)
+	const expiryDate = new Date(date).setHours(0, 0, 0, 0)
+	return Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
+}
+
+function formatExpiryText(days) {
+	if (days <= 0) return 'Expired'
+	if (days === 1) return 'Expires Tomorrow'
+	return `Expires in ${days} days`
+}
+
+function getExpiryAlertClass(days) {
+	if (days <= 7) return 'bg-red-50 text-red-700 border-red-200'
+	if (days <= 15) return 'bg-orange-50 text-orange-700 border-orange-200'
+	if (days <= 30) return 'bg-yellow-50 text-yellow-700 border-yellow-200'
+	return 'bg-blue-50 text-blue-700 border-blue-200'
+}
+
+function getFileIcon(url) {
+	if (!url) return 'file'
+	const extension = url.split('.').pop().toLowerCase()
+
+	const iconMap = {
+		pdf: 'file-text',
+		doc: 'file-text',
+		docx: 'file-text',
+		txt: 'file-text',
+		xls: 'grid',
+		xlsx: 'grid',
+		ppt: 'monitor',
+		pptx: 'monitor',
+		jpg: 'image',
+		jpeg: 'image',
+		png: 'image',
+		gif: 'image',
+	}
+
+	return iconMap[extension] || 'file'
 }
 
 async function createEmployee() {
