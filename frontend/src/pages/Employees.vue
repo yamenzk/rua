@@ -667,11 +667,7 @@ function formatDate(date) {
 		return 'N/A'
 	}
 
-	return date.toLocaleDateString('en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	})
+	return date.toLocaleDateString('en-CA')
 }
 
 const isReadOnly = computed(() => {
