@@ -6,6 +6,7 @@ export const chatResource = createListResource({
     fields: ['*'],
 	cache: ['rua:chat'],
 	start: 0,
+	orderBy: 'timestamp asc',
 	pageLength: 99999999,
 	onError(error) {
 		if (error && error.exc_type === "AuthenticationError") {

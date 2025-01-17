@@ -931,16 +931,36 @@ watch(
   { immediate: true }
 )
 
+function setupBeforeUnloadHandler() {
+  const handleBeforeUnload = async (event) => {
+    if (unsavedChanges.value > 0) {
+      event.preventDefault()
+      event.returnValue = ''
+      
+      try {
+        // Attempt to save changes
+        await forceSave()
+      } catch (error) {
+        console.error('Failed to save changes before unload:', error)
+      }
+    }
+  }
+
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+}
+
 // Component Lifecycle
 onMounted(async () => {
   document.addEventListener('visibilitychange', handleVisibilityChange)
   const cleanupKeyboardShortcuts = setupKeyboardShortcuts()
+  const cleanupBeforeUnload = setupBeforeUnloadHandler()
 
   // Small delay to ensure DOM is ready
   await new Promise(resolve => setTimeout(resolve, 100))
 
   await initUniver()
-  await handleUserArrival()  // Make sure this is called
+  await handleUserArrival()
 
   // Also add a visibility check in case the page was loaded in a background tab
   if (!document.hidden) {
@@ -949,6 +969,7 @@ onMounted(async () => {
 
   return () => {
     cleanupKeyboardShortcuts()
+    cleanupBeforeUnload()
   }
 })
 
