@@ -76,7 +76,7 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import { session } from '../data/session'
 import loginVideo from '../assets/login.webm'
 import loginLogo from '../assets/login_logo.png'

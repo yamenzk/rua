@@ -8,12 +8,6 @@ export const userRoles = createResource({
     user: userResource.data
   },
   cache: 'UserRoles',
-  auto: true,
-  onError(error) {
-    if (error && error.exc_type === 'AuthenticationError') {
-      router.push({ name: 'LoginPage' })
-    }
-  }
 })
 
 export const hasRole = (role) => {

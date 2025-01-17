@@ -15,7 +15,18 @@ import {
 } from 'frappe-ui'
 
 const app = createApp(App)
-setConfig('resourceFetcher', frappeRequest)
+setConfig('resourceFetcher', async (...args) => {
+  try {
+    const response = await frappeRequest(...args);
+    return response;
+  } catch (error) {
+    if (error.response?.headers?.get('content-type')?.includes('text/html')) {
+      // If we got HTML instead of JSON, throw a more meaningful error
+      throw new Error('Received HTML response instead of JSON. Server might be down or returning an error page.');
+    }
+    throw error;
+  }
+});
 
 // Register components
 app.use(router)

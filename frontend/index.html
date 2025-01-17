@@ -1,23 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    
-        <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rua</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <div id="modals"></div>
-    <div id="popovers"></div>
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" href="/favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Rua</title>
+	</head>
+	<body>
+		<div id="app"></div>
+		<div id="modals"></div>
+		<div id="popovers"></div>
 
-    <script>
+		<script>
 			window.csrf_token = "{{ frappe.session.csrf_token }}"
 			window.site_name = 'ruabeta.frappe.cloud'
 			if (!window.frappe) window.frappe = {}
 			frappe.boot = {{ boot }}
 		</script>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+		<script type="module" src="/src/main.js"></script>
+	</body>
 </html>
