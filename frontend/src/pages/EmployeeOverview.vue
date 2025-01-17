@@ -2,38 +2,30 @@
 <template>
 	<div class="space-y-8" v-if="employee">
 		<!-- Hero Section -->
-		<div class="relative h-64 md:h-96">
+		<div class="h-64 md:h-96">
 			<div class="w-full h-full">
 				<div
-  v-if="employee?.image"
-  :style="{
-    backgroundImage: 'url(' + employee.image + ')',
-    backgroundPosition: 'top center',
-    backgroundSize: 'cover',
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden'
-  }"
-  class="w-full h-full bg-gray-900"
->
-  <img
-    :src="employee.image"
-    :alt="employee?.employee_name"
-    class="w-full h-full object-contain"
-    @error="$event.target.style.display = 'none'"
-  />
-</div>
+					v-if="employee?.image"
+					:style="{
+						backgroundPosition: 'top center',
+						backgroundSize: 'cover',
+						width: '100%',
+						height: '100%',
+						overflow: 'hidden',
+					}"
+					class="w-full h-full bg-gray-300"
+				>
+					<img
+						:src="employee.image"
+						:alt="employee?.employee_name"
+						class="w-full h-full object-contain"
+						@error="$event.target.style.display = 'none'"
+					/>
+				</div>
 				<div v-else class="w-full h-full bg-gray-100 flex items-center justify-center">
 					<FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
 				</div>
-				<div class="absolute top-4 right-4 flex gap-2" v-if="isManager">
-					<Button variant="solid" size="sm" @click="openEditDialog">
-						<div class="flex items-center">
-							<FeatherIcon name="edit" class="w-4 h-4 mr-2" />
-							<span>Edit Employee</span>
-						</div>
-					</Button>
-				</div>
+	
 			</div>
 		</div>
 
@@ -42,7 +34,17 @@
 			<!-- Personal Information -->
 
 			<div class="mb-8">
+				<div class="flex items-center justify-between mb-4">
 				<h3 class="text-sm font-medium text-gray-500 mb-4">Personal Information</h3>
+				<div class="flex gap-2" v-if="isManager">
+					<Button variant="solid" size="sm" @click="openEditDialog">
+						<div class="flex items-center">
+							<FeatherIcon name="edit" class="w-4 h-4 mr-2" />
+							<span>Edit Employee</span>
+						</div>
+					</Button>
+				</div>
+				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					<!-- Basic Details -->
 					<div class="space-y-4">
@@ -219,7 +221,6 @@
 	<!-- Image Upload Dialog -->
 	<Dialog
 		v-model="showImageDialog"
-    style="z-index: 999999 !important"
 		:options="{
 			title: 'Update Profile Picture',
 			size: 'sm',
@@ -300,31 +301,30 @@
 			</div>
 		</template>
 	</Dialog>
-	
-  <!-- Edit Employee Dialog -->
-  <Dialog
-  v-model="showEditDialog"
-  style="z-index: 999999 !important"
-  :options="{
-    title: 'Edit Employee',
-    size: 'lg',
-    actions: [
-      {
-        label: 'Remove Employee',
-        variant: 'outline',
-        theme: 'red',
-        loading: removing,
-        onClick: () => openDeleteDialog(), // Changed this line
-      },
-      {
-        label: 'Save Changes',
-        variant: 'solid',
-        loading: employeeResource.setValue.loading,
-        onClick: () => updateEmployee(),
-      },
-    ],
-  }"
->
+
+	<!-- Edit Employee Dialog -->
+	<Dialog
+		v-model="showEditDialog"
+		:options="{
+			title: 'Edit Employee',
+			size: 'lg',
+			actions: [
+				{
+					label: 'Remove Employee',
+					variant: 'outline',
+					theme: 'red',
+					loading: removing,
+					onClick: () => openDeleteDialog(), // Changed this line
+				},
+				{
+					label: 'Save Changes',
+					variant: 'solid',
+					loading: employeeResource.setValue.loading,
+					onClick: () => updateEmployee(),
+				},
+			],
+		}"
+	>
 		<template #body-content>
 			<div class="space-y-4">
 				<div class="flex justify-center">
@@ -460,7 +460,6 @@
 
 	<!-- Delete Confirmation Dialog -->
 	<Dialog
-    style="z-index: 999999 !important"
 		v-model="showDeleteConfirmDialog"
 		:options="{
 			title: 'Confirm Delete',
@@ -469,7 +468,7 @@
 				{
 					label: 'Delete',
 					variant: 'solid',
-          theme: 'red',
+					theme: 'red',
 					loading: removing,
 					disabled: !isDeleteConfirmed,
 					onClick: () => confirmRemove(),
@@ -578,8 +577,8 @@ function openEditDialog() {
 }
 
 function openDeleteDialog() {
-  showDeleteConfirmDialog.value = true
-  showEditDialog.value = false
+	showDeleteConfirmDialog.value = true
+	showEditDialog.value = false
 }
 
 function validateEditForm() {

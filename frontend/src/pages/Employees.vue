@@ -82,7 +82,6 @@
 		<!-- Expiring Documents Dialog -->
 		<Dialog
 			v-model="showExpiringDocumentsDialog"
-			style="z-index: 9999999 !important;"
 			:options="{
 				title: 'Document Status',
 				size: 'xl',
@@ -254,7 +253,6 @@
 		<!-- Attendance Dialog -->
 		<Dialog
 			v-model="showDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: 'Daily Attendance',
 				size: 'xl',
@@ -342,6 +340,29 @@
 			</template>
 		</Dialog>
 
+		<!-- No Attendance @ 8 PM Dialog -->
+		<Dialog
+  v-model="noAttendanceDialog"
+  :options="{
+    title: 'Attendance Locked',
+    message: 'You cannot record attendance after 8 PM.',
+    size: 'sm',
+    icon: {
+      name: 'alert-triangle',
+      appearance: 'danger',
+    },
+    actions: [
+      {
+        label: 'Close',
+        variant: 'subtle',
+        onClick: () => {
+          noAttendanceDialog = false
+        }
+      }
+    ]
+  }"
+></Dialog>
+
 		<!-- Employees Grid -->
 		<div v-if="list.list.loading" class="flex justify-center">
 			<LoadingIndicator />
@@ -403,7 +424,6 @@
 		<!-- New Employee Dialog -->
 		<Dialog
 			v-model="showNewEmployeeDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: 'Add New Employee',
 				size: 'lg',
@@ -530,7 +550,6 @@
 		<!-- Filter Dialog -->
 		<Dialog
 			v-model="showFilterDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: 'Add Filter',
 				icon: {
@@ -617,6 +636,7 @@ import { partyResource } from '../data/party'
 import { genderOptions, positionOptions } from '../data/employeeOptions'
 import { documentResource } from '@/data/document'
 
+
 const router = useRouter()
 
 const setHeaderAction = inject('setHeaderAction')
@@ -644,6 +664,7 @@ const todayAttendance = ref(null)
 const showExpiringDocumentsDialog = ref(false)
 const expiringDocumentsSearch = ref('')
 const activeDocumentTab = ref('expiring')
+const noAttendanceDialog = ref(false)
 
 function getDubaiDateTime() {
 	const now = new Date()
@@ -852,65 +873,71 @@ const groupedExpiringDocuments = computed(() => {
 	}
 })
 const groupedExpiredDocuments = computed(() => {
-  try {
-    if (!documentResource.data || !list.data) return []
+	try {
+		if (!documentResource.data || !list.data) return []
 
-    // Group documents by employee, filter for expired documents
-    const expiredDocs = documentResource.data.filter(doc => {
-      const daysUntilExpiry = getDaysUntilExpiry(doc.expiry_date)
-      return daysUntilExpiry < 0 && daysUntilExpiry > -30
-    })
+		// Group documents by employee, filter for expired documents
+		const expiredDocs = documentResource.data.filter((doc) => {
+			const daysUntilExpiry = getDaysUntilExpiry(doc.expiry_date)
+			return daysUntilExpiry < 0 && daysUntilExpiry > -30
+		})
 
-    // Create a grouped structure similar to groupedExpiringDocuments
-    const grouped = expiredDocs
-      .map(doc => {
-        // Find corresponding employee
-        const employee = list.data.find(emp => emp.name === doc.for_docname)
-        
-        return {
-          ...doc,
-          daysUntilExpiry: getDaysUntilExpiry(doc.expiry_date),
-          employeeName: employee?.employee_name || 'Unknown',
-          employeeImage: employee?.image || null
-        }
-      })
-      // Filter by search query
-      .filter(doc => 
-        doc.employeeName.toLowerCase().includes(expiringDocumentsSearch.value.toLowerCase()) ||
-        doc.document_name.toLowerCase().includes(expiringDocumentsSearch.value.toLowerCase())
-      )
-      // Group by employee
-      .reduce((acc, doc) => {
-        const existingGroup = acc.find(group => group.employeeName === doc.employeeName)
-        if (existingGroup) {
-          existingGroup.documents.push(doc)
-        } else {
-          acc.push({
-            employeeName: doc.employeeName,
-            employeeImage: doc.employeeImage,
-            documents: [doc]
-          })
-        }
-        return acc
-      }, [])
-      // Sort by most recently expired
-      .sort((a, b) => 
-        Math.min(...a.documents.map(d => d.daysUntilExpiry)) - 
-        Math.min(...b.documents.map(d => d.daysUntilExpiry))
-      )
+		// Create a grouped structure similar to groupedExpiringDocuments
+		const grouped = expiredDocs
+			.map((doc) => {
+				// Find corresponding employee
+				const employee = list.data.find((emp) => emp.name === doc.for_docname)
 
-    return grouped
-  } catch (error) {
-    console.error('Error processing expired documents:', error)
-    return []
-  }
+				return {
+					...doc,
+					daysUntilExpiry: getDaysUntilExpiry(doc.expiry_date),
+					employeeName: employee?.employee_name || 'Unknown',
+					employeeImage: employee?.image || null,
+				}
+			})
+			// Filter by search query
+			.filter(
+				(doc) =>
+					doc.employeeName
+						.toLowerCase()
+						.includes(expiringDocumentsSearch.value.toLowerCase()) ||
+					doc.document_name
+						.toLowerCase()
+						.includes(expiringDocumentsSearch.value.toLowerCase()),
+			)
+			// Group by employee
+			.reduce((acc, doc) => {
+				const existingGroup = acc.find((group) => group.employeeName === doc.employeeName)
+				if (existingGroup) {
+					existingGroup.documents.push(doc)
+				} else {
+					acc.push({
+						employeeName: doc.employeeName,
+						employeeImage: doc.employeeImage,
+						documents: [doc],
+					})
+				}
+				return acc
+			}, [])
+			// Sort by most recently expired
+			.sort(
+				(a, b) =>
+					Math.min(...a.documents.map((d) => d.daysUntilExpiry)) -
+					Math.min(...b.documents.map((d) => d.daysUntilExpiry)),
+			)
+
+		return grouped
+	} catch (error) {
+		console.error('Error processing expired documents:', error)
+		return []
+	}
 })
 
 // Add this new formatting function
 function formatDaysSinceExpiry(days) {
-  const absDays = Math.abs(Math.floor(days))
-  if (absDays === 1) return 'Expired yesterday'
-  return `Expired ${absDays} days ago`
+	const absDays = Math.abs(Math.floor(days))
+	if (absDays === 1) return 'Expired yesterday'
+	return `Expired ${absDays} days ago`
 }
 
 function getDaysUntilExpiry(date) {
@@ -1102,40 +1129,37 @@ async function loadExistingAttendance(date) {
 }
 
 async function showAttendanceDialog() {
-	console.log(partyResource)
-	try {
-		// Ensure employee list is loaded
-		if (!list.data?.length) {
-			//console.error('Employee list is not loaded')
-			return
-		}
+  try {
+    // Ensure employee list is loaded
+    if (!list.data?.length) {
+      return
+    }
 
-		const dubaiTime = getDubaiDateTime()
-		const currentDate = formatDate(dubaiTime)
+    const dubaiTime = getDubaiDateTime()
+    const currentDate = formatDate(dubaiTime)
 
-		if (isReadOnly.value) {
-			// After 8 PM, only allow viewing of existing records
-			const exists = await loadExistingAttendance(currentDate)
-			if (!exists) {
-				//console.warn('No attendance record found for today')
-				return
-			}
-		} else {
-			// Before 8 PM, allow creating/editing today's attendance
-			const exists = await loadExistingAttendance(currentDate)
-			if (!exists) {
-				const initialized = await initializeAttendanceData()
-				if (!initialized) {
-					//console.error('Failed to initialize attendance data')
-					return
-				}
-			}
-		}
+    if (isReadOnly.value) {
+      // After 8 PM, only allow viewing of existing records
+      const exists = await loadExistingAttendance(currentDate)
+      if (!exists) {
+        noAttendanceDialog.value = true
+        return
+      }
+    } else {
+      // Before 8 PM, allow creating/editing today's attendance
+      const exists = await loadExistingAttendance(currentDate)
+      if (!exists) {
+        const initialized = await initializeAttendanceData()
+        if (!initialized) {
+          return
+        }
+      }
+    }
 
-		showDialog.value = true
-	} catch (error) {
-		//console.error('Error showing attendance dialog:', error)
-	}
+    showDialog.value = true
+  } catch (error) {
+    console.error('Error showing attendance dialog:', error)
+  }
 }
 
 async function saveAttendance() {

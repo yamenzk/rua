@@ -6,7 +6,7 @@
   
   <div v-else class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b">
+    <header class="fixed top-0 left-0 right-0 z-9 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b">
       <div class="flex items-center gap-3 overflow-hidden">
         <button @click="router.push('/projects')" class="flex-shrink-0 text-gray-500 hover:text-gray-700">
           <FeatherIcon name="arrow-left" class="w-5 h-5" />
@@ -87,7 +87,7 @@
       </main>
 
       <!-- Bottom navigation for mobile -->
-      <nav class="overflow-x-auto md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t px-4 py-2">
+      <nav class="overflow-x-auto md:hidden fixed bottom-0 left-0 right-0 z-9 bg-white border-t px-4 py-2">
         <div class="flex justify-around">
           <router-link
             v-for="item in navigation"
@@ -108,7 +108,6 @@
   <Dialog
     v-model="showDeleteDialog"
     :options="dialogOptions"
-    style="z-index: 99999 !important;"
   >
     <template #body-content>
       <div class="mt-4">

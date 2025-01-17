@@ -113,7 +113,6 @@
 		<!-- New Party Dialog -->
 		<Dialog
 			v-model="showNewPartyDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: 'Add New Party',
 				size: 'lg',
@@ -197,7 +196,6 @@
 		<!-- Party Details Dialog -->
 		<Dialog
 			v-model="showPartyDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: selectedParty?.party,
 				size: 'md',
@@ -288,7 +286,6 @@
 
 		<!-- Party Image Dialog -->
 		<Dialog
-            style="z-index: 999999 !important"
 			v-model="showImageDialog"
 			:options="{
 				title: 'Update Party Image',
@@ -387,7 +384,6 @@
 		<!-- Edit Party Dialog -->
 		<Dialog
 			v-model="showEditDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: 'Edit Party',
 				size: 'lg',
@@ -471,7 +467,6 @@
 		<!-- Delete Confirmation Dialog -->
 		<Dialog
 			v-model="showDeleteConfirmDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: 'Confirm Delete',
 				size: 'sm',
@@ -509,7 +504,6 @@
 		<!-- Filter Dialog -->
 		<Dialog
 			v-model="showFilterDialog"
-			style="z-index: 999999 !important"
 			:options="{
 				title: 'Add Filter',
 				icon: {

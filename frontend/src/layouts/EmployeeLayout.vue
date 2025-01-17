@@ -6,7 +6,7 @@
   <div v-else class="min-h-screen flex flex-col">
     <!-- Header -->
     <header
-      class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b"
+      class="fixed top-0 left-0 right-0 z-9 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b"
     >
       <div class="flex items-center gap-3 overflow-hidden">
         <button
@@ -64,7 +64,7 @@
       </main>
 
       <!-- Bottom navigation for mobile -->
-      <nav class="overflow-x-auto md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t px-4 py-2">
+      <nav class="overflow-x-auto md:hidden fixed bottom-0 left-0 right-0 z-9 bg-white border-t px-4 py-2">
         <div class="flex justify-around">
           <router-link
             v-for="item in navigation"

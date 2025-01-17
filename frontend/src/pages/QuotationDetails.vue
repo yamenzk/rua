@@ -182,7 +182,6 @@
   <!-- Status Update Dialog -->
   <Dialog
     v-model="showStatusDialog"
-    style="z-index: 999999 !important"
     :options="statusDialogOptions"
   >
     <template #body-content>

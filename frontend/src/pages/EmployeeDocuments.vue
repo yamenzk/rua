@@ -1,17 +1,20 @@
 <template>
 	<div class="space-y-6 p-4">
-		<div 
-  v-if="isDraggingFile" 
-  class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-50 pointer-events-none"
->
-  <div class="absolute inset-0 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
-      <FeatherIcon name="upload-cloud" class="w-12 h-12 text-gray-400 mx-auto mb-2" />
-      <h3 class="text-lg font-medium text-gray-900">Drop your file here</h3>
-      <p class="text-sm text-gray-500">to upload a new document</p>
-    </div>
-  </div>
-</div>
+		<div
+			v-if="isDraggingFile"
+			class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-50 pointer-events-none"
+		>
+			<div class="absolute inset-0 flex items-center justify-center">
+				<div class="bg-white rounded-lg shadow-lg p-6 text-center">
+					<FeatherIcon
+						name="upload-cloud"
+						class="w-12 h-12 text-gray-400 mx-auto mb-2"
+					/>
+					<h3 class="text-lg font-medium text-gray-900">Drop your file here</h3>
+					<p class="text-sm text-gray-500">to upload a new document</p>
+				</div>
+			</div>
+		</div>
 		<!-- Header with tabs -->
 		<div class="border-b">
 			<div class="flex items-center justify-between mb-4">
@@ -36,107 +39,81 @@
 				</div>
 			</div>
 
-			 <!-- Tags/Categories Navigation -->
-       <div class="flex space-x-4 overflow-x-auto pb-2">
-        <!-- All Documents Button -->
-        <button
-          @click="selectedTag = 'All'"
-          class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-          :class="[
-            selectedTag === 'All'
-              ? 'border-2 border-gray-900 text-gray-900' 
-              : 'text-gray-600 hover:bg-gray-100'
-          ]"
-        >
-          📄 All
-        </button>
+			<!-- Tags/Categories Navigation -->
+			<div class="flex space-x-4 overflow-x-auto pb-2">
+				<!-- All Documents Button -->
+				<button
+					@click="selectedTag = 'All'"
+					class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
+					:class="[
+						selectedTag === 'All'
+							? 'border-2 border-gray-900 text-gray-900'
+							: 'text-gray-600 hover:bg-gray-100',
+					]"
+				>
+					📄 All
+				</button>
 
-        <!-- Regular Tags -->
-        <button
-          v-for="tag in uniqueTags"
-          :key="tag"
-          v-show="tag !== 'Expired Documents'"
-          @click="selectedTag = tag"
-          class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-          :class="[
-            selectedTag === tag
-              ? 'border-2 border-gray-900 text-gray-900' 
-              : 'text-gray-600 hover:bg-gray-100'
-          ]"
-        >
-          <span class="inline-flex items-center gap-1">
-            <span>{{ recommendedTags[tag] || '🏷️' }}</span>
-            <span>{{ tag }}</span>
-          </span>
-        </button>
+				<!-- Regular Tags -->
+				<button
+					v-for="tag in uniqueTags"
+					:key="tag"
+					v-show="tag !== 'Expired Documents'"
+					@click="selectedTag = tag"
+					class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
+					:class="[
+						selectedTag === tag
+							? 'border-2 border-gray-900 text-gray-900'
+							: 'text-gray-600 hover:bg-gray-100',
+					]"
+				>
+					<span class="inline-flex items-center gap-1">
+						<span>{{ recommendedTags[tag] || '🏷️' }}</span>
+						<span>{{ tag }}</span>
+					</span>
+				</button>
 
-        <!-- Expired Documents Button -->
-        <button
-          @click="selectedTag = 'Expired Documents'"
-          class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-          :class="[
-            selectedTag === 'Expired Documents'
-              ? 'border-2 border-red-600 bg-red-50 text-red-600' 
-              : hasExpiredDocuments
-                ? 'bg-red-50 hover:bg-red-100 text-red-600'
-                : 'text-gray-600 hover:bg-gray-100'
-          ]"
-        >
-          <span class="inline-flex items-center gap-1">
-            <span>🗑️</span>
-            <span>Expired Documents</span>
-            <span 
-              v-if="hasExpiredDocuments"
-              class="ml-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700"
-            >
-              {{ expiredDocumentsCount }}
-            </span>
-          </span>
-        </button>
-      </div>
-    </div>
+				<!-- Expired Documents Button -->
+				<button
+					@click="selectedTag = 'Expired Documents'"
+					class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
+					:class="[
+						selectedTag === 'Expired Documents'
+							? 'border-2 border-red-600 bg-red-50 text-red-600'
+							: hasExpiredDocuments
+								? 'bg-red-50 hover:bg-red-100 text-red-600'
+								: 'text-gray-600 hover:bg-gray-100',
+					]"
+				>
+					<span class="inline-flex items-center gap-1">
+						<span>🗑️</span>
+						<span>Expired Documents</span>
+						<span
+							v-if="hasExpiredDocuments"
+							class="ml-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700"
+						>
+							{{ expiredDocumentsCount }}
+						</span>
+					</span>
+				</button>
+			</div>
+		</div>
 
 		<!-- Document Grid -->
 		<div
 			v-if="filteredDocuments.length"
 			class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4"
 		>
-    <div
-        v-for="doc in filteredDocuments"
-        :key="doc.name"
-        class="document-card group relative bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow"
-        :class="{'ring-2 ring-gray-900': isSelected(doc)}"
-        :data-document-id="doc.name"
-        @click="handleCardClick(doc, $event)"
-        @dblclick="handleCardInteraction(doc, $event)"
-      >
-				<!-- Selection Checkbox -->
-				<div class="absolute top-2 left-2 z-20">
-					<label class="cursor-pointer">
-						<input
-							type="checkbox"
-							:checked="isSelected(doc)"
-							@change="toggleSelection(doc)"
-							class="w-4 h-4 rounded border-gray-900 text-gray-900 focus:ring-gray-900"
-						/>
-					</label>
-				</div>
-
+			<div
+				v-for="doc in filteredDocuments"
+				:key="doc.name"
+				class="document-card group bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+				:class="{ 'ring-2 ring-gray-900': isSelected(doc) }"
+				:data-document-id="doc.name"
+				@dblclick="handleCardInteraction(doc, $event)"
+			>
 				<!-- Document Preview -->
-				<div class="aspect-[4/3] rounded-t-lg overflow-hidden bg-gray-100 relative">
-					<!-- Expiry Warning Overlay -->
-					<div
-						v-if="isExpiringSoon(doc.expiry_date)"
-						class="absolute top-2 right-2 z-10"
-					>
-						<div
-							class="px-2 py-1 rounded-full text-xs font-medium"
-							:class="getExpiryStatusClass(doc.expiry_date)"
-						>
-							{{ getExpiryStatus(doc.expiry_date) }}
-						</div>
-					</div>
-
+				<div class="aspect-[4/3] rounded-t-lg overflow-hidden bg-gray-100">
 					<!-- Document Preview -->
 					<div class="w-full h-full flex items-center justify-center">
 						<!-- Image Preview -->
@@ -210,15 +187,17 @@
 
 					<!-- Enhanced Tags Display -->
 					<div class="flex flex-wrap gap-1">
-            <span 
-              v-for="tag in doc.tags?.split(',')" 
-              :key="tag"
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs"
-            >
-              <span v-if="recommendedTags[tag.trim()]">{{ recommendedTags[tag.trim()] }}</span>
-              <span>{{ tag.trim() }}</span>
-            </span>
-          </div>
+						<span
+							v-for="tag in doc.tags?.split(',')"
+							:key="tag"
+							class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs"
+						>
+							<span v-if="recommendedTags[tag.trim()]">{{
+								recommendedTags[tag.trim()]
+							}}</span>
+							<span>{{ tag.trim() }}</span>
+						</span>
+					</div>
 
 					<div class="text-sm text-gray-500 space-y-1">
 						<div class="flex items-center justify-between">
@@ -227,23 +206,19 @@
 								@click="copyDocNumber(doc)"
 							>
 								<FeatherIcon name="hash" class="w-4 h-4" />
-								<span>{{ doc.document_number || 'N/A' }}</span>
+								<span>{{ doc.document_number || '' }}</span>
 							</div>
 							<span v-if="doc.showCopied" class="text-xs text-green-600"
 								>Copied!</span
 							>
 						</div>
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="calendar" class="w-4 h-4" />
-							<span>Issued: {{ formatDate(doc.issue_date) }}</span>
-						</div>
-						<div class="flex items-center gap-2">
-							<FeatherIcon
-								name="clock"
-								class="w-4 h-4"
-								:class="getExpiryIconClass(doc.expiry_date)"
-							/>
-							<span>Expires: {{ formatDate(doc.expiry_date) }}</span>
+						<div>
+							<div
+								class="px-2 py-1 mt-2 rounded-full w-fit text-xs font-medium"
+								:class="getExpiryStatusClass(doc.expiry_date)"
+							>
+								{{ getExpiryStatus(doc.expiry_date) }}
+							</div>
 						</div>
 					</div>
 
@@ -286,6 +261,16 @@
 						>
 							<FeatherIcon name="trash-2" class="w-4 h-4" />
 						</button>
+						<div>
+							<label class="cursor-pointer">
+								<input
+									type="checkbox"
+									:checked="isSelected(doc)"
+									@change="toggleSelection(doc)"
+									class="w-4 h-4 rounded border-gray-400 text-gray-900 focus:ring-gray-900"
+								/>
+							</label>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -304,113 +289,108 @@
 			</p>
 		</div>
 
-    <!-- Update Dialog -->
-    <Dialog
-    style="z-index: 999999 !important"
-    v-model="showEditDialog"
-    :options="{
-      title: 'Edit Document',
-      size: 'lg'
-    }"
-  >
-    <template #body-content>
-      <div v-if="editingDocument" class="space-y-4">
-        <!-- Document Preview -->
-        <div class="aspect-video rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-          <div  class="text-gray-400 flex flex-col items-center">
-            <FeatherIcon 
-              :name="getFileIcon(editingDocument.document)" 
-              class="w-16 h-16"
-            />
-            <p class="mt-1 text-sm text-gray-900">{{ editingDocument.document_name }}</p>
-          </div>
-        </div>
+		<!-- Update Dialog -->
+		<Dialog
+			v-model="showEditDialog"
+			:options="{
+				title: 'Edit Document',
+				size: 'lg',
+			}"
+		>
+			<template #body-content>
+				<div v-if="editingDocument" class="space-y-4">
+					<!-- Document Preview -->
+					<div
+						class="aspect-video rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center"
+					>
+						<div class="text-gray-400 flex flex-col items-center">
+							<FeatherIcon
+								:name="getFileIcon(editingDocument.document)"
+								class="w-16 h-16"
+							/>
+							<p class="mt-1 text-sm text-gray-900">
+								{{ editingDocument.document_name }}
+							</p>
+						</div>
+					</div>
 
-        <!-- Edit Form -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormControl
-            type="text"
-            label="Document Name"
-            required
-            v-model="editingDocument.document_name"
-          />
+					<!-- Edit Form -->
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<FormControl
+							type="text"
+							label="Document Name"
+							required
+							v-model="editingDocument.document_name"
+						/>
 
-          <FormControl
-            type="text"
-            label="Document Number"
-            v-model="editingDocument.document_number"
-          />
+						<FormControl
+							type="text"
+							label="Document Number"
+							v-model="editingDocument.document_number"
+						/>
 
-          <FormControl
-            type="text"
-            label="Place of Issue"
-            v-model="editingDocument.place_of_issue"
-          />
+						<FormControl
+							type="text"
+							label="Place of Issue"
+							v-model="editingDocument.place_of_issue"
+						/>
 
-          <FormControl
-            type="date"
-            label="Issue Date"
-            required
-            v-model="editingDocument.issue_date"
-          />
+						<FormControl
+							type="date"
+							label="Issue Date"
+							required
+							v-model="editingDocument.issue_date"
+						/>
 
-          <FormControl
-            type="date"
-            label="Expiry Date"
-            required
-            v-model="editingDocument.expiry_date"
-          />
+						<FormControl
+							type="date"
+							label="Expiry Date"
+							required
+							v-model="editingDocument.expiry_date"
+						/>
 
-          <div class="md:col-span-2 space-y-2">
-            <FormControl
-              type="text"
-              label="Tags (comma separated)"
-              v-model="editingDocument.tags"
-            />
-            
-            <!-- Recommended Tags -->
-            <div class="space-y-2">
-              <label class="text-sm text-gray-600">Recommended Tags</label>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="(emoji, tag) in recommendedTags"
-                  :key="tag"
-                  @click="addTagToEditingDoc(tag)"
-                  class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition-colors"
-                  :class="{'opacity-50 cursor-not-allowed': hasTagInEditingDoc(tag)}"
-                  :disabled="hasTagInEditingDoc(tag)"
-                >
-                  <span>{{ emoji }}</span>
-                  <span>{{ tag }}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </template>
+						<div class="md:col-span-2 space-y-2">
+							<FormControl
+								type="text"
+								label="Tags (comma separated)"
+								v-model="editingDocument.tags"
+							/>
 
-    <template #actions>
-      <div class="flex justify-end gap-2">
-        <Button 
-          variant="subtle" 
-          @click="showEditDialog = false"
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="solid"
-          @click="saveDocumentChanges"
-        >
-          Save Changes
-        </Button>
-      </div>
-    </template>
-  </Dialog>
+							<!-- Recommended Tags -->
+							<div class="space-y-2">
+								<label class="text-sm text-gray-600">Recommended Tags</label>
+								<div class="flex flex-wrap gap-2">
+									<button
+										v-for="(emoji, tag) in recommendedTags"
+										:key="tag"
+										@click="addTagToEditingDoc(tag)"
+										class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition-colors"
+										:class="{
+											'opacity-50 cursor-not-allowed':
+												hasTagInEditingDoc(tag),
+										}"
+										:disabled="hasTagInEditingDoc(tag)"
+									>
+										<span>{{ emoji }}</span>
+										<span>{{ tag }}</span>
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</template>
+
+			<template #actions>
+				<div class="flex justify-end gap-2">
+					<Button variant="subtle" @click="showEditDialog = false"> Cancel </Button>
+					<Button variant="solid" @click="saveDocumentChanges"> Save Changes </Button>
+				</div>
+			</template>
+		</Dialog>
 
 		<!-- Upload Dialog -->
 		<Dialog
-    style="z-index: 999999 !important"
 			v-model="showUploadDialog"
 			:options="{
 				title: 'Upload Document',
@@ -421,7 +401,6 @@
 				<div class="space-y-4">
 					<!-- File Upload -->
 					<FileUploader
-					
 						v-model="newDocument.file"
 						:upload-args="{
 							is_private: 0,
@@ -557,7 +536,6 @@
 
 		<!-- QR Code Dialog -->
 		<Dialog
-    style="z-index: 999999 !important"
 			v-model="showQrDialog"
 			:options="{
 				title: 'Document QR Code',
@@ -587,7 +565,6 @@
 
 		<!-- Merge Dialog -->
 		<Dialog
-    style="z-index: 999999 !important"
 			v-model="showMergeDialog"
 			:options="{
 				title: 'Merge Documents',
@@ -689,7 +666,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick  } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Button, Dialog, FileUploader, FormControl, FeatherIcon } from 'frappe-ui'
 import { documentResource } from '@/data/document'
 import { hasRole } from '@/data/roles'
@@ -740,20 +717,20 @@ function hasTag(tag) {
 }
 
 function addTagToEditingDoc(newTag) {
-  if (hasTagInEditingDoc(newTag)) return
-  
-  const currentTags = editingDocument.value.tags
-    ? editingDocument.value.tags.split(',').map(t => t.trim())
-    : []
-  
-  currentTags.push(newTag)
-  editingDocument.value.tags = currentTags.join(', ')
+	if (hasTagInEditingDoc(newTag)) return
+
+	const currentTags = editingDocument.value.tags
+		? editingDocument.value.tags.split(',').map((t) => t.trim())
+		: []
+
+	currentTags.push(newTag)
+	editingDocument.value.tags = currentTags.join(', ')
 }
 
 function hasTagInEditingDoc(tag) {
-  if (!editingDocument.value?.tags) return false
-  const currentTags = editingDocument.value.tags.split(',').map(t => t.trim())
-  return currentTags.includes(tag)
+	if (!editingDocument.value?.tags) return false
+	const currentTags = editingDocument.value.tags.split(',').map((t) => t.trim())
+	return currentTags.includes(tag)
 }
 
 // State
@@ -767,10 +744,7 @@ const showQrDialog = ref(false)
 const selectedDocuments = ref([])
 const showEditDialog = ref(false)
 const editingDocument = ref(null)
-const isLongPress = ref(false)
 const isDraggingFile = ref(false)
-const touchStartPosition = ref({ x: 0, y: 0 })
-const touchMoved = ref(false)
 const mergeFileName = ref('')
 const newDocument = ref({
 	file: null,
@@ -865,10 +839,7 @@ const canMerge = computed(() => {
 })
 
 const canSubmit = computed(() => {
-	return (
-		newDocument.value.document &&
-		newDocument.value.document_name 
-	)
+	return newDocument.value.document && newDocument.value.document_name
 })
 
 const uniqueTags = computed(() => {
@@ -910,16 +881,6 @@ const filteredDocuments = computed(() => {
 	})
 })
 
-// Utility Functions
-function formatDate(date) {
-	if (!date) return 'N/A'
-	return new Date(date).toLocaleDateString('en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	})
-}
-
 // Expiry calculation functions
 function isExpired(date) {
 	if (!date) return false
@@ -927,31 +888,24 @@ function isExpired(date) {
 }
 
 function getDaysUntilExpiry(date) {
-	if (!date) return Infinity
+	if (!date) return 'No Expiry'
 	const today = new Date().setHours(0, 0, 0, 0)
 	const expiryDate = new Date(date).setHours(0, 0, 0, 0)
 	return Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
 }
 
-function isExpiringSoon(date) {
-	if (!date) return false
-	const daysUntilExpiry = getDaysUntilExpiry(date)
-	return daysUntilExpiry <= 60 && daysUntilExpiry >= 0
-}
-
 function getExpiryStatus(date) {
-	if (!date) return ''
+	if (!date) return 'No Expiry'
 	const daysUntilExpiry = getDaysUntilExpiry(date)
 
 	if (daysUntilExpiry < 0) return 'Expired'
 	if (daysUntilExpiry === 0) return 'Expires Today'
 	if (daysUntilExpiry === 1) return 'Expires in 1 day'
-	if (daysUntilExpiry <= 60) return `Expires in ${daysUntilExpiry} days`
-	return ''
+	return `Expires in ${daysUntilExpiry} days`
 }
 
 function getExpiryStatusClass(date) {
-	if (!date) return ''
+	if (!date) return 'bg-gray-50 text-gray-700'
 	const daysUntilExpiry = getDaysUntilExpiry(date)
 
 	if (daysUntilExpiry < 0) return 'bg-red-100 text-red-800'
@@ -959,19 +913,7 @@ function getExpiryStatusClass(date) {
 	if (daysUntilExpiry <= 20) return 'bg-orange-100 text-orange-800'
 	if (daysUntilExpiry <= 30) return 'bg-yellow-100 text-yellow-800'
 	if (daysUntilExpiry <= 60) return 'bg-blue-50 text-blue-700'
-	return ''
-}
-
-function getExpiryIconClass(date) {
-	if (!date) return 'text-gray-400'
-	const daysUntilExpiry = getDaysUntilExpiry(date)
-
-	if (daysUntilExpiry < 0) return 'text-red-500'
-	if (daysUntilExpiry <= 10) return 'text-red-400'
-	if (daysUntilExpiry <= 20) return 'text-orange-500'
-	if (daysUntilExpiry <= 30) return 'text-yellow-500'
-	if (daysUntilExpiry <= 60) return 'text-blue-500'
-	return 'text-gray-400'
+	return 'bg-gray-50 text-gray-700'
 }
 
 // File Operations
@@ -1129,178 +1071,101 @@ async function submitDocument() {
 	}
 }
 
-// Document Editting
-function handleCardClick(doc, event) {
-  // Prevent normal click behavior if this was a long press
-  if (isLongPress.value) {
-    event.preventDefault()
-    event.stopPropagation()
-    return
-  }
-}
-
 // Update the card interaction handler
 function handleCardInteraction(doc, event) {
-  if (event.type === 'dblclick') {
-    openEditDialog(doc)
-  }
+	if (event.type === 'dblclick') {
+		openEditDialog(doc)
+	}
 }
 function setupDragDropHandlers() {
-  const container = document.querySelector('.space-y-6')
-  if (!container) return
+	const container = document.querySelector('.space-y-6')
+	if (!container) return
 
-  const handleDragEnter = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.dataTransfer.types.includes('Files')) {
-      isDraggingFile.value = true
-    }
-  }
+	const handleDragEnter = (e) => {
+		e.preventDefault()
+		e.stopPropagation()
+		if (e.dataTransfer.types.includes('Files')) {
+			isDraggingFile.value = true
+		}
+	}
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+	const handleDragOver = (e) => {
+		e.preventDefault()
+		e.stopPropagation()
+	}
 
-  const handleDragLeave = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    // Only reset if we're leaving the main container, not entering a child
-    if (!e.currentTarget.contains(e.relatedTarget)) {
-      isDraggingFile.value = false
-    }
-  }
+	const handleDragLeave = (e) => {
+		e.preventDefault()
+		e.stopPropagation()
+		// Only reset if we're leaving the main container, not entering a child
+		if (!e.currentTarget.contains(e.relatedTarget)) {
+			isDraggingFile.value = false
+		}
+	}
 
-  async function handleDrop(e) {
-  e.preventDefault()
-  e.stopPropagation()
-  isDraggingFile.value = false
+	async function handleDrop(e) {
+		e.preventDefault()
+		e.stopPropagation()
+		isDraggingFile.value = false
 
-  const files = Array.from(e.dataTransfer.files)
-  if (files.length > 0) {
-    const file = files[0]
-    
-    showUploadDialog.value = true
-    
-    await nextTick()
+		const files = Array.from(e.dataTransfer.files)
+		if (files.length > 0) {
+			const file = files[0]
 
-    const fileInput = document.querySelector('input[type="file"].hidden')
-    
-    if (fileInput) {
-      const dataTransfer = new DataTransfer()
-      dataTransfer.items.add(file)
-      
-      fileInput.files = dataTransfer.files
-      fileInput.dispatchEvent(new Event('change', { bubbles: true }))
-    }
-    
-    newDocument.value.document_name = file.name.split('.')[0]
-  }
-}
+			showUploadDialog.value = true
 
-  container.addEventListener('dragenter', handleDragEnter)
-  container.addEventListener('dragover', handleDragOver)
-  container.addEventListener('dragleave', handleDragLeave)
-  container.addEventListener('drop', handleDrop)
+			await nextTick()
 
-  // Cleanup
-  onUnmounted(() => {
-    container.removeEventListener('dragenter', handleDragEnter)
-    container.removeEventListener('dragover', handleDragOver)
-    container.removeEventListener('dragleave', handleDragLeave)
-    container.removeEventListener('drop', handleDrop)
-  })
-}
+			const fileInput = document.querySelector('input[type="file"].hidden')
 
-function setupTouchHandlers() {
-  // Get the container element that holds all cards
-  const container = document.querySelector('.documents-container')
-  if (!container) return
+			if (fileInput) {
+				const dataTransfer = new DataTransfer()
+				dataTransfer.items.add(file)
 
-  // Track touch movement
-  const handleTouchStart = (e) => {
-    const touch = e.touches[0]
-    touchStartPosition.value = {
-      x: touch.clientX,
-      y: touch.clientY
-    }
-    touchStartTime.value = Date.now()
-    isLongPress.value = false
+				fileInput.files = dataTransfer.files
+				fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+			}
 
-    touchTimeout.value = setTimeout(() => {
-      const card = e.target.closest('.document-card')
-      if (card) {
-        const documentId = card.dataset.documentId
-        const doc = filteredDocuments.value.find(d => d.name === documentId)
-        if (doc) {
-          isLongPress.value = true
-          openEditDialog(doc)
-        }
-      }
-    }, 500)
-  }
+			newDocument.value.document_name = file.name.split('.')[0]
+		}
+	}
 
-  const handleTouchMove = (e) => {
-    if (!touchStartPosition.value) return
+	container.addEventListener('dragenter', handleDragEnter)
+	container.addEventListener('dragover', handleDragOver)
+	container.addEventListener('dragleave', handleDragLeave)
+	container.addEventListener('drop', handleDrop)
 
-    const touch = e.touches[0]
-    const moveThreshold = 10 // pixels
-
-    const xDiff = Math.abs(touch.clientX - touchStartPosition.value.x)
-    const yDiff = Math.abs(touch.clientY - touchStartPosition.value.y)
-
-    // If user has moved more than the threshold, cancel the long press
-    if (xDiff > moveThreshold || yDiff > moveThreshold) {
-      clearTimeout(touchTimeout.value)
-      touchStartPosition.value = null
-    }
-  }
-
-  const handleTouchEnd = () => {
-    clearTimeout(touchTimeout.value)
-    touchStartPosition.value = null
-    
-    // Reset long press after a short delay to allow click prevention
-    setTimeout(() => {
-      isLongPress.value = false
-    }, 50)
-  }
-
-  // Add event listeners with correct options
-  container.addEventListener('touchstart', handleTouchStart)
-  container.addEventListener('touchmove', handleTouchMove)
-  container.addEventListener('touchend', handleTouchEnd)
-
-  // Cleanup
-  onUnmounted(() => {
-    container.removeEventListener('touchstart', handleTouchStart)
-    container.removeEventListener('touchmove', handleTouchMove)
-    container.removeEventListener('touchend', handleTouchEnd)
-  })
+	// Cleanup
+	onUnmounted(() => {
+		container.removeEventListener('dragenter', handleDragEnter)
+		container.removeEventListener('dragover', handleDragOver)
+		container.removeEventListener('dragleave', handleDragLeave)
+		container.removeEventListener('drop', handleDrop)
+	})
 }
 
 function openEditDialog(doc) {
-  editingDocument.value = { ...doc, tags: doc.tags || '' }
-  showEditDialog.value = true
+	editingDocument.value = { ...doc, tags: doc.tags || '' }
+	showEditDialog.value = true
 }
 
 async function saveDocumentChanges() {
-  try {
-    await documentResource.setValue.submit({
-      name: editingDocument.value.name,
-      document_name: editingDocument.value.document_name,
-      document_number: editingDocument.value.document_number,
-      place_of_issue: editingDocument.value.place_of_issue,
-      issue_date: editingDocument.value.issue_date,
-      expiry_date: editingDocument.value.expiry_date,
-      tags: editingDocument.value.tags
-    })
-    
-    showEditDialog.value = false
-    await documentResource.reload()
-  } catch (error) {
-    console.error('Error updating document:', error)
-  }
+	try {
+		await documentResource.setValue.submit({
+			name: editingDocument.value.name,
+			document_name: editingDocument.value.document_name,
+			document_number: editingDocument.value.document_number,
+			place_of_issue: editingDocument.value.place_of_issue,
+			issue_date: editingDocument.value.issue_date,
+			expiry_date: editingDocument.value.expiry_date,
+			tags: editingDocument.value.tags,
+		})
+
+		showEditDialog.value = false
+		await documentResource.reload()
+	} catch (error) {
+		console.error('Error updating document:', error)
+	}
 }
 
 // PDF Merging
@@ -1429,8 +1294,6 @@ watch(
 )
 
 onMounted(() => {
-  setupTouchHandlers()
-  setupDragDropHandlers()
+	setupDragDropHandlers()
 })
-
 </script>

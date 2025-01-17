@@ -150,19 +150,16 @@
     <Dialog
       v-model="showLockDialog"
       :options="lockDialogOptions"
-      style="z-index: 999999 !important"
     />
 
     <Dialog
       v-model="showUnauthorizedDialog"
       :options="unauthorizedDialogOptions"
-      style="z-index: 999999 !important"
     />
 
     <Dialog
       v-model="showActiveUsersDialog"
       :options="activeUsersDialogOptions"
-      style="z-index: 999999 !important"
     />
 
     <!-- Save Status Indicator -->

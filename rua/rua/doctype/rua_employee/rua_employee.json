@@ -16,7 +16,9 @@
   "naming_series",
   "image",
   "salary",
-  "user"
+  "user",
+  "phone",
+  "email"
  ],
  "fields": [
   {
@@ -70,12 +72,24 @@
    "fieldtype": "Link",
    "label": "User",
    "options": "User"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "email"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-14 13:10:33.610088",
+ "modified": "2025-01-18 00:07:16.667950",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
