@@ -15,7 +15,7 @@
 		<!-- Header with tabs -->
 		<div class="border-b">
 			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-xl font-semibold text-gray-900">{{ employee.employee_name }} Documents</h2>
+				<h2 class="text-xl font-semibold text-gray-900">Documents</h2>
 				<div class="flex gap-2">
 					<Button
 						v-if="selectedDocuments.length > 0"
@@ -30,7 +30,7 @@
 					<Button variant="solid" @click="showUploadDialog = true">
 						<div class="flex items-center gap-2">
 							<FeatherIcon name="upload" class="w-4 h-4" />
-							<span>Upload Document</span>
+							<span>Upload</span>
 						</div>
 					</Button>
 				</div>

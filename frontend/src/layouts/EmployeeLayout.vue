@@ -64,7 +64,7 @@
       </main>
 
       <!-- Bottom navigation for mobile -->
-      <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t px-4 py-2">
+      <nav class="overflow-x-auto md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t px-4 py-2">
         <div class="flex justify-around">
           <router-link
             v-for="item in navigation"
