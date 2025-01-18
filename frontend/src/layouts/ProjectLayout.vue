@@ -1,4 +1,4 @@
-// ProjectLayout.vue
+<!-- ProjectLayout.vue -->
 <template>
   <div v-if="isLoading" class="min-h-screen flex items-center justify-center">
     <div class="text-gray-600">Loading project...</div>
@@ -6,7 +6,7 @@
   
   <div v-else class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 z-9 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b">
+    <header class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b">
       <div class="flex items-center gap-3 overflow-hidden">
         <button @click="router.push('/projects')" class="flex-shrink-0 text-gray-500 hover:text-gray-700">
           <FeatherIcon name="arrow-left" class="w-5 h-5" />
@@ -37,49 +37,54 @@
       </div>
     </header>
 
-    <div class="flex-1 flex pt-16">
+    <div class="flex flex-1 pt-16 pb-16 md:pb-0">
       <!-- Sidebar for desktop -->
-      <aside class="hidden md:block md:fixed md:inset-y-16 md:w-64 bg-white border-r md:h-full relative">
-        <nav class="flex-1 px-4 py-4 space-y-1">
-          <router-link
-            v-for="item in navigation"
-            :key="item.name"
-            :to="item.to"
-            class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100"
-            :class="{ 'bg-gray-100': route.path === item.to }"
-          >
-            <FeatherIcon :name="item.icon" class="h-5 w-5 mr-3 text-gray-500" />
-            {{ item.name }}
-          </router-link>
-        </nav>
-        
-        <!-- Sidebar Map -->
-        <div class="px-4 pb-4 mt-auto absolute bottom-20 w-full">
-          <ProjectMap
-            :coords="selectedProject?.coords"
-            :is-manager="isManager"
-            :mini-map="true"
-            @update:coords="updateProjectCoords"
-          />
-          <div v-if="isManager" class="mt-2">
-            <Button
-              :variant="'solid'"
-              theme="red"
-              size="lg"
-              label="Delete Project"
-              :loading="false"
-              :disabled="false"
-              @click="showDeleteDialog = true"
-              class="w-full"
+      <aside class="hidden md:block md:fixed md:w-64 bg-white border-r flex flex-col justify-between h-full pb-16">
+        <div class="flex flex-col h-full justify-between">
+          <nav class="flex-1 px-4 py-4 space-y-1">
+            <router-link
+              v-for="item in navigation"
+              :key="item.name"
+              :to="item.to"
+              class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100"
+              :class="{ 'bg-gray-100': route.path === item.to }"
             >
-              Delete Project
-            </Button>
+              <FeatherIcon :name="item.icon" class="h-5 w-5 mr-3 text-gray-500" />
+              {{ item.name }}
+            </router-link>
+          </nav>
+          
+          <!-- Sidebar Map -->
+          <div class="px-4 pb-4 mt-auto">
+            <ProjectMap
+              :coords="selectedProject?.coords"
+              :is-manager="isManager"
+              :mini-map="true"
+              @update:coords="updateProjectCoords"
+            />
+            <div v-if="isManager" class="mt-2">
+              <Button
+                :variant="'solid'"
+                theme="red"
+                size="lg"
+                label="Delete Project"
+                :loading="false"
+                :disabled="false"
+                @click="showDeleteDialog = true"
+                class="w-full"
+              >
+                Delete Project
+              </Button>
+            </div>
           </div>
         </div>
       </aside>
 
-      <!-- Main content -->
-      <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0 relative">
+      <!-- Main content with chat layout support -->
+      <main 
+        class="flex-1 overflow-y-auto bg-gray-50 md:ml-64"
+        :class="{'chat-layout': isChatRoute}"
+      >
         <router-view 
           v-if="selectedProjectResource"
           :projectResource="selectedProjectResource"
@@ -87,17 +92,17 @@
       </main>
 
       <!-- Bottom navigation for mobile -->
-      <nav class="overflow-x-auto md:hidden fixed bottom-0 left-0 right-0 z-9 bg-white border-t px-4 py-2">
-        <div class="flex justify-around">
+      <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t">
+        <div class="flex justify-around px-4 py-2">
           <router-link
             v-for="item in navigation"
             :key="item.name"
             :to="item.to"
-            class="flex flex-col items-center px-2 py-1"
+            class="flex flex-col items-center px-2 py-1 min-w-[4rem]"
             :class="{ 'text-gray-900': route.path === item.to, 'text-gray-500': route.path !== item.to }"
           >
             <FeatherIcon :name="item.icon" class="h-6 w-6" />
-            <span class="text-xs mt-1">{{ item.name }}</span>
+            <span class="text-xs mt-1 whitespace-nowrap">{{ item.name }}</span>
           </router-link>
         </div>
       </nav>
@@ -147,6 +152,11 @@ const initializationTimeout = ref(null)
 // Get selected project from the list resource
 const selectedProject = computed(() => {
   return projectResource.data?.find(proj => proj.name === route.params.id)
+})
+
+// Detect if current route is chat
+const isChatRoute = computed(() => {
+  return route.path.includes('/chat')
 })
 
 // Watch for changes in project ID and recreate document resource
@@ -284,5 +294,17 @@ async function deleteProject() {
 /* Ensure header stays above Leaflet controls */
 .leaflet-control {
   z-index: 1000;
+}
+
+/* Chat-specific layout styles */
+.chat-layout {
+  @apply relative overflow-hidden;
+  height: calc(100vh - 4rem); /* 4rem = h-16 of header */
+}
+
+@media (min-width: 768px) {
+  .chat-layout {
+    height: calc(100vh - 4rem);
+  }
 }
 </style>

@@ -5,9 +5,7 @@
 
   <div v-else class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header
-      class="fixed top-0 left-0 right-0 z-9 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b"
-    >
+    <header class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b">
       <div class="flex items-center gap-3 overflow-hidden">
         <button
           @click="router.push('/employees')"
@@ -27,36 +25,34 @@
           <h1 class="text-xl font-bold text-gray-900 truncate">
             {{ selectedEmployee?.employee_name }}
           </h1>
-          <div
-            class="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-          >
+          <div class="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
             {{ selectedEmployee?.position }}
           </div>
         </div>
       </div>
     </header>
 
-    <div class="flex-1 flex pt-16">
+    <div class="flex flex-1 pt-16 pb-16 md:pb-0">
       <!-- Sidebar for desktop -->
-      <aside
-        class="hidden md:block md:fixed md:inset-y-16 md:w-64 bg-white border-r md:h-full"
-      >
-        <nav class="flex-1 px-4 py-4 space-y-1">
-          <router-link
-            v-for="item in navigation"
-            :key="item.name"
-            :to="item.to"
-            class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100"
-            :class="{ 'bg-gray-100': route.path === item.to }"
-          >
-            <FeatherIcon :name="item.icon" class="h-5 w-5 mr-3 text-gray-500" />
-            {{ item.name }}
-          </router-link>
-        </nav>
+      <aside class="hidden md:block md:fixed md:inset-y-16 md:w-64 bg-white border-r">
+        <div class="flex flex-col h-full">
+          <nav class="flex-1 px-4 py-4 space-y-1">
+            <router-link
+              v-for="item in navigation"
+              :key="item.name"
+              :to="item.to"
+              class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100"
+              :class="{ 'bg-gray-100': route.path === item.to }"
+            >
+              <FeatherIcon :name="item.icon" class="h-5 w-5 mr-3 text-gray-500" />
+              {{ item.name }}
+            </router-link>
+          </nav>
+        </div>
       </aside>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64 pb-20 md:pb-0">
+      <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64">
         <router-view
           :employee="selectedEmployee"
           :employeeResource="selectedEmployeeResource"
@@ -64,17 +60,17 @@
       </main>
 
       <!-- Bottom navigation for mobile -->
-      <nav class="overflow-x-auto md:hidden fixed bottom-0 left-0 right-0 z-9 bg-white border-t px-4 py-2">
-        <div class="flex justify-around">
+      <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t">
+        <div class="flex justify-around px-4 py-2">
           <router-link
             v-for="item in navigation"
             :key="item.name"
             :to="item.to"
-            class="flex flex-col items-center px-2 py-1"
+            class="flex flex-col items-center px-2 py-1 min-w-[4rem]"
             :class="{ 'text-gray-900': route.path === item.to, 'text-gray-500': route.path !== item.to }"
           >
             <FeatherIcon :name="item.icon" class="h-6 w-6" />
-            <span class="text-xs mt-1">{{ item.name }}</span>
+            <span class="text-xs mt-1 whitespace-nowrap">{{ item.name }}</span>
           </router-link>
         </div>
       </nav>

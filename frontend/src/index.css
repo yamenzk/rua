@@ -15,3 +15,15 @@
 nav{
 	z-index: 9999 !important;
 }
+
+[role="dialog"],
+[data-headlessui-state="open"] {
+  z-index: 100 !important; /* Higher than navbar z-50 */
+}
+
+[role="dialog"] ~ nav,
+[data-headlessui-state="open"] ~ nav,
+html:has([role="dialog"]) nav.fixed.bottom-0,
+html:has([data-headlessui-state="open"]) nav.fixed.bottom-0 {
+  z-index: 40 !important;
+}

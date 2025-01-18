@@ -1,14 +1,14 @@
 <!-- ProjectChat.vue -->
 <template>
-	<!-- Root container that takes full height of main area -->
-	<div class="absolute inset-0 flex flex-col bg-white">
-		<!-- Fixed Header -->
-		<div class="flex-shrink-0 px-6 py-4 border-b bg-white">
-			<h2 class="text-lg font-medium text-gray-900">Project Chat</h2>
-		</div>
-
+	<div class="h-full flex flex-col bg-white">
 		<!-- Scrollable Messages Container -->
-		<div class="flex-1 overflow-y-auto px-4 py-4 pb-[130px] md:pb-[130px]" ref="chatContainer">
+		<div
+			ref="chatContainer"
+			class="flex-1 overflow-y-auto px-4 py-4"
+			:style="{
+				paddingBottom: '76px',
+			}"
+		>
 			<template v-if="messages?.length">
 				<div v-for="message in messages" :key="message.name">
 					<!-- System Messages -->
@@ -33,7 +33,6 @@
 										"
 									></span>
 								</div>
-                
 							</div>
 						</div>
 					</template>
@@ -108,18 +107,18 @@
 
 			<!-- Empty State -->
 			<div v-else class="flex flex-col items-center justify-center h-full text-center">
-        <FeatherIcon name="message-circle" class="w-12 h-12 text-gray-400 mb-4" />
-        <p class="text-base font-medium text-gray-900">No Messages Yet</p>
-        <p class="text-sm text-gray-600">Start the conversation by sending a message.</p>
-      </div>
+				<FeatherIcon name="message-circle" class="w-12 h-12 text-gray-400 mb-4" />
+				<p class="text-base font-medium text-gray-900">No Messages Yet</p>
+				<p class="text-sm text-gray-600">Start the conversation by sending a message.</p>
+			</div>
 		</div>
 
 		<!-- Fixed Input Area -->
-		<div class="absolute left-0 right-0 bottom-[64px] md:bottom-0 bg-white border-t shadow-lg">
-			<form
-				@submit.prevent="sendMessage"
-				class="flex items-center gap-3 p-4 mx-auto max-w-6xl"
-			>
+		<div
+			ref="inputArea"
+			class="fixed md:absolute left-0 right-0 bottom-[64px] md:bottom-0 bg-white border-t shadow-lg z-40"
+		>
+			<form @submit.prevent="sendMessage" class="flex items-center gap-3 p-4">
 				<div class="flex-1 relative">
 					<input
 						ref="inputRef"
@@ -174,6 +173,7 @@
 						</div>
 					</div>
 
+					<!-- Users Autocomplete -->
 					<div
 						v-if="showUsersList && filteredUsers.length"
 						class="absolute left-0 right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-50"
@@ -206,17 +206,19 @@
 						</div>
 					</div>
 				</div>
+
 				<Button
 					type="submit"
-					variant="solid"
-					class="h-11 px-6 rounded-full"
-					:disabled="isSubmitDisabled"
+					:variant="'solid'"
+					:ref_for="true"
+					theme="gray"
+					size="md"
+					class="rounded-full p-[1.3rem] flex items-center justify-center"
+					label="Button"
 					:loading="messages?.insert?.loading"
+					:disabled="isSubmitDisabled"
 				>
-					<template #prefix>
-						<FeatherIcon name="send" class="w-4 h-4" />
-					</template>
-					Send
+					<FeatherIcon name="send" class="w-6 h-6 pr-1" />
 				</Button>
 			</form>
 		</div>
@@ -224,29 +226,65 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch, computed } from 'vue'
-import { createResource } from 'frappe-ui'
+import { ref, onMounted, nextTick, watch, computed, onUnmounted } from 'vue'
 import { session } from '@/data/session'
 import { Avatar, Button, FeatherIcon, Badge } from 'frappe-ui'
 import { chatResource } from '@/data/chat'
-import { hasRole } from '@/data/roles'
 import { quotationResource } from '@/data/quotation'
 import { rfqResource } from '@/data/rfq'
 import { lpoResource } from '@/data/lpo'
 import { invoiceResource } from '@/data/invoice'
 import { employeeResource } from '@/data/employee'
 
-
 // Props
 const props = defineProps({
-  projectResource: {
-    type: Object,
-    required: true,
-    validator: (value) => {
-      return value && typeof value === 'object' && 'doc' in value
-    }
-  },
+	projectResource: {
+		type: Object,
+		required: true,
+		validator: (value) => {
+			return value && typeof value === 'object' && 'doc' in value
+		},
+	},
 })
+
+const inputArea = ref(null)
+const inputHeight = ref(0)
+const isMobile = ref(false)
+
+function checkMobile() {
+	isMobile.value = window.innerWidth < 768 // 768px is the md breakpoint in Tailwind
+}
+
+onMounted(() => {
+	// Calculate input area height for proper padding
+	if (inputArea.value) {
+		inputHeight.value = inputArea.value.offsetHeight
+	}
+
+	// Initial mobile check
+	checkMobile()
+
+	// Update on resize
+	window.addEventListener('resize', () => {
+		updateInputHeight()
+		checkMobile()
+	})
+
+	scrollToBottom()
+})
+
+onUnmounted(() => {
+	window.removeEventListener('resize', () => {
+		updateInputHeight()
+		checkMobile()
+	})
+})
+
+function updateInputHeight() {
+	if (inputArea.value) {
+		inputHeight.value = inputArea.value.offsetHeight
+	}
+}
 
 // State
 const newMessage = ref('')
@@ -260,65 +298,67 @@ const inputRef = ref(null)
 
 // Computed
 const messages = computed(() => {
-  return chatResource.data?.filter(msg => msg.project === props.projectResource.doc?.name) || []
+	return (
+		chatResource.data?.filter((msg) => msg.project === props.projectResource.doc?.name) || []
+	)
 })
 
 const references = computed(() => {
-  const projectName = props.projectResource.doc?.name
-  if (!projectName) return []
+	const projectName = props.projectResource.doc?.name
+	if (!projectName) return []
 
-  const quotations = (quotationResource.data || [])
-    .filter(q => q.project === projectName)
-    .map(q => ({
-      name: q.name,
-      doctype: 'RUA Quotation',
-      party: q.party,
-      date: q.date,
-      link: `/project/${projectName}/documents/quotation/${q.name}`
-    }))
+	const quotations = (quotationResource.data || [])
+		.filter((q) => q.project === projectName)
+		.map((q) => ({
+			name: q.name,
+			doctype: 'RUA Quotation',
+			party: q.party,
+			date: q.date,
+			link: `/project/${projectName}/documents/quotation/${q.name}`,
+		}))
 
-  const rfqs = (rfqResource.data || [])
-    .filter(r => r.project === projectName)
-    .map(r => ({
-      name: r.name,
-      doctype: 'RUA RFQ',
-      party: r.party,
-      date: r.date,
-      link: `/project/${projectName}/documents/rfq/${r.name}`
-    }))
+	const rfqs = (rfqResource.data || [])
+		.filter((r) => r.project === projectName)
+		.map((r) => ({
+			name: r.name,
+			doctype: 'RUA RFQ',
+			party: r.party,
+			date: r.date,
+			link: `/project/${projectName}/documents/rfq/${r.name}`,
+		}))
 
-  const lpos = (lpoResource.data || [])
-    .filter(l => l.project === projectName)
-    .map(l => ({
-      name: l.name,
-      doctype: 'RUA LPO',
-      party: l.party,
-      date: l.date,
-      link: `/project/${projectName}/documents/lpo/${l.name}`
-    }))
+	const lpos = (lpoResource.data || [])
+		.filter((l) => l.project === projectName)
+		.map((l) => ({
+			name: l.name,
+			doctype: 'RUA LPO',
+			party: l.party,
+			date: l.date,
+			link: `/project/${projectName}/documents/lpo/${l.name}`,
+		}))
 
 	const invoices = (invoiceResource.data || [])
-    .filter(i => i.project === projectName)
-    .map(i => ({
-      name: i.name,
-      doctype: 'RUA Invoice',
-      party: i.party,
-      date: i.date,
-      link: `/project/${projectName}/documents/invoice/${i.name}`
-    }))
+		.filter((i) => i.project === projectName)
+		.map((i) => ({
+			name: i.name,
+			doctype: 'RUA Invoice',
+			party: i.party,
+			date: i.date,
+			link: `/project/${projectName}/documents/invoice/${i.name}`,
+		}))
 
-  return [...quotations, ...rfqs, ...lpos, ...invoices]
+	return [...quotations, ...rfqs, ...lpos, ...invoices]
 })
 
 const users = computed(() => {
-  return (employeeResource.data || [])
-    .filter(u => u.user && u.user !== session.user)
-    .map(u => ({
-      name: u.user,
-      employee_name: u.employee_name,
-      image: u.image,
-      user: u.user
-    }))
+	return (employeeResource.data || [])
+		.filter((u) => u.user && u.user !== session.user)
+		.map((u) => ({
+			name: u.user,
+			employee_name: u.employee_name,
+			image: u.image,
+			user: u.user,
+		}))
 })
 
 const isMessageEmpty = computed(() => !newMessage.value || !newMessage.value.trim())
@@ -383,32 +423,31 @@ function formatDate(dateString) {
 }
 
 async function sendMessage() {
-  if (!newMessage.value.trim() || !chatResource) return
+	if (!newMessage.value.trim() || !chatResource) return
 
-  try {
-    await chatResource.insert.submit({
-      project: props.projectResource.doc.name,
-      user: session.user,
-      message: newMessage.value.trim(),
-      type: 'Chat Message',
-      timestamp: formatDateForFrappe(new Date()),
-    })
+	try {
+		await chatResource.insert.submit({
+			project: props.projectResource.doc.name,
+			user: session.user,
+			message: newMessage.value.trim(),
+			type: 'Chat Message',
+			timestamp: formatDateForFrappe(new Date()),
+		})
 
-    newMessage.value = ''
-    scrollToBottom()
-  } catch (error) {
-    console.error('Failed to send message:', error)
-  }
+		newMessage.value = ''
+		scrollToBottom()
+	} catch (error) {
+		console.error('Failed to send message:', error)
+	}
 }
 
-
 function filterUsers(searchTerm) {
-  filteredUsers.value = users.value
-    .filter(user => 
-      user.employee_name.toLowerCase().includes(searchTerm) ||
-      user.name.toLowerCase().includes(searchTerm) ||
-      user.user.toLowerCase().includes(searchTerm)
-    )
+	filteredUsers.value = users.value.filter(
+		(user) =>
+			user.employee_name.toLowerCase().includes(searchTerm) ||
+			user.name.toLowerCase().includes(searchTerm) ||
+			user.user.toLowerCase().includes(searchTerm),
+	)
 }
 
 function handleInput(event) {
@@ -448,56 +487,56 @@ function handleInput(event) {
 }
 
 function selectUserMention(user) {
-  const text = newMessage.value
-  const lastAt = text.lastIndexOf('@', cursorPosition.value)
-  const nextSpace = text.indexOf(' ', lastAt)
-  const searchEnd = nextSpace === -1 ? text.length : nextSpace
+	const text = newMessage.value
+	const lastAt = text.lastIndexOf('@', cursorPosition.value)
+	const nextSpace = text.indexOf(' ', lastAt)
+	const searchEnd = nextSpace === -1 ? text.length : nextSpace
 
-  // Replace with the full username, but display employee name
-  newMessage.value = text.slice(0, lastAt) + '@' + user.name + text.slice(searchEnd)
-  showUsersList.value = false
+	// Replace with the full username, but display employee name
+	newMessage.value = text.slice(0, lastAt) + '@' + user.name + text.slice(searchEnd)
+	showUsersList.value = false
 
-  // Focus back on input
-  nextTick(() => {
-    inputRef.value.focus()
-  })
+	// Focus back on input
+	nextTick(() => {
+		inputRef.value.focus()
+	})
 }
 
 function handleKeydown(event) {
-  // Handle references autocomplete
-  if (showReferencesList.value) {
-    if (event.key === 'Escape') {
-      showReferencesList.value = false
-      event.preventDefault()
-    } else if (event.key === 'Tab') {
-      if (filteredReferences.value.length > 0) {
-        selectReference(filteredReferences.value[0])
-        event.preventDefault()
-      }
-    }
-  }
+	// Handle references autocomplete
+	if (showReferencesList.value) {
+		if (event.key === 'Escape') {
+			showReferencesList.value = false
+			event.preventDefault()
+		} else if (event.key === 'Tab') {
+			if (filteredReferences.value.length > 0) {
+				selectReference(filteredReferences.value[0])
+				event.preventDefault()
+			}
+		}
+	}
 
-  // Handle users autocomplete
-  if (showUsersList.value) {
-    if (event.key === 'Escape') {
-      showUsersList.value = false
-      event.preventDefault()
-    } else if (event.key === 'Tab') {
-      if (filteredUsers.value.length > 0) {
-        selectUserMention(filteredUsers.value[0])
-        event.preventDefault()
-      }
-    }
-  }
+	// Handle users autocomplete
+	if (showUsersList.value) {
+		if (event.key === 'Escape') {
+			showUsersList.value = false
+			event.preventDefault()
+		} else if (event.key === 'Tab') {
+			if (filteredUsers.value.length > 0) {
+				selectUserMention(filteredUsers.value[0])
+				event.preventDefault()
+			}
+		}
+	}
 }
 
 function filterReferences(searchTerm) {
-  filteredReferences.value = references.value
-    .filter(ref =>
-      ref.name.toLowerCase().includes(searchTerm) ||
-      ref.party.toLowerCase().includes(searchTerm) ||
-      ref.doctype.toLowerCase().includes(searchTerm)
-    )
+	filteredReferences.value = references.value.filter(
+		(ref) =>
+			ref.name.toLowerCase().includes(searchTerm) ||
+			ref.party.toLowerCase().includes(searchTerm) ||
+			ref.doctype.toLowerCase().includes(searchTerm),
+	)
 }
 
 function selectReference(ref) {
@@ -529,18 +568,22 @@ function formatReferenceDate(dateString) {
 }
 
 function formatMessageWithReferences(message, isUserMessage = false, isSystemMessage = false) {
-  if (!message) return ''
+	if (!message) return ''
 
-  const refData = references.value || []
-  const userData = users.value || []
+	const refData = references.value || []
+	const userData = users.value || []
 
 	// Replace references first
 	let formattedMessage = message.replace(/#([A-Z0-9-]+)/g, (match, reference) => {
 		const ref = refData.find((r) => r.name === reference)
 		if (ref) {
 			return `
-        <span class="inline-block align-middle mx-0.5 px-1.5 py-0.5 rounded-full text-xs ${isSystemMessage ? '' :
-			isUserMessage ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-800'
+        <span class="inline-block align-middle mx-0.5 px-1.5 py-0.5 rounded-full text-xs ${
+			isSystemMessage
+				? ''
+				: isUserMessage
+					? 'bg-white/20 text-white'
+					: 'bg-gray-300 text-gray-800'
 		}">
           <a 
             href="${ref.link}" 
@@ -564,7 +607,7 @@ function formatMessageWithReferences(message, isUserMessage = false, isSystemMes
 		const user = userData.find((u) => u.name === mentionName)
 		if (user) {
 			return `
-        <span class="inline-block align-middle mx-0.5 px-1.5 py-0.5 rounded-full text-xs ${isSystemMessage ? '' : isUserMessage ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-800' }">
+        <span class="inline-block align-middle mx-0.5 px-1.5 py-0.5 rounded-full text-xs ${isSystemMessage ? '' : isUserMessage ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-800'}">
           <span class="flex items-center">
             <img 
               src="${user.image}" 
@@ -590,18 +633,19 @@ function scrollToBottom() {
 	})
 }
 
-
-
 // Watch for new messages to scroll
 watch(
-  () => messages.value?.length,
-  () => scrollToBottom(),
-  { flush: 'post' }
+	() => messages.value?.length,
+	() => scrollToBottom(),
+	{ flush: 'post' },
 )
-
-
-// Initial setup
-onMounted(() => {
-	scrollToBottom()
-})
 </script>
+
+<style scoped>
+/* Ensure the input area stays fixed to the viewport on mobile */
+@media (max-width: 767px) {
+	.fixed {
+		position: fixed !important;
+	}
+}
+</style>
