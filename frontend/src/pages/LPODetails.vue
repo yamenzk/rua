@@ -5,6 +5,13 @@
     <LoadingIndicator />
   </div>
 
+  <div v-else-if="lpoResource.error" class="flex items-center justify-center min-h-[60vh]">
+    <div class="text-center">
+      <FeatherIcon name="alert-circle" class="w-8 h-8 text-red-500 mx-auto mb-2" />
+      <p class="text-gray-600">Failed to load LPO details</p>
+    </div>
+  </div>
+
   <div v-else>
     <!-- Document Actions -->
     <div class="sticky top-0 z-10 bg-white border-b">
@@ -40,6 +47,14 @@
             @click="showStatusDialog = true"
           >
             {{ lpoResource.doc.status }}
+          </Badge>
+
+          <Badge
+            v-if="lpoResource.doc.status === 'Final'"
+            :variant="getPaymentStatusVariant(lpoResource.doc.payment_status) === 'gray' ? 'solid' : 'subtle'"
+            :theme="getPaymentStatusVariant(lpoResource.doc.payment_status)"
+          >
+            {{ lpoResource.doc.payment_status }}
           </Badge>
 
           <!-- Actions Dropdown -->
@@ -309,12 +324,17 @@
       </div>
     </template>
   </Dialog>
+  <CreatePaymentDialog
+  v-if="lpoResource?.doc"
+  v-model="showCreatePaymentDialog"
+  :source-doc="lpoResource.doc"
+  source-type="RUA LPO"
+/>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createDocumentResource } from 'frappe-ui'
 import { partyResource } from '@/data/party'
 import {
   Button,
@@ -330,6 +350,8 @@ import {
 import { inject } from 'vue'
 import LPOItems from './LPOItems.vue'
 import { formatDate, formatCurrency } from '@/utils/format'
+import CreatePaymentDialog from './CreatePaymentDialog.vue'
+import { createLPOResource } from '@/data/lpo'
 
 const props = defineProps({
   projectResource: {
@@ -353,6 +375,7 @@ const finalLPO = ref(null)
 const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
 const remarks = ref('')
+const showCreatePaymentDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
@@ -367,18 +390,38 @@ const hasAvailableStatuses = computed(() =>
   availableStatuses.value.length > 0
 )
 
-const actionDropdownOptions = computed(() => [
-  {
-    label: 'Download PDF',
-    icon: 'file-text',
-    onClick: downloadPDF
-  },
-  {
-    label: 'Print',
-    icon: 'printer',
-    onClick: printLPO
+const actionDropdownOptions = computed(() => {
+  const doc = lpoResource.value?.doc
+  if (!doc) return []
+
+  if (doc.status === 'Cancelled') {
+    return []
   }
-])
+
+  const options = [
+    {
+      label: 'Download PDF',
+      icon: 'file-text',
+      onClick: downloadPDF
+    },
+    {
+      label: 'Print',
+      icon: 'printer',
+      onClick: printLPO
+    }
+  ]
+
+  // Only show create payment option for submitted LPOs
+  if (doc.status === 'Final') {
+    options.push({
+      label: 'Create Payment',
+      icon: 'credit-card',
+      onClick: () => showCreatePaymentDialog.value = true
+    })
+  }
+
+  return options
+})
 
 const statusDialogOptions = computed(() => ({
   title: hasAvailableStatuses.value ? 'Update LPO Status' : 'LPO Status',
@@ -419,6 +462,19 @@ function getStatusVariant(status) {
       return 'red'
     case 'final':
       return 'gray'
+    default:
+      return 'gray'
+  }
+}
+
+function getPaymentStatusVariant(status) {
+  switch (status?.toLowerCase()) {
+    case 'paid':
+      return 'green'
+    case 'partially paid':
+      return 'yellow'
+    case 'unpaid':
+      return 'red'
     default:
       return 'gray'
   }
@@ -564,25 +620,21 @@ function printLPO() {
   window.open(url, '_blank')
 }
 
+function initializeLPOResource() {
+  if (route.params.lpoId) {
+    lpoResource.value = createLPOResource(route.params.lpoId)
+  }
+}
+
 // Initialize and watch resources
 onMounted(() => {
-  if (route.params.lpoId) {
-    lpoResource.value = createDocumentResource({
-      doctype: 'RUA LPO',
-      name: route.params.lpoId,
-      auto: true
-    })
-  }
+  initializeLPOResource()
 })
 
 // Watch for route changes
 watch(() => route.params.lpoId, (newId) => {
   if (newId) {
-    lpoResource.value = createDocumentResource({
-      doctype: 'RUA LPO',
-      name: newId,
-      auto: true
-    })
+    lpoResource.value = createLPOResource(newId)
   }
 })
 </script>

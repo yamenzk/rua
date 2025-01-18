@@ -180,7 +180,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createDocumentResource } from 'frappe-ui'
+import { createPaymentResource } from '@/data/payment'
 import { 
   Button,
   Badge,
@@ -278,25 +278,22 @@ function navigateToRelatedDoc() {
   }
 }
 
-// Initialize and watch resources
+
 onMounted(() => {
-  if (route.params.paymentId) {
-    paymentResource.value = createDocumentResource({
-      doctype: 'RUA Payment',
-      name: route.params.paymentId,
-      auto: true
-    })
-  }
+  initializePaymentResource()
 })
+
+function initializePaymentResource() {
+  if (route.params.paymentId) {
+    paymentResource.value = createPaymentResource(route.params.paymentId)
+  }
+}
 
 // Watch for route changes
 watch(() => route.params.paymentId, (newId) => {
   if (newId) {
-    paymentResource.value = createDocumentResource({
-      doctype: 'RUA Payment',
-      name: newId,
-      auto: true
-    })
+    paymentResource.value = createPaymentResource(newId)
   }
 })
+
 </script>

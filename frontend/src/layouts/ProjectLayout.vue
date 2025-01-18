@@ -131,8 +131,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Avatar, FeatherIcon, Button, Dialog, createDocumentResource } from 'frappe-ui'
-import { projectResource } from '@/data/project'
+import { Avatar, FeatherIcon, Button, Dialog } from 'frappe-ui'
+import { projectResource, createProjectResource } from '@/data/project'
 import { hasRole } from '@/data/roles'
 import ProjectMap from '../pages/ProjectMap.vue'
 import { inject } from 'vue'
@@ -169,15 +169,7 @@ watch(() => route.params.id, (newId) => {
 // Initialize document resource for selected project
 async function initializeProjectResource(projectId) {
   try {
-    selectedProjectResource.value = createDocumentResource({
-      doctype: 'RUA Project',
-      name: projectId,
-      auto: true,
-      realtime: true,
-    }, { $socket })
-    
-    // Wait for the initial fetch to complete
-    await selectedProjectResource.value.promise
+    selectedProjectResource.value = await createProjectResource(projectId, $socket)
     isLoading.value = false
   } catch (error) {
     console.error('Error creating project resource:', error)

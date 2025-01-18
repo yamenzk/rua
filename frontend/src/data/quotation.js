@@ -1,5 +1,5 @@
 import router from "@/router"
-import { createListResource } from "frappe-ui"
+import { createListResource, createDocumentResource } from "frappe-ui"
 
 export const quotationResource = createListResource({
     doctype: 'RUA Quotation',
@@ -8,3 +8,16 @@ export const quotationResource = createListResource({
 	start: 0,
 	pageLength: 99999999
 })
+
+export function createQuotationResource(name) {
+	return createDocumentResource({
+	  doctype: 'RUA Quotation',
+	  name,
+	  transform(doc) {
+		return doc
+	  },
+	  onError(error) {
+		console.error('Error loading Quotation:', error)
+	  },
+	})
+  }

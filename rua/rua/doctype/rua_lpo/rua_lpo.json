@@ -15,6 +15,7 @@
   "status",
   "type",
   "final_lpo",
+  "payment_status",
   "section_break_vrot",
   "items",
   "section_break_gtgw",
@@ -116,11 +117,18 @@
    "fieldtype": "Currency",
    "label": "Grand Total",
    "precision": "2"
+  },
+  {
+   "default": "Unpaid",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Unpaid\nPaid\nPartially Paid"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-18 18:24:33.278248",
+ "modified": "2025-01-19 02:28:31.006402",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA LPO",

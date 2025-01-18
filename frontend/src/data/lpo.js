@@ -1,5 +1,5 @@
 import router from "@/router"
-import { createListResource } from "frappe-ui"
+import { createListResource, createDocumentResource } from "frappe-ui"
 
 export const lpoResource = createListResource({
     doctype: 'RUA LPO',
@@ -8,3 +8,16 @@ export const lpoResource = createListResource({
 	start: 0,
 	pageLength: 99999999
 })
+
+export function createLPOResource(name) {
+	return createDocumentResource({
+	  doctype: 'RUA LPO',
+	  name,
+	  transform(doc) {
+		return doc
+	  },
+	  onError(error) {
+		console.error('Error loading LPO:', error)
+	  },
+	})
+  }

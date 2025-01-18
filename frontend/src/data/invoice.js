@@ -1,5 +1,5 @@
 import router from "@/router"
-import { createListResource } from "frappe-ui"
+import { createListResource, createDocumentResource } from "frappe-ui"
 
 export const invoiceResource = createListResource({
     doctype: 'RUA Invoice',
@@ -8,3 +8,16 @@ export const invoiceResource = createListResource({
 	start: 0,
 	pageLength: 99999999
 })
+
+export function createInvoiceResource(name) {
+    return createDocumentResource({
+      doctype: 'RUA Invoice',
+      name,
+      transform(doc) {
+        return doc
+      },
+      onError(error) {
+        console.error('Error loading Invoice:', error)
+      },
+    })
+  }

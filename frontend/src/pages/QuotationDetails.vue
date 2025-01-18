@@ -308,15 +308,13 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createDocumentResource } from 'frappe-ui'
+import { createQuotationResource } from '@/data/quotation'
 import {
   Button,
   Badge,
   FeatherIcon,
-  Tooltip,
   Dropdown,
   Dialog,
-  FormControl,
   Textarea,
   FileUploader,
   LoadingIndicator
@@ -324,7 +322,7 @@ import {
 import { inject } from 'vue'
 import { partyResource } from '@/data/party'
 import QuotationItems from './QuotationItems.vue'
-import { formatDate, formatCurrency, formatNumber } from '@/utils/format'
+import { formatDate, formatCurrency } from '@/utils/format'
 
 const $socket = inject('$socket')
 const props = defineProps({
@@ -556,25 +554,21 @@ function printQuotation() {
   window.open(url, '_blank')
 }
 
-// Initialize and watch resources
+
 onMounted(() => {
-  if (route.params.quotationId) {
-    quotationResource.value = createDocumentResource({
-      doctype: 'RUA Quotation',
-      name: route.params.quotationId,
-      auto: true
-    })
-  }
+  initializequotationResource()
 })
+
+function initializequotationResource() {
+  if (route.params.quotationId) {
+    quotationResource.value = createQuotationResource(route.params.quotationId)
+  }
+}
 
 // Watch for route changes
 watch(() => route.params.quotationId, (newId) => {
   if (newId) {
-    quotationResource.value = createDocumentResource({
-      doctype: 'RUA Quotation', 
-      name: newId,
-      auto: true
-    })
+    quotationResource.value = createQuotationResource(newId)
   }
 })
 

@@ -81,8 +81,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Avatar, FeatherIcon, createDocumentResource } from 'frappe-ui'
-import { employeeResource } from '@/data/employee'
+import { Avatar, FeatherIcon } from 'frappe-ui'
+import { employeeResource, createEmployeeResource } from '@/data/employee'
 import { hasRole } from '@/data/roles'
 
 const router = useRouter()
@@ -97,7 +97,7 @@ const selectedEmployee = computed(() => {
 
 // Watch for changes in employee ID and recreate document resource
 watch(() => route.params.id, (newId) => {
-  if (newId && $socket?.connected) {
+  if (newId) {
     initializeEmployeeResource(newId)
   }
 })
@@ -105,13 +105,7 @@ watch(() => route.params.id, (newId) => {
 // Initialize document resource for selected employee
 function initializeEmployeeResource(employeeId) {
   try {
-    selectedEmployeeResource.value = createDocumentResource({
-      doctype: 'RUA Employee',
-      name: employeeId,
-      auto: true,
-      realtime: true,
-    }, { $socket })
-    
+    selectedEmployeeResource.value = createEmployeeResource(employeeId)    
     isLoading.value = false
   } catch (error) {
     console.error('Error creating employee resource:', error)
@@ -119,9 +113,8 @@ function initializeEmployeeResource(employeeId) {
 }
 
 onMounted(() => {
-  // Check if we have both the list data and socket connection
   const initializeResource = () => {
-    if ($socket?.connected && employeeResource.data?.length > 0) {
+    if (employeeResource.data?.length > 0) {
       if (selectedEmployee.value) {
         initializeEmployeeResource(route.params.id)
       } else {

@@ -52,7 +52,7 @@
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="hash" class="w-4 h-4" />
-              Ref Number
+              Ref
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="check-circle" class="w-4 h-4" />
@@ -118,7 +118,7 @@
                     </div>
                     <!-- Ref Number -->
                     <div class="text-sm text-gray-600 flex items-center">
-                      {{ payment.reference_no || '-' }}
+                      {{ payment.related_docname || '-' }}
                     </div>
                     <!-- Status -->
                     <div class="flex items-center">

@@ -13,7 +13,7 @@
         <template #default>
           <div class="flex items-center gap-2">
             <FeatherIcon name="plus" class="w-4 h-4" />
-            <span>Add New Invoice</span>
+            <span>New</span>
           </div>
         </template>
       </Button>
@@ -28,7 +28,7 @@
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-6 gap-4">
+          <div class="flex-1 grid grid-cols-7 gap-4">
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="file-text" class="w-4 h-4" />
               Invoice Number
@@ -52,6 +52,10 @@
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="credit-card" class="w-4 h-4" />
               Payment Status
+            </div>
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <FeatherIcon name="info" class="w-4 h-4" />
+              Additional Info
             </div>
           </div>
         </div>
@@ -115,7 +119,7 @@
                       @click="navigateToInvoice(invoice)"
                     >
                       <div class="flex items-center px-6 py-3 pl-16">
-                        <div class="flex-1 grid grid-cols-6 gap-4">
+                        <div class="flex-1 grid grid-cols-7 gap-4">
                           <!-- Invoice Number -->
                           <div class="flex items-center">
                             <span class="text-sm text-gray-900">{{ invoice.name }}</span>
@@ -150,6 +154,23 @@
                             >
                               {{ invoice.payment_status }}
                             </Badge>
+                          </div>
+                          <!-- Additional Info -->
+                          <div class="flex items-center">
+                            <div 
+                              v-if="invoice.type === 'Tax Invoice' && invoice.status === 'Final' && invoice.invoice_file" 
+                              class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                              @click="openFinalInvoice(invoice.invoice_file, $event)"
+                            >
+                              <FeatherIcon name="file-text" class="w-4 h-4" />
+                              View Final Invoice
+                            </div>
+                            <div 
+                              v-if="invoice.status === 'Cancelled' && invoice.remarks" 
+                              class="text-sm text-gray-600 italic"
+                            >
+                              {{ invoice.remarks }}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -324,5 +345,10 @@ async function handleInvoiceSubmit(formData) {
   } catch (error) {
     console.error('Failed to create invoice:', error)
   }
+}
+function openFinalInvoice(url, event) {
+  event.preventDefault()
+  event.stopPropagation()
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 </script>

@@ -336,7 +336,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createDocumentResource } from 'frappe-ui'
+import { createRFQResource } from '@/data/rfq'
 import { partyResource } from '@/data/party'
 import {
   Button,
@@ -607,23 +607,19 @@ function printRFQ() {
 
 // Initialize and watch resources
 onMounted(() => {
-  if (route.params.rfqId) {
-    rfqResource.value = createDocumentResource({
-      doctype: 'RUA RFQ',
-      name: route.params.rfqId,
-      auto: true
-    })
-  }
+    initializeRFQResource()
 })
+
+function initializeRFQResource() {
+  if (route.params.rfqId) {
+    rfqResource.value = createRFQResource(route.params.rfqId)
+  }
+}
 
 // Watch for route changes
 watch(() => route.params.rfqId, (newId) => {
   if (newId) {
-    rfqResource.value = createDocumentResource({
-      doctype: 'RUA RFQ',
-      name: newId,
-      auto: true
-    })
+    rfqResource.value = createRFQResource(newId)
   }
 })
 </script>

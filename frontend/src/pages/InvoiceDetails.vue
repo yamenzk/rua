@@ -44,7 +44,7 @@
 
           <!-- Payment Status Badge (only for Tax Invoice) -->
           <Badge
-            v-if="invoiceResource.doc.type === 'Tax Invoice'"
+            v-if="invoiceResource.doc.type === 'Tax Invoice' && invoiceResource.doc.status === 'Final'"
             :variant="getPaymentStatusVariant(invoiceResource.doc.payment_status) === 'gray' ? 'solid' : 'subtle'"
             :theme="getPaymentStatusVariant(invoiceResource.doc.payment_status)"
           >
@@ -300,12 +300,17 @@
       </div>
     </template>
   </Dialog>
+  <CreatePaymentDialog
+  v-if="invoiceResource?.doc"
+  v-model="showCreatePaymentDialog"
+  :source-doc="invoiceResource.doc"
+  source-type="RUA Invoice"
+/>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createDocumentResource } from 'frappe-ui'
 import { partyResource } from '@/data/party'
 import {
   Button,
@@ -319,6 +324,8 @@ import {
   LoadingIndicator
 } from 'frappe-ui'
 import { formatDate, formatCurrency } from '@/utils/format'
+import { createInvoiceResource } from '@/data/invoice'
+import CreatePaymentDialog from './CreatePaymentDialog.vue'
 
 const props = defineProps({
   projectResource: {
@@ -342,6 +349,7 @@ const invoiceFile = ref(null)
 const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
 const remarks = ref('')
+const showCreatePaymentDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
@@ -361,18 +369,40 @@ const hasAvailableStatuses = computed(() =>
   availableStatuses.value.length > 0
 )
 
-const actionDropdownOptions = computed(() => [
-  {
-    label: 'Download PDF',
-    icon: 'file-text',
-    onClick: downloadPDF
-  },
-  {
-    label: 'Print',
-    icon: 'printer',
-    onClick: printInvoice
+const actionDropdownOptions = computed(() => {
+  const doc = invoiceResource.value?.doc
+  if (!doc) return []
+
+  if (doc.status === 'Cancelled') {
+    return []
   }
-])
+
+  const options = [
+    {
+      label: 'Download PDF',
+      icon: 'file-text',
+      onClick: downloadPDF
+    },
+    {
+      label: 'Print',
+      icon: 'printer',
+      onClick: printInvoice
+    }
+  ]
+
+  // Only show create payment option for Final Tax Invoices that aren't fully paid
+  if (doc.status === 'Final' && 
+      doc.type === 'Tax Invoice' && 
+      doc.payment_status !== 'Paid') {
+    options.push({
+      label: 'Create Payment',
+      icon: 'credit-card',
+      onClick: () => showCreatePaymentDialog.value = true
+    })
+  }
+
+  return options
+})
 
 const statusDialogOptions = computed(() => ({
   title: hasAvailableStatuses.value ? 'Update Invoice Status' : 'Invoice Status',
@@ -576,23 +606,19 @@ function printInvoice() {
 
 // Initialize and watch resources
 onMounted(() => {
-  if (route.params.invoiceId) {
-    invoiceResource.value = createDocumentResource({
-      doctype: 'RUA Invoice',
-      name: route.params.invoiceId,
-      auto: true
-    })
-  }
+  initializeInvoiceResource()
 })
+
+function initializeInvoiceResource() {
+  if (route.params.invoiceId) {
+    invoiceResource.value = createInvoiceResource(route.params.invoiceId)
+  }
+}
 
 // Watch for route changes
 watch(() => route.params.invoiceId, (newId) => {
   if (newId) {
-    invoiceResource.value = createDocumentResource({
-      doctype: 'RUA Invoice',
-      name: newId,
-      auto: true
-    })
+    invoiceResource.value = createInvoiceResource(newId)
   }
 })
 </script>
