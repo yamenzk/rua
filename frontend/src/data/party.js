@@ -1,4 +1,3 @@
-import router from "@/router"
 import { createListResource } from "frappe-ui"
 
 export const partyResource = createListResource({

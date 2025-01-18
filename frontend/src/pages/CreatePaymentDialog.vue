@@ -91,6 +91,7 @@ import { ref, computed, watch } from 'vue'
 import { Dialog, FeatherIcon } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { paymentResource } from '@/data/payment'
+import { getCurrentDubaiDate } from '@/utils/format'
 
 const router = useRouter()
 
@@ -119,13 +120,6 @@ const formData = ref({
   reference_no: '',
   remarks: ''
 })
-
-// Get current date in Dubai timezone (YYYY-MM-DD)
-function getCurrentDubaiDate() {
-  const now = new Date()
-  const dubaiDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
-  return dubaiDate.toISOString().split('T')[0]
-}
 
 // Computed Properties
 const show = computed({
@@ -192,7 +186,7 @@ async function handleSubmit() {
     const response = await paymentResource.insert.submit({
       project: props.sourceDoc.project,
       party: props.sourceDoc.party,
-      date: formData.value.date, // Already in YYYY-MM-DD format
+      date: formData.value.date,
       amount: formData.value.amount,
       bank: formData.value.bank,
       reference_no: formData.value.reference_no,

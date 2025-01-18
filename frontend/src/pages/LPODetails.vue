@@ -18,7 +18,7 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
           <!-- Back Button -->
-          <Button @click="router.push(`/project/${projectResource.doc.name}/documents/purchase-orders`)">
+          <Button @click="router.push(`/project/${projectResource.doc.name}/invoicing/purchase-orders`)">
             <template #prefix>
               <FeatherIcon name="arrow-left" class="w-4 h-4" />
             </template>
@@ -340,14 +340,12 @@ import {
   Button,
   Badge,
   FeatherIcon,
-  Tooltip,
   Dropdown,
   Dialog,
   Textarea,
   FileUploader,
   LoadingIndicator
 } from 'frappe-ui'
-import { inject } from 'vue'
 import LPOItems from './LPOItems.vue'
 import { formatDate, formatCurrency } from '@/utils/format'
 import CreatePaymentDialog from './CreatePaymentDialog.vue'
@@ -412,7 +410,7 @@ const actionDropdownOptions = computed(() => {
   ]
 
   // Only show create payment option for submitted LPOs
-  if (doc.status === 'Final') {
+  if (doc.status === 'Final' && doc.payment_status !== 'Paid') {
     options.push({
       label: 'Create Payment',
       icon: 'credit-card',

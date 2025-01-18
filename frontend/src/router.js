@@ -76,75 +76,75 @@ const routes = [
         component: () => import('@/pages/ProjectItems.vue'),
       },
       {
-        path: 'documents',
-        name: 'ProjectDocuments',
-        component: () => import('@/pages/ProjectDocuments.vue'),
+        path: 'invoicing',
+        name: 'ProjectInvoicing',
+        component: () => import('@/pages/ProjectInvoicing.vue'),
         children: [
           {
             path: '',
-            name: 'ProjectDocumentsDefault',
-            redirect: to => ({ name: 'ProjectDocumentsQuotations', params: { id: to.params.id }})
+            name: 'ProjectInvoicingDefault',
+            redirect: to => ({ name: 'ProjectInvoicingQuotations', params: { id: to.params.id }})
           },
           {
             path: 'quotations',
-            name: 'ProjectDocumentsQuotations',
-            component: () => import('@/pages/ProjectDocuments.vue'),
+            name: 'ProjectInvoicingQuotations',
+            component: () => import('@/pages/ProjectInvoicing.vue'),
             props: { defaultTab: 'quotations' }
           },
           {
             path: 'purchase-receipts',
-            name: 'ProjectDocumentsPurchaseReceipts',
-            component: () => import('@/pages/ProjectDocuments.vue'),
+            name: 'ProjectInvoicingPurchaseReceipts',
+            component: () => import('@/pages/ProjectInvoicing.vue'),
             props: { defaultTab: 'purchaseReceipts' }
           },
           {
             path: 'invoices',
-            name: 'ProjectDocumentsInvoices',
-            component: () => import('@/pages/ProjectDocuments.vue'),
+            name: 'ProjectInvoicingInvoices',
+            component: () => import('@/pages/ProjectInvoicing.vue'),
             props: { defaultTab: 'invoices' }
           },
           {
             path: 'rfqs',
-            name: 'ProjectDocumentsRFQs',
-            component: () => import('@/pages/ProjectDocuments.vue'),
+            name: 'ProjectInvoicingRFQs',
+            component: () => import('@/pages/ProjectInvoicing.vue'),
             props: { defaultTab: 'rfqs' }
           },
           {
             path: 'purchase-orders',
-            name: 'ProjectDocumentsPurchaseOrders',
-            component: () => import('@/pages/ProjectDocuments.vue'),
+            name: 'ProjectInvoicingPurchaseOrders',
+            component: () => import('@/pages/ProjectInvoicing.vue'),
             props: { defaultTab: 'purchaseOrders' }
           },
           {
             path: 'payments',
-            name: 'ProjectDocumentsPayments',
-            component: () => import('@/pages/ProjectDocuments.vue'),
+            name: 'ProjectInvoicingPayments',
+            component: () => import('@/pages/ProjectInvoicing.vue'),
             props: { defaultTab: 'payments' }
           }
         ]
       },
       {
-        path: 'documents/quotation/:quotationId',
+        path: 'invoicing/quotation/:quotationId',
         name: 'QuotationDetails',
         component: () => import('@/pages/QuotationDetails.vue'),
       },
       {
-        path: 'documents/lpo/:lpoId',
+        path: 'invoicing/lpo/:lpoId',
         name: 'LPODetails',
         component: () => import('@/pages/LPODetails.vue'),
       },
       {
-        path: 'documents/rfq/:rfqId',
+        path: 'invoicing/rfq/:rfqId',
         name: 'RFQDetails',
         component: () => import('@/pages/RFQDetails.vue'),
       },
       {
-        path: 'documents/invoice/:invoiceId',
+        path: 'invoicing/invoice/:invoiceId',
         name: 'InvoiceDetails',
         component: () => import('@/pages/InvoiceDetails.vue'),
       },
       {
-        path: 'documents/payment/:paymentId',
+        path: 'invoicing/payment/:paymentId',
         name: 'PaymentDetails',
         component: () => import('@/pages/PaymentDetails.vue'),
       },

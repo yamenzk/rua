@@ -1,4 +1,3 @@
-import router from "@/router"
 import { createListResource, createDocumentResource } from "frappe-ui"
 
 export const paymentResource = createListResource({

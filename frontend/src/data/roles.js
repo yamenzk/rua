@@ -1,4 +1,3 @@
-import router from '@/router'
 import { createResource } from 'frappe-ui'
 import { userResource } from './user'
 

@@ -1,4 +1,4 @@
-# ProjectDocuments.vue
+# ProjectInvoicing.vue
 <template>
   <div v-if="!projectResource?.doc" class="flex items-center justify-center min-h-[60vh]">
     <LoadingIndicator />
@@ -97,37 +97,37 @@ const documentTabs = [
     label: 'Quotations', 
     value: 'quotations',
     icon: 'file-text',
-    route: 'ProjectDocumentsQuotations'
+    route: 'ProjectInvoicingQuotations'
   },
   { 
     label: 'Invoices', 
     value: 'invoices',
     icon: 'file',
-    route: 'ProjectDocumentsInvoices'
+    route: 'ProjectInvoicingInvoices'
   },
   { 
     label: 'RFQs', 
     value: 'rfqs',
     icon: 'help-circle',
-    route: 'ProjectDocumentsRFQs'
+    route: 'ProjectInvoicingRFQs'
   },
   { 
     label: 'Purchase Orders', 
     value: 'purchaseOrders',
     icon: 'shopping-cart',
-    route: 'ProjectDocumentsPurchaseOrders'
+    route: 'ProjectInvoicingPurchaseOrders'
   },
   { 
     label: 'Purchase Receipts', 
     value: 'purchaseReceipts',
     icon: 'box',
-    route: 'ProjectDocumentsPurchaseReceipts'
+    route: 'ProjectInvoicingPurchaseReceipts'
   },
   { 
     label: 'Payments', 
     value: 'payments',
     icon: 'credit-card',
-    route: 'ProjectDocumentsPayments'
+    route: 'ProjectInvoicingPayments'
   },
 ]
 

@@ -314,7 +314,7 @@ const references = computed(() => {
 			doctype: 'RUA Quotation',
 			party: q.party,
 			date: q.date,
-			link: `/project/${projectName}/documents/quotation/${q.name}`,
+			link: `/project/${projectName}/invoicing/quotation/${q.name}`,
 		}))
 
 	const rfqs = (rfqResource.data || [])
@@ -324,7 +324,7 @@ const references = computed(() => {
 			doctype: 'RUA RFQ',
 			party: r.party,
 			date: r.date,
-			link: `/project/${projectName}/documents/rfq/${r.name}`,
+			link: `/project/${projectName}/invoicing/rfq/${r.name}`,
 		}))
 
 	const lpos = (lpoResource.data || [])
@@ -334,7 +334,7 @@ const references = computed(() => {
 			doctype: 'RUA LPO',
 			party: l.party,
 			date: l.date,
-			link: `/project/${projectName}/documents/lpo/${l.name}`,
+			link: `/project/${projectName}/invoicing/lpo/${l.name}`,
 		}))
 
 	const invoices = (invoiceResource.data || [])
@@ -344,7 +344,7 @@ const references = computed(() => {
 			doctype: 'RUA Invoice',
 			party: i.party,
 			date: i.date,
-			link: `/project/${projectName}/documents/invoice/${i.name}`,
+			link: `/project/${projectName}/invoicing/invoice/${i.name}`,
 		}))
 
 	return [...quotations, ...rfqs, ...lpos, ...invoices]

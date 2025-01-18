@@ -11,7 +11,7 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
           <!-- Back Button -->
-          <Button @click="router.push(`/project/${projectResource.doc.name}/documents/payments`)">
+          <Button @click="router.push(`/project/${projectResource.doc.name}/invoicing/payments`)">
             <template #prefix>
               <FeatherIcon name="arrow-left" class="w-4 h-4" />
             </template>
