@@ -1,7 +1,7 @@
-# LPODetails.vue
+# RFQDetails.vue
 <template>
   <!-- Loading State -->
-  <div v-if="!lpoResource?.doc || lpoResource?.loading" class="flex items-center justify-center min-h-[60vh]">
+  <div v-if="!rfqResource?.doc || rfqResource?.loading" class="flex items-center justify-center min-h-[60vh]">
     <LoadingIndicator />
   </div>
 
@@ -11,21 +11,21 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
           <!-- Back Button -->
-          <Button @click="router.push(`/project/${projectResource.doc.name}/documents/purchase-orders`)">
+          <Button @click="router.push(`/project/${projectResource.doc.name}/documents/rfqs`)">
             <template #prefix>
               <FeatherIcon name="arrow-left" class="w-4 h-4" />
             </template>
-            <span class="hidden md:inline">Back to Purchase Orders</span>
+            <span class="hidden md:inline">Back to RFQs</span>
           </Button>
 
           <!-- Document Info -->
           <div class="flex flex-col">
             <h1 class="text-xl font-bold text-gray-900">
-              {{ lpoResource.doc.name }}
+              {{ rfqResource.doc.name }}
             </h1>
             <p class="text-sm text-gray-600">
-              Created on {{ formatDate(lpoResource.doc.creation) }} by
-              {{ lpoResource.doc.owner }}
+              Created on {{ formatDate(rfqResource.doc.creation) }} by
+              {{ rfqResource.doc.owner }}
             </p>
           </div>
         </div>
@@ -34,12 +34,12 @@
         <div class="flex items-center gap-3">
           <!-- Status Badge -->
           <Badge
-            :variant="lpoResource.doc.status === 'Final' ? 'solid' : 'subtle'"
-            :theme="getStatusVariant(lpoResource.doc.status)"
+            :variant="rfqResource.doc.status === 'Quotation Received' ? 'solid' : 'subtle'"
+            :theme="getStatusVariant(rfqResource.doc.status)"
             class="cursor-pointer"
             @click="showStatusDialog = true"
           >
-            {{ lpoResource.doc.status }}
+            {{ rfqResource.doc.status }}
           </Badge>
 
           <!-- Actions Dropdown -->
@@ -59,24 +59,24 @@
       <!-- Summary Section -->
       <div class="space-y-6">
         <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Purchase Order Details</h2>
+          <h2 class="text-xl font-semibold">RFQ Details</h2>
           <div class="text-sm text-gray-600">
-            Last modified: {{ formatDate(lpoResource.doc.modified) }} by
-            {{ lpoResource.doc.modified_by }}
+            Last modified: {{ formatDate(rfqResource.doc.modified) }} by
+            {{ rfqResource.doc.modified_by }}
           </div>
         </div>
 
         <!-- Details Card -->
         <div class="bg-white border rounded-lg shadow-sm">
           <!-- Party Information -->
-          <div class="p-6 border-b">
+          <div class="p-6" :class="{ 'border-b': !isLinkType }">
             <div class="flex items-start space-x-4">
               <!-- Party Image -->
               <div class="flex-shrink-0">
                 <img
                   v-if="partyData?.image"
                   :src="partyData.image"
-                  :alt="lpoResource.doc.party"
+                  :alt="rfqResource.doc.party"
                   class="w-16 h-16 rounded-lg object-cover"
                 />
                 <div
@@ -92,13 +92,13 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <h3 class="text-lg font-medium text-gray-900">
-                      {{ lpoResource.doc.party }}
+                      {{ rfqResource.doc.party }}
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                      LPO Date: {{ formatDate(lpoResource.doc.date, true) }}
+                      RFQ Date: {{ formatDate(rfqResource.doc.date, true) }}
                     </p>
                     <p class="mt-1 text-sm text-gray-500">
-                      Type: {{ lpoResource.doc.type }}
+                      Type: {{ rfqResource.doc.type }}
                     </p>
                   </div>
                 </div>
@@ -106,13 +106,35 @@
             </div>
           </div>
 
-          <!-- Metrics Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
+          <!-- Link Section (only for Link type) -->
+          <div v-if="isLinkType" class="p-6 border-b">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <FeatherIcon name="link" class="w-5 h-5 text-gray-400" />
+              </div>
+              <div class="ml-3 flex-1">
+                <h3 class="text-sm font-medium text-gray-900">External Link</h3>
+                <div class="mt-1">
+                  <a 
+                    :href="rfqResource.doc.link" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="text-gray-600 hover:text-gray-800 break-all"
+                  >
+                    {{ rfqResource.doc.link }}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metrics Grid (only for non-Link types) -->
+          <div v-if="!isLinkType" class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
             <div class="p-6">
               <label class="text-sm font-medium text-gray-600">Total Items</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ lpoResource.doc.total_items }}
+                  {{ rfqResource.doc.total_items }}
                 </span>
               </div>
             </div>
@@ -120,7 +142,7 @@
               <label class="text-sm font-medium text-gray-600">Net Total</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(lpoResource.doc.total_amount) }}
+                  {{ formatCurrency(rfqResource.doc.total_amount) }}
                 </span>
               </div>
             </div>
@@ -128,7 +150,7 @@
               <label class="text-sm font-medium text-gray-600">Grand Total</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(lpoResource.doc.grand_total) }}
+                  {{ formatCurrency(rfqResource.doc.grand_total) }}
                 </span>
               </div>
             </div>
@@ -136,7 +158,7 @@
 
           <!-- Cancellation Notice -->
           <div
-            v-if="lpoResource.doc.status === 'Cancelled'"
+            v-if="rfqResource.doc.status === 'Cancelled'"
             class="p-6 bg-red-50 border-t"
           >
             <div class="flex items-start">
@@ -146,34 +168,34 @@
               <div class="ml-3">
                 <h3 class="text-sm font-medium text-red-800">Cancellation Remarks</h3>
                 <div class="mt-2 text-sm text-red-700">
-                  {{ lpoResource.doc.remarks }}
+                  {{ rfqResource.doc.remarks }}
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Final LPO Preview -->
+          <!-- Quotation File Preview -->
           <div
-            v-if="lpoResource.doc.status === 'Final' && lpoResource.doc.final_lpo"
+            v-if="rfqResource.doc.status === 'Quotation Received' && rfqResource.doc.quotation_file"
             class="border-t"
           >
-          <div class="p-6">
-              <h3 class="text-sm font-medium text-gray-900 mb-4">LPO Document</h3>
+            <div class="p-6">
+              <h3 class="text-sm font-medium text-gray-900 mb-4">Quotation Document</h3>
               <iframe
                 v-if="isPDF"
-                :src="lpoResource.doc.final_lpo"
+                :src="rfqResource.doc.quotation_file"
                 class="w-full h-[1200px] border rounded-lg"
                 frameborder="0"
               ></iframe>
               <div v-else class="text-center py-8">
                 <a 
-                  :href="lpoResource.doc.final_lpo" 
+                  :href="rfqResource.doc.quotation_file" 
                   target="_blank"
                   rel="noopener noreferrer" 
                   class="text-gray-600 hover:text-gray-800"
                 >
                   <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
-                  <span>Download LPO File</span>
+                  <span>Download Quotation File</span>
                 </a>
               </div>
             </div>
@@ -181,18 +203,19 @@
         </div>
       </div>
 
-      <!-- Items List -->
-      <LPOItems 
-  :items="lpoResource.doc.items"
-  :type="lpoResource.doc.type"
-  :status="lpoResource.doc.status"
-  :lpo-name="lpoResource.doc.name"
-  :totals="{
-    net: lpoResource.doc.total_amount,
-    vat: lpoResource.doc.vat_amount,
-    grand: lpoResource.doc.grand_total
-  }"
-/>
+      <!-- Items List (only for non-Link types) -->
+      <RFQItems 
+        v-if="!isLinkType"
+        :items="rfqResource.doc.items"
+        :type="rfqResource.doc.type"
+        :status="rfqResource.doc.status"
+        :rfq-name="rfqResource.doc.name"
+        :totals="{
+          net: rfqResource.doc.total_amount,
+          vat: rfqResource.doc.vat_amount,
+          grand: rfqResource.doc.grand_total
+        }"
+      />
     </div>
   </div>
 
@@ -210,7 +233,7 @@
           </label>
 
           <div v-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
-            {{ lpoResource.doc.remarks }}
+            {{ rfqResource.doc.remarks }}
           </div>
 
           <div v-else class="space-y-3">
@@ -246,64 +269,63 @@
             />
           </div>
 
+          <!-- Quotation File Upload -->
+          <div v-if="newStatus === 'Quotation Received'" class="space-y-4">
+            <div class="text-sm font-medium text-gray-700">Quotation File</div>
+            <FileUploader
+              v-model="quotationFile"
+              :accept="['application/pdf', 'image/*', '.doc', '.docx', '.xls', '.xlsx']"
+              :max-size="5000000"
+              :upload-args="uploadArgs"
+              @success="handleUploadSuccess"
+              v-slot="{ openFileSelector, file, uploading, progress, error }"
+            >
+              <div
+                class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
+                @click="openFileSelector"
+                @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
+                @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
+                @drop.prevent="handleDrop($event, openFileSelector)"
+              >
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <div v-if="!file" class="text-center">
+                    <FeatherIcon name="upload-cloud" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <div class="text-sm font-medium text-gray-900">Click to upload file</div>
+                    <div class="text-xs text-gray-500">or drag and drop</div>
+                  </div>
+                  <div v-else class="w-full">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center space-x-2">
+                        <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
+                        <span class="text-sm text-gray-900">{{ file.name }}</span>
+                      </div>
+                      <button
+                        v-if="!uploading"
+                        class="text-sm text-red-500 hover:text-red-700"
+                        @click.stop="quotationFile = null"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        class="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                        :style="{ width: progress + '%' }"
+                      ></div>
+                    </div>
+                  </div>
+                  <div v-if="error" class="text-sm text-red-500">{{ error }}</div>
+                </div>
+              </div>
+            </FileUploader>
+            <div class="text-sm text-gray-500">
+              Maximum file size: 5MB. Supported formats: PDF, Images, Word, Excel
+            </div>
+          </div>
+
           <!-- Status Update Error -->
           <div v-if="statusError" class="text-sm text-red-500 mt-1">
             {{ statusError }}
-          </div>
-        </div>
-
-        <!-- Final LPO Upload -->
-        <div v-if="newStatus === 'Final'" class="space-y-4">
-          <div class="text-sm font-medium text-gray-700">Final LPO Document</div>
-          <FileUploader
-            v-model="finalLPO"
-            :accept="['application/pdf']"
-            :max-size="5000000"
-            :upload-args="uploadArgs"
-            @success="handleUploadSuccess"
-            v-slot="{ openFileSelector, file, uploading, progress, error }"
-          >
-          <div
-  class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
-  @click="openFileSelector"
-  @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
-  @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
-  @drop.prevent="handleDrop($event)"
-  @dragenter.prevent
->
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <div v-if="!file" class="text-center">
-                  <FeatherIcon name="upload-cloud" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <div class="text-sm font-medium text-gray-900">Click to upload PDF</div>
-                  <div class="text-xs text-gray-500">or drag and drop</div>
-                </div>
-                <div v-else class="w-full">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-2">
-                      <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
-                      <span class="text-sm text-gray-900">{{ file.name }}</span>
-                    </div>
-                    <button
-                      v-if="!uploading"
-                      class="text-sm text-red-500 hover:text-red-700"
-                      @click.stop="finalLPO = null"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      class="bg-gray-900 h-2 rounded-full transition-all duration-300"
-                      :style="{ width: progress + '%' }"
-                    ></div>
-                  </div>
-                </div>
-                <div v-if="error" class="text-sm text-red-500">{{ error }}</div>
-              </div>
-            </div>
-          </FileUploader>
-          <div class="text-sm text-gray-500">
-            Maximum file size: 5MB. Supported format: PDF
           </div>
         </div>
       </div>
@@ -327,8 +349,7 @@ import {
   FileUploader,
   LoadingIndicator
 } from 'frappe-ui'
-import { inject } from 'vue'
-import LPOItems from './LPOItems.vue'
+import RFQItems from './RFQItems.vue'
 import { formatDate, formatCurrency } from '@/utils/format'
 
 const props = defineProps({
@@ -345,58 +366,76 @@ const route = useRoute()
 const router = useRouter()
 
 // State Management
-const lpoResource = ref(null)
+const rfqResource = ref(null)
 const showStatusDialog = ref(false)
 const newStatus = ref('')
 const statusError = ref('')
-const finalLPO = ref(null)
+const quotationFile = ref(null)
 const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
 const remarks = ref('')
 
 // Computed Properties
 const partyData = computed(() => {
-  return partyResource.data?.find(p => p.name === lpoResource.value?.doc?.party)
+  return partyResource.data?.find(p => p.name === rfqResource.value?.doc?.party)
+})
+
+const isLinkType = computed(() => {
+  return rfqResource.value?.doc?.type === 'Link'
+})
+
+const isPDF = computed(() => {
+  const file = rfqResource.value?.doc?.quotation_file
+  return file?.toLowerCase().endsWith('.pdf')
 })
 
 const availableStatuses = computed(() => 
-  getAvailableStatuses(lpoResource.value?.doc?.status)
+  getAvailableStatuses(rfqResource.value?.doc?.status)
 )
 
 const hasAvailableStatuses = computed(() => 
   availableStatuses.value.length > 0
 )
 
-const actionDropdownOptions = computed(() => [
-  {
-    label: 'Download PDF',
-    icon: 'file-text',
-    onClick: downloadPDF
-  },
-  {
-    label: 'Print',
-    icon: 'printer',
-    onClick: printLPO
+const actionDropdownOptions = computed(() => {
+  const options = []
+
+  if (!isLinkType.value) {
+    options.push(
+      {
+        label: 'Download PDF',
+        icon: 'file-text',
+        onClick: downloadPDF
+      },
+      {
+        label: 'Print',
+        icon: 'printer',
+        onClick: printRFQ
+      }
+    )
   }
-])
+
+  return options
+})
 
 const statusDialogOptions = computed(() => ({
-  title: hasAvailableStatuses.value ? 'Update LPO Status' : 'LPO Status',
+  title: hasAvailableStatuses.value ? 'Update RFQ Status' : 'RFQ Status',
   size: 'sm',
   actions: hasAvailableStatuses.value ? [
     {
       label: 'Update Status',
       variant: 'solid',
       loading: isUpdatingStatus.value,
+      disabled: newStatus.value === 'Quotation Received' && !uploadedResult.value?.file_url,
       onClick: updateStatus
     }
   ] : []
 }))
 
 const uploadArgs = computed(() => ({
-  doctype: 'RUA LPO',
-  docname: lpoResource.value?.doc?.name,
-  fieldname: 'final_lpo',
+  doctype: 'RUA RFQ',
+  docname: rfqResource.value?.doc?.name,
+  fieldname: 'quotation_file',
   private: true
 }))
 
@@ -405,7 +444,7 @@ const radioClasses = {
   container: 'relative flex items-center p-4 cursor-pointer rounded-lg border hover:border-gray-500 transition-colors',
   input: 'peer absolute opacity-0 w-full h-full cursor-pointer',
   radio: 'w-5 h-5 border-2 rounded-full peer-checked:border-gray-900 peer-checked:border-8 transition-all',
-  label: 'ml-3 text-sm font-medium text-gray-900 peer-checked:text-gray-900',
+  label: 'ml-3 text-sm font-medium text-gray-900 peer-checked:text-gray-900'
 }
 
 // Methods
@@ -414,11 +453,11 @@ function getStatusVariant(status) {
     case 'draft':
       return 'orange'
     case 'submitted':
+      return 'blue'
+    case 'quotation received':
       return 'green'
     case 'cancelled':
       return 'red'
-    case 'final':
-      return 'gray'
     default:
       return 'gray'
   }
@@ -429,8 +468,8 @@ function getAvailableStatuses(currentStatus) {
     case 'draft':
       return ['Submitted', 'Cancelled']
     case 'submitted':
-      return ['Final', 'Cancelled']
-    case 'final':
+      return ['Quotation Received', 'Cancelled']
+    case 'quotation received':
       return ['Cancelled']
     case 'cancelled':
       return []
@@ -443,24 +482,26 @@ function handleUploadSuccess(result) {
   uploadedResult.value = result
 }
 
-const isPDF = computed(() => {
-  const file = lpoResource.value?.doc?.final_lpo
-  return file?.toLowerCase().endsWith('.pdf')
-})
-
 function handleDrop(event) {
   const file = event.dataTransfer?.files?.[0]
-  if (file && file.type === 'application/pdf') {
-    event.currentTarget.classList.remove('border-gray-900')
-    const input = document.querySelector('input[type="file"]')
-    if (input) {
-      const dataTransfer = new DataTransfer()
-      dataTransfer.items.add(file)
-      input.files = dataTransfer.files
-      input.dispatchEvent(new Event('change', { bubbles: true }))
+  if (file) {
+    const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ]
+    
+    if (acceptedTypes.includes(file.type)) {
+      event.currentTarget.classList.remove('border-gray-900')
+      const input = document.querySelector('input[type="file"]')
+      if (input) {
+        const dataTransfer = new DataTransfer()
+        dataTransfer.items.add(file)
+        input.files = dataTransfer.files
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+    } else {
+      statusError.value = 'Please upload a supported file type (PDF, Images, Word, or Excel)'
     }
-  } else {
-    statusError.value = 'Please upload a PDF file'
   }
 }
 
@@ -468,7 +509,7 @@ function resetStatusDialog() {
   showStatusDialog.value = false
   newStatus.value = ''
   statusError.value = ''
-  finalLPO.value = null
+  quotationFile.value = null
   uploadedResult.value = null
   remarks.value = ''
 }
@@ -492,28 +533,28 @@ async function updateStatus() {
     return
   }
 
-  if (newStatus.value === 'Final' && !uploadedResult.value?.file_url) {
-    statusError.value = 'Please upload the final LPO document'
+  if (newStatus.value === 'Quotation Received' && !uploadedResult.value?.file_url) {
+    statusError.value = 'Please upload the quotation file'
     return
   }
 
   try {
     isUpdatingStatus.value = true
     const updateData = {
-      name: lpoResource.value.doc.name,
+      name: rfqResource.value.doc.name,
       status: newStatus.value,
     }
 
-    if (newStatus.value === 'Final') {
-      updateData.final_lpo = uploadedResult.value.file_url
+    if (newStatus.value === 'Quotation Received') {
+      updateData.quotation_file = uploadedResult.value.file_url
     }
 
     if (newStatus.value === 'Cancelled') {
       updateData.remarks = remarks.value
     }
 
-    await lpoResource.value.setValue.submit(updateData)
-    await lpoResource.value.reload()
+    await rfqResource.value.setValue.submit(updateData)
+    await rfqResource.value.reload()
     resetStatusDialog()
   } catch (error) {
     statusError.value = 'Failed to update status'
@@ -530,8 +571,8 @@ async function downloadPDF() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        doctype: 'RUA LPO',
-        name: lpoResource.value.doc.name,
+        doctype: 'RUA RFQ',
+        name: rfqResource.value.doc.name,
         format: 'Standard',
         no_letterhead: 0,
       }),
@@ -543,7 +584,7 @@ async function downloadPDF() {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${lpoResource.value.doc.name}.pdf`
+    a.download = `${rfqResource.value.doc.name}.pdf`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -553,33 +594,33 @@ async function downloadPDF() {
   }
 }
 
-function printLPO() {
+function printRFQ() {
   let baseUrl = window.location.origin
 
   if (window.location.hostname === 'localhost' && window.location.port === '8080') {
     baseUrl = `http://${window.location.hostname}:8000`
   }
 
-  const url = `${baseUrl}/printview?doctype=RUA LPO&name=${lpoResource.value.doc.name}&format=Standard&no_letterhead=0&_lang=en`
+  const url = `${baseUrl}/printview?doctype=RUA RFQ&name=${rfqResource.value.doc.name}&format=Standard&no_letterhead=0&_lang=en`
   window.open(url, '_blank')
 }
 
 // Initialize and watch resources
 onMounted(() => {
-  if (route.params.lpoId) {
-    lpoResource.value = createDocumentResource({
-      doctype: 'RUA LPO',
-      name: route.params.lpoId,
+  if (route.params.rfqId) {
+    rfqResource.value = createDocumentResource({
+      doctype: 'RUA RFQ',
+      name: route.params.rfqId,
       auto: true
     })
   }
 })
 
 // Watch for route changes
-watch(() => route.params.lpoId, (newId) => {
+watch(() => route.params.rfqId, (newId) => {
   if (newId) {
-    lpoResource.value = createDocumentResource({
-      doctype: 'RUA LPO',
+    rfqResource.value = createDocumentResource({
+      doctype: 'RUA RFQ',
       name: newId,
       auto: true
     })

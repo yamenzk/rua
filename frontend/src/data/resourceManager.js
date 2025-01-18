@@ -10,6 +10,8 @@ import { quotationResource } from "./quotation"
 import { documentResource } from "./document"
 import { rfqResource } from "./rfq"
 import { lpoResource } from "./lpo"
+import { invoiceResource } from "./invoice"
+import { paymentResource } from "./payment"
 
 export const resources = {
   user: userResource,
@@ -22,7 +24,9 @@ export const resources = {
   quotation: quotationResource,
   document: documentResource,
   rfq: rfqResource,
-  lpo: lpoResource
+  lpo: lpoResource,
+  invoice: invoiceResource,
+  payment: paymentResource
 }
 
 export const reloadResources = async () => {

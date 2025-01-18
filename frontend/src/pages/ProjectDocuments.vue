@@ -69,6 +69,9 @@ import {
 import { quotationResource } from '@/data/quotation'
 import QuotationsTab from './QuotationsTab.vue'
 import PurchaseOrdersTab from './PurchaseOrdersTab.vue'
+import RFQsTab from './RFQsTab.vue'
+import InvoicesTab from './InvoicesTab.vue'
+import PaymentsTab from './PaymentsTab.vue'
 import ComingSoon from '../components/ComingSoon.vue'
 
 const router = useRouter()
@@ -97,12 +100,6 @@ const documentTabs = [
     route: 'ProjectDocumentsQuotations'
   },
   { 
-    label: 'Proformas', 
-    value: 'proformas',
-    icon: 'clipboard',
-    route: 'ProjectDocumentsProformas'
-  },
-  { 
     label: 'Invoices', 
     value: 'invoices',
     icon: 'file',
@@ -119,6 +116,12 @@ const documentTabs = [
     value: 'purchaseOrders',
     icon: 'shopping-cart',
     route: 'ProjectDocumentsPurchaseOrders'
+  },
+  { 
+    label: 'Purchase Receipts', 
+    value: 'purchaseReceipts',
+    icon: 'box',
+    route: 'ProjectDocumentsPurchaseReceipts'
   },
   { 
     label: 'Payments', 
@@ -165,7 +168,10 @@ const getCurrentTabLabel = computed(() => {
 const getCurrentTabComponent = computed(() => {
   const components = {
     quotations: QuotationsTab,
-    purchaseOrders: PurchaseOrdersTab
+    purchaseOrders: PurchaseOrdersTab,
+    rfqs: RFQsTab,
+    invoices: InvoicesTab,
+    payments: PaymentsTab
   }
 
   const component = components[currentTab.value]

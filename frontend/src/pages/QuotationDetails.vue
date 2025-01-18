@@ -155,13 +155,25 @@
             v-if="quotationResource.doc.status === 'Final' && quotationResource.doc.signed_document"
             class="border-t"
           >
-            <div class="p-6">
-              <h3 class="text-sm font-medium text-gray-900 mb-4">Signed Document</h3>
+          <div class="p-6">
+              <h3 class="text-sm font-medium text-gray-900 mb-4">Signed Quotation</h3>
               <iframe
+                v-if="isPDF"
                 :src="quotationResource.doc.signed_document"
                 class="w-full h-[1200px] border rounded-lg"
                 frameborder="0"
               ></iframe>
+              <div v-else class="text-center py-8">
+                <a 
+                  :href="quotationResource.doc.signed_document" 
+                  target="_blank"
+                  rel="noopener noreferrer" 
+                  class="text-gray-600 hover:text-gray-800"
+                >
+                  <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
+                  <span>Download Signed Quotation</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -246,13 +258,13 @@
             @success="handleUploadSuccess"
             v-slot="{ openFileSelector, file, uploading, progress, error }"
           >
-            <div
-              class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer"
-              @click="openFileSelector"
-              @dragover.prevent="$event.currentTarget.classList.add('border-blue-500')"
-              @dragleave.prevent="$event.currentTarget.classList.remove('border-blue-500')"
-              @drop.prevent="handleDrop($event, openFileSelector)"
-            >
+          <div
+  class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
+  @click="openFileSelector"
+  @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
+  @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
+  @drop.prevent="handleDrop($event)"
+>
               <div class="flex flex-col items-center justify-center space-y-2">
                 <div v-if="!file" class="text-center">
                   <FeatherIcon name="upload-cloud" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -275,7 +287,7 @@
                   </div>
                   <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      class="bg-gray-900 h-2 rounded-full transition-all duration-300"
                       :style="{ width: progress + '%' }"
                     ></div>
                   </div>
@@ -316,17 +328,18 @@ import { formatDate, formatCurrency, formatNumber } from '@/utils/format'
 
 const $socket = inject('$socket')
 const props = defineProps({
-  projectResource: {
+  projectResource: { 
     type: Object,
-    required: true,
-    validator: (value) => {
-      return value && typeof value === 'object' && 'doc' in value
-    }
+    required: true
   }
 })
 
 const route = useRoute()
 const router = useRouter()
+const isPDF = computed(() => {
+  const file = quotationResource.value?.doc?.signed_document
+  return file?.toLowerCase().endsWith('.pdf')
+})
 
 // State Management
 const quotationResource = ref(null)
@@ -369,13 +382,9 @@ const statusDialogOptions = computed(() => ({
   size: 'sm',
   actions: hasAvailableStatuses.value ? [
     {
-      label: 'Cancel',
-      variant: 'subtle',
-      onClick: resetStatusDialog
-    },
-    {
       label: 'Update Status',
       loading: isUpdatingStatus.value,
+      variant: 'solid',
       onClick: updateStatus
     }
   ] : []
@@ -431,10 +440,19 @@ function handleUploadSuccess(result) {
   uploadedResult.value = result
 }
 
-function handleDrop(event, openFileSelector) {
-  const file = event.dataTransfer.files[0]
+function handleDrop(event) {
+  const file = event.dataTransfer?.files?.[0]
   if (file && file.type === 'application/pdf') {
-    openFileSelector(event)
+    event.currentTarget.classList.remove('border-gray-900')
+    const input = document.querySelector('input[type="file"]')
+    if (input) {
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(file)
+      input.files = dataTransfer.files
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+  } else if (file) {
+    statusError.value = 'Please upload a PDF file'
   }
 }
 

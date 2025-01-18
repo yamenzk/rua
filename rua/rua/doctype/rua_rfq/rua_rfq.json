@@ -15,7 +15,7 @@
   "type",
   "status",
   "naming_series",
-  "supplier_quotation",
+  "quotation_file",
   "link",
   "section_break_eqjh",
   "items"
@@ -76,11 +76,6 @@
    "label": "Date"
   },
   {
-   "fieldname": "supplier_quotation",
-   "fieldtype": "Attach",
-   "label": "Supplier Quotation"
-  },
-  {
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks"
@@ -89,11 +84,16 @@
    "fieldname": "link",
    "fieldtype": "Data",
    "label": "Link"
+  },
+  {
+   "fieldname": "quotation_file",
+   "fieldtype": "Attach",
+   "label": "Quotation File"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-17 20:15:13.619863",
+ "modified": "2025-01-18 18:25:01.655142",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA RFQ",
@@ -109,6 +109,62 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Employee Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Project Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Project Employee",
    "share": 1,
    "write": 1
   }

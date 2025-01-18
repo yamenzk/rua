@@ -2,29 +2,36 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2025-01-17 20:11:04.801855",
+ "creation": "2025-01-18 18:18:18.752797",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "date",
   "project",
   "party",
   "remarks",
-  "column_break_zswp",
-  "date",
-  "naming_series",
-  "status",
+  "column_break_qayv",
   "type",
-  "final_lpo",
-  "section_break_vrot",
-  "items",
-  "section_break_gtgw",
-  "total_items",
-  "column_break_bazd",
-  "total_amount",
-  "vat_amount",
+  "status",
+  "payment_status",
+  "naming_series",
+  "print_remarks",
+  "invoice_file",
+  "section_break_phmr",
+  "column_break_ctrn",
+  "completion",
+  "column_break_ikyt",
+  "amount",
+  "amount_after_retention",
+  "vat_after_retention",
   "grand_total"
  ],
  "fields": [
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
   {
    "fieldname": "project",
    "fieldtype": "Link",
@@ -43,20 +50,14 @@
    "label": "Remarks"
   },
   {
-   "fieldname": "column_break_zswp",
+   "fieldname": "column_break_qayv",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "date",
-   "fieldtype": "Date",
-   "label": "Date"
-  },
-  {
-   "default": "RC-LPO-.YY.",
-   "fieldname": "naming_series",
+   "fieldname": "type",
    "fieldtype": "Select",
-   "label": "Naming Series",
-   "options": "RC-LPO-.YY."
+   "label": "Type",
+   "options": "\nTax Invoice\nProforma"
   },
   {
    "default": "Draft",
@@ -66,64 +67,80 @@
    "options": "Draft\nSubmitted\nFinal\nCancelled"
   },
   {
-   "fieldname": "type",
+   "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Type",
-   "options": "\nAluminum\nGlass\nMaterial"
+   "label": "Naming Series",
+   "options": "RC-INV-.YY.\nRC-PRO-.YY."
   },
   {
-   "fieldname": "section_break_vrot",
+   "fieldname": "print_remarks",
+   "fieldtype": "Small Text",
+   "label": "Print Remarks"
+  },
+  {
+   "fieldname": "section_break_phmr",
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "final_lpo",
-   "fieldtype": "Attach",
-   "label": "Final LPO"
-  },
-  {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Items",
-   "options": "RUA LPO Items"
-  },
-  {
-   "fieldname": "section_break_gtgw",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "total_items",
-   "fieldtype": "Int",
-   "label": "Total Items"
-  },
-  {
-   "fieldname": "column_break_bazd",
+   "fieldname": "column_break_ikyt",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "total_amount",
+   "fieldname": "amount",
    "fieldtype": "Currency",
-   "label": "Total Amount",
+   "label": "Amount",
+   "non_negative": 1,
    "precision": "2"
   },
   {
-   "fieldname": "vat_amount",
+   "fieldname": "amount_after_retention",
    "fieldtype": "Currency",
-   "label": "VAT Amount",
+   "label": "Amount After Retention",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "vat_after_retention",
+   "fieldtype": "Currency",
+   "label": "VAT After Retention",
+   "non_negative": 1,
    "precision": "2"
   },
   {
    "fieldname": "grand_total",
    "fieldtype": "Currency",
    "label": "Grand Total",
+   "non_negative": 1,
    "precision": "2"
+  },
+  {
+   "default": "Unpaid",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Unpaid\nPartially Paid\nPaid"
+  },
+  {
+   "fieldname": "column_break_ctrn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "completion",
+   "fieldtype": "Percent",
+   "label": "Completion"
+  },
+  {
+   "fieldname": "invoice_file",
+   "fieldtype": "Attach",
+   "label": "Invoice File"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-18 18:24:33.278248",
+ "modified": "2025-01-18 19:26:21.447699",
  "modified_by": "Administrator",
  "module": "Rua",
- "name": "RUA LPO",
+ "name": "RUA Invoice",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [

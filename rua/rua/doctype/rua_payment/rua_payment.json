@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-01-18 19:36:55.479670",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "party",
+  "project",
+  "related_doctype",
+  "related_docname",
+  "remarks",
+  "date",
+  "column_break_xrxf",
+  "type",
+  "naming_series",
+  "amount",
+  "ref_number",
+  "bank",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "label": "Party",
+   "options": "RUA Party"
+  },
+  {
+   "fieldname": "related_doctype",
+   "fieldtype": "Link",
+   "label": "Related Doctype",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "related_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Related Docname",
+   "options": "related_doctype"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "column_break_xrxf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nPay\nReceive\nPay: Petty Cash\nPay: Salary"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "RC-PAY-.YY.\nRC-REC-.YY.\nRC-PTY-.YY."
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "ref_number",
+   "fieldtype": "Data",
+   "label": "Ref Number"
+  },
+  {
+   "fieldname": "bank",
+   "fieldtype": "Data",
+   "label": "Bank"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nCancelled"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "RUA Project"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-01-18 20:25:44.005917",
+ "modified_by": "Administrator",
+ "module": "Rua",
+ "name": "RUA Payment",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -84,3 +84,91 @@ def update_lpo_items(lpo_name, items):
         frappe.db.rollback()
         frappe.log_error("Error updating LPO items", str(e))
         frappe.throw(_("Error updating LPO items: {0}").format(str(e)))
+
+@frappe.whitelist()
+def update_rfq_items(rfq_name, items):
+    """
+    Update items in RUA RFQ document
+    
+    Args:
+        rfq_name (str): Name of the RFQ document
+        items (list): List of item dictionaries containing based on type:
+            Glass type:
+                - item: str
+                - description: str
+                - width: float
+                - length: float
+                - area: float (computed)
+                - qty: float
+                - total_area: float (computed)
+            Aluminum type:
+                - item: str
+                - qty: float
+                - measurement_unit: str
+                - length: float
+            Material type:
+                - item: str
+                - description: str
+                - qty: float
+    """
+    if not frappe.has_permission("RUA RFQ", "write"):
+        frappe.throw(_("Not permitted to update RFQ items"))
+        
+    # Convert items from string to list if needed
+    if isinstance(items, str):
+        items = frappe.parse_json(items)
+    
+    try:
+        doc = frappe.get_doc("RUA RFQ", rfq_name)
+        
+        # Don't allow updates for Link type RFQs
+        if doc.type == "Link":
+            frappe.throw(_("Cannot update items for Link type RFQ"))
+            
+        # Clear existing items
+        doc.items = []
+        
+        # Add new items based on RFQ type
+        for item_data in items:
+            item_dict = {
+                "item": item_data.get("item"),
+                "qty": flt(item_data.get("qty"))
+            }
+            
+            if doc.type == "Glass":
+                # For Glass type, include width, length, and computed areas
+                item_dict.update({
+                    "description": item_data.get("description"),
+                    "width": flt(item_data.get("width")),
+                    "length": flt(item_data.get("length")),
+                    "area": flt(item_data.get("area")),
+                    "total_area": flt(item_data.get("total_area"))
+                })
+            elif doc.type == "Aluminum":
+                # For Aluminum type, include measurement unit and length
+                item_dict.update({
+                    "measurement_unit": item_data.get("measurement_unit"),
+                    "length": flt(item_data.get("length"))
+                })
+            elif doc.type == "Material":
+                # For Material type, include description
+                item_dict.update({
+                    "description": item_data.get("description")
+                })
+                
+            doc.append("items", item_dict)
+        
+        # Save the document
+        doc.save()
+        
+        frappe.db.commit()
+        
+        return {
+            "status": "success",
+            "message": "Items updated successfully"
+        }
+        
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.log_error("Error updating RFQ items", str(e))
+        frappe.throw(_("Error updating RFQ items: {0}").format(str(e)))

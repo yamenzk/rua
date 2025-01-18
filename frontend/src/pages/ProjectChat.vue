@@ -233,6 +233,7 @@ import { hasRole } from '@/data/roles'
 import { quotationResource } from '@/data/quotation'
 import { rfqResource } from '@/data/rfq'
 import { lpoResource } from '@/data/lpo'
+import { invoiceResource } from '@/data/invoice'
 import { employeeResource } from '@/data/employee'
 
 
@@ -296,7 +297,17 @@ const references = computed(() => {
       link: `/project/${projectName}/documents/lpo/${l.name}`
     }))
 
-  return [...quotations, ...rfqs, ...lpos]
+	const invoices = (invoiceResource.data || [])
+    .filter(i => i.project === projectName)
+    .map(i => ({
+      name: i.name,
+      doctype: 'RUA Invoice',
+      party: i.party,
+      date: i.date,
+      link: `/project/${projectName}/documents/invoice/${i.name}`
+    }))
+
+  return [...quotations, ...rfqs, ...lpos, ...invoices]
 })
 
 const users = computed(() => {

@@ -92,10 +92,10 @@ const routes = [
             props: { defaultTab: 'quotations' }
           },
           {
-            path: 'proformas',
-            name: 'ProjectDocumentsProformas',
+            path: 'purchase-receipts',
+            name: 'ProjectDocumentsPurchaseReceipts',
             component: () => import('@/pages/ProjectDocuments.vue'),
-            props: { defaultTab: 'proformas' }
+            props: { defaultTab: 'purchaseReceipts' }
           },
           {
             path: 'invoices',
@@ -132,6 +132,21 @@ const routes = [
         path: 'documents/lpo/:lpoId',
         name: 'LPODetails',
         component: () => import('@/pages/LPODetails.vue'),
+      },
+      {
+        path: 'documents/rfq/:rfqId',
+        name: 'RFQDetails',
+        component: () => import('@/pages/RFQDetails.vue'),
+      },
+      {
+        path: 'documents/invoice/:invoiceId',
+        name: 'InvoiceDetails',
+        component: () => import('@/pages/InvoiceDetails.vue'),
+      },
+      {
+        path: 'documents/payment/:paymentId',
+        name: 'PaymentDetails',
+        component: () => import('@/pages/PaymentDetails.vue'),
       },
     ],
   },
