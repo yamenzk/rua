@@ -32,7 +32,7 @@
 						class="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium"
 						:class="{
 							'bg-purple-100 text-purple-800': selectedProject?.status === 'Tender',
-							'bg-blue-100 text-blue-800': selectedProject?.status === 'Job In Hand',
+							'bg-blue-100 text-blue-800': selectedProject?.status === 'Job in Hand',
 							'bg-yellow-100 text-yellow-800':
 								selectedProject?.status === 'In Progress',
 							'bg-green-100 text-green-800': selectedProject?.status === 'Completed',
@@ -143,8 +143,16 @@
       label="Project Name"
       v-model="projectName"
       required
+	  :disabled="true"
       :placeholder="selectedProject?.project_name"
     />
+	<FormControl
+  type="select"
+  label="Project Status"
+  v-model="projectStatus"
+  :options="statusOptions"
+  required
+/>
 
     <!-- Location -->
     <FormControl
@@ -371,6 +379,14 @@ const route = useRoute()
 const projectName = ref('')
 const projectLocation = ref('')
 const projectDescription = ref('')
+const projectStatus = ref('')
+const statusOptions = [
+  { label: 'Tender', value: 'Tender' },
+  { label: 'Job in Hand', value: 'Job in Hand' },
+  { label: 'In Progress', value: 'In Progress' },
+  { label: 'Completed', value: 'Completed' },
+  { label: 'Cancelled', value: 'Cancelled' }
+]
 
 const retentionStatusOptions = [
 	{ label: 'Select status', value: '' },
@@ -391,7 +407,8 @@ const selectedProject = computed(() => {
 const hasBasicFieldsChanged = computed(() => {
   return projectName.value !== selectedProject.value?.project_name ||
          projectLocation.value !== selectedProject.value?.location ||
-         projectDescription.value !== selectedProject.value?.description
+         projectDescription.value !== selectedProject.value?.description ||
+         projectStatus.value !== selectedProject.value?.status
 })
 
 
@@ -449,6 +466,7 @@ async function saveSettings() {
       project_name: projectName.value,
       location: projectLocation.value,
       description: projectDescription.value,
+      status: projectStatus.value,
       retention_status: retentionStatus.value,
       retention_percentage: retentionStatus.value === 'Enabled' ? retentionPercentage.value : 0
     })
@@ -490,6 +508,7 @@ onMounted(() => {
   projectName.value = selectedProject.value?.project_name || ''
   projectLocation.value = selectedProject.value?.location || ''
   projectDescription.value = selectedProject.value?.description || ''
+  projectStatus.value = selectedProject.value?.status || ''
 })
 
 onMounted(async () => {

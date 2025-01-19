@@ -194,7 +194,7 @@ async function handleSubmit() {
       related_doctype: props.sourceType,
       related_docname: props.sourceDoc.name,
       type: props.sourceType === 'RUA LPO' ? 'Pay' : 'Receive',
-      naming_series: props.sourceType === 'RUA LPO' ? 'RC-LPO-.YY.' : 'RC-INV-.YY.',
+      naming_series: props.sourceType === 'RUA LPO' ? 'RC-PAY-.YY.' : 'RC-REC-.YY.',
       doctype: 'RUA Payment',
       status: 'Draft'
     })

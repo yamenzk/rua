@@ -39,24 +39,16 @@
           <div class="w-full p-6 text-white">
             <div class="flex items-center justify-between">
               <div>
-                <h1 
-                  class="text-2xl font-bold"
-                  :class="{ 'cursor-pointer': isManager }"
-                  @click="isManager && openNameDialog()"
-                >
+                <h1 class="text-2xl font-bold">
                   {{ projectResource.doc?.project_name }}
                 </h1>
-                <div 
-                  class="flex items-center mt-2 text-white/80"
-                  :class="{ 'cursor-pointer hover:text-white': isManager }"
-                  @click="isManager && openLocationDialog()"
-                >
+                <div class="flex items-center mt-2 text-white/80">
                   <FeatherIcon name="map-pin" class="w-4 h-4 mr-1" />
-                  <span class="text-sm">{{ projectResource.doc?.location || 'Add location' }}</span>
+                  <span class="text-sm">{{ projectResource.doc?.location || 'No location set' }}</span>
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-3xl font-bold">{{ projectResource.doc?.completion_percentage || 0 }}%</div>
+                <div class="text-3xl font-bold">{{ projectResource.doc?.completion || 0 }}%</div>
                 <div class="text-sm text-white/80">Completed</div>
               </div>
             </div>
@@ -78,11 +70,7 @@
         <h3 class="text-sm font-medium text-gray-500 mb-4">Project Overview</h3>
         <div class="flex overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6 space-x-4">
           <!-- Contract Value Card -->
-          <div 
-            class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between"
-            :class="{ 'cursor-pointer hover:shadow-lg transition-shadow': isManager }"
-            @click="isManager && openContractValueDialog()"
-          >
+          <div class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between">
             <div class="text-sm font-bold text-blue-200">Contract Value</div>
             <div>
               <div class="text-2xl font-bold text-blue-100">
@@ -97,7 +85,7 @@
             <div class="text-sm font-medium text-red-200">Project Cost</div>
             <div>
               <div class="text-2xl font-bold text-red-100">
-                {{ formatCurrency(450000) }}
+                {{ formatCurrency(projectResource.doc?.project_cost) }}
               </div>
               <div class="text-xs text-red-200 mt-1">Estimated Cost</div>
             </div>
@@ -108,7 +96,7 @@
             <div class="text-sm font-medium text-orange-200">Additional Expenses</div>
             <div>
               <div class="text-2xl font-bold text-orange-100">
-                {{ formatCurrency(32000) }}
+                {{ formatCurrency(projectResource.doc?.additional_expenses) }}
               </div>
               <div class="text-xs text-orange-200 mt-1">Extra Costs</div>
             </div>
@@ -119,9 +107,31 @@
             <div class="text-sm font-medium text-green-200">Project Profit</div>
             <div>
               <div class="text-2xl font-bold text-green-100">
-                {{ formatCurrency(projectResource.doc?.contract_value - 450000 - 32000) }}
+                {{ formatCurrency(calculateProfit) }}
               </div>
               <div class="text-xs text-green-200 mt-1">Expected Profit</div>
+            </div>
+          </div>
+
+          <!-- Total Invoiced Card -->
+          <div class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-purple-500 to-purple-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between">
+            <div class="text-sm font-medium text-purple-200">Total Invoiced</div>
+            <div>
+              <div class="text-2xl font-bold text-purple-100">
+                {{ formatCurrency(projectResource.doc?.total_invoiced) }}
+              </div>
+              <div class="text-xs text-purple-200 mt-1">Amount Invoiced</div>
+            </div>
+          </div>
+
+          <!-- Total Received Card -->
+          <div class="min-w-[200px] max-w-[300px] bg-gradient-to-br from-teal-500 to-teal-800 rounded-lg p-6 shadow-md h-32 flex flex-col justify-between">
+            <div class="text-sm font-medium text-teal-200">Total Received</div>
+            <div>
+              <div class="text-2xl font-bold text-teal-100">
+                {{ formatCurrency(projectResource.doc?.total_received) }}
+              </div>
+              <div class="text-xs text-teal-200 mt-1">Amount Received</div>
             </div>
           </div>
         </div>
@@ -210,10 +220,10 @@
           v-slot="{ openFileSelector, file, uploading, progress, error }"
         >
           <div 
-            class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer"
+            class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
             @click="openFileSelector"
-            @dragover.prevent="$event.currentTarget.classList.add('border-blue-500')"
-            @dragleave.prevent="$event.currentTarget.classList.remove('border-blue-500')"
+            @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
+            @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
             @drop.prevent="handleDrop($event)"
           >
             <div class="flex flex-col items-center justify-center space-y-2">
@@ -238,7 +248,7 @@
                 </div>
                 <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    class="bg-gray-900 h-2 rounded-full transition-all duration-300"
                     :style="{ width: progress + '%' }"
                   ></div>
                 </div>
@@ -254,106 +264,13 @@
     </template>
     <template #actions>
       <div class="flex justify-end gap-2">
-        <Button variant="subtle" @click="showImageDialog = false">
-          Cancel
-        </Button>
+        <Button variant="subtle" @click="showImageDialog = false">Cancel</Button>
         <Button
           :loading="isUploading"
           :disabled="!uploadedResult?.file_url"
           @click="updateImage"
         >
           Update Picture
-        </Button>
-      </div>
-    </template>
-  </Dialog>
-
-  <!-- Project Name Dialog -->
-  <Dialog
-    v-model="showNameDialog"
-    :options="{
-      title: 'Update Project Name',
-      size: 'sm',
-    }"
-  >
-    <template #body-content>
-      <FormControl
-        type="text"
-        label="Project Name"
-        v-model="newName"
-        :error="nameError"
-      />
-    </template>
-    <template #actions>
-      <div class="flex justify-end gap-2">
-        <Button variant="subtle" @click="showNameDialog = false">
-          Cancel
-        </Button>
-        <Button
-          :loading="projectResource.setValue.loading"
-          @click="updateName"
-        >
-          Update Name
-        </Button>
-      </div>
-    </template>
-  </Dialog>
-
-  <!-- Location Dialog -->
-  <Dialog
-    v-model="showLocationDialog"
-    :options="{
-      title: 'Update Project Location',
-      size: 'sm',
-    }"
-  >
-    <template #body-content>
-      <FormControl
-        type="text"
-        label="Location"
-        v-model="newLocation"
-      />
-    </template>
-    <template #actions>
-      <div class="flex justify-end gap-2">
-        <Button variant="subtle" @click="showLocationDialog = false">
-          Cancel
-        </Button>
-        <Button
-          :loading="projectResource.setValue.loading"
-          @click="updateLocation"
-        >
-          Update Location
-        </Button>
-      </div>
-    </template>
-  </Dialog>
-
-  <!-- Contract Value Dialog -->
-  <Dialog
-    v-model="showContractValueDialog"
-    :options="{
-      title: 'Update Contract Value',
-      size: 'sm',
-    }"
-  >
-    <template #body-content>
-      <FormControl
-        type="number"
-        label="Contract Value"
-        v-model="newContractValue"
-      />
-    </template>
-    <template #actions>
-      <div class="flex justify-end gap-2">
-        <Button variant="subtle" @click="showContractValueDialog = false">
-          Cancel
-        </Button>
-        <Button
-          :loading="projectResource.setValue.loading"
-          @click="updateContractValue"
-        >
-          Update Value
         </Button>
       </div>
     </template>
@@ -366,9 +283,8 @@ import {
   FeatherIcon, 
   LoadingIndicator,
   Dialog, 
-  Button, 
-  FormControl, 
-  FileUploader
+  Button,
+  FileUploader 
 } from 'frappe-ui'
 import { hasRole } from '@/data/roles'
 import PartyCard from './PartyCard.vue'
@@ -386,18 +302,9 @@ const props = defineProps({
 // Role-based access control
 const isManager = hasRole('RUA Project Manager')
 
-// Dialog states
+// Image upload state
 const showImageDialog = ref(false)
-const showNameDialog = ref(false)
-const showLocationDialog = ref(false)
-const showContractValueDialog = ref(false)
-
-// Form values
 const newImage = ref(null)
-const newName = ref('')
-const newLocation = ref('')
-const newContractValue = ref('')
-const nameError = ref('')
 const isUploading = ref(false)
 const uploadedResult = ref(null)
 
@@ -428,7 +335,15 @@ const consultant = computed(() => {
   return parties?.find(p => p.type === 'Consultant')
 })
 
-// Dialog handlers
+// Computed property for profit calculation
+const calculateProfit = computed(() => {
+  const contract = props.projectResource.doc?.contract_value || 0
+  const cost = props.projectResource.doc?.project_cost || 0
+  const expenses = props.projectResource.doc?.additional_expenses || 0
+  return contract - cost - expenses
+})
+
+// Image upload handlers
 async function handleUploadSuccess(result) {
   uploadedResult.value = result
 }
@@ -455,7 +370,7 @@ async function updateImage() {
 function handleDrop(event) {
   const file = event.dataTransfer?.files?.[0]
   if (file && file.type.startsWith('image/')) {
-    event.currentTarget.classList.remove('border-blue-500')
+    event.currentTarget.classList.remove('border-gray-900')
     const input = document.querySelector('input[type="file"]')
     if (input) {
       const dataTransfer = new DataTransfer()
@@ -469,72 +384,6 @@ function handleDrop(event) {
 function handleImageClick() {
   if (!isManager) return
   showImageDialog.value = true
-}
-
-function openNameDialog() {
-  if (!isManager) return
-  newName.value = props.projectResource.doc?.project_name || ''
-  showNameDialog.value = true
-}
-
-function openLocationDialog() {
-  if (!isManager) return
-  newLocation.value = props.projectResource.doc?.location || ''
-  showLocationDialog.value = true
-}
-
-function openContractValueDialog() {
-  if (!isManager) return
-  newContractValue.value = props.projectResource.doc?.contract_value || ''
-  showContractValueDialog.value = true
-}
-
-async function updateName() {
-  if (!newName.value.trim()) {
-    nameError.value = 'Project name is required'
-    return
-  }
-
-  try {
-    await props.projectResource.setValue.submit({
-      name: props.projectResource.doc.name,
-      project_name: newName.value
-    })
-    showNameDialog.value = false
-    newName.value = ''
-    nameError.value = ''
-  } catch (error) {
-    console.error('Failed to update name:', error)
-    nameError.value = error.message || 'Failed to update project name'
-  }
-}
-
-async function updateLocation() {
-  try {
-    await props.projectResource.setValue.submit({
-      name: props.projectResource.doc.name,
-      location: newLocation.value
-    })
-    showLocationDialog.value = false
-    newLocation.value = ''
-  } catch (error) {
-    console.error('Failed to update location:', error)
-  }
-}
-
-async function updateContractValue() {
-  if (!newContractValue.value) return
-
-  try {
-    await props.projectResource.setValue.submit({
-      name: props.projectResource.doc.name,
-      contract_value: newContractValue.value
-    })
-    showContractValueDialog.value = false
-    newContractValue.value = ''
-  } catch (error) {
-    console.error('Failed to update contract value:', error)
-  }
 }
 
 function formatCurrency(value) {

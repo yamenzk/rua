@@ -11,31 +11,86 @@
 		>
 			<template v-if="messages?.length">
 				<div v-for="message in messages" :key="message.name">
-					<!-- System Messages -->
-					<template v-if="message.type !== 'Chat Message'">
-						<div class="flex justify-center my-4">
-							<div
-								class="px-4 py-2 rounded-full text-sm"
-								:class="getMessageTypeClasses(message.type)"
-							>
-								<div class="flex items-center gap-2">
-									<FeatherIcon
-										:name="getSystemMessageIcon(message.type)"
-										class="w-4 h-4"
-									/>
-									<span
-										v-html="
-											formatMessageWithReferences(
-												message.message,
-												false,
-												true,
-											)
-										"
-									></span>
-								</div>
-							</div>
-						</div>
-					</template>
+					<!-- System Messages Template -->
+<template v-if="message.type !== 'Chat Message'">
+  <div class="flex justify-center my-4">
+    <div class="max-w-[85%] w-full">
+      <div 
+        class="group relative rounded-xl border-2 shadow-sm transition-all duration-200"
+        :class="[
+          message.type === 'Info' ? 'border-blue-100' :
+          message.type === 'Success' ? 'border-green-100' :
+          message.type === 'Warning' ? 'border-yellow-100' :
+          message.type === 'Danger' ? 'border-red-100' :
+          message.type === 'Alert' ? 'border-purple-100' :
+          'border-gray-100'
+        ]"
+      >
+        <div class="p-4">
+          <!-- Header with Icon and Status -->
+          <div class="flex items-center justify-between mb-3">
+            <div 
+              class="rounded-full p-2 transition-colors duration-200"
+              :class="getMessageIconClasses(message.type)"
+            >
+              <FeatherIcon
+                :name="getSystemMessageIcon(message.type)"
+                class="w-6 h-6"
+                :class="getMessageIconColorClass(message.type)"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <div 
+                class="w-2 h-2 rounded-full animate-pulse"
+                :class="[
+                  message.type === 'Info' ? 'bg-blue-500' :
+                  message.type === 'Success' ? 'bg-green-500' :
+                  message.type === 'Warning' ? 'bg-yellow-500' :
+                  message.type === 'Danger' ? 'bg-red-500' :
+                  message.type === 'Alert' ? 'bg-purple-500' :
+                  'bg-gray-500'
+                ]"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Message Content -->
+          <div class="mb-4">
+            <p 
+              class="text-gray-700 text-sm leading-relaxed"
+              v-html="formatMessageWithReferences(
+                message.message,
+                false,
+                true
+              )"
+            ></p>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center text-xs text-gray-500">
+              <FeatherIcon name="clock" class="w-3.5 h-3.5 mr-1" />
+              {{ formatDate(message.timestamp) }}
+            </div>
+
+            <template v-if="parseMessageAction(message.message)">
+              <a 
+                :href="parseMessageAction(message.message).url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200"
+                :class="getActionButtonStyles(message.type)"
+              >
+                {{ parseMessageAction(message.message).label }}
+                <FeatherIcon name="arrow-right" class="w-3.5 h-3.5" />
+              </a>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 					<!-- Chat Messages -->
 					<template v-else>
@@ -351,14 +406,14 @@ const references = computed(() => {
 })
 
 const users = computed(() => {
-	return (employeeResource.data || [])
-		.filter((u) => u.user && u.user !== session.user)
-		.map((u) => ({
-			name: u.user,
-			employee_name: u.employee_name,
-			image: u.image,
-			user: u.user,
-		}))
+    return (employeeResource.data || [])
+        .filter((u) => u.user) // Only filter out entries without a user
+        .map((u) => ({
+            name: u.user,
+            employee_name: u.employee_name,
+            image: u.image,
+            user: u.user,
+        }))
 })
 
 const isMessageEmpty = computed(() => !newMessage.value || !newMessage.value.trim())
@@ -366,20 +421,109 @@ const isSubmitDisabled = computed(() => isMessageEmpty.value || chatResource.ins
 
 // Methods
 function getMessageTypeClasses(type) {
-	switch (type) {
-		case 'Info':
-			return 'bg-blue-50 text-blue-700'
-		case 'Success':
-			return 'bg-green-50 text-green-700'
-		case 'Danger':
-			return 'bg-red-50 text-red-700'
-		case 'Warning':
-			return 'bg-yellow-50 text-yellow-700'
-		case 'Alert':
-			return 'bg-purple-50 text-purple-700'
-		default:
-			return 'bg-gray-50'
-	}
+    switch (type) {
+        case 'Info':
+            return 'bg-blue-50 border-blue-200'
+        case 'Success':
+            return 'bg-green-50 border-green-200'
+        case 'Danger':
+            return 'bg-red-50 border-red-200'
+        case 'Warning':
+            return 'bg-yellow-50 border-yellow-200'
+        case 'Alert':
+            return 'bg-purple-50 border-purple-200'
+        default:
+            return 'bg-gray-50 border-gray-200'
+    }
+}
+
+function getMessageIconClasses(type) {
+    switch (type) {
+        case 'Info':
+            return 'bg-blue-100'
+        case 'Success':
+            return 'bg-green-100'
+        case 'Danger':
+            return 'bg-red-100'
+        case 'Warning':
+            return 'bg-yellow-100'
+        case 'Alert':
+            return 'bg-purple-100'
+        default:
+            return 'bg-gray-100'
+    }
+}
+
+function getMessageIconColorClass(type) {
+    switch (type) {
+        case 'Info':
+            return 'text-blue-600'
+        case 'Success':
+            return 'text-green-600'
+        case 'Danger':
+            return 'text-red-600'
+        case 'Warning':
+            return 'text-yellow-600'
+        case 'Alert':
+            return 'text-purple-600'
+        default:
+            return 'text-gray-600'
+    }
+}
+
+function getMessageTextClass(type) {
+    switch (type) {
+        case 'Info':
+            return 'text-blue-800'
+        case 'Success':
+            return 'text-green-800'
+        case 'Danger':
+            return 'text-red-800'
+        case 'Warning':
+            return 'text-yellow-800'
+        case 'Alert':
+            return 'text-purple-800'
+        default:
+            return 'text-gray-800'
+    }
+}
+
+function getActionButtonStyles(type) {
+  switch (type) {
+    case 'Info':
+      return 'bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700'
+    case 'Success':
+      return 'bg-green-50 hover:bg-green-100 text-green-600 hover:text-green-700'
+    case 'Warning':
+      return 'bg-yellow-50 hover:bg-yellow-100 text-yellow-600 hover:text-yellow-700'
+    case 'Danger':
+      return 'bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700'
+    case 'Alert':
+      return 'bg-purple-50 hover:bg-purple-100 text-purple-600 hover:text-purple-700'
+    default:
+      return 'bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700'
+  }
+}
+
+function parseMessageAction(message) {
+  try {
+    // Find the JSON array pattern at the end of the message
+    const match = message.match(/\[(.*?)\]$/);
+    if (match) {
+      // Parse just the matched array portion
+      const actionData = JSON.parse(`[${match[1]}]`);
+      if (Array.isArray(actionData) && actionData.length === 2) {
+        return {
+          label: actionData[0],
+          url: actionData[1]
+        }
+      }
+    }
+  } catch (e) {
+    // If parsing fails, return null
+    return null
+  }
+  return null
 }
 
 function getSystemMessageIcon(type) {
@@ -442,12 +586,14 @@ async function sendMessage() {
 }
 
 function filterUsers(searchTerm) {
-	filteredUsers.value = users.value.filter(
-		(user) =>
-			user.employee_name.toLowerCase().includes(searchTerm) ||
-			user.name.toLowerCase().includes(searchTerm) ||
-			user.user.toLowerCase().includes(searchTerm),
-	)
+    filteredUsers.value = users.value.filter(
+        (user) => 
+            // Filter out current user only in the autocomplete dropdown
+            user.user !== session.user &&
+            (user.employee_name.toLowerCase().includes(searchTerm) ||
+            user.name.toLowerCase().includes(searchTerm) ||
+            user.user.toLowerCase().includes(searchTerm))
+    )
 }
 
 function handleInput(event) {
@@ -487,19 +633,19 @@ function handleInput(event) {
 }
 
 function selectUserMention(user) {
-	const text = newMessage.value
-	const lastAt = text.lastIndexOf('@', cursorPosition.value)
-	const nextSpace = text.indexOf(' ', lastAt)
-	const searchEnd = nextSpace === -1 ? text.length : nextSpace
+    const text = newMessage.value
+    const lastAt = text.lastIndexOf('@', cursorPosition.value)
+    const nextSpace = text.indexOf(' ', lastAt)
+    const searchEnd = nextSpace === -1 ? text.length : nextSpace
 
-	// Replace with the full username, but display employee name
-	newMessage.value = text.slice(0, lastAt) + '@' + user.name + text.slice(searchEnd)
-	showUsersList.value = false
+    // Use user.user (email) as the mention value
+    newMessage.value = text.slice(0, lastAt) + '@' + user.user + text.slice(searchEnd)
+    showUsersList.value = false
 
-	// Focus back on input
-	nextTick(() => {
-		inputRef.value.focus()
-	})
+    // Focus back on input
+    nextTick(() => {
+        inputRef.value.focus()
+    })
 }
 
 function handleKeydown(event) {
@@ -568,61 +714,103 @@ function formatReferenceDate(dateString) {
 }
 
 function formatMessageWithReferences(message, isUserMessage = false, isSystemMessage = false) {
-	if (!message) return ''
+    if (!message) return ''
 
-	const refData = references.value || []
-	const userData = users.value || []
+    const refData = references.value || []
+    const userData = users.value || []
 
-	// Replace references first
-	let formattedMessage = message.replace(/#([A-Z0-9-]+)/g, (match, reference) => {
-		const ref = refData.find((r) => r.name === reference)
-		if (ref) {
-			return `
-        <span class="inline-block align-middle mx-0.5 px-1.5 py-0.5 rounded-full text-xs ${
-			isSystemMessage
-				? ''
-				: isUserMessage
-					? 'bg-white/20 text-white'
-					: 'bg-gray-300 text-gray-800'
-		}">
-          <a 
-            href="${ref.link}" 
-            class="${
-				isUserMessage
-					? 'hover:underline font-medium text-white'
-					: 'hover:underline font-medium text-gray-800'
-			}" 
-            @click.prevent="router.push('${ref.link}')"
-          >
-            ${ref.name}
-          </a>
-        </span>
-      `
-		}
-		return match
-	})
+    const actionMatch = message.match(/\[(.*?)\]$/);
+    let messageWithoutAction = message;
+    if (actionMatch) {
+        messageWithoutAction = message.replace(/\[(.*?)\]$/, '');
+    }
 
-	// Then replace user mentions
-	formattedMessage = formattedMessage.replace(/@([A-Z0-9-]+)/g, (match, mentionName) => {
-		const user = userData.find((u) => u.name === mentionName)
-		if (user) {
-			return `
-        <span class="inline-block align-middle mx-0.5 px-1.5 py-0.5 rounded-full text-xs ${isSystemMessage ? '' : isUserMessage ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-800'}">
-          <span class="flex items-center">
-            <img 
-              src="${user.image}" 
-              alt="${user.employee_name}" 
-              class="w-4 h-4 rounded-full mr-1"
-            />
-            <span class="font-medium">${user.employee_name}</span>
-          </span>
-        </span>
-      `
-		}
-		return match
-	})
+    // Convert URLs to clickable links first
+    const urlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g
+    let processedMessage = messageWithoutAction.replace(urlRegex, (url) => {
+        let linkStyle = ''
+        if (isSystemMessage) {
+            // System message styling (inherits text color)
+            linkStyle = 'font-medium underline decoration-current/30 hover:decoration-current/60 transition-all duration-200'
+        } else if (isUserMessage) {
+            // User message styling (white text on dark background)
+            linkStyle = 'text-white underline decoration-white/30 hover:decoration-white/60 transition-all duration-200'
+        } else {
+            // Regular message styling (dark text on light background)
+            linkStyle = 'text-blue-500 underline decoration-blue-200/50 hover:decoration-blue-500/50 hover:text-blue-600 transition-all duration-200'
+        }
 
-	return formattedMessage
+        return `<a 
+            href="${url}" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="${linkStyle}"
+        >${url}</a>`
+    })
+
+    // Handle line breaks
+    processedMessage = processedMessage.replace(/\n/g, '<br>')
+
+    // Replace references
+    let formattedMessage = processedMessage.replace(/#([A-Z0-9-]+)/g, (match, reference) => {
+        const ref = refData.find((r) => r.name === reference)
+        if (ref) {
+            return `
+                <span class="inline-flex items-center align-middle px-1 py-0.5 rounded-full text-xs ${
+                    isSystemMessage
+                        ? 'bg-current/10'
+                        : isUserMessage
+                            ? 'bg-white/20 text-white'
+                            : 'bg-gray-300 text-gray-800'
+                }">
+                    <a 
+                        href="${ref.link}" 
+                        class="${
+                            isSystemMessage
+                                ? 'hover:underline font-medium'
+                                : isUserMessage
+                                    ? 'hover:underline font-medium text-white'
+                                    : 'hover:underline font-medium text-gray-800'
+                        }" 
+                        @click.prevent="router.push('${ref.link}')"
+                    >
+                        ${ref.name}
+                    </a>
+                </span>
+            `
+        }
+        return match
+    })
+
+    // Replace user mentions
+    formattedMessage = formattedMessage.replace(/@([^\s]+)/g, (match, mentionName) => {
+        const user = userData.find((u) => u.user === mentionName)
+        if (user) {
+            return `
+                <span class="inline-flex items-center align-middle px-1 py-0.5 rounded-full text-xs ${
+                    isSystemMessage
+                        ? 'bg-current/10'
+                        : isUserMessage
+                            ? 'bg-white/20 text-white'
+                            : 'bg-gray-300 text-gray-800'
+                }">
+                    <span class="flex items-center">
+                        ${user.image ? `
+                            <img 
+                                src="${user.image}" 
+                                alt="${user.employee_name}" 
+                                class="w-4 h-4 rounded-full mr-1"
+                            />
+                        ` : ''}
+                        <span class="font-medium">${user.employee_name}</span>
+                    </span>
+                </span>
+            `
+        }
+        return match
+    })
+
+    return formattedMessage
 }
 
 function scrollToBottom() {
