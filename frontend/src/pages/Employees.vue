@@ -57,27 +57,165 @@
 					</button>
 				</div>
 			</div>
+			<div>
+  <div class="inline-flex rounded-md shadow-sm" role="group">
+    <Button
+      variant="outline"
+      size="sm"
+      :label="attendanceButtonLabel"
+      @click="showAttendanceDialog"
+      class="rounded-r-none border-r-0 min-w-[180px]"
+    >
+      <template #prefix>
+        <FeatherIcon name="calendar" class="w-4 h-4" />
+      </template>
+      {{ attendanceButtonLabel }}
+    </Button>
+    
+    <Button
+      variant="outline"
+      size="sm"
+      @click="showMonthlyAttendanceDialog = true"
+      class="rounded-none border-r-0 min-w-[180px]"
+    >
+      <template #prefix>
+        <FeatherIcon name="list" class="w-4 h-4" />
+      </template>
+      Attendance List
+    </Button>
+
+    <Button
+      variant="outline"
+      size="sm"
+      @click="showExpiringDocumentsDialog = true"
+      class="rounded-l-none min-w-[180px]"
+    >
+      <template #prefix>
+        <FeatherIcon name="file-text" class="w-4 h-4" />
+      </template>
+      Document Status
+    </Button>
+  </div>
+</div>
 		</div>
 
-		<!-- Attendance Setup Button -->
-		<Button
-			variant="outline"
-			size="sm"
-			:label="attendanceButtonLabel"
-			@click="showAttendanceDialog"
-		>
-			{{ attendanceButtonLabel }}
-		</Button>
+<!-- Monthly Attendance Dialog -->
+<Dialog
+  v-model="showMonthlyAttendanceDialog"
+  :options="{
+    title: 'Monthly Attendance List',
+    size: 'xl',
+  }"
+>
+  <template #body-content>
+    <div class="space-y-4">
+      <!-- Month Selector -->
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-medium">
+          {{ formatMonth(selectedMonth) }} {{ currentYear }}
+        </h3>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="subtle"
+            size="sm"
+            @click="previousMonth"
+          >
+            <FeatherIcon name="chevron-left" class="w-4 h-4" />
+          </Button>
+          <Button
+            variant="subtle"
+            size="sm"
+            @click="nextMonth"
+            :disabled="isCurrentMonth"
+          >
+            <FeatherIcon name="chevron-right" class="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
 
-		<!-- Expiring Documents Button -->
-		<Button
-			variant="outline"
-			class="ml-2"
-			size="sm"
-			@click="showExpiringDocumentsDialog = true"
-		>
-			Check Document Status
-		</Button>
+      <!-- Search Bar -->
+      <FormControl
+        type="search"
+        size="sm"
+        variant="subtle"
+        placeholder="Search employees..."
+        v-model="monthlyAttendanceSearch"
+        class="w-full"
+      />
+
+      <!-- Attendance Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Employee
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Present Days
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Late Days
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Absent Days
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Total Overtime
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Attendance Rate
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="employee in filteredMonthlyAttendance" :key="employee.id">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <Avatar
+                    :image="employee.image"
+                    :label="getInitials(employee.name)"
+                    shape="circle"
+                    size="sm"
+                  />
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ employee.name }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ employee.presentDays }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ employee.lateDays }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ employee.absentDays }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ employee.totalOvertime }}h
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <span class="text-sm text-gray-900">{{ employee.attendanceRate }}%</span>
+                  <div class="ml-2 w-16 bg-gray-200 rounded-full h-1.5">
+                    <div
+                      class="h-1.5 rounded-full"
+                      :class="getAttendanceRateColor(employee.attendanceRate)"
+                      :style="{ width: employee.attendanceRate + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </template>
+</Dialog>
 
 		<!-- Expiring Documents Dialog -->
 		<Dialog
@@ -666,6 +804,11 @@ const expiringDocumentsSearch = ref('')
 const activeDocumentTab = ref('expiring')
 const noAttendanceDialog = ref(false)
 
+const showMonthlyAttendanceDialog = ref(false)
+const monthlyAttendanceSearch = ref('')
+const selectedMonth = ref(new Date().getMonth())
+const currentYear = ref(new Date().getFullYear())
+
 function getDubaiDateTime() {
 	const now = new Date()
 	return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
@@ -676,6 +819,99 @@ const attendanceButtonLabel = computed(() => {
 	const todayRecord = findAttendanceRecord(currentDate)
 	return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
 })
+
+
+const isCurrentMonth = computed(() => {
+  const now = new Date()
+  return selectedMonth.value === now.getMonth() && currentYear.value === now.getFullYear()
+})
+
+const monthlyAttendance = computed(() => {
+  if (!list.data || !attendanceList.data) return []
+
+  const monthStart = new Date(currentYear.value, selectedMonth.value, 1)
+  const monthEnd = new Date(currentYear.value, selectedMonth.value + 1, 0)
+
+  // Get all attendance records for the selected month
+  const monthRecords = attendanceList.data.filter(record => {
+    const recordDate = new Date(record.date)
+    return recordDate >= monthStart && recordDate <= monthEnd
+  })
+
+  // Calculate statistics for each employee
+  return list.data.map(employee => {
+    let presentDays = 0
+    let lateDays = 0
+    let absentDays = 0
+    let totalOvertime = 0
+
+    monthRecords.forEach(record => {
+      try {
+        const attendanceLog = JSON.parse(record.attendance_log || '{}')
+        const employeeLog = attendanceLog[employee.name] || {}
+
+        if (employeeLog.absent) absentDays++
+        else if (employeeLog.late) lateDays++
+        else if (employeeLog.present) presentDays++
+
+        totalOvertime += Number(employeeLog.overtime || 0)
+      } catch (error) {
+        console.error('Error processing attendance record:', error)
+      }
+    })
+
+    const totalDays = presentDays + lateDays + absentDays
+    const attendanceRate = totalDays ? Math.round(((presentDays + lateDays) / totalDays) * 100) : 0
+
+    return {
+      id: employee.name,
+      name: employee.employee_name,
+      image: employee.image,
+      presentDays,
+      lateDays,
+      absentDays,
+      totalOvertime,
+      attendanceRate
+    }
+  })
+})
+
+const filteredMonthlyAttendance = computed(() => {
+  if (!monthlyAttendance.value) return []
+
+  return monthlyAttendance.value.filter(employee =>
+    employee.name.toLowerCase().includes(monthlyAttendanceSearch.value.toLowerCase())
+  )
+})
+
+// Add these methods
+function formatMonth(month) {
+  return new Date(2000, month).toLocaleString('default', { month: 'long' })
+}
+
+function previousMonth() {
+  if (selectedMonth.value === 0) {
+    selectedMonth.value = 11
+    currentYear.value--
+  } else {
+    selectedMonth.value--
+  }
+}
+
+function nextMonth() {
+  if (selectedMonth.value === 11) {
+    selectedMonth.value = 0
+    currentYear.value++
+  } else {
+    selectedMonth.value++
+  }
+}
+
+function getAttendanceRateColor(rate) {
+  if (rate >= 90) return 'bg-green-500'
+  if (rate >= 75) return 'bg-yellow-500'
+  return 'bg-red-500'
+}
 
 function formatDate(date) {
 	// Handle different input types

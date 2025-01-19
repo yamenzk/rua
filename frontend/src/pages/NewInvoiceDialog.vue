@@ -17,6 +17,21 @@
               </div>
             </div>
             <div>
+      <label class="text-xs text-gray-500">Retention Status</label>
+      <div class="flex items-center gap-1">
+        <Badge
+          :theme="projectResource.doc.retention_status === 'Enabled' ? 'blue' : 'gray'"
+          variant="subtle"
+          class="text-sm"
+        >
+          {{ projectResource.doc.retention_status || 'Not Configured' }}
+        </Badge>
+        <span v-if="projectResource.doc.retention_status === 'Enabled'" class="text-sm text-gray-600">
+          ({{ projectResource.doc.retention_percentage }}%)
+        </span>
+      </div>
+    </div>
+            <div>
               <label class="text-xs text-gray-500">Total Invoiced</label>
               <div class="text-sm font-medium text-gray-900">
                 {{ formatCurrency(projectResource.doc.total_invoiced) }}
@@ -44,6 +59,7 @@
             </div>
           </div>
         </div>
+
 
         <!-- Date Selection -->
         <DatePicker
@@ -142,7 +158,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Dialog, Button, DatePicker, Switch } from 'frappe-ui'
+import { Dialog, Button, DatePicker, Switch, Badge } from 'frappe-ui'
 import { formatDate, formatCurrency } from '@/utils/format'
 
 const props = defineProps({

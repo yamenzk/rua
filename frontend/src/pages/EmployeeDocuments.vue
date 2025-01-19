@@ -107,13 +107,21 @@
 			<div
 				v-for="doc in filteredDocuments"
 				:key="doc.name"
-				class="document-card group bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+				class="document-card group bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow flex flex-col"
 				:class="{ 'ring-2 ring-gray-900': isSelected(doc) }"
 				:data-document-id="doc.name"
 				@dblclick="handleCardInteraction(doc, $event)"
 			>
 				<!-- Document Preview -->
-				<div class="aspect-[4/3] rounded-t-lg overflow-hidden bg-gray-100">
+				<div class="aspect-[4/3] rounded-t-lg overflow-hidden bg-gray-100 relative">
+					<div class="absolute top-2 left-2">
+							<div
+								class="px-2 py-1 mt-2 rounded-full w-fit text-xs font-medium"
+								:class="getExpiryStatusClass(doc.expiry_date)"
+							>
+								{{ getExpiryStatus(doc.expiry_date) }}
+							</div>
+						</div>
 					<!-- Document Preview -->
 					<div class="w-full h-full flex items-center justify-center">
 						<!-- Image Preview -->
@@ -175,7 +183,7 @@
 				</div>
 
 				<!-- Document Info -->
-				<div class="p-4 space-y-2">
+				<div class="p-4 space-y-2 flex flex-col justify-between flex-grow">
 					<!-- Document Title and Type -->
 					<div class="flex items-center gap-2">
 						<FeatherIcon
@@ -199,8 +207,8 @@
 						</span>
 					</div>
 
-					<div class="text-sm text-gray-500 space-y-1">
-						<div class="flex items-center justify-between">
+					<div class="text-sm text-gray-500 space-y-1" v-if='doc.document_number'>
+						<div class="flex items-center justify-between flex-grow">
 							<div
 								class="flex items-center gap-2 cursor-pointer hover:text-gray-700"
 								@click="copyDocNumber(doc)"
@@ -212,14 +220,7 @@
 								>Copied!</span
 							>
 						</div>
-						<div>
-							<div
-								class="px-2 py-1 mt-2 rounded-full w-fit text-xs font-medium"
-								:class="getExpiryStatusClass(doc.expiry_date)"
-							>
-								{{ getExpiryStatus(doc.expiry_date) }}
-							</div>
-						</div>
+						
 					</div>
 
 					<!-- Action Buttons -->
@@ -843,25 +844,29 @@ const canSubmit = computed(() => {
 })
 
 const uniqueTags = computed(() => {
-	const allTags =
-		documentResource.data?.flatMap((doc) => {
-			return doc.tags?.split(',').map((tag) => tag.trim())
-		}) || []
+  if (!documentResource.data) return []
+  
+  // Get only active (non-expired) documents
+  const activeDocuments = documentResource.data.filter(doc => !isExpired(doc.expiry_date))
+  
+  // Get tags only from active documents
+  const allTags = activeDocuments.flatMap(doc => {
+    return doc.tags?.split(',').map(tag => tag.trim())
+  }) || []
 
-	// Get unique tags and sort them
-	const uniqueSet = [...new Set(allTags.filter(Boolean))]
+  // Get unique tags and sort them
+  const uniqueSet = [...new Set(allTags.filter(Boolean))]
 
-	// Filter out 'Expired Documents' and sort remaining tags
-	const regularTags = uniqueSet.filter((tag) => tag !== 'Expired Documents').sort()
+  // Filter out 'Expired Documents' and sort remaining tags
+  const regularTags = uniqueSet.filter(tag => tag !== 'Expired Documents').sort()
 
-	// If 'Expired Documents' was in the original set, append it at the end
-	if (uniqueSet.includes('Expired Documents')) {
-		regularTags.push('Expired Documents')
-	}
+  // If we have any expired documents, append 'Expired Documents' at the end
+  if (hasExpiredDocuments.value) {
+    regularTags.push('Expired Documents')
+  }
 
-	return regularTags
+  return regularTags
 })
-
 const filteredDocuments = computed(() => {
 	if (!documentResource.data) return []
 
@@ -888,14 +893,14 @@ function isExpired(date) {
 }
 
 function getDaysUntilExpiry(date) {
-	if (!date) return 'No Expiry'
+	if (!date) return
 	const today = new Date().setHours(0, 0, 0, 0)
 	const expiryDate = new Date(date).setHours(0, 0, 0, 0)
 	return Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
 }
 
 function getExpiryStatus(date) {
-	if (!date) return 'No Expiry'
+	if (!date) return
 	const daysUntilExpiry = getDaysUntilExpiry(date)
 
 	if (daysUntilExpiry < 0) return 'Expired'

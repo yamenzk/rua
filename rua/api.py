@@ -87,6 +87,7 @@ def update_lpo_items(lpo_name, items):
 
 @frappe.whitelist()
 def update_rfq_items(rfq_name, items):
+
     """
     Update items in RUA RFQ document
     
@@ -172,3 +173,98 @@ def update_rfq_items(rfq_name, items):
         frappe.db.rollback()
         frappe.log_error("Error updating RFQ items", str(e))
         frappe.throw(_("Error updating RFQ items: {0}").format(str(e)))
+
+
+@frappe.whitelist()
+def delete_rua_document(docname, passkey):
+    """
+    Find and delete all RUA module documents that have Link fields pointing to the given docname
+    Args:
+        docname (str): The document name to search for and delete across all RUA doctypes
+    """
+    system_passkey = frappe.db.get_single_value("RUA Company", "passkey")
+    
+    # Compare the cleaned-up passkeys
+    if passkey != system_passkey:
+        frappe.throw("Invalid passkey.")
+        return
+    
+    try:
+        # Begin transaction
+        frappe.db.begin()
+        
+        # Get all doctypes from RUA module
+        rua_doctypes = frappe.get_all(
+            "DocType",
+            filters={"module": "Rua"},
+            fields=["name"]
+        )
+        
+        if not rua_doctypes:
+            frappe.throw("No RUA doctypes found.")
+            return
+        
+        deletion_log = []
+        
+        # Go through each doctype
+        for dt in rua_doctypes:
+            doctype = dt.name
+            table_name = f"tab{doctype}"
+            
+            # Get all link fields (including Dynamic Link, if any)
+            link_fields = [
+                field for field in frappe.get_meta(doctype).fields
+                if field.fieldtype in ["Link", "Dynamic Link"]
+            ]
+            
+            # Check each Link field for our docname
+            for field in link_fields:
+                # Get count of matching records
+                query = f"""
+                    SELECT COUNT(*) as count 
+                    FROM `{table_name}`
+                    WHERE `{field.fieldname}` = %s
+                """
+                count = frappe.db.sql(query, docname)[0][0]
+                
+                if count > 0:
+                    # Delete matching records
+                    delete_query = f"""
+                        DELETE FROM `{table_name}`
+                        WHERE `{field.fieldname}` = %s
+                    """
+                    frappe.db.sql(delete_query, docname)
+                    
+                    deletion_log.append({
+                        "doctype": doctype,
+                        "field": field.fieldname,
+                        "count": count
+                    })
+                    
+                    frappe.log_error(
+                        f"Deleted {count} records from {table_name} where {field.fieldname} = {docname}",
+                        "RUA Document Deletion Log"
+                    )
+
+        # Commit the transaction
+        frappe.db.commit()
+
+        summary = "\n".join([ 
+            f"- Deleted {log['count']} records from {log['doctype']} (linked in {log['field']})"
+            for log in deletion_log
+        ])
+        
+        return {
+            "status": "success",
+            "message": f"Successfully deleted all linked RUA records for {docname}",
+            "details": summary,
+            "deletion_log": deletion_log
+        }
+
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.log_error(
+            f"Error during RUA document deletion for {docname}: {str(e)}",
+            "RUA Document Deletion Error"
+        )
+        frappe.throw(str(e))

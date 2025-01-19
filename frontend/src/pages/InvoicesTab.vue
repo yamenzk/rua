@@ -204,6 +204,35 @@
       @submit="handleInvoiceSubmit"
     />
   </div>
+  <Dialog
+  v-model="showWarningDialog"
+  :options="{
+    title: 'Retention Settings Required',
+    icon: {
+      name: 'alert-triangle',
+      appearance: 'warning'
+    },
+    size: 'sm'
+  }"
+>
+  <template #body-content>
+    <div class="space-y-4">
+      <p class="text-sm text-gray-600">
+        Please configure retention settings in Project Settings before creating invoices.
+      </p>
+    </div>
+  </template>
+  <template #actions>
+    <div class="flex justify-end">
+      <Button
+        variant="solid"
+        @click="showWarningDialog = false"
+      >
+        Got it
+      </Button>
+    </div>
+  </template>
+</Dialog>
 </template>
 
 <script setup>
@@ -213,6 +242,7 @@ import {
   Badge,
   FeatherIcon,
   Button,
+  Dialog,
   LoadingIndicator
 } from 'frappe-ui'
 import { hasRole } from '@/data/roles'
@@ -221,6 +251,7 @@ import { formatDate, formatCurrency } from '@/utils/format'
 import NewInvoiceDialog from './NewInvoiceDialog.vue'
 
 const router = useRouter()
+const showWarningDialog = ref(false)
 
 const props = defineProps({
   projectResource: {
@@ -236,6 +267,11 @@ const props = defineProps({
 const typeCollapsed = ref({
   'Tax Invoice': false,
   'Proforma': false
+})
+
+const canCreateInvoice = computed(() => {
+  return props.projectResource.doc?.retention_status && 
+         props.projectResource.doc.retention_status !== ''
 })
 
 const statusCollapsed = ref({})
@@ -314,6 +350,10 @@ function navigateToInvoice(invoice) {
 }
 
 function handleNewInvoice() {
+  if (!canCreateInvoice.value) {
+    showWarningDialog.value = true
+    return
+  }
   showNewInvoiceDialog.value = true
 }
 

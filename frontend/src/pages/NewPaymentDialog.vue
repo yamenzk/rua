@@ -1,107 +1,194 @@
 # NewPaymentDialog.vue
 <template>
-  <Dialog
-    v-model="show"
-    :options="dialogOptions"
-  >
-    <template #body-content>
-      <div class="space-y-6">
-        <!-- Party Selection -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Party</label>
-          <div class="relative">
-            <Autocomplete
-              v-model="formData.party"
-              :options="partyOptions"
-              placeholder="Select a party"
+  <div>
+    <Dialog
+      v-model="show"
+      :options="dialogOptions"
+    >
+      <template #body-content>
+        <div class="space-y-6">
+          <!-- Party Selection -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Party</label>
+            <!-- Selected Party Display -->
+            <div 
+              v-if="formData.party" 
+              class="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg group"
             >
-              <template #prefix v-if="selectedParty">
+              <div class="flex items-center gap-2">
                 <Avatar
-                  v-if="selectedParty.image"
+                  v-if="selectedParty?.image"
                   :image="selectedParty.image"
-                  size="xs"
+                  size="sm"
                   shape="circle"
-                  class="mr-2"
                 />
-                <div v-else class="w-4 h-4 mr-2 rounded-full bg-gray-200 flex items-center justify-center">
-                  <FeatherIcon name="user" class="w-3 h-3 text-gray-500" />
+                <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                  <FeatherIcon name="user" class="w-4 h-4 text-gray-500" />
                 </div>
-              </template>
-              <template #item-prefix="{ option }">
-                <Avatar
-                  v-if="option.image"
-                  :image="option.image"
-                  size="xs"
-                  shape="circle"
-                  class="mr-2"
-                />
-                <div v-else class="w-4 h-4 mr-2 rounded-full bg-gray-200 flex items-center justify-center">
-                  <FeatherIcon name="user" class="w-3 h-3 text-gray-500" />
-                </div>
-              </template>
-            </Autocomplete>
-          </div>
-        </div>
-
-        <!-- Amount Input -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Amount</label>
-          <div class="relative">
-            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <span class="text-gray-500 sm:text-sm">AED</span>
+                <span class="text-sm font-medium text-gray-900">{{ selectedParty?.name }}</span>
+              </div>
+              <button 
+                @click="openPartySelect"
+                class="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <FeatherIcon name="edit-2" class="w-4 h-4" />
+              </button>
             </div>
+
+            <!-- Party Selection Dialog Trigger -->
+            <button
+              v-else
+              @click="openPartySelect"
+              class="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-600 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-900 transition-colors"
+            >
+              <FeatherIcon name="plus" class="w-4 h-4" />
+              Select Party
+            </button>
+          </div>
+
+          <!-- Amount Input -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Amount</label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <span class="text-gray-500 sm:text-sm">AED</span>
+              </div>
+              <input
+                type="number"
+                v-model.number="formData.amount"
+                class="block w-full rounded-md border-gray-300 pl-12 pr-4 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                placeholder="0.00"
+                step="0.01"
+                @input="validateAmount"
+              />
+            </div>
+            <p v-if="amountError" class="mt-1 text-sm text-red-600">
+              {{ amountError }}
+            </p>
+          </div>
+
+          <!-- Date Input -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Date</label>
             <input
-              type="number"
-              v-model.number="formData.amount"
-              class="block w-full rounded-md border-gray-300 pl-12 pr-4 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
-              placeholder="0.00"
-              step="0.01"
-              @input="validateAmount"
+              type="date"
+              v-model="formData.date"
+              class="block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
             />
           </div>
-          <p v-if="amountError" class="mt-1 text-sm text-red-600">
-            {{ amountError }}
-          </p>
+
+          <!-- Optional Fields -->
+          <div class="space-y-4">
+            <!-- Bank -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Bank (Optional)</label>
+              <input
+                type="text"
+                v-model="formData.bank"
+                class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                placeholder="Enter bank name"
+              />
+            </div>
+
+            <!-- Reference Number -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Reference Number (Optional)</label>
+              <input
+                type="text"
+                v-model="formData.reference_no"
+                class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                placeholder="Enter reference number"
+              />
+            </div>
+
+            <!-- Remarks -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Remarks (Optional)</label>
+              <textarea
+                v-model="formData.remarks"
+                rows="3"
+                class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                placeholder="Add any additional notes"
+              ></textarea>
+            </div>
+          </div>
         </div>
+      </template>
+    </Dialog>
 
-        <!-- Optional Fields -->
-        <div class="space-y-4">
-          <!-- Bank -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Bank (Optional)</label>
-            <input
-              type="text"
-              v-model="formData.bank"
-              class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
-              placeholder="Enter bank name"
-            />
-          </div>
+    <!-- Party Selection Dialog -->
+    <Teleport to="body">
+      <div v-if="showPartyDialog" class="fixed inset-0 z-[9999]">
+        <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+          <div 
+            class="relative bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden"
+            @click.stop
+          >
+            <!-- Dialog Header -->
+            <div class="px-6 py-4 border-b">
+              <h3 class="text-lg font-medium">Select Party</h3>
+            </div>
 
-          <!-- Reference Number -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Reference Number (Optional)</label>
-            <input
-              type="text"
-              v-model="formData.reference_no"
-              class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
-              placeholder="Enter reference number"
-            />
-          </div>
+            <!-- Dialog Content -->
+            <div class="p-6 space-y-4">
+              <!-- Search Input -->
+              <div class="relative">
+                <FeatherIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  v-model="partySearch"
+                  class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                  placeholder="Search parties..."
+                />
+              </div>
 
-          <!-- Remarks -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Remarks (Optional)</label>
-            <textarea
-              v-model="formData.remarks"
-              rows="3"
-              class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
-              placeholder="Add any additional notes"
-            ></textarea>
+              <!-- Parties List -->
+              <div class="space-y-2 max-h-[60vh] overflow-y-auto">
+                <button
+                  v-for="party in filteredParties"
+                  :key="party.value"
+                  class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg hover:bg-gray-50 transition-colors"
+                  @click="selectParty(party)"
+                >
+                  <Avatar
+                    v-if="party.image"
+                    :image="party.image"
+                    size="sm"
+                    shape="circle"
+                  />
+                  <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <FeatherIcon name="user" class="w-4 h-4 text-gray-500" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-gray-900 truncate">{{ party.label }}</div>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Empty State -->
+              <div v-if="!filteredParties.length" class="text-center py-8">
+                <div class="text-gray-400 mb-2">
+                  <FeatherIcon name="users" class="w-6 h-6 mx-auto" />
+                </div>
+                <p class="text-sm text-gray-600">No parties found</p>
+              </div>
+            </div>
+
+            <!-- Dialog Footer -->
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+              <Button 
+                variant="subtle" 
+                @click="showPartyDialog = false"
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </template>
-  </Dialog>
+    </Teleport>
+  </div>
 </template>
 
 <script setup>
@@ -109,8 +196,8 @@ import { ref, computed, watch } from 'vue'
 import { 
   Dialog,
   Avatar,
-  Autocomplete,
-  FeatherIcon
+  FeatherIcon,
+  Button
 } from 'frappe-ui'
 import { partyResource } from '@/data/party'
 
@@ -128,6 +215,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 // State
+const showPartyDialog = ref(false)
+const partySearch = ref('')
 const amountError = ref('')
 const formData = ref({
   date: new Date().toISOString().split('T')[0],
@@ -156,10 +245,17 @@ const partyOptions = computed(() => {
   return (partyResource.data || [])
     .filter(party => !excludedTypes.includes(party.type))
     .map(party => ({
-      label: `${party.name}`,
+      label: party.name,
       value: party.name,
       image: party.image
     }))
+})
+
+const filteredParties = computed(() => {
+  const search = partySearch.value.toLowerCase()
+  return partyOptions.value.filter(party => 
+    party.label.toLowerCase().includes(search)
+  )
 })
 
 const selectedParty = computed(() => {
@@ -199,6 +295,16 @@ function validateAmount() {
   return true
 }
 
+function openPartySelect() {
+  partySearch.value = ''
+  showPartyDialog.value = true
+}
+
+function selectParty(party) {
+  formData.value.party = party.value
+  showPartyDialog.value = false
+}
+
 function resetForm() {
   formData.value = {
     date: new Date().toISOString().split('T')[0],
@@ -214,14 +320,8 @@ function resetForm() {
 function handleSubmit() {
   if (!isFormValid.value) return
 
-  // Create a new object with the processed party value
-  const processedFormData = {
-    ...formData.value,
-    party: formData.value.party?.value || formData.value.party // Take the value if it's an object, otherwise use as is
-  }
-
   const submitData = {
-    ...processedFormData,
+    ...formData.value,
     project: props.projectResource.doc.name,
     type: 'Pay: Petty Cash',
     naming_series: 'RC-PTY-.YY.',

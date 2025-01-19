@@ -624,6 +624,7 @@ const typeOptions = [
 	{ label: 'Supplier: Glass', value: 'Supplier: Glass' },
 	{ label: 'Supplier: Aluminum', value: 'Supplier: Aluminum' },
 	{ label: 'Supplier: Cladding', value: 'Supplier: Cladding' },
+	{ label: 'Supplier', value: 'Supplier' },
 	{ label: 'Consultant', value: 'Consultant' },
 	{ label: 'Client', value: 'Client' },
 ]

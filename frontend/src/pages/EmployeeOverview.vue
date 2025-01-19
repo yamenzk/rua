@@ -304,27 +304,27 @@
 
 	<!-- Edit Employee Dialog -->
 	<Dialog
-		v-model="showEditDialog"
-		:options="{
-			title: 'Edit Employee',
-			size: 'lg',
-			actions: [
-				{
-					label: 'Remove Employee',
-					variant: 'outline',
-					theme: 'red',
-					loading: removing,
-					onClick: () => openDeleteDialog(), // Changed this line
-				},
-				{
-					label: 'Save Changes',
-					variant: 'solid',
-					loading: employeeResource.setValue.loading,
-					onClick: () => updateEmployee(),
-				},
-			],
-		}"
-	>
+  v-model="showEditDialog"
+  :options="{
+    title: 'Edit Employee',
+    size: 'lg',
+    actions: [
+      {
+        label: 'Remove Employee',
+        variant: 'outline',
+        theme: 'red',
+        loading: removing,
+        onClick: initiateDelete
+      },
+      {
+        label: 'Save Changes',
+        variant: 'solid',
+        loading: employeeResource.setValue.loading,
+        onClick: updateEmployee
+      }
+    ]
+  }"
+>
 		<template #body-content>
 			<div class="space-y-4">
 				<div class="flex justify-center">
@@ -460,36 +460,68 @@
 
 	<!-- Delete Confirmation Dialog -->
 	<Dialog
-		v-model="showDeleteConfirmDialog"
-		:options="{
-			title: 'Confirm Delete',
-			size: 'sm',
-			actions: [
-				{
-					label: 'Delete',
-					variant: 'solid',
-					theme: 'red',
-					loading: removing,
-					disabled: !isDeleteConfirmed,
-					onClick: () => confirmRemove(),
-				},
-			],
-		}"
-	>
-		<template #body-content>
-			<div class="space-y-4">
-				<p class="text-gray-600">
-					This action cannot be undone. Please type
-					<strong>{{ employee?.employee_name }}</strong> to confirm deletion.
-				</p>
-				<FormControl
-					type="text"
-					placeholder="Enter employee name"
-					v-model="deleteConfirmation"
-				/>
-			</div>
-		</template>
-	</Dialog>
+  v-model="showDeleteDialog"
+  :options="{
+    title: 'Delete Employee',
+    size: 'md',
+    icon: {
+      name: 'alert-triangle',
+      appearance: 'danger'
+    }
+  }"
+>
+  <template #body-content>
+    <div class="space-y-6">
+      <p class="text-sm text-gray-600">
+        This action cannot be undone. Please complete both fields to confirm deletion.
+      </p>
+      
+      <!-- Employee Name Confirmation -->
+      <div class="space-y-2">
+        <FormControl
+          type="text"
+          label="Confirm Employee Name"
+          v-model="deleteForm.confirmName"
+          :placeholder="'Type ' + employee?.employee_name"
+        />
+        <p class="text-xs text-gray-500">
+          Please type "{{ employee?.employee_name }}" to confirm
+        </p>
+      </div>
+
+      <!-- Passkey Input -->
+      <div class="space-y-2">
+        <FormControl
+          type="password"
+          label="Enter Passkey"
+          v-model="deleteForm.passkey"
+          placeholder="Enter your passkey"
+          :error="deleteError"
+        />
+      </div>
+    </div>
+  </template>
+
+  <template #actions>
+    <div class="flex justify-end gap-2">
+      <Button 
+        variant="subtle" 
+        @click="cancelDelete"
+      >
+        Cancel
+      </Button>
+      <Button 
+        variant="solid" 
+        theme="red" 
+        :loading="validateLoading"
+        :disabled="deleteForm.confirmName !== employee?.employee_name || !deleteForm.passkey"
+        @click="validateAndDelete"
+      >
+        Delete Employee
+      </Button>
+    </div>
+  </template>
+</Dialog>
 </template>
 
 <script setup>
@@ -525,17 +557,19 @@ const isUploading = ref(false)
 const uploadedResult = ref(null)
 const showEditDialog = ref(false)
 const editingEmployee = ref({})
-const removing = ref(false)
-const showDeleteConfirmDialog = ref(false)
-const deleteConfirmation = ref('')
+const showDeleteDialog = ref(false)
+const removing = ref(false)	
+const deleteForm = ref({
+  confirmName: '',
+  passkey: ''
+})
+const deleteError = ref('')
+const validateLoading = ref(false)
 const countryOptions = countries.map((country) => ({
 	label: country.name,
 	value: country.alpha2,
 }))
 const formSubmitted = ref(false)
-const isDeleteConfirmed = computed(() => {
-	return deleteConfirmation.value === props.employee?.employee_name
-})
 
 // Image handlers
 
@@ -576,10 +610,7 @@ function openEditDialog() {
 	showEditDialog.value = true
 }
 
-function openDeleteDialog() {
-	showDeleteConfirmDialog.value = true
-	showEditDialog.value = false
-}
+
 
 function validateEditForm() {
 	formSubmitted.value = true
@@ -593,17 +624,64 @@ function validateEditForm() {
 	)
 }
 
-async function confirmRemove() {
-	try {
-		removing.value = true
-		await props.employeeResource.delete.submit(props.employee.name)
-		showDeleteConfirmDialog.value = false
-		router.push('/employees')
-	} catch (error) {
-		console.error('Error removing employee:', error)
-	} finally {
-		removing.value = false
-	}
+function cancelDelete() {
+  showDeleteDialog.value = false
+  deleteForm.value = {
+    confirmName: '',
+    passkey: ''
+  }
+  deleteError.value = ''
+}
+
+async function validateAndDelete() {
+  if (deleteForm.value.confirmName !== props.employee?.employee_name || !deleteForm.value.passkey) return
+  
+  validateLoading.value = true
+  deleteError.value = ''
+  
+  try {
+    // First validate the passkey
+    const response = await fetch(
+      `/api/method/rua.api.delete_rua_document?docname=${props.employee.name}&passkey=${deleteForm.value.passkey}`
+    )
+    const result = await response.json()
+    
+    if (!response.ok) {
+      if (result._server_messages) {
+        try {
+          const serverMessages = JSON.parse(result._server_messages)
+          const firstMessage = JSON.parse(serverMessages[0])
+          throw new Error(firstMessage.message)
+        } catch {
+          if (result.exception) {
+            const exceptionMessage = result.exception.split(':').pop().trim()
+            throw new Error(exceptionMessage)
+          }
+          throw new Error('Invalid passkey')
+        }
+      }
+      throw new Error('Invalid passkey')
+    }
+    
+    // If validation successful, proceed with deletion
+    await props.employeeResource.delete.submit()
+    router.push('/employees')
+  } catch (error) {
+    deleteError.value = error.message
+    deleteForm.value.passkey = '' // Clear the passkey input on error
+  } finally {
+    validateLoading.value = false
+  }
+}
+
+function initiateDelete() {
+  showEditDialog.value = false
+  deleteForm.value = {
+    confirmName: '',
+    passkey: ''
+  }
+  deleteError.value = ''
+  showDeleteDialog.value = true
 }
 
 function handleImageClick() {

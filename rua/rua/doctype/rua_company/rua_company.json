@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "date",
-  "column_break_dkmq"
+  "column_break_dkmq",
+  "passkey"
  ],
  "fields": [
   {
@@ -18,13 +19,18 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date"
+  },
+  {
+   "fieldname": "passkey",
+   "fieldtype": "Data",
+   "label": "Passkey"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-01-13 18:05:28.962429",
+ "modified": "2025-01-19 04:48:17.558444",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Company",
