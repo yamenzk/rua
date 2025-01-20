@@ -21,9 +21,9 @@
           <!-- Document Info -->
           <div class="flex flex-col">
             <h1 class="text-xl font-bold text-gray-900">
-              {{ invoiceResource.doc.name }}
+              {{ invoiceResource.doc.name }} <span v-if="invoiceResource.doc.serial_number">(#{{ invoiceResource.doc.serial_number }})</span>
             </h1>
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-gray-600 hidden md:inline">
               Created on {{ formatDate(invoiceResource.doc.creation) }} by
               {{ invoiceResource.doc.owner }}
             </p>
@@ -69,7 +69,7 @@
       <div class="space-y-6">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold">Invoice Details</h2>
-          <div class="text-sm text-gray-600">
+          <div class="text-sm text-gray-600 hidden md:inline">
             Last modified: {{ formatDate(invoiceResource.doc.modified) }} by
             {{ invoiceResource.doc.modified_by }}
           </div>
@@ -104,7 +104,7 @@
                       {{ invoiceResource.doc.party }}
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                      Invoice Date: {{ formatDate(invoiceResource.doc.date, true) }}
+                      <span class="hidden md:inline">Invoice Date:</span>{{ formatDate(invoiceResource.doc.date, true) }}
                     </p>
                     <p class="mt-1 text-sm text-gray-500">
                       Type: {{ invoiceResource.doc.type }}
@@ -117,23 +117,44 @@
 
           <!-- Amount Information -->
           <div class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="text-sm font-medium text-gray-600">Amount</label>
-                <div class="mt-1">
-                  <span class="text-2xl font-semibold text-gray-900">
-                    {{ formatCurrency(invoiceResource.doc.amount) }}
-                  </span>
+            <div class="grid grid-cols-2 gap-6">
+              <!-- Column 1 -->
+              <div class="space-y-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-600">Amount</label>
+                  <div class="mt-1">
+                    <span class="text-2xl font-semibold text-gray-900">
+                      {{ formatCurrency(invoiceResource.doc.amount) }}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-600">Amount After Retention</label>
+                  <div class="mt-1">
+                    <span class="text-2xl font-semibold text-gray-900">
+                      {{ formatCurrency(invoiceResource.doc.amount_after_retention) }}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Payment Info (only for Tax Invoice) -->
-              <div v-if="invoiceResource.doc.type === 'Tax Invoice'" class="text-right">
-                <label class="text-sm font-medium text-gray-600">Received Amount</label>
-                <div class="mt-1">
-                  <span class="text-2xl font-semibold text-gray-900">
-                    {{ formatCurrency(invoiceResource.doc.received_amount || 0) }}
-                  </span>
+              <!-- Column 2 -->
+              <div class="space-y-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-600">VAT After Retention</label>
+                  <div class="mt-1">
+                    <span class="text-2xl font-semibold text-gray-900">
+                      {{ formatCurrency(invoiceResource.doc.vat_after_retention) }}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-600">Grand Total</label>
+                  <div class="mt-1">
+                    <span class="text-2xl font-semibold text-gray-900">
+                      {{ formatCurrency(invoiceResource.doc.grand_total) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -193,17 +214,24 @@
     v-model="showStatusDialog"
     :options="statusDialogOptions"
   >
-    <template #body-content>
-      <div class="space-y-4">
-        <!-- Status Selection -->
-        <div class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
-            {{ hasAvailableStatuses ? 'Change Status' : 'Cancelled' }}
-          </label>
+  <template #body-content>
+  <div class="space-y-4">
+    <!-- Status Selection -->
+    <div class="space-y-4">
+      <label class="block text-sm font-medium text-gray-700">
+        {{ hasAvailableStatuses ? 'Change Status' : 'Status' }}
+      </label>
 
-          <div v-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
-            {{ invoiceResource.doc.remarks }}
-          </div>
+      <div 
+        v-if="invoiceResource.doc.payment_linked" 
+        class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg"
+      >
+        This invoice has linked payments and cannot be modified. You must first cancel all related payments before changing the invoice status.
+      </div>
+
+      <div v-else-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
+        {{ invoiceResource.doc.remarks }}
+      </div>
 
           <div v-else class="space-y-3">
             <div
@@ -362,7 +390,10 @@ const isPDF = computed(() => {
 })
 
 const availableStatuses = computed(() => 
-  getAvailableStatuses(invoiceResource.value?.doc?.status)
+  getAvailableStatuses(
+    invoiceResource.value?.doc?.status,
+    invoiceResource.value?.doc?.payment_linked
+  )
 )
 
 const hasAvailableStatuses = computed(() => 
@@ -462,7 +493,13 @@ function getPaymentStatusVariant(status) {
   }
 }
 
-function getAvailableStatuses(currentStatus) {
+function getAvailableStatuses(currentStatus, paymentLinked) {
+  // If payment is linked, prevent status changes
+  if (paymentLinked) {
+    return []
+  }
+
+  // Regular status flow if no payments are linked
   switch (currentStatus?.toLowerCase()) {
     case 'draft':
       return ['Submitted', 'Cancelled']

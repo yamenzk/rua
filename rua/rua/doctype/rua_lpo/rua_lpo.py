@@ -2,6 +2,7 @@ import frappe
 from frappe.model.document import Document
 import rua
 from rua import ChatMessageHandler
+from frappe.utils import flt
 
 
 class RUALPO(Document):
@@ -68,10 +69,28 @@ class RUALPO(Document):
 
     def validate(self):
         self.total_items = len(self.items)
-        self.total_amount = 0
-        self.vat_amount = 0
-        self.grand_total = 0
+        self.total_amount = self.vat_amount = self.grand_total = 0
+        
         for item in self.items:
-            self.total_amount += item.total_amount
-            self.vat_amount += item.vat_amount
-            self.grand_total += item.grand_total
+            self.total_amount += flt(item.total_amount)
+            self.vat_amount += flt(item.vat_amount)
+            self.grand_total += flt(item.grand_total)
+
+        if self.has_value_changed('status'):
+            try:
+                if not self.project:
+                    frappe.throw("Project is mandatory")
+
+                project_doc = frappe.get_doc("RUA Project", self.project)
+                
+                if self.status == "Final":
+                    project_doc.project_cost = flt(project_doc.project_cost + self.grand_total)
+
+                elif self.status == "Cancelled":
+                    if self.get_doc_before_save().status == "Final":
+                        project_doc.project_cost = flt(project_doc.project_cost - self.grand_total)
+                
+                project_doc.save(ignore_permissions=True)
+                
+            except Exception as e:
+                frappe.log_error(f"Error updating project cost: {str(e)}")

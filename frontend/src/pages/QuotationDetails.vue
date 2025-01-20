@@ -23,7 +23,7 @@
             <h1 class="text-xl font-bold text-gray-900">
               {{ quotationResource.doc.name }}
             </h1>
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-gray-600 hidden md:inline">
               Created on {{ formatDate(quotationResource.doc.creation) }} by
               {{ quotationResource.doc.owner }}
             </p>
@@ -60,7 +60,7 @@
       <div class="space-y-6">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold">Quotation Details</h2>
-          <div class="text-sm text-gray-600">
+          <div class="text-sm text-gray-600 hidden md:inline">
             Last modified: {{ formatDate(quotationResource.doc.modified) }} by
             {{ quotationResource.doc.modified_by }}
           </div>
@@ -95,7 +95,7 @@
                       {{ quotationResource.doc.party }}
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                      Quotation Date:
+                      <span class="hidden md:inline">Quotation Date:</span>
                       {{ formatDate(quotationResource.doc.date, true) }}
                     </p>
                   </div>

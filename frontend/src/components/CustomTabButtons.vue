@@ -1,5 +1,5 @@
 <template>
-    <div class="flex border-b">
+    <div class="flex border-b overflow-x-auto">
       <button 
         v-for="button in buttons" 
         :key="button.value"
@@ -20,6 +20,7 @@
           hover:text-gray-900
           focus:outline-none
           group
+
         "
         :class="{
           'text-gray-900 font-semibold': modelValue === button.value,

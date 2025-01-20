@@ -30,7 +30,7 @@
             <h1 class="text-xl font-bold text-gray-900">
               {{ lpoResource.doc.name }}
             </h1>
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-gray-600 hidden md:inline">
               Created on {{ formatDate(lpoResource.doc.creation) }} by
               {{ lpoResource.doc.owner }}
             </p>
@@ -75,7 +75,7 @@
       <div class="space-y-6">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold">Purchase Order Details</h2>
-          <div class="text-sm text-gray-600">
+          <div class="text-sm text-gray-600 hidden md:inline">
             Last modified: {{ formatDate(lpoResource.doc.modified) }} by
             {{ lpoResource.doc.modified_by }}
           </div>
@@ -110,7 +110,7 @@
                       {{ lpoResource.doc.party }}
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                      LPO Date: {{ formatDate(lpoResource.doc.date, true) }}
+                      <span class="hidden md:inline">LPO Date:</span> {{ formatDate(lpoResource.doc.date, true) }}
                     </p>
                     <p class="mt-1 text-sm text-gray-500">
                       Type: {{ lpoResource.doc.type }}
@@ -216,17 +216,24 @@
     v-model="showStatusDialog"
     :options="statusDialogOptions"
   >
-    <template #body-content>
-      <div class="space-y-4">
-        <!-- Status Selection -->
-        <div class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
-            {{ hasAvailableStatuses ? 'Change Status' : 'Cancelled' }}
-          </label>
+  <template #body-content>
+  <div class="space-y-4">
+    <!-- Status Selection -->
+    <div class="space-y-4">
+      <label class="block text-sm font-medium text-gray-700">
+        {{ hasAvailableStatuses ? 'Change Status' : 'Status' }}
+      </label>
 
-          <div v-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
-            {{ lpoResource.doc.remarks }}
-          </div>
+      <div 
+        v-if="lpoResource.doc.payment_linked" 
+        class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg"
+      >
+        This LPO has linked payments and cannot be modified. You must first cancel all related payments before changing the LPO status.
+      </div>
+
+      <div v-else-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
+        {{ lpoResource.doc.remarks }}
+      </div>
 
           <div v-else class="space-y-3">
             <div
@@ -381,7 +388,10 @@ const partyData = computed(() => {
 })
 
 const availableStatuses = computed(() => 
-  getAvailableStatuses(lpoResource.value?.doc?.status)
+  getAvailableStatuses(
+    lpoResource.value?.doc?.status,
+    lpoResource.value?.doc?.payment_linked
+  )
 )
 
 const hasAvailableStatuses = computed(() => 
@@ -478,7 +488,13 @@ function getPaymentStatusVariant(status) {
   }
 }
 
-function getAvailableStatuses(currentStatus) {
+function getAvailableStatuses(currentStatus, paymentLinked) {
+  // If payment is linked, only allow viewing the status
+  if (paymentLinked) {
+    return []
+  }
+
+  // Regular status flow if no payments are linked
   switch (currentStatus?.toLowerCase()) {
     case 'draft':
       return ['Submitted', 'Cancelled']

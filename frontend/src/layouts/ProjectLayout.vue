@@ -23,10 +23,19 @@
 					:label="selectedProject?.project_name?.substring(0, 2)"
 					size="md"
 					class="flex-shrink-0"
-				/>
+				/>	
 				<div class="flex items-center gap-3 min-w-0">
 					<h1 class="text-xl font-bold text-gray-900 truncate">
 						{{ selectedProject?.project_name }}
+						<Badge
+  :variant="'solid'"
+  :ref_for="true"
+  theme="gray"
+  size="sm"
+  label="Badge"
+>
+  #{{ selectedProject?.serial_number }}
+</Badge>
 					</h1>
 					<div
 						class="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium"
@@ -355,7 +364,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Avatar, FeatherIcon, Button, Dialog, FormControl } from 'frappe-ui'
+import { Avatar, FeatherIcon, Button, Dialog, FormControl, Badge } from 'frappe-ui'
 import { projectResource, createProjectResource } from '@/data/project'
 import { hasRole } from '@/data/roles'
 import ProjectMap from '../pages/ProjectMap.vue'

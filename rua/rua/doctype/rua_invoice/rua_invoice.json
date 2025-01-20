@@ -10,6 +10,8 @@
   "project",
   "party",
   "remarks",
+  "payment_linked",
+  "serial_number",
   "column_break_qayv",
   "type",
   "status",
@@ -19,7 +21,6 @@
   "invoice_file",
   "section_break_phmr",
   "column_break_ctrn",
-  "completion",
   "column_break_ikyt",
   "amount",
   "amount_after_retention",
@@ -125,19 +126,25 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "completion",
-   "fieldtype": "Percent",
-   "label": "Completion"
-  },
-  {
    "fieldname": "invoice_file",
    "fieldtype": "Attach",
    "label": "Invoice File"
+  },
+  {
+   "default": "0",
+   "fieldname": "payment_linked",
+   "fieldtype": "Check",
+   "label": "Payment Linked"
+  },
+  {
+   "fieldname": "serial_number",
+   "fieldtype": "Int",
+   "label": "Serial Number"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-18 19:26:21.447699",
+ "modified": "2025-01-20 05:43:34.897949",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Invoice",

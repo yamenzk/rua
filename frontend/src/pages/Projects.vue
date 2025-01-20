@@ -129,12 +129,12 @@
           <div class="space-y-1">
             <div class="flex justify-between items-center text-xs">
               <span class="text-gray-600">Completion</span>
-              <span class="font-medium">{{ project.completion || 0 }}%</span>
+              <span class="font-medium">{{ Math.round(project.completion || 0)}}%</span>
             </div>
             <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
                 class="h-full bg-blue-500 rounded-full transition-all duration-300"
-                :style="{ width: (project.completion || 0) + '%' }"
+                :style="{ width: (Math.round(project.completion || 0)) + '%' }"
               ></div>
             </div>
           </div>

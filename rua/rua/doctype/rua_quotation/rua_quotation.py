@@ -5,12 +5,9 @@ import rua
 from rua import ChatMessageHandler
 
 
+
 class RUAQuotation(Document):
     STATUS_HANDLERS = {
-        "Rejected": {
-            "type": "Danger",
-            "message": lambda doc: f"@{doc.owner} has rejected Quotation #{doc.name} for {doc.reject_reason}."
-        },
         "Submitted": {
             "type": "Info",
             "message": lambda doc: f"@{doc.owner} has updated Quotation #{doc.name} status to {doc.status}."
@@ -19,9 +16,16 @@ class RUAQuotation(Document):
             "type": "Success",
             "timeline": 1,
             "message": lambda doc: (
-                f'@{doc.owner} has finalized Quotation #{doc.name} '
-                f'with {doc.total_items} items and a grand total of AED {doc.grand_total:,.2f}. '
+                f"@{doc.owner} has finalized Quotation #{doc.name} "
+                f"with {doc.total_items} items and a grand total of AED {doc.grand_total:,.2f}. "
                 f'["View Signed Quotation","{doc.signed_document}"]'
+            )
+        },
+        "Cancelled": {
+            "type": "Danger",
+            "message": lambda doc: (
+                f"@{doc.owner} has cancelled Quotation #{doc.name} "
+                f"for {doc.party}. Reason: {doc.reject_reason}"
             )
         }
     }
@@ -31,16 +35,20 @@ class RUAQuotation(Document):
 
     def on_update(self):
         self.publish_update()
-        ChatMessageHandler(self).handle_status_update(self.STATUS_HANDLERS)
+        if self.has_value_changed('status') and self.status != "Draft":
+            ChatMessageHandler(self).handle_status_update(self.STATUS_HANDLERS)
 
     def on_trash(self):
         self.publish_update()
 
     def after_insert(self):
         self.publish_update()
-        ChatMessageHandler(self).handle_insert(
-            lambda doc: f"@{doc.owner} has created Quotation #{doc.name}"
-        )
+        
+        # Only create insert message if not Draft
+        if self.status != "Draft":
+            ChatMessageHandler(self).handle_insert(
+                lambda doc: f"@{doc.owner} has created Quotation #{doc.name} for {doc.party}"
+            )
 
     def before_insert(self):
         if not self.project:

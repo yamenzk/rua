@@ -13,79 +13,66 @@
 				<div v-for="message in messages" :key="message.name">
 					<!-- System Messages Template -->
 <template v-if="message.type !== 'Chat Message'">
-  <div class="flex justify-center my-4">
-    <div class="max-w-[85%] w-full">
+  <div class="flex justify-center my-6">
+    <div class="max-w-[85%] w-full relative">
+      <!-- Floating Icon -->
       <div 
-        class="group relative rounded-xl border-2 shadow-sm transition-all duration-200"
+        class="absolute -top-4 left-6 p-2 rounded-lg shadow-md z-10 transition-colors duration-200"
         :class="[
-          message.type === 'Info' ? 'border-blue-100' :
-          message.type === 'Success' ? 'border-green-100' :
-          message.type === 'Warning' ? 'border-yellow-100' :
-          message.type === 'Danger' ? 'border-red-100' :
-          message.type === 'Alert' ? 'border-purple-100' :
-          'border-gray-100'
+          message.type === 'Info' ? 'bg-blue-500' :
+          message.type === 'Success' ? 'bg-green-500' :
+          message.type === 'Warning' ? 'bg-yellow-500' :
+          message.type === 'Danger' ? 'bg-red-500' :
+          message.type === 'Alert' ? 'bg-purple-500' :
+          'bg-gray-500'
         ]"
       >
-        <div class="p-4">
-          <!-- Header with Icon and Status -->
-          <div class="flex items-center justify-between mb-3">
-            <div 
-              class="rounded-full p-2 transition-colors duration-200"
-              :class="getMessageIconClasses(message.type)"
+        <FeatherIcon
+          :name="getSystemMessageIcon(message.type)"
+          class="w-5 h-5 text-white"
+        />
+      </div>
+
+      <!-- Message Card -->
+      <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 pt-6">
+        <!-- Message Content -->
+        <div class="mb-4 mt-2">
+          <p 
+            class="text-gray-700 text-sm leading-relaxed"
+            v-html="formatMessageWithReferences(
+              message.message,
+              false,
+              true
+            )"
+          ></p>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center text-gray-500 text-sm">
+            <FeatherIcon name="clock" class="w-4 h-4 mr-1" />
+            {{ formatDate(message.timestamp) }}
+          </div>
+
+          <template v-if="parseMessageAction(message.message)">
+            <a 
+              :href="parseMessageAction(message.message).url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm font-medium text-white transition-opacity duration-200 hover:opacity-90"
+              :class="[
+                message.type === 'Info' ? 'bg-blue-500' :
+                message.type === 'Success' ? 'bg-green-500' :
+                message.type === 'Warning' ? 'bg-yellow-500' :
+                message.type === 'Danger' ? 'bg-red-500' :
+                message.type === 'Alert' ? 'bg-purple-500' :
+                'bg-gray-500'
+              ]"
             >
-              <FeatherIcon
-                :name="getSystemMessageIcon(message.type)"
-                class="w-6 h-6"
-                :class="getMessageIconColorClass(message.type)"
-              />
-            </div>
-            <div class="flex items-center gap-2">
-              <div 
-                class="w-2 h-2 rounded-full animate-pulse"
-                :class="[
-                  message.type === 'Info' ? 'bg-blue-500' :
-                  message.type === 'Success' ? 'bg-green-500' :
-                  message.type === 'Warning' ? 'bg-yellow-500' :
-                  message.type === 'Danger' ? 'bg-red-500' :
-                  message.type === 'Alert' ? 'bg-purple-500' :
-                  'bg-gray-500'
-                ]"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Message Content -->
-          <div class="mb-4">
-            <p 
-              class="text-gray-700 text-sm leading-relaxed"
-              v-html="formatMessageWithReferences(
-                message.message,
-                false,
-                true
-              )"
-            ></p>
-          </div>
-
-          <!-- Footer -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center text-xs text-gray-500">
-              <FeatherIcon name="clock" class="w-3.5 h-3.5 mr-1" />
-              {{ formatDate(message.timestamp) }}
-            </div>
-
-            <template v-if="parseMessageAction(message.message)">
-              <a 
-                :href="parseMessageAction(message.message).url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200"
-                :class="getActionButtonStyles(message.type)"
-              >
-                {{ parseMessageAction(message.message).label }}
-                <FeatherIcon name="arrow-right" class="w-3.5 h-3.5" />
-              </a>
-            </template>
-          </div>
+              {{ parseMessageAction(message.message).label }}
+              <FeatherIcon name="arrow-right" class="w-4 h-4" />
+            </a>
+          </template>
         </div>
       </div>
     </div>
@@ -290,6 +277,7 @@ import { rfqResource } from '@/data/rfq'
 import { lpoResource } from '@/data/lpo'
 import { invoiceResource } from '@/data/invoice'
 import { employeeResource } from '@/data/employee'
+import { paymentResource } from '@/data/payment'
 
 // Props
 const props = defineProps({
@@ -401,8 +389,18 @@ const references = computed(() => {
 			date: i.date,
 			link: `/project/${projectName}/invoicing/invoice/${i.name}`,
 		}))
+	
+	const payments = (paymentResource.data || [])
+	.filter((i) => i.project === projectName)
+	.map((i) => ({
+		name: i.name,
+		doctype: 'RUA Payment',
+		party: i.party,
+		date: i.date,
+		link: `/project/${projectName}/invoicing/payment/${i.name}`,
+	}))
 
-	return [...quotations, ...rfqs, ...lpos, ...invoices]
+	return [...quotations, ...rfqs, ...lpos, ...invoices, ...payments]
 })
 
 const users = computed(() => {

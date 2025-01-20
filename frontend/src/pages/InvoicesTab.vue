@@ -122,7 +122,7 @@
                         <div class="flex-1 grid grid-cols-7 gap-4">
                           <!-- Invoice Number -->
                           <div class="flex items-center">
-                            <span class="text-sm text-gray-900">{{ invoice.name }}</span>
+                            <span class="text-sm text-gray-900">{{ invoice.name }} <span v-if="invoice.serial_number">(#{{ invoice.serial_number }})</span></span>
                           </div>
                           <!-- Date -->
                           <div class="text-sm text-gray-600 flex items-center">

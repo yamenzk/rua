@@ -34,7 +34,7 @@
 					</Button>
 
 					<!-- Excel Paste Button -->
-					<Button v-if="isDraft" variant="subtle" size="sm" @click="startPaste">
+					<Button v-if="isDraft" variant="subtle" size="sm" @click="startPaste" class="hidden md:flex">
 						<template #prefix>
 							<FeatherIcon name="clipboard" class="w-4 h-4" />
 						</template>

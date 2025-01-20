@@ -26,7 +26,7 @@
         <template #default>
           <div class="flex items-center gap-2">
             <FeatherIcon name="plus" class="w-4 h-4" />
-            <span>Add New Expense</span>
+            <span>New</span>
           </div>
         </template>
       </Button>
@@ -204,7 +204,7 @@ const showNewPaymentDialog = ref(false)
 const paymentTabs = [
   { label: 'Received', value: 'received', icon: 'arrow-down-circle' },
   { label: 'Paid', value: 'paid', icon: 'arrow-up-circle' },
-  { label: 'Additional Expenses', value: 'additional', icon: 'plus-circle' }
+  { label: 'Expenses', value: 'additional', icon: 'plus-circle' }
 ]
 
 // Computed Properties

@@ -9,6 +9,7 @@
   "project",
   "party",
   "remarks",
+  "payment_linked",
   "column_break_zswp",
   "date",
   "naming_series",
@@ -124,11 +125,17 @@
    "fieldtype": "Select",
    "label": "Payment Status",
    "options": "Unpaid\nPaid\nPartially Paid"
+  },
+  {
+   "default": "0",
+   "fieldname": "payment_linked",
+   "fieldtype": "Check",
+   "label": "Payment Linked"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-19 02:28:31.006402",
+ "modified": "2025-01-20 04:56:37.110847",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA LPO",

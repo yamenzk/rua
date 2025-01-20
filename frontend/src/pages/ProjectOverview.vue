@@ -48,7 +48,7 @@
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-3xl font-bold">{{ projectResource.doc?.completion || 0 }}%</div>
+                <div class="text-3xl font-bold">{{  Math.round(projectResource.doc?.completion || 0) }}%</div>
                 <div class="text-sm text-white/80">Completed</div>
               </div>
             </div>

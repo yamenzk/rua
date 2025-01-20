@@ -23,21 +23,38 @@
             <h1 class="text-xl font-bold text-gray-900">
               {{ paymentResource.doc.name }}
             </h1>
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-gray-600 hidden md:inline">
               Created on {{ formatDate(paymentResource.doc.creation) }} by
               {{ paymentResource.doc.owner }}
             </p>
           </div>
         </div>
 
-        <!-- Status Badge -->
+        <!-- Status Badge and Actions -->
         <div class="flex items-center gap-3">
           <Badge
             :variant="paymentResource.doc.status === 'Final' ? 'solid' : 'subtle'"
             :theme="getStatusVariant(paymentResource.doc.status)"
+            class="cursor-pointer"
+            @click="showStatusDialog = true"
           >
             {{ paymentResource.doc.status }}
           </Badge>
+        </div>
+      </div>
+    </div>
+
+    <!-- Draft Warning Banner -->
+    <div v-if="paymentResource.doc.status === 'Draft'" class="bg-orange-50 p-4 mx-6 mt-4 rounded-lg">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <FeatherIcon name="alert-triangle" class="h-5 w-5 text-orange-400" />
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-orange-800">Draft Payment</h3>
+          <div class="mt-2 text-sm text-orange-700">
+            This payment is still in draft status. Please submit it to process the payment.
+          </div>
         </div>
       </div>
     </div>
@@ -48,7 +65,7 @@
       <div class="space-y-6">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold">Payment Details</h2>
-          <div class="text-sm text-gray-600">
+          <div class="text-sm text-gray-600 hidden md:inline">
             Last modified: {{ formatDate(paymentResource.doc.modified) }} by
             {{ paymentResource.doc.modified_by }}
           </div>
@@ -83,7 +100,7 @@
                       {{ paymentResource.doc.party }}
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                      Payment Date: {{ formatDate(paymentResource.doc.date, true) }}
+                      <span class="hidden md:inline">Payment Date:</span> {{ formatDate(paymentResource.doc.date, true) }}
                     </p>
                     <p class="mt-1 text-sm text-gray-500">
                       Type: {{ paymentResource.doc.type }}
@@ -175,6 +192,54 @@
       </div>
     </div>
   </div>
+  <Dialog
+    v-model="showStatusDialog"
+    :options="statusDialogOptions"
+  >
+    <template #body-content>
+      <div class="space-y-4">
+        <!-- Status Information -->
+        <div class="space-y-4">
+          <label class="block text-sm font-medium text-gray-700">
+            {{ getDialogTitle }}
+          </label>
+
+          <div v-if="paymentResource.doc.status === 'Draft'">
+            <div class="text-sm text-gray-600 mb-4">
+              To submit this payment, please confirm the payment amount below:
+            </div>
+            <input
+  v-model="confirmationAmount"
+  type="number"
+  step="0.01"
+  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+  :class="{
+    'border-red-300 focus:border-red-500 focus:ring-red-500': confirmationAmount.value && !isSubmitEnabled.value,
+    'border-green-300 focus:border-green-500 focus:ring-green-500': isSubmitEnabled.value
+  }"
+  :placeholder="paymentResource.doc.amount"
+/>
+          </div>
+
+          <div v-if="canBeCancelled">
+            <Textarea
+              v-model="cancellationReason"
+              label="Cancellation Reason"
+              placeholder="Please provide a reason for cancellation"
+              variant="outline"
+              size="sm"
+              class="w-full"
+            />
+          </div>
+
+          <!-- Status Update Error -->
+          <div v-if="statusError" class="text-sm text-red-500 mt-1">
+            {{ statusError }}
+          </div>
+        </div>
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
@@ -184,6 +249,8 @@ import { createPaymentResource } from '@/data/payment'
 import { 
   Button,
   Badge,
+  Dialog,
+  Textarea,
   FeatherIcon,
   LoadingIndicator
 } from 'frappe-ui'
@@ -200,16 +267,54 @@ const props = defineProps({
   }
 })
 
+const isSubmitEnabled = computed(() => {
+  const currentDoc = paymentResource.value?.doc
+  if (currentDoc?.status !== 'Draft') return true
+  return confirmationAmount.value && parseFloat(confirmationAmount.value) === currentDoc.amount
+})
+
 const route = useRoute()
 const router = useRouter()
 
 // State Management
 const paymentResource = ref(null)
+const showStatusDialog = ref(false)
+const newStatus = ref('')
+const statusError = ref('')
+const confirmationAmount = ref('')
+const cancellationReason = ref('')
+const isUpdatingStatus = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
   return partyResource.data?.find(p => p.name === paymentResource.value?.doc?.party)
 })
+
+const canBeCancelled = computed(() => 
+  paymentResource.value?.doc?.status === 'Submitted'
+)
+
+const getDialogTitle = computed(() => {
+  const status = paymentResource.value?.doc?.status
+  if (status === 'Draft') return 'Submit Payment'
+  if (status === 'Submitted') return 'Cancel Payment'
+  return 'Payment Status'
+})
+
+const statusDialogOptions = computed(() => ({
+  title: getDialogTitle.value,
+  size: 'sm',
+  actions: [
+    {
+      label: paymentResource.value?.doc?.status === 'Draft' ? 'Submit Payment' : 'Cancel Payment',
+      loading: isUpdatingStatus.value,
+      variant: 'solid',
+      onClick: updateStatus,
+      disabled: paymentResource.value?.doc?.status === 'Cancelled' || 
+               (paymentResource.value?.doc?.status === 'Draft' && !isSubmitEnabled.value)
+    }
+  ]
+}))
 
 const relatedDocIcon = computed(() => {
   const doctype = paymentResource.value?.doc?.related_doctype
@@ -248,6 +353,66 @@ function getStatusVariant(status) {
       return 'red'
     default:
       return 'gray'
+  }
+}
+
+
+function resetStatusDialog() {
+  showStatusDialog.value = false
+  newStatus.value = ''
+  statusError.value = ''
+  confirmationAmount.value = ''
+  cancellationReason.value = ''
+}
+
+async function updateStatus() {
+  statusError.value = ''
+  const currentDoc = paymentResource.value.doc
+
+  if (currentDoc.status === 'Draft') {
+    // Handle submission
+    if (!confirmationAmount.value) {
+      statusError.value = 'Please enter the payment amount'
+      return
+    }
+
+    if (parseFloat(confirmationAmount.value) !== currentDoc.amount) {
+      statusError.value = 'The confirmation amount does not match the payment amount'
+      return
+    }
+
+    newStatus.value = 'Submitted'
+  } else if (currentDoc.status === 'Submitted') {
+    // Handle cancellation
+    if (!cancellationReason.value.trim()) {
+      statusError.value = 'Please provide a cancellation reason'
+      return
+    }
+
+    newStatus.value = 'Cancelled'
+  } else {
+    return // No other transitions allowed
+  }
+
+  try {
+    isUpdatingStatus.value = true
+    const updateData = {
+      name: currentDoc.name,
+      status: newStatus.value,
+    }
+
+    if (newStatus.value === 'Cancelled') {
+      updateData.remarks = cancellationReason.value
+    }
+
+    await paymentResource.value.setValue.submit(updateData)
+    await paymentResource.value.reload()
+    resetStatusDialog()
+  } catch (error) {
+    statusError.value = 'Failed to update status'
+    console.error('Error updating payment status:', error)
+  } finally {
+    isUpdatingStatus.value = false
   }
 }
 
