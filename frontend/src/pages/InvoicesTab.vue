@@ -205,6 +205,11 @@
     />
   </div>
   <Dialog
+      v-if="showNoClientDialog"
+      v-model="showNoClientDialog"
+      :options="noClientDialogOptions"
+    ></Dialog>
+  <Dialog
   v-model="showWarningDialog"
   :options="{
     title: 'Retention Settings Required',
@@ -252,6 +257,7 @@ import NewInvoiceDialog from './NewInvoiceDialog.vue'
 
 const router = useRouter()
 const showWarningDialog = ref(false)
+const showNoClientDialog = ref(false)
 
 const props = defineProps({
   projectResource: {
@@ -273,6 +279,31 @@ const canCreateInvoice = computed(() => {
   return props.projectResource.doc?.retention_status && 
          props.projectResource.doc.retention_status !== ''
 })
+
+const noClientDialogOptions = computed(() => ({
+  title: 'Missing Client',
+  message: 'A client must be added to the project before creating an invoice. Please add a client from the project overview page.',
+  size: 'sm',
+  icon: {
+    name: 'alert-triangle',
+    appearance: 'warning'
+  },
+  actions: [
+    {
+      label: 'Go to Overview',
+      variant: 'solid',
+      theme: 'warning',
+      onClick: () => {
+        router.push(`/project/${props.projectResource.doc.name}/overview`)
+      }
+    },
+    {
+      label: 'Close',
+      variant: 'subtle',
+      onClick: () => showNoClientDialog.value = false
+    }
+  ]
+}))
 
 const statusCollapsed = ref({})
 const showNewInvoiceDialog = ref(false)
@@ -349,13 +380,36 @@ function navigateToInvoice(invoice) {
   })
 }
 
+function getProjectParties() {
+  try {
+    return props.projectResource.doc?.parties ? 
+      (typeof props.projectResource.doc.parties === 'string' ? 
+        JSON.parse(props.projectResource.doc.parties) : 
+        props.projectResource.doc.parties
+      ) : []
+  } catch (error) {
+    console.error('Error parsing parties:', error)
+    return []
+  }
+}
+
 function handleNewInvoice() {
+  const parties = getProjectParties()
+  const hasClient = parties.some(party => party.type.toLowerCase() === 'client')
+  
+  if (!hasClient) {
+    showNoClientDialog.value = true
+    return
+  }
+
   if (!canCreateInvoice.value) {
     showWarningDialog.value = true
     return
   }
+  
   showNewInvoiceDialog.value = true
 }
+
 
 async function handleInvoiceSubmit(formData) {
   try {

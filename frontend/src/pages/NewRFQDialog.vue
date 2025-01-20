@@ -31,11 +31,11 @@
                 </ComboboxButton>
               </div>
               <ComboboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                <div v-if="filteredPartys.length === 0" class="relative cursor-default select-none py-2 px-4 text-gray-700">
+                <div v-if="filteredParties.length === 0" class="relative cursor-default select-none py-2 px-4 text-gray-700">
                   No parties found.
                 </div>
                 <ComboboxOption
-                  v-for="party in filteredPartys"
+                  v-for="party in filteredParties"
                   :key="party.name"
                   :value="party"
                   v-slot="{ selected, active }"
@@ -144,7 +144,7 @@ const dialogOptions = computed(() => ({
   ]
 }))
 
-const partys = computed(() => {
+const parties = computed(() => {
   try {
     const parties = props.projectResource.doc?.parties ? 
       (typeof props.projectResource.doc.parties === 'string' ? 
@@ -161,10 +161,10 @@ const partys = computed(() => {
   }
 })
 
-const filteredPartys = computed(() => {
+const filteredParties = computed(() => {
   return query.value === ''
-    ? partys.value
-    : partys.value.filter((party) =>
+    ? parties.value
+    : parties.value.filter((party) =>
         party.name
           .toLowerCase()
           .includes(query.value.toLowerCase())

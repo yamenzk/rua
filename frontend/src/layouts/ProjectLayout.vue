@@ -27,7 +27,7 @@
 				<div class="flex items-center gap-3 min-w-0">
 					<h1 class="text-xl font-bold text-gray-900 truncate">
 						{{ selectedProject?.project_name }}
-						<Badge
+						<Badge v-if="selectedProject?.serial_number"
   :variant="'solid'"
   :ref_for="true"
   theme="gray"
@@ -163,6 +163,17 @@
   required
 />
 
+<FormControl
+    type="number"
+    :ref_for="true"
+    size="sm"
+    variant="subtle"
+    :disabled="false"
+    label="Contract Value"
+    v-model="contractValue"
+    :placeholder="selectedProject?.contract_value?.toString() || 'Enter contract value'"
+/>
+
     <!-- Location -->
     <FormControl
       type="text"
@@ -178,7 +189,7 @@
         label="Description"
         v-model="projectDescription"
         :placeholder="selectedProject?.description || 'Enter project description'"
-        rows="4"
+        :rows="4"
       />
     </div>
   </div>
@@ -387,6 +398,7 @@ const router = useRouter()
 const route = useRoute()
 const projectName = ref('')
 const projectLocation = ref('')
+const contractValue = ref('')
 const projectDescription = ref('')
 const projectStatus = ref('')
 const statusOptions = [
@@ -416,6 +428,7 @@ const selectedProject = computed(() => {
 const hasBasicFieldsChanged = computed(() => {
   return projectName.value !== selectedProject.value?.project_name ||
          projectLocation.value !== selectedProject.value?.location ||
+		 contractValue.value !== selectedProject.value?.contract_value ||
          projectDescription.value !== selectedProject.value?.description ||
          projectStatus.value !== selectedProject.value?.status
 })
@@ -474,6 +487,7 @@ async function saveSettings() {
     await selectedProjectResource.value.setValue.submit({
       project_name: projectName.value,
       location: projectLocation.value,
+	  contract_value: contractValue.value,
       description: projectDescription.value,
       status: projectStatus.value,
       retention_status: retentionStatus.value,
@@ -516,6 +530,7 @@ onMounted(() => {
   retentionPercentage.value = selectedProject.value?.retention_percentage || 0
   projectName.value = selectedProject.value?.project_name || ''
   projectLocation.value = selectedProject.value?.location || ''
+  contractValue.value = selectedProject.value?.contract_value || ''
   projectDescription.value = selectedProject.value?.description || ''
   projectStatus.value = selectedProject.value?.status || ''
 })

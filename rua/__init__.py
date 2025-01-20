@@ -1,7 +1,7 @@
 import frappe
 from typing import Optional, Dict, Any, Callable
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 
 def refetch_resource(cache_key: str | list):
@@ -45,6 +45,12 @@ class ChatMessageHandler:
         self.doc = doc
         self.chat_doc = None
 
+    def get_project_reference(self):
+        """Get the correct project reference based on document type"""
+        if self.doc.doctype == "RUA Project":
+            return self.doc.name  # For projects, use the document name itself
+        return getattr(self.doc, 'project', None)  # For other doctypes, get the project field
+
     def create_message(
         self,
         message: str,
@@ -53,8 +59,12 @@ class ChatMessageHandler:
         commit: bool = True
     ):
         """Create a chat message for the current document."""
+        project = self.get_project_reference()
+        if not project:
+            frappe.throw("Project reference is required for chat messages")
+            
         return create_chat_entry(
-            project=self.doc.project,
+            project=project,
             user=self.doc.owner,
             message=message,
             type=type,
