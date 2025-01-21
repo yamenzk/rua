@@ -12,6 +12,7 @@
   "gender",
   "nationality",
   "position",
+  "branch",
   "column_break_ouxq",
   "naming_series",
   "image",
@@ -83,13 +84,19 @@
    "fieldname": "email",
    "fieldtype": "Data",
    "label": "Email",
-   "options": "email"
+   "options": "Email"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Select",
+   "label": "Branch",
+   "options": "\nMain\nBranch"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-18 00:07:16.667950",
+ "modified": "2025-01-21 19:09:17.790482",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

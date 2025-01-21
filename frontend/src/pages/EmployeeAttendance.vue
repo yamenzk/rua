@@ -19,7 +19,7 @@
 		</div>
 
 		<!-- Statistics Cards -->
-		<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+		<div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
 			<!-- Attendance Rate -->
 			<div class="border rounded-lg bg-white">
 				<div class="px-5 py-4">
@@ -163,6 +163,29 @@
 					</div>
 				</div>
 			</div>
+
+			<!-- Leave Setup Button -->
+			<div v-if="isManager" class="border rounded-lg bg-white flex items-center justify-center">
+    <div 
+      v-if="currentOngoingLeave"
+      class="w-full h-full py-6 flex flex-col items-center justify-center bg-blue-50 text-center cursor-pointer"
+      @click="showEarlyReturnDialog = true"
+    >
+      <FeatherIcon name="calendar" class="w-6 h-6 text-blue-500 mb-2" />
+      <span class="text-sm text-blue-600 font-medium">Currently on Leave</span>
+      <span class="text-xs text-gray-600 mt-1">
+        Return Expected: {{ formatDate(currentOngoingLeave.return_date) }}
+      </span>
+    </div>
+    <button 
+      v-else
+      @click="showLeaveSetupDialog = true"
+      class="w-full h-full py-6 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors"
+    >
+      <FeatherIcon name="calendar" class="w-6 h-6 text-blue-500 mb-2" />
+      <span class="text-sm text-gray-600">Setup Leave</span>
+    </button>
+  </div>
 		</div>
 
 		<!-- Calendar View -->
@@ -282,6 +305,12 @@
 													}}</span
 												>
 												<span
+													>Leave:
+													{{
+														monthStats[`${year}-${month}`].leaveDays
+													}}</span
+												>
+												<span
 													>Overtime:
 													{{
 														Number(
@@ -327,6 +356,8 @@
 															:class="{
 																'bg-green-500':
 																	record.status === 'present',
+																	'bg-blue-500':
+																	record.status === 'leave',
 																'bg-yellow-400':
 																	record.status === 'late',
 																'bg-red-500':
@@ -369,70 +400,120 @@
 			</div>
 		</div>
 
-		<!-- Event Details Modal -->
-		<Dialog
-  :open="showEventDetails"
-  @close="showEventDetails = false"
-  class="relative z-50"
+
+
+ <!-- Leave Setup Dialog -->
+ <Dialog
+  :modelValue="showLeaveSetupDialog"
+  @update:modelValue="showLeaveSetupDialog = $event"
+  :options="{
+    title: 'Setup Employee Leave',
+    size: 'sm',
+    icon: {
+      name: 'calendar',
+      appearance: 'primary'
+    },
+    actions: [
+      {
+        label: 'Save Leave',
+        variant: 'solid',
+        onClick: () => saveLeave()
+      }
+    ]
+  }"
 >
-  <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
-  <div class="fixed inset-0 flex items-center justify-center p-4">
-    <DialogPanel class="w-full max-w-sm rounded bg-white p-4">
+    <template #body-content>
       <div class="space-y-4">
-        <h3 class="text-lg font-medium">Attendance Details</h3>
-        
-        <div v-if="selectedEvent">
-          <div class="space-y-3">
-            <div class="flex justify-between">
-              <span class="text-gray-600">Date:</span>
-              <span class="font-medium">{{ formatAttendanceDate(selectedEvent.fromDate) }}</span>
-            </div>
-            
-            <template v-if="selectedEvent.type === 'attendance'">
-              <div class="flex justify-between">
-                <span class="text-gray-600">Status:</span>
-                <span 
-                  class="font-medium capitalize"
-                  :class="{
-                    'text-green-600': selectedEvent.status === 'present',
-                    'text-yellow-600': selectedEvent.status === 'late',
-                    'text-red-600': selectedEvent.status === 'absent'
-                  }"
-                >
-                  {{ selectedEvent.status }}
-                </span>
-              </div>
-            </template>
-            
-            <template v-else-if="selectedEvent.type === 'overtime'">
-              <div class="flex justify-between">
-                <span class="text-gray-600">Type:</span>
-                <span class="font-medium text-purple-600">Overtime Hours</span>
-              </div>
-            </template>
+        <!-- Last Leave Information -->
+        <div 
+          v-if="lastLeave"
+          class="bg-gray-50 rounded-lg p-4 text-sm"
+        >
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-medium text-gray-700">Last Leave</span>
+            <span class="text-xs text-gray-500">
+              {{ formatLeaveDuration(lastLeave.leave_date, lastLeave.return_date) }}
+            </span>
+          </div>
+          <div class="text-gray-600">
+            <div>From: {{ formatDate(lastLeave.leave_date) }}</div>
+            <div>To: {{ formatDate(lastLeave.return_date) }}</div>
           </div>
         </div>
 
-        <div class="flex justify-end">
-          <button
-            @click="showEventDetails = false"
-            class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
-          >
-            Close
-          </button>
+        <FormControl
+          type="date"
+          label="Leave Start Date"
+          v-model="newLeave.leave_date"
+          required
+          :min="getMinLeaveDate()"
+        />
+        <FormControl
+          type="date"
+          label="Return Date"
+          v-model="newLeave.return_date"
+          required
+          :min="newLeave.leave_date || getMinLeaveDate()"
+        />
+      </div>
+    </template>
+  </Dialog>
+
+   <!-- Early Return Dialog -->
+   <Dialog
+  :modelValue="showEarlyReturnDialog"
+  @update:modelValue="showEarlyReturnDialog = $event"
+  :options="{
+    title: 'Early Return Confirmation',
+    size: 'sm',
+    icon: {
+      name: 'check-circle',
+      appearance: 'primary'
+    },
+    actions: [
+      {
+        label: 'Confirm Early Return',
+        variant: 'solid',
+        onClick: () => confirmEarlyReturn()
+      }
+    ]
+  }"
+>
+    <template #body-content>
+      <div class="space-y-4">
+        <div class="bg-blue-50 rounded-lg p-4 text-sm">
+          <div class="flex items-center gap-3 mb-2">
+            <FeatherIcon name="info" class="w-5 h-5 text-blue-500" />
+            <span class="font-medium text-blue-800">Early Return Confirmation</span>
+          </div>
+          <p class="text-blue-700">
+            The employee is currently on leave until {{ formatDate(currentOngoingLeave.return_date) }}.
+          </p>
+        </div>
+
+        <FormControl
+          type="text"
+          label="Confirm Today's Date"
+          v-model="earlyReturnConfirmation"
+          :placeholder="todayFormatted"
+          required
+        />
+        <div class="text-xs text-gray-500">
+          Please type today's date: {{ todayFormatted }}
         </div>
       </div>
-    </DialogPanel>
-  </div>
-</Dialog>
+    </template>
+  </Dialog>
 
 	</div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Calendar, FeatherIcon, Badge } from 'frappe-ui'
-import { Dialog, DialogPanel } from '@headlessui/vue'
+import { leaveResource } from '@/data/leave'
+import { Calendar, FeatherIcon, Badge, Dialog, FormControl } from 'frappe-ui'
+import { hasRole } from '@/data/roles'
+import { DialogPanel } from '@headlessui/vue'
 import { attendanceResource } from '@/data/attendance'
 import { formatAttendanceDate, getMonthName } from '@/utils/format'
 
@@ -448,44 +529,93 @@ const currentView = ref('List')
 const yearCollapsed = ref({})
 const monthCollapsed = ref({})
 const showEventDetails = ref(false)
+const showEarlyReturnDialog = ref(false)
+const earlyReturnConfirmation = ref('')
 const selectedEvent = ref(null)
+const isManager = hasRole('RUA Manager')
+const showLeaveSetupDialog = ref(false)
+const newLeave = ref({
+  leave_date: '',
+  return_date: '',
+})
 const attendanceList = attendanceResource
+
+const currentOngoingLeave = computed(() => {
+  const today = new Date()
+  return leaveResource.data?.find(leave => 
+    leave.employee === props.employee.name &&
+    new Date(leave.leave_date) <= today &&
+    today <= new Date(leave.return_date)
+  )
+})
+
+
+const todayFormatted = computed(() => {
+  return new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format
+})
+
+function getMinLeaveDate() {
+  // If there's a last leave, suggest the day after the last leave
+  if (lastLeave.value) {
+    const lastLeaveEnd = new Date(lastLeave.value.return_date)
+    lastLeaveEnd.setDate(lastLeaveEnd.getDate() + 1)
+    return lastLeaveEnd.toISOString().split('T')[0]
+  }
+  
+  // Otherwise, use today's date
+  return new Date().toISOString().split('T')[0]
+}
+
+
+const lastLeave = computed(() => {
+  if (!leaveResource.data?.length) return null
+
+  // Filter leaves for this employee and sort by return date in descending order
+  const employeeLeaves = leaveResource.data
+    .filter(leave => leave.employee === props.employee.name)
+    .sort((a, b) => new Date(b.return_date) - new Date(a.return_date))
+
+  // Return the most recent leave (excluding current ongoing leave)
+  return employeeLeaves[0]
+})
 
 // Process attendance records
 const processedRecords = computed(() => {
-	if (!attendanceResource.data?.length || !props.employee?.name) return []
+  const records = []
 
-	return attendanceResource.data.map((record) => {
-		try {
-			const attendanceLog = JSON.parse(record.attendance_log || '{}')
-			const employeeLog = attendanceLog[props.employee.name] || {}
+  // Existing attendance record processing
+  attendanceResource.data?.forEach((record) => {
+    try {
+      const attendanceLog = JSON.parse(record.attendance_log || '{}')
+      const employeeLog = attendanceLog[props.employee.name] || {}
 
-			return {
-				date: record.date,
-				status: employeeLog.absent ? 'absent' : employeeLog.late ? 'late' : 'present',
-				overtime: employeeLog.overtime || 0,
-			}
-		} catch (error) {
-			console.error('Error processing attendance record:', error)
-			return {
-				date: record.date,
-				status: 'present',
-				overtime: 0,
-			}
-		}
-	})
+      records.push({
+        date: record.date,
+        status: employeeLog.absent ? 'absent' : 
+                employeeLog.late ? 'late' : 
+                isOnLeave(record.date) ? 'leave' : 
+                'present',
+        overtime: employeeLog.overtime || 0,
+      })
+    } catch (error) {
+      console.error('Error processing attendance record:', error)
+    }
+  })
+
+  return records
 })
 
 // Transform attendance records to calendar events
 const calendarEvents = computed(() => {
-  return processedRecords.value.flatMap(record => {
+  const events = processedRecords.value.flatMap(record => {
     const colorMap = {
       present: 'green',
       late: 'amber',
-      absent: 'red'
+      absent: 'red',
+      leave: 'blue'
     }
 
-    // Create base attendance event
+    // Existing attendance event creation
     const attendanceEvent = {
       id: `attendance-${record.date}`,
       title: ' ',
@@ -497,8 +627,9 @@ const calendarEvents = computed(() => {
       status: record.status,
     }
 
-    // Create overtime event if there is overtime
     const events = [attendanceEvent]
+
+    // Overtime event
     if (record.overtime > 0) {
       events.push({
         id: `overtime-${record.date}`,
@@ -507,14 +638,94 @@ const calendarEvents = computed(() => {
         toDate: `${record.date} 23:59:59`,
         isFullDay: true,
         color: 'purple',
-        isFullDay: true,
         type: 'overtime'
       })
     }
 
     return events
   }).flat()
+
+  // Add leave events with individual daily events
+  leaveResource.data?.forEach(leave => {
+    if (leave.employee === props.employee.name) {
+      const startDate = new Date(leave.leave_date)
+      const endDate = new Date(leave.return_date)
+
+      // Create an event for each day of the leave period
+      while (startDate <= endDate) {
+        const currentDate = new Date(startDate)
+        events.push({
+          id: `leave-${leave.name}-${currentDate.toISOString().split('T')[0]}`,
+          title: 'On Leave',
+          fromDate: `${currentDate.toISOString().split('T')[0]} 00:00:00`,
+          toDate: `${currentDate.toISOString().split('T')[0]} 23:59:59`,
+          color: 'blue',
+          isFullDay: true,
+          type: 'leave'
+        })
+
+        // Move to the next day
+        startDate.setDate(startDate.getDate() + 1)
+      }
+    }
+  })
+
+  return events
 })
+
+async function confirmEarlyReturn() {
+  // Validate input matches today's date
+  if (earlyReturnConfirmation.value.trim() !== todayFormatted.value) {
+    // Optional: Add a toast or error message
+    return
+  }
+
+  try {
+    // Update the leave record to end today
+    await leaveResource.setValue.submit({
+      name: currentOngoingLeave.value.name,
+      return_date: todayFormatted.value
+    })
+
+    // Reload leave resources
+    await leaveResource.reload()
+
+    // Reset dialog state
+    showEarlyReturnDialog.value = false
+    earlyReturnConfirmation.value = ''
+
+    // Optional: Add a success toast/notification
+  } catch (error) {
+    console.error('Error updating leave return date:', error)
+    // Optional: Add an error toast/notification
+  }
+}
+
+function isOnLeave(date) {
+  return leaveResource.data?.some(leave => 
+    leave.employee === props.employee.name && 
+    new Date(leave.leave_date) <= new Date(date) && 
+    new Date(date) <= new Date(leave.return_date)
+  )
+}
+
+// Method to save leave
+async function saveLeave() {
+  try {
+    await leaveResource.insert.submit({
+      employee: props.employee.name,
+      leave_date: newLeave.value.leave_date,
+      return_date: newLeave.value.return_date
+    })
+    
+    // Reset dialog and reload leaves
+    showLeaveSetupDialog.value = false
+    newLeave.value = { leave_date: '', return_date: '' }
+    await leaveResource.reload()
+  } catch (error) {
+    console.error('Error saving leave:', error)
+  }
+}
 
 // Group records by year and month
 const groupedAttendance = computed(() => {
@@ -562,12 +773,14 @@ const monthStats = computed(() => {
 			const presentDays = records.filter((r) => r.status === 'present').length
 			const lateDays = records.filter((r) => r.status === 'late').length
 			const absentDays = records.filter((r) => r.status === 'absent').length
+			const leaveDays = records.filter((r) => r.status === 'leave').length
 			const totalOvertime = records.reduce((sum, r) => sum + (r.overtime || 0), 0)
 
 			stats[key] = {
 				presentDays,
 				lateDays,
 				absentDays,
+				leaveDays,
 				totalOvertime,
 				attendanceRate: Math.round((presentDays / records.length) * 100),
 			}
@@ -607,14 +820,43 @@ function handleEventClick(event) {
 	showEventDetails.value = true
 }
 
+function formatDate(date) {
+  if (!date) return 'Not specified'
+  return new Date(date).toLocaleDateString('en-AE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function formatLeaveDuration(startDate, endDate) {
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const diffTime = Math.abs(end - start)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return `${diffDays} day${diffDays !== 1 ? 's' : ''}`
+}
+
 // Initialize
 onMounted(async () => {
-	if (!attendanceResource.data?.length) {
-		try {
-			await attendanceResource.reload()
-		} catch (error) {
-			console.error('Failed to load attendance data:', error)
-		}
-	}
+  // Existing attendance resource loading
+  if (!attendanceResource.data?.length) {
+    try {
+      await attendanceResource.reload()
+    } catch (error) {
+      console.error('Failed to load attendance data:', error)
+    }
+  }
+
+  // Load leaves
+  if (!leaveResource.data?.length) {
+    try {
+      await leaveResource.get.fetch({
+        filters: [['employee', '=', props.employee.name]]
+      })
+    } catch (error) {
+      console.error('Failed to load leave data:', error)
+    }
+  }
 })
 </script>

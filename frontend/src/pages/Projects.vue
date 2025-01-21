@@ -338,7 +338,10 @@ const statusOptions = [
 const list = projectResource
 onMounted(async () => {
   // Initialize with default filter to exclude child projects
-  list.filters = [['is_child', '!=', 1]]
+  list.filters = [
+    ['is_child', '!=', 1],
+    ['status', '=', 'In Progress']
+  ]
   await list.reload()  // Add await here
 })
 

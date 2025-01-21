@@ -1,7 +1,7 @@
 import frappe
 from typing import Optional, Dict, Any, Callable
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 
 def refetch_resource(cache_key: str | list):

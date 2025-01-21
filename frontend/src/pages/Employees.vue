@@ -58,171 +58,196 @@
 				</div>
 			</div>
 			<div>
-  <div class="inline-flex rounded-md shadow-sm" role="group">
-    <Button
-      variant="outline"
-      size="sm"
-      :label="attendanceButtonLabel"
-      @click="showAttendanceDialog"
-      class="rounded-r-none border-r-0 min-w-[180px]"
-    >
-      <template #prefix>
-        <FeatherIcon name="calendar" class="w-4 h-4" />
-      </template>
-      {{ attendanceButtonLabel }}
-    </Button>
-    
-    <Button
-      variant="outline"
-      size="sm"
-      @click="showMonthlyAttendanceDialog = true"
-      class="rounded-none border-r-0 min-w-[180px]"
-    >
-      <template #prefix>
-        <FeatherIcon name="list" class="w-4 h-4" />
-      </template>
-      Attendance List
-    </Button>
+				<div class="inline-flex rounded-md shadow-sm" role="group">
+					<Button
+						variant="outline"
+						size="sm"
+						:label="attendanceButtonLabel"
+						@click="showAttendanceDialog"
+						class="rounded-r-none border-r-0 min-w-[180px]"
+					>
+						<template #prefix>
+							<FeatherIcon name="calendar" class="w-4 h-4" />
+						</template>
+						{{ attendanceButtonLabel }}
+					</Button>
 
-    <Button
-      variant="outline"
-      size="sm"
-      @click="showExpiringDocumentsDialog = true"
-      class="rounded-l-none min-w-[180px]"
-    >
-      <template #prefix>
-        <FeatherIcon name="file-text" class="w-4 h-4" />
-      </template>
-      Document Status
-    </Button>
-  </div>
-</div>
+					<Button
+						variant="outline"
+						size="sm"
+						@click="showMonthlyAttendanceDialog = true"
+						class="rounded-none border-r-0 min-w-[180px]"
+					>
+						<template #prefix>
+							<FeatherIcon name="list" class="w-4 h-4" />
+						</template>
+						Attendance List
+					</Button>
+
+					<Button
+						variant="outline"
+						size="sm"
+						@click="showExpiringDocumentsDialog = true"
+						class="rounded-l-none min-w-[180px]"
+					>
+						<template #prefix>
+							<FeatherIcon name="file-text" class="w-4 h-4" />
+						</template>
+						Document Status
+					</Button>
+				</div>
+			</div>
 		</div>
 
-<!-- Monthly Attendance Dialog -->
-<Dialog
-  v-model="showMonthlyAttendanceDialog"
-  :options="{
-    title: 'Monthly Attendance List',
-    size: 'xl',
-  }"
->
-  <template #body-content>
-    <div class="space-y-4">
-      <!-- Month Selector -->
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-medium">
-          {{ formatMonth(selectedMonth) }} {{ currentYear }}
-        </h3>
-        <div class="flex items-center gap-2">
-          <Button
-            variant="subtle"
-            size="sm"
-            @click="previousMonth"
-          >
-            <FeatherIcon name="chevron-left" class="w-4 h-4" />
-          </Button>
-          <Button
-            variant="subtle"
-            size="sm"
-            @click="nextMonth"
-            :disabled="isCurrentMonth"
-          >
-            <FeatherIcon name="chevron-right" class="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+		<!-- Monthly Attendance Dialog -->
+		<Dialog
+			v-model="showMonthlyAttendanceDialog"
+			:options="{
+				title: 'Monthly Attendance List',
+				size: '3xl',
+			}"
+		>
+			<template #body-content>
+				<div class="space-y-4">
+					<!-- Month Selector -->
+					<div class="flex items-center justify-between">
+						<h3 class="text-lg font-medium">
+							{{ formatMonth(selectedMonth) }} {{ currentYear }}
+						</h3>
+						<div class="flex items-center gap-2">
+							<Button variant="subtle" size="sm" @click="previousMonth">
+								<FeatherIcon name="chevron-left" class="w-4 h-4" />
+							</Button>
+							<Button
+								variant="subtle"
+								size="sm"
+								@click="nextMonth"
+								:disabled="isCurrentMonth"
+							>
+								<FeatherIcon name="chevron-right" class="w-4 h-4" />
+							</Button>
+						</div>
+					</div>
 
-      <!-- Search Bar -->
-      <FormControl
-        type="search"
-        size="sm"
-        variant="subtle"
-        placeholder="Search employees..."
-        v-model="monthlyAttendanceSearch"
-        class="w-full"
-      />
+					<!-- Search Bar -->
+					<FormControl
+						type="search"
+						size="sm"
+						variant="subtle"
+						placeholder="Search employees..."
+						v-model="monthlyAttendanceSearch"
+						class="w-full"
+					/>
 
-      <!-- Attendance Table -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Employee
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Present Days
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Late Days
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Absent Days
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total Overtime
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Attendance Rate
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="employee in filteredMonthlyAttendance" :key="employee.id">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <Avatar
-                    :image="employee.image"
-                    :label="getInitials(employee.name)"
-                    shape="circle"
-                    size="sm"
-                  />
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">
-                      {{ employee.name }}
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ employee.presentDays }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ employee.lateDays }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ employee.absentDays }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ employee.totalOvertime }}h
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <span class="text-sm text-gray-900">{{ employee.attendanceRate }}%</span>
-                  <div class="ml-2 w-16 bg-gray-200 rounded-full h-1.5">
-                    <div
-                      class="h-1.5 rounded-full"
-                      :class="getAttendanceRateColor(employee.attendanceRate)"
-                      :style="{ width: employee.attendanceRate + '%' }"
-                    ></div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </template>
-</Dialog>
+					<!-- Attendance Table -->
+					<div class="overflow-x-auto">
+						<table class="min-w-full divide-y divide-gray-200">
+							<thead class="bg-gray-50">
+								<tr>
+									<th
+										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Employee
+									</th>
+									<th
+										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Present Days
+									</th>
+									<th
+										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Late Days
+									</th>
+									<th
+										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Absent Days
+									</th>
+									<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      Leave Days
+    </th>
+									<th
+										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Total Overtime
+									</th>
+									<th
+										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Attendance Rate
+									</th>
+								</tr>
+							</thead>
+							<tbody class="bg-white divide-y divide-gray-200">
+								<tr
+									v-for="employee in filteredMonthlyAttendance"
+									:key="employee.id"
+								>
+									<td class="px-6 py-4 whitespace-nowrap">
+										<div class="flex items-center">
+											<Avatar
+												:image="employee.image"
+												:label="getInitials(employee.name)"
+												shape="circle"
+												size="sm"
+											/>
+											<div class="ml-4">
+												<div class="text-sm font-medium text-gray-900">
+													{{ employee.name }}
+												</div>
+											</div>
+										</div>
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+										{{ employee.presentDays }}
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+										{{ employee.lateDays }}
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+										{{ employee.absentDays }}
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      {{ employee.leaveDays }}
+    </td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+										{{ employee.totalOvertime }}h
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap">
+										<div class="flex items-center">
+											<span class="text-sm text-gray-900"
+												>{{ employee.attendanceRate }}%</span
+											>
+											<div class="ml-2 w-16 bg-gray-200 rounded-full h-1.5">
+												<div
+													class="h-1.5 rounded-full"
+													:class="
+														getAttendanceRateColor(
+															employee.attendanceRate,
+														)
+													"
+													:style="{
+														width: employee.attendanceRate + '%',
+													}"
+												></div>
+											</div>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</template>
+		</Dialog>
 
 		<!-- Expiring Documents Dialog -->
 		<Dialog
 			v-model="showExpiringDocumentsDialog"
 			:options="{
 				title: 'Document Status',
-				size: 'xl',
+				size: '3xl',
 			}"
 		>
 			<template #body-content>
@@ -393,7 +418,7 @@
 			v-model="showDialog"
 			:options="{
 				title: 'Daily Attendance',
-				size: 'xl',
+				size: '3xl',
 				actions: computedActions,
 			}"
 		>
@@ -410,27 +435,32 @@
 					/>
 
 					<!-- Attendance List -->
-					<div class="space-y-4 max-h-[60vh] overflow-y-auto">
-						<div
-							v-for="employee in filteredEmployees"
-							:key="employee.name"
-							class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
-						>
-							<Avatar
-								:image="employee.image"
-								:label="getInitials(employee.employee_name)"
-								shape="circle"
-								size="md"
-							/>
+					<div
+						v-for="employee in filteredEmployees"
+						:key="employee.name"
+						class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
+					>
+						<Avatar
+							:image="employee.image"
+							:label="getInitials(employee.employee_name)"
+							shape="circle"
+							size="md"
+						/>
 
-							<div class="flex-grow">
-								<span class="font-medium">{{ employee.employee_name }}</span>
-							</div>
+						<div class="flex-grow">
+							<span class="font-medium">{{ employee.employee_name }}</span>
+						</div>
 
+						<div class="flex items-center gap-4" :class="{ 'opacity-50': isReadOnly }">
+							<!-- Add leave status for employees on leave -->
 							<div
-								class="flex items-center gap-4"
-								:class="{ 'opacity-50': isReadOnly }"
+								v-if="isEmployeeOnLeave(employee.name)"
+								class="text-sm text-blue-600 flex items-center"
 							>
+								<FeatherIcon name="calendar" class="w-4 h-4 mr-2" />
+								On Leave
+							</div>
+							<template v-else>
 								<FormControl
 									type="checkbox"
 									size="sm"
@@ -466,7 +496,7 @@
 									v-model="attendance[employee.name].overtime"
 									:disabled="isReadOnly"
 								/>
-							</div>
+							</template>
 						</div>
 					</div>
 
@@ -480,26 +510,26 @@
 
 		<!-- No Attendance @ 8 PM Dialog -->
 		<Dialog
-  v-model="noAttendanceDialog"
-  :options="{
-    title: 'Attendance Locked',
-    message: 'You cannot record attendance after 8 PM.',
-    size: 'sm',
-    icon: {
-      name: 'alert-triangle',
-      appearance: 'danger',
-    },
-    actions: [
-      {
-        label: 'Close',
-        variant: 'subtle',
-        onClick: () => {
-          noAttendanceDialog = false
-        }
-      }
-    ]
-  }"
-></Dialog>
+			v-model="noAttendanceDialog"
+			:options="{
+				title: 'Attendance Locked',
+				message: 'You cannot record attendance after 8 PM.',
+				size: 'sm',
+				icon: {
+					name: 'alert-triangle',
+					appearance: 'danger',
+				},
+				actions: [
+					{
+						label: 'Close',
+						variant: 'subtle',
+						onClick: () => {
+							noAttendanceDialog = false
+						},
+					},
+				],
+			}"
+		></Dialog>
 
 		<!-- Employees Grid -->
 		<div v-if="list.list.loading" class="flex justify-center">
@@ -773,7 +803,7 @@ import { attendanceResource } from '../data/attendance'
 import { partyResource } from '../data/party'
 import { genderOptions, positionOptions } from '../data/employeeOptions'
 import { documentResource } from '@/data/document'
-
+import { leaveResource } from '@/data/leave'
 
 const router = useRouter()
 
@@ -820,14 +850,13 @@ const attendanceButtonLabel = computed(() => {
 	return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
 })
 
-
 const isCurrentMonth = computed(() => {
-  const now = new Date()
-  return selectedMonth.value === now.getMonth() && currentYear.value === now.getFullYear()
+	const now = new Date()
+	return selectedMonth.value === now.getMonth() && currentYear.value === now.getFullYear()
 })
 
 const monthlyAttendance = computed(() => {
-  if (!list.data || !attendanceList.data) return []
+  if (!list.data || !attendanceList.data || !leaveResource.data) return []
 
   const monthStart = new Date(currentYear.value, selectedMonth.value, 1)
   const monthEnd = new Date(currentYear.value, selectedMonth.value + 1, 0)
@@ -838,12 +867,25 @@ const monthlyAttendance = computed(() => {
     return recordDate >= monthStart && recordDate <= monthEnd
   })
 
+  // Get leave records for the selected month
+  const monthLeaves = leaveResource.data.filter(leave => {
+    const leaveStart = new Date(leave.leave_date)
+    const leaveEnd = new Date(leave.return_date)
+    
+    return (
+      (leaveStart >= monthStart && leaveStart <= monthEnd) ||
+      (leaveEnd >= monthStart && leaveEnd <= monthEnd) ||
+      (leaveStart <= monthStart && leaveEnd >= monthEnd)
+    )
+  })
+
   // Calculate statistics for each employee
   return list.data.map(employee => {
     let presentDays = 0
     let lateDays = 0
     let absentDays = 0
     let totalOvertime = 0
+    let leaveDays = 0
 
     monthRecords.forEach(record => {
       try {
@@ -860,8 +902,26 @@ const monthlyAttendance = computed(() => {
       }
     })
 
-    const totalDays = presentDays + lateDays + absentDays
-    const attendanceRate = totalDays ? Math.round(((presentDays + lateDays) / totalDays) * 100) : 0
+    // Calculate leave days
+    monthLeaves.forEach(leave => {
+      if (leave.employee === employee.name) {
+        const leaveStart = new Date(leave.leave_date)
+        const leaveEnd = new Date(leave.return_date)
+        
+        // Adjust start and end to month boundaries
+        const start = leaveStart < monthStart ? monthStart : leaveStart
+        const end = leaveEnd > monthEnd ? monthEnd : leaveEnd
+        
+        // Calculate days of leave within the month
+        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+        leaveDays += days
+      }
+    })
+
+    const totalDays = presentDays + lateDays + absentDays + leaveDays
+    const attendanceRate = totalDays 
+      ? Math.round(((presentDays + lateDays) / totalDays) * 100) 
+      : 0
 
     return {
       id: employee.name,
@@ -870,6 +930,7 @@ const monthlyAttendance = computed(() => {
       presentDays,
       lateDays,
       absentDays,
+      leaveDays,
       totalOvertime,
       attendanceRate
     }
@@ -877,40 +938,40 @@ const monthlyAttendance = computed(() => {
 })
 
 const filteredMonthlyAttendance = computed(() => {
-  if (!monthlyAttendance.value) return []
+	if (!monthlyAttendance.value) return []
 
-  return monthlyAttendance.value.filter(employee =>
-    employee.name.toLowerCase().includes(monthlyAttendanceSearch.value.toLowerCase())
-  )
+	return monthlyAttendance.value.filter((employee) =>
+		employee.name.toLowerCase().includes(monthlyAttendanceSearch.value.toLowerCase()),
+	)
 })
 
 // Add these methods
 function formatMonth(month) {
-  return new Date(2000, month).toLocaleString('default', { month: 'long' })
+	return new Date(2000, month).toLocaleString('default', { month: 'long' })
 }
 
 function previousMonth() {
-  if (selectedMonth.value === 0) {
-    selectedMonth.value = 11
-    currentYear.value--
-  } else {
-    selectedMonth.value--
-  }
+	if (selectedMonth.value === 0) {
+		selectedMonth.value = 11
+		currentYear.value--
+	} else {
+		selectedMonth.value--
+	}
 }
 
 function nextMonth() {
-  if (selectedMonth.value === 11) {
-    selectedMonth.value = 0
-    currentYear.value++
-  } else {
-    selectedMonth.value++
-  }
+	if (selectedMonth.value === 11) {
+		selectedMonth.value = 0
+		currentYear.value++
+	} else {
+		selectedMonth.value++
+	}
 }
 
 function getAttendanceRateColor(rate) {
-  if (rate >= 90) return 'bg-green-500'
-  if (rate >= 75) return 'bg-yellow-500'
-  return 'bg-red-500'
+	if (rate >= 90) return 'bg-green-500'
+	if (rate >= 75) return 'bg-yellow-500'
+	return 'bg-red-500'
 }
 
 function formatDate(date) {
@@ -929,7 +990,7 @@ function formatDate(date) {
 
 const isReadOnly = computed(() => {
 	const dubaiTime = getDubaiDateTime()
-	return dubaiTime.getHours() >= 20
+	return dubaiTime.getHours() >= 22
 })
 
 const newEmployee = ref({
@@ -946,6 +1007,17 @@ const newFilter = ref({
 	operator: '=',
 	value: '',
 })
+
+function isEmployeeOnLeave(employeeId) {
+  if (!leaveResource.data) return false
+  
+  const today = new Date()
+  return leaveResource.data.some(leave => 
+    leave.employee === employeeId && 
+    new Date(leave.leave_date) <= today && 
+    today <= new Date(leave.return_date)
+  )
+}
 
 const fieldOptions = [
 	{ label: 'Creation Date', value: 'creation', sortOnly: true },
@@ -1252,10 +1324,20 @@ async function createEmployee() {
 }
 
 const filteredEmployees = computed(() => {
-	if (!list.data) return []
+	if (!list.data || !leaveResource.data) return []
 
-	return list.data.filter((employee) =>
-		employee.employee_name.toLowerCase().includes(searchQuery.value.toLowerCase()),
+	// Find employees currently on leave
+	const currentLeaves = leaveResource.data.filter((leave) => {
+		const today = new Date()
+		return new Date(leave.leave_date) <= today && today <= new Date(leave.return_date)
+	})
+
+	const leaveEmployeeIds = new Set(currentLeaves.map((leave) => leave.employee))
+
+	return list.data.filter(
+		(employee) =>
+			employee.employee_name.toLowerCase().includes(searchQuery.value.toLowerCase()) &&
+			!leaveEmployeeIds.has(employee.name),
 	)
 })
 
@@ -1319,21 +1401,37 @@ function findAttendanceRecord(date) {
 }
 
 async function initializeAttendanceData() {
-	if (!list.data?.length) {
-		//console.warn('Employee list is not loaded yet')
-		return false
-	}
+  if (!list.data?.length || !leaveResource.data) {
+    return false
+  }
 
-	attendance.value = {}
-	list.data.forEach((employee) => {
-		attendance.value[employee.name] = {
-			present: true,
-			late: false,
-			absent: false,
-			overtime: 0,
-		}
-	})
-	return true
+  const today = formatDate(getDubaiDateTime())
+  
+  attendance.value = {}
+  list.data.forEach((employee) => {
+    // Check if employee is on leave today
+    const isOnLeave = leaveResource.data.some(leave => 
+      leave.employee === employee.name && 
+      new Date(leave.leave_date) <= new Date(today) && 
+      new Date(today) <= new Date(leave.return_date)
+    )
+
+    attendance.value[employee.name] = isOnLeave 
+      ? {
+          present: false,
+          late: false,
+          absent: false,
+          overtime: 0,
+          status: 'leave'
+        }
+      : {
+          present: true,
+          late: false,
+          absent: false,
+          overtime: 0
+        }
+  })
+  return true
 }
 
 async function loadExistingAttendance(date) {
@@ -1365,37 +1463,37 @@ async function loadExistingAttendance(date) {
 }
 
 async function showAttendanceDialog() {
-  try {
-    // Ensure employee list is loaded
-    if (!list.data?.length) {
-      return
-    }
+	try {
+		// Ensure employee list is loaded
+		if (!list.data?.length) {
+			return
+		}
 
-    const dubaiTime = getDubaiDateTime()
-    const currentDate = formatDate(dubaiTime)
+		const dubaiTime = getDubaiDateTime()
+		const currentDate = formatDate(dubaiTime)
 
-    if (isReadOnly.value) {
-      // After 8 PM, only allow viewing of existing records
-      const exists = await loadExistingAttendance(currentDate)
-      if (!exists) {
-        noAttendanceDialog.value = true
-        return
-      }
-    } else {
-      // Before 8 PM, allow creating/editing today's attendance
-      const exists = await loadExistingAttendance(currentDate)
-      if (!exists) {
-        const initialized = await initializeAttendanceData()
-        if (!initialized) {
-          return
-        }
-      }
-    }
+		if (isReadOnly.value) {
+			// After 8 PM, only allow viewing of existing records
+			const exists = await loadExistingAttendance(currentDate)
+			if (!exists) {
+				noAttendanceDialog.value = true
+				return
+			}
+		} else {
+			// Before 8 PM, allow creating/editing today's attendance
+			const exists = await loadExistingAttendance(currentDate)
+			if (!exists) {
+				const initialized = await initializeAttendanceData()
+				if (!initialized) {
+					return
+				}
+			}
+		}
 
-    showDialog.value = true
-  } catch (error) {
-    console.error('Error showing attendance dialog:', error)
-  }
+		showDialog.value = true
+	} catch (error) {
+		console.error('Error showing attendance dialog:', error)
+	}
 }
 
 async function saveAttendance() {

@@ -1,8 +1,22 @@
 // EmployeeOverview.vue
 <template>
 	<div class="space-y-8" v-if="employee">
+		<div 
+      v-if="currentLeave" 
+      class="bg-blue-50 border-l-4 border-blue-500 p-4 flex items-center"
+    >
+      <FeatherIcon name="calendar" class="w-6 h-6 text-blue-600 mr-3" />
+      <div>
+        <p class="font-medium text-blue-800">
+          Currently on Leave
+        </p>
+        <p class="text-sm text-blue-700">
+          Expected to return on {{ formatDate(currentLeave.return_date) }}
+        </p>
+      </div>
+    </div>
 		<!-- Hero Section -->
-		<div class="h-64 md:h-96">
+		<div class="h-64 md:h-96 !mt-0">
 			<div class="w-full h-full">
 				<div
 					v-if="employee?.image"
@@ -45,7 +59,7 @@
 					</Button>
 				</div>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					<!-- Basic Details -->
 					<div class="space-y-4">
 						<div>
@@ -76,6 +90,14 @@
 								{{ employee?.nationality }}
 							</div>
 						</div>
+						<div v-if="employee?.phone">
+							<label class="block text-sm font-medium text-gray-500"
+								>Phone Number</label
+							>
+							<div class="mt-1 text-lg text-gray-900">
+								{{ employee?.phone }}
+							</div>
+						</div>
 					</div>
 
 					<!-- Employment Details -->
@@ -101,6 +123,19 @@
 								>Associated System User</label
 							>
 							<div class="mt-1 text-lg text-gray-900">{{ employee?.user }}</div>
+						</div>
+						<div v-if="employee?.email">
+							<label class="block text-sm font-medium text-gray-500"
+								>Email Address</label
+							>
+							<div class="mt-1 text-lg text-gray-900">{{ employee?.email }}</div>
+						</div>
+					</div>
+
+					<div class="space-y-4">
+						<div v-if="employee?.branch">
+							<label class="block text-sm font-medium text-gray-500">Branch</label>
+							<div class="mt-1 text-lg text-gray-900">{{ employee?.branch }}</div>
 						</div>
 					</div>
 				</div>
@@ -215,6 +250,63 @@
 					</table>
 				</div>
 			</div>
+
+			 <!-- Leave Records -->
+			 <div class="mb-8">
+      <h3 class="text-sm font-medium text-gray-500 mb-4">
+        Leave Records
+      </h3>
+      <div v-if="leaveRecords.length === 0" class="text-gray-500 text-sm">
+        No leave records found
+      </div>
+      <div v-else class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+			<thead>
+    <tr>
+      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Leave Date
+      </th>
+      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Return Date
+      </th>
+      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Duration
+      </th>
+      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Status
+      </th>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <tr v-for="leave in leaveRecords" :key="leave.name">
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {{ formatDate(leave.leave_date) }}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {{ formatDate(leave.return_date) }}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {{ calculateLeaveDuration(leave.leave_date, leave.return_date) }}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <div class="flex items-center">
+          <span
+            class="w-2.5 h-2.5 rounded-full mr-2"
+            :class="{
+              'bg-green-500': isLeaveCompleted(leave),
+              'bg-blue-500': isLeaveOngoing(leave)
+            }"
+          ></span>
+          <span class="text-sm text-gray-900">
+            {{ getLeaveStatus(leave) }}
+          </span>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+        </table>
+      </div>
+	</div>
 		</div>
 	</div>
 
@@ -363,44 +455,24 @@
 							required
 							v-model="editingEmployee.employee_name"
 						/>
-						<span
-							v-if="!editingEmployee.employee_name && formSubmitted"
-							class="text-sm text-red-500"
-						>
-							Employee name is required
-						</span>
 					</div>
 
 					<div class="space-y-1">
 						<FormControl
 							type="date"
 							label="Date of Birth"
-							required
 							variant="subtle"
 							v-model="editingEmployee.date_of_birth"
 						/>
-						<span
-							v-if="!editingEmployee.date_of_birth && formSubmitted"
-							class="text-sm text-red-500"
-						>
-							Date of birth is required
-						</span>
 					</div>
 
 					<div class="space-y-1">
 						<FormControl
 							type="select"
 							label="Gender"
-							required
 							:options="genderOptions"
 							v-model="editingEmployee.gender"
 						/>
-						<span
-							v-if="!editingEmployee.gender && formSubmitted"
-							class="text-sm text-red-500"
-						>
-							Gender is required
-						</span>
 					</div>
 
 					<div class="space-y-1">
@@ -415,43 +487,51 @@
 								<img :src="flags[option.value]" class="h-4 w-4 rounded-full" />
 							</template>
 						</Autocomplete>
-						<span
-							v-if="!editingEmployee.nationality && formSubmitted"
-							class="text-sm text-red-500"
-						>
-							Nationality is required
-						</span>
 					</div>
 
 					<div class="space-y-1">
 						<FormControl
 							type="select"
 							label="Position"
-							required
 							:options="positionOptions"
 							v-model="editingEmployee.position"
 						/>
-						<span
-							v-if="!editingEmployee.position && formSubmitted"
-							class="text-sm text-red-500"
-						>
-							Position is required
-						</span>
 					</div>
 
 					<div class="space-y-1">
 						<FormControl
 							type="number"
 							label="Salary"
-							required
 							v-model="editingEmployee.salary"
 						/>
-						<span
-							v-if="!editingEmployee.salary && formSubmitted"
-							class="text-sm text-red-500"
-						>
-							Salary is required
-						</span>
+					</div>
+					<div class="space-y-1">
+						<FormControl
+							type="text"
+							label="Phone"
+							v-model="editingEmployee.phone"
+						/>
+					</div>
+					<div class="space-y-1">
+						<FormControl
+							type="text"
+							label="Email"
+							v-model="editingEmployee.email"
+						/>
+					</div>
+					<div class="space-y-1">
+						<FormControl
+							type="select"
+							label="Branch"
+							:options="[{
+								label: 'Main',
+								value: 'Main'
+							}, {
+								label: 'Branch',
+								value: 'Branch'
+							}]"
+							v-model="editingEmployee.branch"
+						/>
 					</div>
 				</div>
 			</div>
@@ -525,10 +605,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { FeatherIcon, Dialog, Button, FileUploader, FormControl, Autocomplete } from 'frappe-ui'
 import { session } from '@/data/session'
 import { attendanceResource } from '@/data/attendance'
+import { leaveResource } from '@/data/leave' 
 import { hasRole } from '@/data/roles'
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -549,6 +630,46 @@ const props = defineProps({
 
 // Role-based access control
 const isManager = hasRole('RUA Manager')
+const leaveRecords = computed(() => {
+  if (!leaveResource.data || !props.employee?.name) return []
+
+  return leaveResource.data
+    .filter(leave => leave.employee === props.employee.name)
+    .sort((a, b) => new Date(b.leave_date) - new Date(a.leave_date))
+})
+const currentLeave = computed(() => {
+  const today = new Date()
+  return leaveRecords.value.find(leave => {
+    const leaveStart = new Date(leave.leave_date)
+    const leaveEnd = new Date(leave.return_date)
+    return leaveStart <= today && today <= leaveEnd
+  })
+})
+function calculateLeaveDuration(leaveDate, returnDate) {
+  const start = new Date(leaveDate)
+  const end = new Date(returnDate)
+  const diffTime = Math.abs(end - start)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return `${diffDays} day${diffDays !== 1 ? 's' : ''}`
+}
+function isLeaveCompleted(leave) {
+  const today = new Date()
+  const returnDate = new Date(leave.return_date)
+  return returnDate < today
+}
+
+function isLeaveOngoing(leave) {
+  const today = new Date()
+  const leaveStart = new Date(leave.leave_date)
+  const leaveEnd = new Date(leave.return_date)
+  return leaveStart <= today && today <= leaveEnd
+}
+
+function getLeaveStatus(leave) {
+  if (isLeaveOngoing(leave)) return 'Ongoing'
+  if (isLeaveCompleted(leave)) return 'Completed'
+  return 'Upcoming'
+}
 
 // Image upload state
 const showImageDialog = ref(false)
@@ -585,6 +706,9 @@ async function updateEmployee() {
 			nationality: editingEmployee.value.nationality.label, // Use the label for nationality
 			position: editingEmployee.value.position, // Position is already a string
 			salary: Number(editingEmployee.value.salary),
+			phone: editingEmployee.value.phone,
+			email: editingEmployee.value.email,
+			branch: editingEmployee.value.branch
 		}
 
 		await props.employeeResource.setValue.submit(employeeData)
@@ -615,12 +739,7 @@ function openEditDialog() {
 function validateEditForm() {
 	formSubmitted.value = true
 	return (
-		editingEmployee.value.employee_name &&
-		editingEmployee.value.date_of_birth &&
-		editingEmployee.value.gender &&
-		editingEmployee.value.nationality?.label && // Check for nationality label
-		editingEmployee.value.position && // Position is just a string
-		editingEmployee.value.salary
+		editingEmployee.value.employee_name
 	)
 }
 
