@@ -82,27 +82,35 @@ class RUAQuotation(Document):
 
                 # Helper function to clean and format unit values
                 def clean_unit_value(value):
+                    if not value:  # Handle empty values
+                        return ""
                     if isinstance(value, str):
                         # Split into numeric value and unit
-                        num = float(value.split()[0].replace(',', ''))
-                        unit = value.split()[1]
-                        # Return formatted string with value and unit
-                        return f"{num} {unit}"
-                    return str(value)
+                        parts = value.split()
+                        if len(parts) >= 2:
+                            num = float(parts[0].replace(',', ''))
+                            unit = parts[1]
+                            # Return formatted string with value and unit
+                            return f"{num} {unit}"
+                        return ""  # Return empty string if format is invalid
+                    return str(value) if value else ""
 
-                # Create new item row
+                # Create new item row with basic required fields
                 item = {
                     'item_name': row['Item Name'],
                     'description': row['Description'],
                     'qty': int(row['Qty']),
-                    'width': clean_unit_value(row['Width']),
-                    'height': clean_unit_value(row['Height']),
-                    'area': clean_unit_value(row['Area']),
+                    'width': clean_unit_value(row.get('Width', '')),
+                    'height': clean_unit_value(row.get('Height', '')),
                     'amount': clean_currency(row['Amount']),
                     'total': clean_currency(row['Total']),
                     'vat_amount': clean_currency(row['Vat Amount']),
                     'grand_total': clean_currency(row['Grand Total'])
                 }
+
+                # Only add area if it exists in the row
+                if 'Area' in row and row['Area']:
+                    item['area'] = clean_unit_value(row['Area'])
 
                 # Add to summary totals
                 total_amount += clean_currency(row['Total'])

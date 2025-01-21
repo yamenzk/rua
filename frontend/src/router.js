@@ -123,6 +123,7 @@ const routes = [
           }
         ]
       },
+
       {
         path: 'invoicing/quotation/:quotationId',
         name: 'QuotationDetails',
@@ -147,6 +148,11 @@ const routes = [
         path: 'invoicing/payment/:paymentId',
         name: 'PaymentDetails',
         component: () => import('@/pages/PaymentDetails.vue'),
+      },
+      {
+        path: 'sub-projects',
+        name: 'ProjectSubProjects',
+        component: () => import('@/pages/ProjectSubProjects.vue'),
       },
     ],
   },

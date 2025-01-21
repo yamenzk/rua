@@ -90,6 +90,7 @@ class RUAInvoice(Document):
                 project_doc 
                 and project_doc.retention_status == "Enabled" 
                 and project_doc.retention_percentage > 0
+                and project_doc.enable_retention_invoicing
             )
 
             if retention_enabled:
@@ -106,7 +107,7 @@ class RUAInvoice(Document):
             self.grand_total = flt(self.amount_after_retention + self.vat_after_retention)
 
             # Handle status changes
-            if self.has_value_changed("status"):
+            if self.has_value_changed("status") and self.type == "Tax Invoice":
                 if self.status == "Final":
                     project_doc.total_invoiced = flt(project_doc.total_invoiced + self.grand_total)
                         

@@ -42,12 +42,12 @@
               Grand Total
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="check-circle" class="w-4 h-4" />
-              Status
+              <FeatherIcon name="hash" class="w-4 h-4" />
+              Reference
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="credit-card" class="w-4 h-4" />
-              Payment Status
+              Status
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="info" class="w-4 h-4" />
@@ -134,6 +134,10 @@
                           <div class="text-sm text-gray-900 font-medium flex items-center">
                             {{ formatCurrency(lpo.grand_total) }}
                           </div>
+                          <!-- Reference -->
+                          <div class="flex items-center text-sm text-gray-900">
+                            {{ lpo.supplier_reference_number }}
+                          </div>
                           <!-- Status -->
                           <div class="flex items-center">
                             <Badge
@@ -142,8 +146,6 @@
                             >
                               {{ lpo.status }}
                             </Badge>
-                          </div>
-                          <div class="flex items-center">
                             <Badge
                               v-if="lpo.status === 'Final'"
                               :variant="getPaymentStatusVariant(lpo.payment_status) === 'gray' ? 'solid' : 'subtle'"
@@ -329,6 +331,7 @@ async function handleLPOSubmit(formData) {
       date: formData.date,
       party: formData.party.name,
       type: formData.type,
+      supplier_reference_number: formData.supplier_reference_number,
       doctype: 'RUA LPO'
     })
     

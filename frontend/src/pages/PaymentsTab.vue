@@ -161,6 +161,11 @@
       :projectResource="projectResource"
       @submit="handlePaymentSubmit"
     />
+    <NewReceiptDialog
+    v-model="showNewReceiptDialog"
+    :projectResource="projectResource"
+    @submit="handlePaymentSubmit"
+  />
   </div>
 </template>
 
@@ -180,6 +185,7 @@ import { paymentResource } from '@/data/payment'
 import { formatDate, formatCurrency } from '@/utils/format'
 import { partyResource } from '@/data/party'
 import NewPaymentDialog from './NewPaymentDialog.vue'
+import NewReceiptDialog from './NewReceiptDialog.vue'
 import CustomTabButtons from '@/components/CustomTabButtons.vue'
 
 
@@ -199,6 +205,7 @@ const props = defineProps({
 const currentTab = ref('received')
 const statusCollapsed = ref({})
 const showNewPaymentDialog = ref(false)
+const showNewReceiptDialog = ref(false)
 
 // Tab Definitions
 const paymentTabs = [
@@ -218,7 +225,7 @@ const currentTabLabel = computed(() => {
 })
 
 const showAddButton = computed(() => {
-  return currentTab.value === 'additional'
+  return currentTab.value === 'additional' || currentTab.value === 'received'
 })
 
 const filteredPayments = computed(() => {
@@ -301,9 +308,12 @@ function navigateToPayment(payment) {
 }
 
 function handleNewPayment() {
-  showNewPaymentDialog.value = true
+  if (currentTab.value === 'received') {
+    showNewReceiptDialog.value = true
+  } else {
+    showNewPaymentDialog.value = true
+  }
 }
-
 async function handlePaymentSubmit(formData) {
   try {
     const response = await paymentResource.insert.submit({

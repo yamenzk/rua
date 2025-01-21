@@ -11,11 +11,11 @@
 		>
 			<div class="flex items-center gap-3 overflow-hidden">
 				<button
-					@click="router.push('/projects')"
-					class="flex-shrink-0 text-gray-500 hover:text-gray-700"
-				>
-					<FeatherIcon name="arrow-left" class="w-5 h-5" />
-				</button>
+    @click="handleBackNavigation"
+    class="flex-shrink-0 text-gray-500 hover:text-gray-700"
+>
+    <FeatherIcon name="arrow-left" class="w-5 h-5" />
+</button>
 				<Avatar
 					:shape="'square'"
 					:ref_for="true"
@@ -147,14 +147,14 @@
   
   <div class="grid gap-4">
     <!-- Project Name -->
-    <FormControl
-      type="text"
-      label="Project Name"
-      v-model="projectName"
-      required
-	  :disabled="true"
-      :placeholder="selectedProject?.project_name"
-    />
+	<FormControl
+  type="text"
+  label="Project Name"
+  v-model="projectName"
+  required
+  :disabled="true"
+  :placeholder="selectedProjectResource.value?.doc?.project_name"
+/>
 	<FormControl
   type="select"
   label="Project Status"
@@ -171,7 +171,7 @@
     :disabled="false"
     label="Contract Value"
     v-model="contractValue"
-    :placeholder="selectedProject?.contract_value?.toString() || 'Enter contract value'"
+    :placeholder="selectedProjectResource.value?.doc?.contract_value?.toString() || 'Enter contract value'"
 />
 
     <!-- Location -->
@@ -179,7 +179,7 @@
       type="text"
       label="Location"
       v-model="projectLocation"
-      :placeholder="selectedProject?.location || 'Enter project location'"
+      :placeholder="selectedProjectResource.value?.doc?.location || 'Enter project location'"
     />
 
     <!-- Description -->
@@ -188,7 +188,7 @@
         type="textarea"
         label="Description"
         v-model="projectDescription"
-        :placeholder="selectedProject?.description || 'Enter project description'"
+        :placeholder="selectedProjectResource.value?.doc?.description || 'Enter project description'"
         :rows="4"
       />
     </div>
@@ -198,56 +198,66 @@
 <!-- Separator -->
 <div class="border-t"></div>
 				<!-- Retention Settings -->
-				<div class="space-y-4">
-					<h3 class="text-lg font-medium text-gray-900">Retention Settings</h3>
+<div class="space-y-4">
+    <h3 class="text-lg font-medium text-gray-900">Retention Settings</h3>
 
-					<!-- Disabled State Warning -->
-					<div
-						v-if="!canEditRetention"
-						class="bg-yellow-50 border border-yellow-200 rounded-md p-4"
-					>
-						<div class="flex items-center">
-							<FeatherIcon name="alert-triangle" class="w-5 h-5 text-yellow-400" />
-							<p class="ml-3 text-sm text-yellow-700">
-								Retention settings cannot be modified as there are existing
-								invoices for this project.
-							</p>
-						</div>
-					</div>
+    <!-- Disabled State Warning -->
+    <div
+        v-if="!canEditRetention"
+        class="bg-yellow-50 border border-yellow-200 rounded-md p-4"
+    >
+        <div class="flex items-center">
+            <FeatherIcon name="alert-triangle" class="w-5 h-5 text-yellow-400" />
+            <p class="ml-3 text-sm text-yellow-700">
+                Retention settings cannot be modified as there are existing
+                invoices for this project.
+            </p>
+        </div>
+    </div>
 
-					<div class="space-y-4" :class="{ 'opacity-50': !canEditRetention }">
-						<!-- Retention Status Select -->
-						<FormControl
-							type="select"
-							label="Retention Status"
-							v-model="retentionStatus"
-							:options="retentionStatusOptions"
-							:disabled="!canEditRetention"
-							required
-						/>
+    <div class="space-y-4" :class="{ 'opacity-50': !canEditRetention }">
+        <!-- Retention Status Select -->
+        <FormControl
+            type="select"
+            label="Retention Status"
+            v-model="retentionStatus"
+            :options="retentionStatusOptions"
+            :disabled="!canEditRetention"
+            required
+        />
 
-						<!-- Retention Percentage -->
-						<div v-if="retentionStatus === 'Enabled'" class="space-y-1">
-							<FormControl
-								type="number"
-								label="Retention Percentage"
-								v-model="retentionPercentage"
-								:disabled="!canEditRetention"
-								min="0"
-								max="100"
-								step="0.01"
-								placeholder="Enter percentage (e.g. 5)"
-								required
-							/>
-							<p class="text-sm text-gray-500">Enter a value between 0 and 100</p>
-						</div>
-					</div>
+        <!-- Retention Percentage and Invoicing -->
+        <div v-if="retentionStatus === 'Enabled'" class="space-y-4">
+            <FormControl
+                type="number"
+                label="Retention Percentage"
+                v-model="retentionPercentage"
+                :disabled="!canEditRetention"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="Enter percentage (e.g. 5)"
+                required
+            />
+            <p class="text-sm text-gray-500">Enter a value between 0 and 100</p>
+            
+            <!-- Added Retention Invoicing Checkbox -->
+            <FormControl
+                type="checkbox"
+                size="sm"
+                variant="subtle"
+                :disabled="!canEditRetention"
+                label="Enable Retention Invoicing"
+                v-model="retentionInvoicing"
+            />
+        </div>
+    </div>
 
-					<!-- Error Message -->
-					<p v-if="settingsError" class="text-sm text-red-600">
-						{{ settingsError }}
-					</p>
-				</div>
+    <!-- Error Message -->
+    <p v-if="settingsError" class="text-sm text-red-600">
+        {{ settingsError }}
+    </p>
+</div>
 
 				<!-- Danger Zone -->
 				<div class="border-t pt-4">
@@ -298,19 +308,19 @@
 			},
 		}"
 	>
-		<template #body-content>
-			<div class="space-y-4">
-				<p class="text-sm text-gray-600">
-					Please type "{{ selectedProject?.project_name }}" to confirm.
-				</p>
-				<FormControl
-					type="text"
-					v-model="confirmProjectName"
-					placeholder="Enter project name"
-					:error="nameConfirmError"
-				/>
-			</div>
-		</template>
+	<template #body-content>
+    <div class="space-y-4">
+        <p class="text-sm text-gray-600">
+            Please type "{{ selectedProject?.project_name }}" to confirm.
+        </p>
+        <FormControl
+            type="text"
+            v-model="confirmProjectName"
+            placeholder="Enter project name"
+            :error="nameConfirmError"
+        />
+    </div>
+</template>
 		<template #actions>
 			<div class="flex justify-end gap-2">
 				<Button variant="subtle" @click="cancelDeletion"> Cancel </Button>
@@ -401,6 +411,7 @@ const projectLocation = ref('')
 const contractValue = ref('')
 const projectDescription = ref('')
 const projectStatus = ref('')
+const retentionInvoicing = ref(false)
 const statusOptions = [
   { label: 'Tender', value: 'Tender' },
   { label: 'Job in Hand', value: 'Job in Hand' },
@@ -426,11 +437,12 @@ const selectedProject = computed(() => {
 })
 
 const hasBasicFieldsChanged = computed(() => {
-  return projectName.value !== selectedProject.value?.project_name ||
-         projectLocation.value !== selectedProject.value?.location ||
-		 contractValue.value !== selectedProject.value?.contract_value ||
-         projectDescription.value !== selectedProject.value?.description ||
-         projectStatus.value !== selectedProject.value?.status
+  const projectDoc = selectedProjectResource.value?.doc
+  return projectName.value !== projectDoc?.project_name ||
+         projectLocation.value !== projectDoc?.location ||
+         contractValue.value !== projectDoc?.contract_value ||
+         projectDescription.value !== projectDoc?.description ||
+         projectStatus.value !== projectDoc?.status
 })
 
 
@@ -448,7 +460,7 @@ const projectInvoices = computed(() => {
 })
 
 const canEditRetention = computed(() => {
-	return projectInvoices.value.length === 0
+  return projectInvoices.value.length === 0 && selectedProjectResource.value?.doc
 })
 
 // Watch for changes in project ID and recreate document resource
@@ -460,6 +472,32 @@ watch(
 		}
 	},
 )
+
+watch(
+  () => selectedProjectResource.value?.doc,
+  (newDoc) => {
+    if (newDoc) {
+      retentionStatus.value = newDoc.retention_status || ''
+      retentionPercentage.value = newDoc.retention_percentage || 0
+      retentionInvoicing.value = newDoc.retention_invoicing || false
+      projectName.value = newDoc.project_name || ''
+      projectLocation.value = newDoc.location || ''
+      contractValue.value = newDoc.contract_value || ''
+      projectDescription.value = newDoc.description || ''
+      projectStatus.value = newDoc.status || ''
+    }
+  }
+)
+
+async function handleBackNavigation() {
+    if (selectedProject.value?.is_child && selectedProject.value?.parent1) {
+        // If it's a subproject, navigate to parent project
+        router.push(`/project/${selectedProject.value.parent1}/overview`)
+    } else {
+        // Otherwise go to projects list
+        router.push('/projects')
+    }
+}
 
 // Initialize document resource for selected project
 async function initializeProjectResource(projectId) {
@@ -487,11 +525,12 @@ async function saveSettings() {
     await selectedProjectResource.value.setValue.submit({
       project_name: projectName.value,
       location: projectLocation.value,
-	  contract_value: contractValue.value,
+      contract_value: contractValue.value,
       description: projectDescription.value,
       status: projectStatus.value,
       retention_status: retentionStatus.value,
-      retention_percentage: retentionStatus.value === 'Enabled' ? retentionPercentage.value : 0
+      retention_percentage: retentionStatus.value === 'Enabled' ? retentionPercentage.value : 0,
+      retention_invoicing: retentionStatus.value === 'Enabled' ? retentionInvoicing.value : false  // Add this line
     })
 
     showSettingsDialog.value = false
@@ -526,13 +565,17 @@ async function waitForInitialization() {
 }
 
 onMounted(() => {
-  retentionStatus.value = selectedProject.value?.retention_status || ''
-  retentionPercentage.value = selectedProject.value?.retention_percentage || 0
-  projectName.value = selectedProject.value?.project_name || ''
-  projectLocation.value = selectedProject.value?.location || ''
-  contractValue.value = selectedProject.value?.contract_value || ''
-  projectDescription.value = selectedProject.value?.description || ''
-  projectStatus.value = selectedProject.value?.status || ''
+  // Get the current project doc from the resource
+  const projectDoc = selectedProjectResource.value?.doc
+
+  retentionStatus.value = projectDoc?.retention_status || ''
+  retentionPercentage.value = projectDoc?.retention_percentage || 0
+  retentionInvoicing.value = projectDoc?.retention_invoicing || false
+  projectName.value = projectDoc?.project_name || ''
+  projectLocation.value = projectDoc?.location || ''
+  contractValue.value = projectDoc?.contract_value || ''
+  projectDescription.value = projectDoc?.description || ''
+  projectStatus.value = projectDoc?.status || ''
 })
 
 onMounted(async () => {
@@ -572,12 +615,26 @@ async function updateProjectCoords(newCoords) {
 	}
 }
 
-const navigation = computed(() => [
-	{ name: 'Overview', to: `/project/${route.params.id}/overview`, icon: 'home' },
-	{ name: 'Chat', to: `/project/${route.params.id}/chat`, icon: 'message-square' },
-	{ name: 'Items', to: `/project/${route.params.id}/items`, icon: 'package' },
-	{ name: 'Invoicing', to: `/project/${route.params.id}/invoicing`, icon: 'file-text' },
-])
+const navigation = computed(() => {
+  // Base navigation items
+  const baseNav = [
+    { name: 'Overview', to: `/project/${route.params.id}/overview`, icon: 'home' },
+    { name: 'Chat', to: `/project/${route.params.id}/chat`, icon: 'message-square' },
+    { name: 'Items', to: `/project/${route.params.id}/items`, icon: 'package' },
+    { name: 'Invoicing', to: `/project/${route.params.id}/invoicing`, icon: 'file-text' },
+  ]
+
+  // Add Sub Projects section only if this is NOT a child project
+  if (!selectedProject.value?.is_child) {
+    baseNav.splice(3, 0, {
+      name: 'Sub Projects',
+      to: `/project/${route.params.id}/sub-projects`,
+      icon: 'git-branch'
+    })
+  }
+
+  return baseNav
+})
 
 function initiateProjectDeletion() {
 	showSettingsDialog.value = false
@@ -598,9 +655,9 @@ function cancelDeletion() {
 }
 
 function proceedToPasskey() {
-  if (confirmProjectName.value === selectedProject.value?.project_name) {
-    showDeleteConfirmDialog.value = false  // Close the project name dialog
-    showPasskeyDialog.value = true         // Show the passkey dialog
+  if (confirmProjectName.value === selectedProjectResource.value?.doc?.project_name) {
+    showDeleteConfirmDialog.value = false
+    showPasskeyDialog.value = true
   }
 }
 

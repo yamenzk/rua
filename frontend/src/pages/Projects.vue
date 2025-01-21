@@ -102,7 +102,7 @@
           <!-- Status Badge -->
           <div class="absolute top-3 right-3 z-10">
             <Badge
-              :variant="'solid'"
+              :variant="'subtle'"
               :ref_for="true"
               :theme="getStatusTheme(project.status)"
               size="sm"
@@ -261,7 +261,7 @@
 </template>
 
 <script setup>
-import { ref, inject, h } from 'vue'
+import { ref, inject, h, onMounted } from 'vue'
 import { Button, Input, Dialog, Badge, FeatherIcon, LoadingIndicator, FormControl, debounce } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { projectResource } from '@/data/project'
@@ -330,6 +330,12 @@ const statusOptions = [
 ]
 
 const list = projectResource
+onMounted(async () => {
+  // Initialize with default filter to exclude child projects
+  list.filters = [['is_child', '!=', 1]]
+  await list.reload()  // Add await here
+})
+
 
 // Handlers
 const handleSearch = debounce((value) => {
@@ -375,13 +381,18 @@ function removeFilter(index) {
 }
 
 function updateListFilters() {
-  list.filters = activeFilters.value.map(filter => {
+  const baseFilters = [['is_child', '!=', 1]]  // Always include this filter
+  
+  const userFilters = activeFilters.value.map(filter => {
     let value = filter.value
     if (filter.operator === 'like') {
       value = `%${value}%`
     }
     return [filter.field, filter.operator, value]
   })
+
+  // Combine base filters with user filters
+  list.filters = [...baseFilters, ...userFilters]
   list.reload()
 }
 

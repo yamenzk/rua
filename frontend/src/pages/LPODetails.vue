@@ -124,18 +124,18 @@
           <!-- Metrics Grid -->
           <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
             <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Total Items</label>
+              <label class="text-sm font-medium text-gray-600">Supplier Reference Number</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ lpoResource.doc.total_items }}
+                  {{ lpoResource.doc.supplier_reference_number }}
                 </span>
               </div>
             </div>
             <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Net Total</label>
+              <label class="text-sm font-medium text-gray-600">Total Items</label>
               <div class="mt-2">
                 <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(lpoResource.doc.total_amount) }}
+                  {{ lpoResource.doc.total_items }}
                 </span>
               </div>
             </div>

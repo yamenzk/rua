@@ -10,6 +10,7 @@
   "party",
   "remarks",
   "payment_linked",
+  "supplier_reference_number",
   "column_break_zswp",
   "date",
   "naming_series",
@@ -131,11 +132,16 @@
    "fieldname": "payment_linked",
    "fieldtype": "Check",
    "label": "Payment Linked"
+  },
+  {
+   "fieldname": "supplier_reference_number",
+   "fieldtype": "Data",
+   "label": "Supplier Reference Number"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-20 04:56:37.110847",
+ "modified": "2025-01-21 15:43:23.126113",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA LPO",

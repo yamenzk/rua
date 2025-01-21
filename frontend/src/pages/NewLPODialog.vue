@@ -83,6 +83,17 @@
             </button>
           </div>
         </div>
+
+        <!-- Supplier Reference Number -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Supplier Reference Number</label>
+          <input
+            v-model="formData.supplier_reference_number"
+            type="text"
+            class="w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-sm leading-5 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            placeholder="Enter supplier reference number"
+          />
+        </div>
       </div>
     </template>
   </Dialog>
@@ -109,7 +120,8 @@ const query = ref('')
 const formData = ref({
   date: new Date().toISOString().split('T')[0],
   party: null,
-  type: ''
+  type: '',
+  supplier_reference_number: ''
 })
 
 // Computed

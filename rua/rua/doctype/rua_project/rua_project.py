@@ -58,7 +58,7 @@ class RUAProject(Document):
             )
 
     def validate(self):
-        if self.has_value_changed('status') and self.status == 'In Progress' and self.serial_number == 0:
+        if self.has_value_changed('status') and self.status == 'In Progress' and self.serial_number == 0 and not self.is_child:
             projects = frappe.get_list('RUA Project', fields=['serial_number'], order_by='serial_number desc', limit=1)
             highest_serial = projects[0].serial_number if projects else 0
             self.serial_number = highest_serial + 1
