@@ -492,7 +492,7 @@ watch(
 async function handleBackNavigation() {
     if (selectedProject.value?.is_child && selectedProject.value?.parent1) {
         // If it's a subproject, navigate to parent project
-        router.push(`/project/${selectedProject.value.parent1}/overview`)
+        router.push(`/project/${selectedProject.value.parent1}/sub-projects`)
     } else {
         // Otherwise go to projects list
         router.push('/projects')

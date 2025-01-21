@@ -282,9 +282,15 @@ if (isManager) {
 
 // State
 const searchQuery = ref('')
-const sortField = ref('creation')
-const sortDirection = ref('desc')
-const activeFilters = ref([])
+const sortField = ref('project_name')
+const sortDirection = ref('asc')
+const activeFilters = ref([
+  {
+    field: 'status',
+    operator: '=',
+    value: 'In Progress'
+  }
+])
 const showFilterDialog = ref(false)
 const showNewProject = ref(false)
 const newFilter = ref({
