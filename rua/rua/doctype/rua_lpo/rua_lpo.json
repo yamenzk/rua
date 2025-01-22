@@ -20,6 +20,7 @@
   "payment_status",
   "section_break_vrot",
   "items",
+  "all_items_received",
   "section_break_gtgw",
   "total_items",
   "column_break_bazd",
@@ -137,11 +138,17 @@
    "fieldname": "supplier_reference_number",
    "fieldtype": "Data",
    "label": "Supplier Reference Number"
+  },
+  {
+   "default": "0",
+   "fieldname": "all_items_received",
+   "fieldtype": "Check",
+   "label": "All Items Received"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-21 15:43:23.126113",
+ "modified": "2025-01-22 04:28:05.782514",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA LPO",

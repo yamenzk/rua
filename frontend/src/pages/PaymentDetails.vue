@@ -5,8 +5,15 @@
     <LoadingIndicator />
   </div>
 
+  <div v-else-if="paymentResource.error" class="flex items-center justify-center min-h-[60vh]">
+    <div class="text-center">
+      <FeatherIcon name="alert-circle" class="w-8 h-8 text-red-500 mx-auto mb-2" />
+      <p class="text-gray-600">Failed to load payment details</p>
+    </div>
+  </div>
+
   <div v-else>
-    <!-- Document Actions -->
+    <!-- Document Header -->
     <div class="sticky top-0 z-10 bg-white border-b">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
@@ -24,29 +31,26 @@
               {{ paymentResource.doc.name }}
             </h1>
             <p class="text-sm text-gray-600 hidden md:inline">
-              Created on {{ formatDate(paymentResource.doc.creation) }} by
-              {{ paymentResource.doc.owner }}
+              Created on {{ formatDate(paymentResource.doc.creation) }} by {{ paymentResource.doc.owner }}
             </p>
           </div>
         </div>
 
-        <!-- Status Badge and Actions -->
-        <div class="flex items-center gap-3">
-          <Badge
-            :variant="paymentResource.doc.status === 'Final' ? 'solid' : 'subtle'"
-            :theme="getStatusVariant(paymentResource.doc.status)"
-            class="cursor-pointer"
-            @click="showStatusDialog = true"
-          >
-            {{ paymentResource.doc.status }}
-          </Badge>
-        </div>
+        <!-- Status Badge -->
+        <Badge
+          :variant="paymentResource.doc.status === 'Final' ? 'solid' : 'subtle'"
+          :theme="getStatusVariant(paymentResource.doc.status)"
+          class="cursor-pointer"
+          @click="showStatusDialog = true"
+        >
+          {{ paymentResource.doc.status }}
+        </Badge>
       </div>
     </div>
 
     <!-- Draft Warning Banner -->
-    <div v-if="paymentResource.doc.status === 'Draft'" class="bg-orange-50 p-4 mx-6 mt-4 rounded-lg">
-      <div class="flex">
+    <div v-if="paymentResource.doc.status === 'Draft'" class="bg-orange-50 px-6 py-4 mt-4">
+      <div class="flex items-start rounded-lg">
         <div class="flex-shrink-0">
           <FeatherIcon name="alert-triangle" class="h-5 w-5 text-orange-400" />
         </div>
@@ -55,187 +59,188 @@
           <div class="mt-2 text-sm text-orange-700">
             This payment is still in draft status. Please submit it to process the payment.
           </div>
+          <div class="mt-4">
+            <Button
+              variant="solid"
+              theme="orange"
+              size="sm"
+              @click="showStatusDialog = true"
+            >
+              Submit Payment
+            </Button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="space-y-8 px-6 py-4">
-      <!-- Summary Section -->
-      <div class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Payment Details</h2>
-          <div class="text-sm text-gray-600 hidden md:inline">
-            Last modified: {{ formatDate(paymentResource.doc.modified) }} by
-            {{ paymentResource.doc.modified_by }}
+      <!-- Summary Card -->
+      <div class="bg-white rounded-lg border shadow-sm">
+        <!-- Party Information -->
+        <div class="p-6 border-b">
+          <div class="flex items-start space-x-4">
+            <!-- Party Image -->
+            <div class="flex-shrink-0 align-center align-middle self-center">
+              <Avatar
+                v-if="partyData?.image"
+                :image="partyData.image"
+                size="lg"
+                shape="circle"
+              />
+              <div v-else class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                <FeatherIcon name="user" class="w-8 h-8 text-gray-400" />
+              </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="flex-1 grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-medium text-gray-600">Party</label>
+                <p class="mt-1 text-sm text-gray-900">{{ paymentResource.doc.party }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Type</label>
+                <p class="mt-1 text-sm text-gray-900">{{ paymentResource.doc.type }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Bank</label>
+                <p class="mt-1 text-sm text-gray-900">{{ paymentResource.doc.bank || '-' }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Date</label>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(paymentResource.doc.date) }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Details Card -->
-        <div class="bg-white border rounded-lg shadow-sm">
-          <!-- Party Information -->
-          <div class="p-6 border-b">
-            <div class="flex items-start space-x-4">
-              <!-- Party Image -->
-              <div class="flex-shrink-0">
-                <img
-                  v-if="partyData?.image"
-                  :src="partyData.image"
-                  :alt="paymentResource.doc.party"
-                  class="w-16 h-16 rounded-lg object-cover"
-                />
-                <div
-                  v-else
-                  class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center"
-                >
-                  <FeatherIcon name="user" class="w-8 h-8 text-gray-400" />
-                </div>
-              </div>
+        <!-- Amount Information -->
+        <div class="px-6 py-8 border-b">
+          <label class="text-sm font-medium text-gray-600">Amount</label>
+          <div class="mt-2">
+            <span class="text-3xl font-semibold text-gray-900">
+              {{ formatCurrency(paymentResource.doc.amount) }}
+            </span>
+          </div>
+        </div>
 
-              <!-- Party Details -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-medium text-gray-900">
-                      {{ paymentResource.doc.party }}
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                      <span class="hidden md:inline">Payment Date:</span> {{ formatDate(paymentResource.doc.date, true) }}
-                    </p>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Type: {{ paymentResource.doc.type }}
-                    </p>
-                  </div>
-                </div>
-              </div>
+        <!-- Additional Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-b">
+          <!-- Related Document -->
+          <div class="p-6">
+            <label class="text-sm font-medium text-gray-600">Related Document</label>
+            <div class="mt-2">
+              <Button 
+                v-if="paymentResource.doc.related_doctype && paymentResource.doc.related_docname"
+                variant="link"
+                @click="navigateToRelatedDoc"
+                class="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+              >
+                <span class="flex items-center"><FeatherIcon :name="relatedDocIcon" class="w-4 h-4" />{{ relatedDocLabel }}</span>
+              </Button>
+              <span v-else class="text-sm text-gray-500">No related document</span>
             </div>
           </div>
 
-          <!-- Amount Information -->
-          <div class="p-6 border-b">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="text-sm font-medium text-gray-600">Amount</label>
-                <div class="mt-1">
-                  <span class="text-2xl font-semibold text-gray-900">
-                    {{ formatCurrency(paymentResource.doc.amount) }}
-                  </span>
-                </div>
-              </div>
+          <!-- Reference Number -->
+          <div class="p-6">
+            <label class="text-sm font-medium text-gray-600">Reference Number</label>
+            <div class="mt-2">
+              <span class="text-sm text-gray-900">
+                {{ paymentResource.doc.reference_no || '-' }}
+              </span>
             </div>
           </div>
+        </div>
 
-          <!-- Additional Details -->
-          <div class="p-6 border-b space-y-4">
-            <!-- Related Document Link -->
-            <div v-if="paymentResource.doc.related_doctype && paymentResource.doc.related_docname">
-              <label class="text-sm font-medium text-gray-600">Related Document</label>
-              <div class="mt-1">
-                <Button 
-                  variant="link"
-                  @click="navigateToRelatedDoc"
-                >
-                  <template #prefix>
-                    <FeatherIcon 
-                      :name="relatedDocIcon" 
-                      class="w-4 h-4"
-                    />
-                  </template>
-                  {{ relatedDocLabel }}
-                </Button>
-              </div>
+        <!-- Remarks -->
+        <div v-if="paymentResource.doc.remarks && paymentResource.doc.status !== 'Cancelled'" class="p-6 border-b">
+          <label class="text-sm font-medium text-gray-600">Remarks</label>
+          <div class="mt-2 text-sm text-gray-900">
+            {{ paymentResource.doc.remarks }}
+          </div>
+        </div>
+
+        <!-- Cancellation Notice -->
+        <div
+          v-if="paymentResource.doc.status === 'Cancelled'"
+          class="p-6 bg-red-50"
+        >
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <FeatherIcon name="alert-circle" class="w-5 h-5 text-red-400" />
             </div>
-
-            <!-- Bank Information -->
-            <div v-if="paymentResource.doc.bank">
-              <label class="text-sm font-medium text-gray-600">Bank</label>
-              <div class="mt-1 text-sm text-gray-900">
-                {{ paymentResource.doc.bank }}
-              </div>
-            </div>
-
-            <!-- Reference Number -->
-            <div v-if="paymentResource.doc.reference_no">
-              <label class="text-sm font-medium text-gray-600">Reference Number</label>
-              <div class="mt-1 text-sm text-gray-900">
-                {{ paymentResource.doc.reference_no }}
-              </div>
-            </div>
-
-            <!-- Remarks -->
-            <div v-if="paymentResource.doc.remarks">
-              <label class="text-sm font-medium text-gray-600">Remarks</label>
-              <div class="mt-1 text-sm text-gray-900">
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">Cancellation Remarks</h3>
+              <div class="mt-2 text-sm text-red-700">
                 {{ paymentResource.doc.remarks }}
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Cancellation Notice -->
-          <div
-            v-if="paymentResource.doc.status === 'Cancelled'"
-            class="p-6 bg-red-50"
-          >
-            <div class="flex items-start">
-              <div class="flex-shrink-0">
-                <FeatherIcon name="alert-circle" class="w-5 h-5 text-red-400" />
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Cancellation Remarks</h3>
-                <div class="mt-2 text-sm text-red-700">
-                  {{ paymentResource.doc.remarks }}
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- Last Modified -->
+        <div v-if="paymentResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+          Last modified: {{ formatDate(paymentResource.doc.modified) }} by {{ paymentResource.doc.modified_by }}
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Status Dialog -->
   <Dialog
     v-model="showStatusDialog"
     :options="statusDialogOptions"
   >
     <template #body-content>
       <div class="space-y-4">
-        <!-- Status Information -->
-        <div class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
-            {{ getDialogTitle }}
-          </label>
+        <label class="block text-sm font-medium text-gray-700">
+          {{ getDialogTitle }}
+        </label>
 
-          <div v-if="paymentResource.doc.status === 'Draft'">
-            <div class="text-sm text-gray-600 mb-4">
-              To submit this payment, please confirm the payment amount below:
-            </div>
+        <!-- Payment Confirmation -->
+        <div v-if="paymentResource.doc.status === 'Draft'" class="space-y-4">
+          <div class="text-sm text-gray-600">
+            To submit this payment, please confirm the payment amount below:
+          </div>
+          <div class="relative">
             <input
-  v-model="confirmationAmount"
-  type="number"
-  step="0.01"
-  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
-  :class="{
-    'border-red-300 focus:border-red-500 focus:ring-red-500': confirmationAmount.value && !isSubmitEnabled.value,
-    'border-green-300 focus:border-green-500 focus:ring-green-500': isSubmitEnabled.value
-  }"
-  :placeholder="paymentResource.doc.amount"
-/>
-          </div>
-
-          <div v-if="canBeCancelled">
-            <Textarea
-              v-model="cancellationReason"
-              label="Cancellation Reason"
-              placeholder="Please provide a reason for cancellation"
-              variant="outline"
-              size="sm"
-              class="w-full"
+              v-model="confirmationAmount"
+              type="number"
+              step="0.01"
+              class="block w-full rounded-md shadow-sm sm:text-sm"
+              :class="{
+                'border-gray-300 focus:border-gray-900 focus:ring-gray-900': !confirmationAmount,
+                'border-red-300 focus:border-red-500 focus:ring-red-500': confirmationAmount && !isSubmitEnabled,
+                'border-green-300 focus:border-green-500 focus:ring-green-500': isSubmitEnabled
+              }"
+              :placeholder="paymentResource.doc.amount"
             />
+            <div 
+              v-if="confirmationAmount && !isSubmitEnabled"
+              class="mt-1 text-sm text-red-600"
+            >
+              Amount does not match payment amount
+            </div>
           </div>
+        </div>
 
-          <!-- Status Update Error -->
-          <div v-if="statusError" class="text-sm text-red-500 mt-1">
-            {{ statusError }}
-          </div>
+        <!-- Cancellation Reason -->
+        <div v-if="canBeCancelled">
+          <Textarea
+            v-model="cancellationReason"
+            label="Cancellation Reason"
+            placeholder="Please provide a reason for cancellation"
+            variant="outline"
+            size="sm"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Error Message -->
+        <div v-if="statusError" class="text-sm text-red-500 mt-1">
+          {{ statusError }}
         </div>
       </div>
     </template>
@@ -334,11 +339,11 @@ const relatedDocLabel = computed(() => {
 
   switch (doc.related_doctype) {
     case 'RUA LPO':
-      return `Related to purchase order: ${doc.related_docname}`
+      return `${doc.related_docname}`
     case 'RUA Invoice':
-      return `Related to tax invoice: ${doc.related_docname}`
+      return `${doc.related_docname}`
     default:
-      return `Related to: ${doc.related_docname}`
+      return `${doc.related_docname}`
   }
 })
 

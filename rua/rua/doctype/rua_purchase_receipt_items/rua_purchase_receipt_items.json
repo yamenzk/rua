@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-01-22 00:26:16.752372",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "ordered_quantity",
+  "previously_received_quantity",
+  "received_quantity",
+  "remaining_quantity"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item"
+  },
+  {
+   "fieldname": "ordered_quantity",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Ordered Quantity"
+  },
+  {
+   "fieldname": "previously_received_quantity",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Previously Received Quantity"
+  },
+  {
+   "fieldname": "received_quantity",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Received Quantity"
+  },
+  {
+   "fieldname": "remaining_quantity",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Remaining Quantity"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-01-22 00:27:52.529481",
+ "modified_by": "Administrator",
+ "module": "Rua",
+ "name": "RUA Purchase Receipt Items",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

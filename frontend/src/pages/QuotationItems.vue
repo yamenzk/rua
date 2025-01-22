@@ -1,33 +1,37 @@
 # QuotationItems.vue
 <template>
-  <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold">Items</h2>
-      <div class="flex items-center gap-2">
-        <p class="text-sm text-gray-600">
-          {{ items?.length || 0 }} items
-        </p>
-        <Button v-if="isExporting" disabled variant="subtle" size="sm">
-          <template #prefix>
-            <FeatherIcon name="loader" class="w-4 h-4 animate-spin" />
-          </template>
-          Exporting...
-        </Button>
-        <Button v-else variant="subtle" size="sm" @click="exportToExcel">
-          <template #prefix>
-            <FeatherIcon name="download" class="w-4 h-4" />
-          </template>
-          Export
-        </Button>
+  <div class="bg-white">
+    <!-- Header with Actions -->
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <div class="flex items-center gap-4">
+        <span class="text-sm text-gray-500">{{ items?.length || 0 }} items</span>
       </div>
+
+      <!-- Export Button -->
+      <Button 
+        v-if="isExporting" 
+        disabled 
+        variant="subtle" 
+        size="sm"
+        class="flex items-center gap-2"
+      >
+        <FeatherIcon name="loader" class="w-4 h-4 animate-spin" />
+      </Button>
+      <Button 
+        v-else 
+        variant="subtle" 
+        size="sm" 
+        @click="exportToExcel"
+        class="flex items-center gap-2"
+      >
+        <FeatherIcon name="download" class="w-4 h-4" />
+      </Button>
     </div>
 
-    <!-- Table -->
     <div class="overflow-x-auto">
       <!-- Table Header -->
-      <div class="border-b min-w-[800px]">
-        <div class="flex items-center px-6 py-2">
+      <div class="bg-gray-50 border-b min-w-[800px]">
+        <div class="flex items-center px-6 py-3">
           <div class="flex-1 grid grid-cols-8 gap-4">
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="box" class="w-4 h-4" />
@@ -50,13 +54,12 @@
               Qty
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
-              <FeatherIcon name="dollar-sign" class="w-4 h-4" />
               Net Amount
             </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+            <div class="text-sm font-medium text-gray-700 justify-end text-right">
               VAT
             </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+            <div class="text-sm font-medium text-gray-700 justify-end text-right">
               Total
             </div>
           </div>
@@ -81,37 +84,44 @@
                     :hover-delay="1"
                     placement="top"
                   >
-                    <div class="text-sm text-gray-900">
+                    <div class="text-sm font-medium text-gray-900 hover:text-gray-600">
                       {{ item.item_name }}
                     </div>
                   </Tooltip>
                 </div>
+
                 <!-- Dimensions -->
                 <div class="text-sm text-gray-600 text-right">
                   {{ formatNumber(item.width) }} x {{ formatNumber(item.height) }}
                 </div>
+
                 <!-- Area -->
                 <div class="text-sm text-gray-600 text-right">
                   {{ formatNumber(item.area) }}
                 </div>
+
                 <!-- Rate -->
                 <div class="text-sm text-gray-600 text-right">
                   {{ formatCurrency(item.amount) }}
                 </div>
+
                 <!-- Qty -->
                 <div class="text-sm text-gray-600 text-right">
                   {{ item.qty }}
                 </div>
+
                 <!-- Net Amount -->
-                <div class="text-sm text-gray-900 font-medium text-right">
+                <div class="text-sm font-medium text-gray-900 text-right">
                   {{ formatCurrency(item.total) }}
                 </div>
+
                 <!-- VAT -->
                 <div class="text-sm text-gray-600 text-right">
                   {{ formatCurrency(item.vat_amount) }}
                 </div>
+
                 <!-- Total -->
-                <div class="text-sm text-gray-900 font-medium text-right">
+                <div class="text-sm font-medium text-gray-900 text-right">
                   {{ formatCurrency(item.grand_total) }}
                 </div>
               </div>
@@ -119,8 +129,8 @@
           </div>
 
           <!-- Totals Row -->
-          <div class="bg-gray-50 min-w-[800px]">
-            <div class="flex items-center px-6 py-3">
+          <div class="bg-gray-50 border-t min-w-[800px]">
+            <div class="flex items-center px-6 py-4">
               <div class="flex-1 grid grid-cols-8 gap-4">
                 <div class="col-span-5 text-sm font-medium text-gray-900 text-right">
                   Totals:
@@ -128,7 +138,7 @@
                 <div class="text-sm font-medium text-gray-900 text-right">
                   {{ formatCurrency(totals.net) }}
                 </div>
-                <div class="text-sm font-medium text-gray-900 text-right">
+                <div class="text-sm text-gray-900 text-right">
                   {{ formatCurrency(totals.vat) }}
                 </div>
                 <div class="text-sm font-medium text-gray-900 text-right">
@@ -140,16 +150,16 @@
         </template>
 
         <!-- Empty State -->
-        <div 
-          v-else 
-          class="flex flex-col items-center justify-center py-12 min-w-[800px]"
-        >
-          <FeatherIcon 
-            name="box" 
-            class="w-12 h-12 text-gray-400 mb-4" 
-          />
-          <p class="text-base font-medium text-gray-900">No Items Found</p>
-          <p class="text-sm text-gray-600">This quotation has no items.</p>
+        <div v-else class="flex flex-col items-center justify-center py-12">
+          <div class="flex flex-col items-center text-center max-w-sm">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <FeatherIcon name="box" class="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 class="text-base font-medium text-gray-900">No Items</h3>
+            <p class="mt-1 text-sm text-gray-500">
+              This quotation has no items.
+            </p>
+          </div>
         </div>
       </div>
     </div>

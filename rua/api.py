@@ -26,7 +26,6 @@ def get_server_time(date=None, time=None, datetime=None):
             'current_datetime': current_datetime
         }
 
-
 @frappe.whitelist()
 def update_lpo_items(lpo_name, items):
     """
@@ -174,6 +173,47 @@ def update_rfq_items(rfq_name, items):
         frappe.log_error("Error updating RFQ items", str(e))
         frappe.throw(_("Error updating RFQ items: {0}").format(str(e)))
 
+@frappe.whitelist()
+def update_receipt_items(receipt_name, items):
+    """
+    Update received quantities in RUA Purchase Receipt document
+    
+    Args:
+        receipt_name (str): Name of the Purchase Receipt document
+        items (list): List of item dictionaries containing:
+            - name: str (name of the item row)
+            - received_quantity: float
+    """
+    if not frappe.has_permission("RUA Purchase Receipt", "write"):
+        frappe.throw(_("Not permitted to update receipt items"))
+        
+    # Convert items from string to list if needed
+    if isinstance(items, str):
+        items = frappe.parse_json(items)
+    
+    try:
+        doc = frappe.get_doc("RUA Purchase Receipt", receipt_name)
+        
+        # Update received quantities
+        for item_data in items:
+            for row in doc.items:
+                if row.name == item_data.get("name"):
+                    row.received_quantity = flt(item_data.get("received_quantity"))
+        
+        # Save the document
+        doc.save()
+        
+        frappe.db.commit()
+        
+        return {
+            "status": "success",
+            "message": "Items updated successfully"
+        }
+        
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.log_error("Error updating receipt items", str(e))
+        frappe.throw(_("Error updating receipt items: {0}").format(str(e)))
 
 @frappe.whitelist()
 def delete_rua_document(docname, passkey):

@@ -29,7 +29,7 @@
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
           <div class="flex-1 grid grid-cols-7 gap-4">
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 col-span-2">
               <FeatherIcon name="file-text" class="w-4 h-4" />
               Invoice Number
             </div>
@@ -46,12 +46,8 @@
               Amount
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="check-circle" class="w-4 h-4" />
-              Status
-            </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="credit-card" class="w-4 h-4" />
-              Payment Status
+              Status
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="info" class="w-4 h-4" />
@@ -121,9 +117,24 @@
                       <div class="flex items-center px-6 py-3 pl-16">
                         <div class="flex-1 grid grid-cols-7 gap-4">
                           <!-- Invoice Number -->
-                          <div class="flex items-center">
-                            <span class="text-sm text-gray-900">{{ invoice.name }} <span v-if="invoice.serial_number">(#{{ invoice.serial_number }})</span></span>
-                          </div>
+                          <div class="flex flex-col col-span-2">
+											<div class="flex items-center gap-2">
+												<Avatar
+													v-if="getPartyData(invoice.party)?.image"
+													:image="getPartyData(invoice.party)?.image"
+													size="sm"
+													shape="circle"
+												/>
+												<span class="text-sm text-gray-900">{{
+													invoice.party
+												}}</span>
+											</div>
+											<div
+												class="ml-7 text-sm text-gray-400 flex items-center"
+											>
+												{{ invoice.name }}
+											</div>
+										</div>
                           <!-- Date -->
                           <div class="text-sm text-gray-600 flex items-center">
                             {{ new Date(invoice.date).toLocaleDateString('en-AE') }}
@@ -144,9 +155,6 @@
                             >
                               {{ invoice.status }}
                             </Badge>
-                          </div>
-                          <!-- Payment Status (only for Tax Invoice) -->
-                          <div class="flex items-center">
                             <Badge
                               v-if="invoice.type === 'Tax Invoice' && invoice.status === 'Final'"
                               :variant="getPaymentStatusVariant(invoice.payment_status) === 'gray' ? 'solid' : 'subtle'"
@@ -248,12 +256,14 @@ import {
   FeatherIcon,
   Button,
   Dialog,
+  Avatar,
   LoadingIndicator
 } from 'frappe-ui'
 import { hasRole } from '@/data/roles'
 import { invoiceResource } from '@/data/invoice'
 import { formatDate, formatCurrency } from '@/utils/format'
 import NewInvoiceDialog from './NewInvoiceDialog.vue'
+import { partyResource } from '@/data/party'
 
 const router = useRouter()
 const showWarningDialog = ref(false)
@@ -268,6 +278,10 @@ const props = defineProps({
     }
   }
 })
+
+function getPartyData(partyName) {
+	return partyResource.data?.find((p) => p.name === partyName)
+}
 
 // State
 const typeCollapsed = ref({

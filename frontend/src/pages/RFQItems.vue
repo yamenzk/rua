@@ -1,55 +1,57 @@
 # RFQItems.vue
 <template>
-  <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold">Items</h2>
-      <div class="flex items-center gap-2">
-        <p class="text-sm text-gray-600">{{ localItems?.length || 0 }} items</p>
+  <div class="bg-white">
+    <!-- Header with Actions -->
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-gray-500">{{ localItems?.length || 0 }} items</span>
+      </div>
 
-        <!-- Actions -->
-        <div v-if="isDraft" class="flex items-center gap-2">
-          <!-- Save Changes Button -->
-          <Button
-            v-if="hasChanges"
-            variant="solid"
-            size="sm"
-            theme="primary"
-            :loading="updateRFQItems.loading"
-            :disabled="updateRFQItems.loading"
-            @click="saveItems"
-          >
-            <template #prefix>
-              <FeatherIcon name="save" class="w-4 h-4" />
-            </template>
-            {{ updateRFQItems.loading ? 'Saving...' : 'Save Changes' }}
-          </Button>
+      <!-- Actions -->
+       <div v-if="!isDraft">
+        <Button 
+        v-if="isExporting" 
+        disabled 
+        variant="subtle" 
+        size="sm"
+        class="flex items-center gap-2"
+      >
+        <FeatherIcon name="loader" class="w-4 h-4 animate-spin" />
+      </Button>
+      <Button 
+        v-else 
+        variant="subtle" 
+        size="sm" 
+        @click="exportToExcel"
+        class="flex items-center gap-2"
+      >
+        <FeatherIcon name="download" class="w-4 h-4" />
+      </Button>
+       </div>
+      <div v-if="isDraft" class="flex items-center gap-2">
+        <!-- Add Row Button -->
+        <Button variant="subtle" size="sm" @click="addNewRow">
+          <template #prefix>
+            <FeatherIcon name="plus" class="w-4 h-4" />
+          </template>
+          Add Row
+        </Button>
 
-          <!-- Add Row Button -->
-          <Button variant="subtle" size="sm" @click="addNewRow">
-            <template #prefix>
-              <FeatherIcon name="plus" class="w-4 h-4" />
-            </template>
-            Add Row
-          </Button>
-
-          <!-- Excel Paste Button -->
-          <Button variant="subtle" size="sm" @click="startPaste" class="hidden md:flex">
-            <template #prefix>
-              <FeatherIcon name="clipboard" class="w-4 h-4" />
-            </template>
-            Paste from Excel
-          </Button>
-        </div>
+        <!-- Excel Paste Button -->
+        <Button variant="subtle" size="sm" @click="startPaste" class="hidden md:flex">
+          <template #prefix>
+            <FeatherIcon name="clipboard" class="w-4 h-4" />
+          </template>
+          Paste from Excel
+        </Button>
       </div>
     </div>
 
-    <!-- Table -->
     <div class="overflow-x-auto">
       <!-- Table Header -->
-      <div class="border-b min-w-[800px]">
-        <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid items-center" :class="gridColsClass">
+      <div class="bg-gray-50 border-b min-w-[800px]">
+        <div class="flex items-center px-6 py-3">
+          <div class="flex-1 grid items-center gap-4" :class="gridColsClass">
             <!-- Common Column -->
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="box" class="w-4 h-4" />
@@ -59,24 +61,45 @@
             <!-- Glass Type Columns -->
             <template v-if="type === 'Glass'">
               <div class="text-sm font-medium text-gray-700">Description</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Width (cm)</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Length (cm)</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Area (sqm)</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Qty</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Total Area</div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+                Width (cm)
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+                Length (cm)
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+                Area (sqm)
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-center">
+                <FeatherIcon name="hash" class="w-4 h-4" />
+                Qty
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+                Total Area
+              </div>
             </template>
 
             <!-- Aluminum Type Columns -->
             <template v-if="type === 'Aluminum'">
-              <div class="text-sm font-medium text-gray-700 text-right">Qty</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Measurement Unit</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Length</div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-center">
+                <FeatherIcon name="hash" class="w-4 h-4" />
+                Qty
+              </div>
+              <div class="text-sm font-medium text-gray-700">
+                Measurement Unit
+              </div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+                Length
+              </div>
             </template>
 
             <!-- Material Type Columns -->
             <template v-if="type === 'Material'">
               <div class="text-sm font-medium text-gray-700">Description</div>
-              <div class="text-sm font-medium text-gray-700 text-right">Qty</div>
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-center">
+                <FeatherIcon name="hash" class="w-4 h-4" />
+                Qty
+              </div>
             </template>
 
             <!-- Actions Column -->
@@ -97,7 +120,7 @@
             class="hover:bg-gray-50 transition-colors min-w-[800px]"
           >
             <div class="flex items-center px-6 py-3">
-              <div class="flex-1 grid items-center gap-2" :class="gridColsClass">
+              <div class="flex-1 grid items-center gap-4" :class="gridColsClass">
                 <!-- Common Fields -->
                 <div>
                   <input
@@ -137,7 +160,7 @@
                       step="any"
                       @input="updateGlassCalculations(index)"
                     />
-                    <div v-else class="text-sm text-gray-600 text-right">
+                    <div v-else class="text-sm text-gray-600 text-center">
                       {{ formatNumber(item.width) }}
                     </div>
                   </div>
@@ -150,11 +173,11 @@
                       step="any"
                       @input="updateGlassCalculations(index)"
                     />
-                    <div v-else class="text-sm text-gray-600 text-right">
+                    <div v-else class="text-sm text-gray-600 text-center">
                       {{ formatNumber(item.length) }}
                     </div>
                   </div>
-                  <div class="text-sm text-gray-600 text-right">
+                  <div class="text-sm text-gray-600 text-center">
                     {{ formatNumber(item.area) }}
                   </div>
                   <div>
@@ -162,15 +185,15 @@
                       v-if="isDraft"
                       type="number"
                       v-model.number="item.qty"
-                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900 text-right"
+                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900 text-center"
                       step="any"
                       @input="updateGlassCalculations(index)"
                     />
-                    <div v-else class="text-sm text-gray-600 text-right">
+                    <div v-else class="text-sm text-gray-600 text-center">
                       {{ formatNumber(item.qty) }}
                     </div>
                   </div>
-                  <div class="text-sm text-gray-600 text-right">
+                  <div class="text-sm font-medium text-gray-900 text-right">
                     {{ formatNumber(item.total_area) }}
                   </div>
                 </template>
@@ -182,11 +205,11 @@
                       v-if="isDraft"
                       type="number"
                       v-model.number="item.qty"
-                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900 text-right"
+                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900 text-center"
                       step="any"
                       @input="debouncedInput"
                     />
-                    <div v-else class="text-sm text-gray-600 text-right">
+                    <div v-else class="text-sm text-gray-600 text-center">
                       {{ formatNumber(item.qty) }}
                     </div>
                   </div>
@@ -195,10 +218,10 @@
                       v-if="isDraft"
                       type="text"
                       v-model="item.measurement_unit"
-                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900 text-right"
+                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900"
                       @input="debouncedInput"
                     />
-                    <div v-else class="text-sm text-gray-600">
+                    <div v-else class="text-sm text-gray-600 text-center">
                       {{ item.measurement_unit }}
                     </div>
                   </div>
@@ -237,11 +260,11 @@
                       v-if="isDraft"
                       type="number"
                       v-model.number="item.qty"
-                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900 text-right"
+                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900 text-center"
                       step="any"
                       @input="debouncedInput"
                     />
-                    <div v-else class="text-sm text-gray-600 text-right">
+                    <div v-else class="text-sm text-gray-600 text-center">
                       {{ formatNumber(item.qty) }}
                     </div>
                   </div>
@@ -250,13 +273,14 @@
                 <!-- Actions -->
                 <template v-if="isDraft">
                   <div class="flex justify-center">
-                    <button
-                      type="button"
-                      class="text-gray-400 hover:text-red-500"
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      theme="error"
                       @click="removeRow(index)"
                     >
                       <FeatherIcon name="trash-2" class="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </template>
               </div>
@@ -265,41 +289,67 @@
         </template>
 
         <!-- Empty State -->
-        <div v-else class="flex flex-col items-center justify-center py-12 min-w-[800px]">
-          <FeatherIcon name="box" class="w-12 h-12 text-gray-400 mb-4" />
-          <p class="text-base font-medium text-gray-900">No Items Found</p>
-          <p class="text-sm text-gray-600">
-            {{ isDraft ? 'Click "Add Row" or paste from Excel to add items.' : 'This RFQ has no items.' }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dialog for Paste -->
-    <Dialog v-model="showPasteDialog" :options="pasteDialogOptions">
-      <template #body-content>
-        <div class="space-y-4">
-          <textarea
-            v-model="pasteContent"
-            class="w-full h-40 p-2 border rounded-md font-mono text-sm"
-            placeholder="Paste your Excel data here..."
-          ></textarea>
-          <div class="text-sm text-gray-600">
-            Paste your data in the format:<br />
-            <template v-if="type === 'Glass'">
-              Item Name[tab]Description[tab]Width[tab]Length[tab]Qty
-            </template>
-            <template v-if="type === 'Aluminum'">
-              Item Name[tab]Qty[tab]Measurement Unit[tab]Length
-            </template>
-            <template v-if="type === 'Material'">
-              Item Name[tab]Description[tab]Qty
-            </template>
+        <div v-else class="flex flex-col items-center justify-center py-12">
+          <div class="flex flex-col items-center text-center max-w-sm">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <FeatherIcon name="box" class="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 class="text-base font-medium text-gray-900">No Items</h3>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ isDraft ? 'Click "Add Row" or paste from Excel to add items.' : 'This RFQ has no items.' }}
+            </p>
           </div>
         </div>
-      </template>
-    </Dialog>
+      </div>
+
+      <!-- Save Changes Bar -->
+      
+    </div>
+    <div v-if="hasChanges && isDraft" class="flex justify-between px-6 py-4 bg-gray-50 border-t">
+        <Button variant="ghost" size="sm" @click="addNewRow">
+          <template #prefix>
+            <FeatherIcon name="plus" class="w-4 h-4" />
+          </template>
+          Add Row
+        </Button>
+        <Button
+          variant="solid"
+          :loading="updateRFQItems.loading"
+          :disabled="updateRFQItems.loading"
+          @click="saveItems"
+        >
+          <template #prefix>
+            <FeatherIcon name="save" class="w-4 h-4" />
+          </template>
+          {{ updateRFQItems.loading ? 'Saving...' : 'Save Changes' }}
+        </Button>
+      </div>
   </div>
+
+  <!-- Paste Dialog -->
+  <Dialog v-model="showPasteDialog" :options="pasteDialogOptions">
+    <template #body-content>
+      <div class="space-y-4">
+        <textarea
+          v-model="pasteContent"
+          class="w-full h-40 p-2 border rounded-md font-mono text-sm focus:border-gray-900 focus:ring-gray-900"
+          placeholder="Paste your Excel data here..."
+        ></textarea>
+        <div class="text-sm text-gray-600">
+          Paste your data in the format:<br />
+          <template v-if="type === 'Glass'">
+            Item Name[tab]Description[tab]Width[tab]Length[tab]Qty
+          </template>
+          <template v-if="type === 'Aluminum'">
+            Item Name[tab]Qty[tab]Measurement Unit[tab]Length
+          </template>
+          <template v-if="type === 'Material'">
+            Item Name[tab]Description[tab]Qty
+          </template>
+        </div>
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
@@ -334,6 +384,7 @@ const localItems = ref(JSON.parse(JSON.stringify(props.items)))
 const originalItems = ref(JSON.parse(JSON.stringify(props.items)))
 const showPasteDialog = ref(false)
 const pasteContent = ref('')
+const isExporting = ref(false)
 
 // Computed
 const isDraft = computed(() => props.status === 'Draft')
@@ -538,6 +589,90 @@ function handleBeforeUnload(e) {
   if (hasChanges.value) {
     e.preventDefault()
     e.returnValue = ''
+  }
+}
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = url
+    script.onload = resolve
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
+
+async function exportToExcel() {
+  try {
+    if (!window.XLSX) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
+    }
+    const XLSX = window.XLSX
+    isExporting.value = true
+    
+    // Prepare headers based on type
+    let headers = []
+    switch (props.type) {
+      case 'Glass':
+        headers = ['Item', 'Description', 'Width (cm)', 'Length (cm)', 'Area (sqm)', 'Quantity', 'Total Area']
+        break
+      case 'Aluminum':
+        headers = ['Item', 'Quantity', 'Measurement Unit', 'Length']
+        break
+      case 'Material':
+        headers = ['Item', 'Description', 'Quantity']
+        break
+    }
+
+    // Prepare data rows based on type
+    const data = localItems.value.map(item => {
+      switch (props.type) {
+        case 'Glass':
+          return [
+            item.item,
+            item.description,
+            formatNumber(item.width),
+            formatNumber(item.length),
+            formatNumber(item.area),
+            formatNumber(item.qty),
+            formatNumber(item.total_area)
+          ]
+        case 'Aluminum':
+          return [
+            item.item,
+            formatNumber(item.qty),
+            item.measurement_unit,
+            formatNumber(item.length)
+          ]
+        case 'Material':
+          return [
+            item.item,
+            item.description,
+            formatNumber(item.qty)
+          ]
+      }
+    })
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
+
+    // Set column widths
+    const colWidths = headers.map(() => ({ wch: 15 }))
+    ws['!cols'] = colWidths
+
+    // Create workbook
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'RFQ Items')
+
+    // Generate filename
+    const filename = `RFQ_Items_${props.rfqName}_${new Date().toISOString().split('T')[0]}.xlsx`
+
+    // Save file
+    XLSX.writeFile(wb, filename)
+  } catch (error) {
+    console.error('Error exporting to Excel:', error)
+  } finally {
+    isExporting.value = false
   }
 }
 

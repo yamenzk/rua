@@ -28,8 +28,8 @@
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-7 gap-4">
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <div class="flex-1 grid grid-cols-8 gap-4">
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 col-span-2">
               <FeatherIcon name="user" class="w-4 h-4" />
               Party
             </div>
@@ -45,7 +45,7 @@
               <FeatherIcon name="hash" class="w-4 h-4" />
               Reference
             </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 col-span-2">
               <FeatherIcon name="credit-card" class="w-4 h-4" />
               Status
             </div>
@@ -115,17 +115,26 @@
                       @click="navigateToLPO(lpo)"
                     >
                       <div class="flex items-center px-6 py-3 pl-16">
-                        <div class="flex-1 grid grid-cols-7 gap-4">
+                        <div class="flex-1 grid grid-cols-8 gap-4">
                           <!-- Party -->
-                          <div class="flex items-center gap-2">
-                            <Avatar
-                              v-if="getPartyData(lpo.party)?.image"
-                              :image="getPartyData(lpo.party)?.image"
-                              size="sm"
-                              shape="circle"
-                            />
-                            <span class="text-sm text-gray-900">{{ lpo.party }}</span>
-                          </div>
+                          <div class="flex flex-col col-span-2">
+											<div class="flex items-center gap-2">
+												<Avatar
+													v-if="getPartyData(lpo.party)?.image"
+													:image="getPartyData(lpo.party)?.image"
+													size="sm"
+													shape="circle"
+												/>
+												<span class="text-sm text-gray-900">{{
+													lpo.party
+												}}</span>
+											</div>
+											<div
+												class="ml-7 text-sm text-gray-400 flex items-center"
+											>
+												{{ lpo.name }}
+											</div>
+										</div>
                           <!-- Date -->
                           <div class="text-sm text-gray-600 flex items-center">
                             {{ new Date(lpo.date).toLocaleDateString('en-AE') }}
@@ -139,7 +148,7 @@
                             {{ lpo.supplier_reference_number }}
                           </div>
                           <!-- Status -->
-                          <div class="flex items-center">
+                          <div class="flex items-center gap-2 col-span-2">
                             <Badge
                               :variant="getStatusVariant(lpo.status) === 'gray' ? 'solid' : 'subtle'"
                               :theme="getStatusVariant(lpo.status)"
@@ -152,6 +161,9 @@
                               :theme="getPaymentStatusVariant(lpo.payment_status)"
                             >
                               {{ lpo.payment_status }}
+                            </Badge>
+                            <Badge v-if="lpo.all_items_received" variant="solid" theme="green">
+                              Received
                             </Badge>
                           </div>
                           <!-- Additional Info -->

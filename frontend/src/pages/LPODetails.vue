@@ -13,7 +13,7 @@
   </div>
 
   <div v-else>
-    <!-- Document Actions -->
+    <!-- Document Header -->
     <div class="sticky top-0 z-10 bg-white border-b">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
@@ -31,8 +31,7 @@
               {{ lpoResource.doc.name }}
             </h1>
             <p class="text-sm text-gray-600 hidden md:inline">
-              Created on {{ formatDate(lpoResource.doc.creation) }} by
-              {{ lpoResource.doc.owner }}
+              Created on {{ formatDate(lpoResource.doc.creation) }} by {{ lpoResource.doc.owner }}
             </p>
           </div>
         </div>
@@ -71,143 +70,208 @@
 
     <!-- Main Content -->
     <div class="space-y-8 px-6 py-4">
-      <!-- Summary Section -->
-      <div class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Purchase Order Details</h2>
-          <div class="text-sm text-gray-600 hidden md:inline">
-            Last modified: {{ formatDate(lpoResource.doc.modified) }} by
-            {{ lpoResource.doc.modified_by }}
+      <!-- Summary Card -->
+      <div class="bg-white rounded-lg border shadow-sm">
+        <!-- Party Information -->
+        <div class="p-6 border-b">
+          <div class="flex items-start space-x-4">
+            <!-- Party Image -->
+            <div class="flex-shrink-0 align-center align-middle self-center">
+              <Avatar
+                v-if="partyData?.image"
+                :image="partyData.image"
+                size="3xl"
+                shape="square"
+              />
+              <div v-else class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                <FeatherIcon name="user" class="w-8 h-8 text-gray-400" />
+              </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="flex-1 grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-medium text-gray-600">Party</label>
+                <p class="mt-1 text-sm text-gray-900">{{ lpoResource.doc.party }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Type</label>
+                <p class="mt-1 text-sm text-gray-900">{{ lpoResource.doc.type }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Reference Number</label>
+                <p class="mt-1 text-sm text-gray-900">{{ lpoResource.doc.supplier_reference_number }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Date</label>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(lpoResource.doc.date, true) }}</p>
+              </div>
+              
+              <!-- Show remarks if cancelled -->
+              <div v-if="lpoResource.doc.status === 'Cancelled'" class="col-span-2">
+                <label class="text-sm font-medium text-red-600">Cancellation Remarks</label>
+                <p class="mt-1 text-sm text-red-600">{{ lpoResource.doc.remarks }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Details Card -->
-        <div class="bg-white border rounded-lg shadow-sm">
-          <!-- Party Information -->
-          <div class="p-6 border-b">
-            <div class="flex items-start space-x-4">
-              <!-- Party Image -->
-              <div class="flex-shrink-0">
-                <img
-                  v-if="partyData?.image"
-                  :src="partyData.image"
-                  :alt="lpoResource.doc.party"
-                  class="w-16 h-16 rounded-lg object-cover"
-                />
-                <div
-                  v-else
-                  class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center"
-                >
-                  <FeatherIcon name="briefcase" class="w-8 h-8 text-gray-400" />
-                </div>
-              </div>
-
-              <!-- Party Details -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-medium text-gray-900">
-                      {{ lpoResource.doc.party }}
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                      <span class="hidden md:inline">LPO Date:</span> {{ formatDate(lpoResource.doc.date, true) }}
-                    </p>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Type: {{ lpoResource.doc.type }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Metrics Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
-            <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Supplier Reference Number</label>
-              <div class="mt-2">
-                <span class="text-2xl font-semibold text-gray-900">
-                  {{ lpoResource.doc.supplier_reference_number }}
-                </span>
-              </div>
-            </div>
-            <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Total Items</label>
-              <div class="mt-2">
-                <span class="text-2xl font-semibold text-gray-900">
-                  {{ lpoResource.doc.total_items }}
-                </span>
-              </div>
-            </div>
-            <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Grand Total</label>
-              <div class="mt-2">
-                <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(lpoResource.doc.grand_total) }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cancellation Notice -->
-          <div
-            v-if="lpoResource.doc.status === 'Cancelled'"
-            class="p-6 bg-red-50 border-t"
-          >
-            <div class="flex items-start">
-              <div class="flex-shrink-0">
-                <FeatherIcon name="alert-circle" class="w-5 h-5 text-red-400" />
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Cancellation Remarks</h3>
-                <div class="mt-2 text-sm text-red-700">
-                  {{ lpoResource.doc.remarks }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Final LPO Preview -->
-          <div
-            v-if="lpoResource.doc.status === 'Final' && lpoResource.doc.final_lpo"
-            class="border-t"
-          >
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x border-b">
           <div class="p-6">
-              <h3 class="text-sm font-medium text-gray-900 mb-4">LPO Document</h3>
-              <iframe
-                v-if="isPDF"
-                :src="lpoResource.doc.final_lpo"
-                class="w-full h-[1200px] border rounded-lg"
-                frameborder="0"
-              ></iframe>
-              <div v-else class="text-center py-8">
-                <a 
-                  :href="lpoResource.doc.final_lpo" 
-                  target="_blank"
-                  rel="noopener noreferrer" 
-                  class="text-gray-600 hover:text-gray-800"
-                >
-                  <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
-                  <span>Download LPO File</span>
-                </a>
-              </div>
+            <label class="text-sm font-medium text-gray-600">Total Items</label>
+            <div class="mt-2">
+              <span class="text-2xl font-semibold text-gray-900">
+                {{ lpoResource.doc.total_items }}
+              </span>
             </div>
           </div>
+          <div class="p-6">
+            <label class="text-sm font-medium text-gray-600">Total Amount</label>
+            <div class="mt-2">
+              <span class="text-2xl font-semibold text-gray-900">
+                {{ formatCurrency(lpoResource.doc.total_amount) }}
+              </span>
+            </div>
+          </div>
+          <div class="p-6">
+            <label class="text-sm font-medium text-gray-600">Grand Total (Inc. VAT)</label>
+            <div class="mt-2">
+              <span class="text-2xl font-semibold text-gray-900">
+                {{ formatCurrency(lpoResource.doc.grand_total) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="lpoResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+          Last modified: {{ formatDate(lpoResource.doc.modified) }} by {{ lpoResource.doc.modified_by }}
         </div>
       </div>
 
-      <!-- Items List -->
-      <LPOItems 
-  :items="lpoResource.doc.items"
-  :type="lpoResource.doc.type"
-  :status="lpoResource.doc.status"
-  :lpo-name="lpoResource.doc.name"
-  :totals="{
-    net: lpoResource.doc.total_amount,
-    vat: lpoResource.doc.vat_amount,
-    grand: lpoResource.doc.grand_total
-  }"
-/>
+      <!-- Items Table -->
+      <div class="bg-white rounded-lg border shadow-sm">
+        <div class="px-6 py-4 border-b">
+          <h2 class="text-lg font-medium text-gray-900">Items</h2>
+        </div>
+        <LPOItems 
+          :items="lpoResource.doc.items"
+          :type="lpoResource.doc.type"
+          :status="lpoResource.doc.status"
+          :lpo-name="lpoResource.doc.name"
+        />
+      </div>
+
+      <!-- Purchase Receipts Card -->
+<div class="bg-white rounded-lg border shadow-sm">
+  <div class="px-6 py-4 border-b">
+    <h2 class="text-lg font-medium text-gray-900">Purchase Receipts</h2>
+  </div>
+  <div class="divide-y">
+    <template v-if="linkedReceipts.length">
+      <div 
+        v-for="receipt in linkedReceipts" 
+        :key="receipt.name"
+        class="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+        @click="router.push(`/project/${projectResource.doc.name}/invoicing/receipt/${receipt.name}`)"
+      >
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <div class="text-sm font-medium text-gray-900">{{ receipt.name }}</div>
+            <div class="text-sm text-gray-600">
+              Supplier Delivery Note: {{ receipt.supplier_delivery_note }}
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge
+              :variant="receipt.status === 'Received' ? 'solid' : 'subtle'"
+              :theme="getDeliveryStatusVariant(receipt.status)"
+            >
+              {{ receipt.status }}
+            </Badge>
+            <FeatherIcon name="chevron-right" class="w-4 h-4 text-gray-400" />
+          </div>
+        </div>
+      </div>
+    </template>
+    <div v-else class="px-6 py-8 text-center text-sm text-gray-600">
+      No purchase receipts found
+    </div>
+  </div>
+</div>
+
+<!-- Payments Card -->
+<div class="bg-white rounded-lg border shadow-sm">
+  <div class="px-6 py-4 border-b">
+    <h2 class="text-lg font-medium text-gray-900">Related Payments</h2>
+  </div>
+  <div class="divide-y">
+    <template v-if="linkedPayments.length">
+      <div 
+        v-for="payment in linkedPayments" 
+        :key="payment.name"
+        class="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+        @click="router.push(`/project/${projectResource.doc.name}/invoicing/payment/${payment.name}`)"
+      >
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <div class="text-sm font-medium text-gray-900">{{ payment.name }}</div>
+            <div class="text-sm text-gray-600">
+              Date: {{ formatDate(payment.date, true) }}
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-sm font-medium text-gray-900">
+              {{ formatCurrency(payment.amount) }}
+            </div>
+            <FeatherIcon name="chevron-right" class="w-4 h-4 text-gray-400" />
+          </div>
+        </div>
+      </div>
+    </template>
+    <div v-else class="px-6 py-8 text-center text-sm text-gray-600">
+      No payments found
+    </div>
+  </div>
+</div>
+
+      <!-- Final LPO Document -->
+      <div 
+        v-if="lpoResource.doc.status === 'Final' && lpoResource.doc.final_lpo" 
+        class="bg-white rounded-lg border shadow-sm"
+      >
+        <div class="flex items-center justify-between border-b px-6 py-4">
+          <h2 class="text-lg font-medium text-gray-900">Final LPO Document</h2>
+          <a 
+            :href="lpoResource.doc.final_lpo" 
+            target="_blank"
+            rel="noopener noreferrer" 
+            class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-2"
+          >
+            <FeatherIcon name="external-link" class="w-4 h-4" />
+            <span>Open in New Tab</span>
+          </a>
+        </div>
+        <div class="p-6">
+          <iframe
+            v-if="isPDF"
+            :src="lpoResource.doc.final_lpo"
+            class="w-full h-[600px] border rounded-lg"
+            frameborder="0"
+          ></iframe>
+          <div v-else class="text-center py-8">
+            <a 
+              :href="lpoResource.doc.final_lpo" 
+              target="_blank"
+              rel="noopener noreferrer" 
+              class="text-gray-600 hover:text-gray-800"
+            >
+              <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
+              <span>Download LPO File</span>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -337,18 +401,59 @@
   :source-doc="lpoResource.doc"
   source-type="RUA LPO"
 />
+<!-- New Item Receipt Dialog -->
+<Dialog
+      v-model="showItemReceiptDialog"
+      :options="{
+        title: 'Create Item Receipt',
+        size: 'sm',
+        actions: [
+          {
+            label: 'Create',
+            loading: isCreatingReceipt,
+            variant: 'solid',
+            onClick: createItemReceipt,
+            disabled: !supplierDeliveryNote.trim() || isCreatingReceipt
+          }
+        ]
+      }"
+    >
+      <template #body-content>
+        <div class="space-y-4">
+          <div>
+            <label for="delivery-note" class="block text-sm font-medium text-gray-700">
+              Supplier Delivery Note Reference
+            </label>
+            <input
+              id="delivery-note"
+              type="text"
+              v-model="supplierDeliveryNote"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+              placeholder="Enter reference number"
+              :disabled="isCreatingReceipt"
+            />
+          </div>
+          <div v-if="receiptError" class="text-sm text-red-600">
+            {{ receiptError }}
+          </div>
+        </div>
+      </template>
+    </Dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { partyResource } from '@/data/party'
+import { paymentResource } from '@/data/payment'
+import { purchaseReceiptResource } from '@/data/purchaseReceipt'
 import {
   Button,
   Badge,
   FeatherIcon,
   Dropdown,
   Dialog,
+  Avatar,
   Textarea,
   FileUploader,
   LoadingIndicator
@@ -380,11 +485,30 @@ const finalLPO = ref(null)
 const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
 const remarks = ref('')
+const showItemReceiptDialog = ref(false)
+const supplierDeliveryNote = ref('')
+const isCreatingReceipt = ref(false)
+const receiptError = ref('')
 const showCreatePaymentDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
   return partyResource.data?.find(p => p.name === lpoResource.value?.doc?.party)
+})
+
+// Purchase Receipt State
+const linkedReceipts = computed(() => {
+  return purchaseReceiptResource.data?.filter(receipt => 
+    receipt.purchase_order === lpoResource.value?.doc?.name &&
+    receipt.status !== 'Cancelled'
+  ) || []
+})
+
+const linkedPayments = computed(() => {
+  return paymentResource.data?.filter(payment => 
+    payment.related_docname === lpoResource.value?.doc?.name &&
+    payment.status === 'Submitted'
+  ) || []
 })
 
 const availableStatuses = computed(() => 
@@ -419,13 +543,25 @@ const actionDropdownOptions = computed(() => {
     }
   ]
 
-  // Only show create payment option for submitted LPOs
-  if (doc.status === 'Final' && doc.payment_status !== 'Paid') {
+  if (doc.status === 'Final') {
+    if (doc.payment_status !== 'Paid') {
+      options.push({
+        label: 'Create Payment',
+        icon: 'credit-card',
+        onClick: () => showCreatePaymentDialog.value = true
+      })
+    }
+    if (doc.all_items_received == 0){
     options.push({
-      label: 'Create Payment',
-      icon: 'credit-card',
-      onClick: () => showCreatePaymentDialog.value = true
+      label: 'Create Item Receipt',
+      icon: 'clipboard',
+      onClick: () => {
+        showItemReceiptDialog.value = true
+        supplierDeliveryNote.value = ''
+        receiptError.value = ''
+      }
     })
+  }
   }
 
   return options
@@ -475,6 +611,17 @@ function getStatusVariant(status) {
   }
 }
 
+function getDeliveryStatusVariant(status) {
+  switch (status?.toLowerCase()) {
+    case 'received':
+      return 'green'
+    case 'draft':
+      return 'orange'
+    default:
+      return 'red'
+  }
+}
+
 function getPaymentStatusVariant(status) {
   switch (status?.toLowerCase()) {
     case 'paid':
@@ -506,6 +653,38 @@ function getAvailableStatuses(currentStatus, paymentLinked) {
       return []
     default:
       return []
+  }
+}
+
+async function createItemReceipt() {
+  if (!supplierDeliveryNote.value.trim()) {
+    receiptError.value = 'Please enter a supplier delivery note reference'
+    return
+  }
+
+  try {
+    isCreatingReceipt.value = true
+    receiptError.value = ''
+
+    // Insert the new purchase receipt and capture its name
+    const newReceipt = await purchaseReceiptResource.insert.submit({
+      purchase_order: lpoResource.value.doc.name,
+      supplier_delivery_note: supplierDeliveryNote.value.trim(),
+      doctype: 'RUA Purchase Receipt'
+    })
+
+    // Route to the newly created item receipt
+    router.push({
+      path: `/project/${props.projectResource.doc.name}/invoicing/receipt/${newReceipt.name}`
+    })
+
+    // Close the dialog
+    showItemReceiptDialog.value = false
+    supplierDeliveryNote.value = ''
+  } catch (error) {
+    receiptError.value = error.message || 'Failed to create item receipt'
+  } finally {
+    isCreatingReceipt.value = false
   }
 }
 

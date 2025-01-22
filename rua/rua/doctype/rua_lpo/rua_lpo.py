@@ -40,11 +40,42 @@ class RUALPO(Document):
         }
     }
 
+    ITEMS_RECEIVED_HANDLER = {
+        "All Items Received": {
+            "type": "Success",
+            "timeline": 1,
+            "message": lambda doc: f"All items for LPO #{doc.name} ({doc.party}) have been received"
+        }
+    }
+
     def publish_update(self):
         rua.refetch_resource("rua:lpo")
 
     def on_update(self):
         self.publish_update()
+
+        if self.has_value_changed('status'):
+            try:
+                if not self.project:
+                    frappe.throw("Project is mandatory")
+
+                project_doc = frappe.get_doc("RUA Project", self.project)
+                
+                if self.status == "Final":
+                    project_doc.project_cost = flt(project_doc.project_cost + self.grand_total)
+
+                elif self.status == "Cancelled":
+                    if self.get_doc_before_save().status == "Final":
+                        project_doc.project_cost = flt(project_doc.project_cost - self.grand_total)
+                
+                project_doc.save(ignore_permissions=True)
+                
+            except Exception as e:
+                frappe.log_error(f"Error updating project cost: {str(e)}")  
+        
+        # Send message when all items are newly received
+        if current_all_items_received and not previous_all_items_received:
+            ChatMessageHandler(self).handle_status_update(self.ITEMS_RECEIVED_HANDLER)
         
         # Handle status changes (except Draft)
         if self.has_value_changed('status') and self.status != "Draft":
@@ -55,6 +86,19 @@ class RUALPO(Document):
             handler = self.PAYMENT_STATUS_HANDLERS.get(self.payment_status)
             if handler:
                 ChatMessageHandler(self).handle_status_update({self.payment_status: handler})
+        
+        # Check for all items received
+        previous_all_items_received = self.get_doc_before_save().all_items_received or 0
+        current_all_items_received = 1
+        
+        for item in self.items:
+            if item.received_quantity < item.qty:
+                current_all_items_received = 0
+                break
+                
+        frappe.db.set_value("RUA LPO", self.name, "all_items_received", current_all_items_received)
+        frappe.db.commit()
+
 
     def on_trash(self):
         self.publish_update()
@@ -75,22 +119,3 @@ class RUALPO(Document):
             self.total_amount += flt(item.total_amount)
             self.vat_amount += flt(item.vat_amount)
             self.grand_total += flt(item.grand_total)
-
-        if self.has_value_changed('status'):
-            try:
-                if not self.project:
-                    frappe.throw("Project is mandatory")
-
-                project_doc = frappe.get_doc("RUA Project", self.project)
-                
-                if self.status == "Final":
-                    project_doc.project_cost = flt(project_doc.project_cost + self.grand_total)
-
-                elif self.status == "Cancelled":
-                    if self.get_doc_before_save().status == "Final":
-                        project_doc.project_cost = flt(project_doc.project_cost - self.grand_total)
-                
-                project_doc.save(ignore_permissions=True)
-                
-            except Exception as e:
-                frappe.log_error(f"Error updating project cost: {str(e)}")

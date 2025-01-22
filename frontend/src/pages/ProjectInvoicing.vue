@@ -72,7 +72,7 @@ import PurchaseOrdersTab from './PurchaseOrdersTab.vue'
 import RFQsTab from './RFQsTab.vue'
 import InvoicesTab from './InvoicesTab.vue'
 import PaymentsTab from './PaymentsTab.vue'
-import ComingSoon from '../components/ComingSoon.vue'
+import PurchaseReceiptsTab from './PurchaseReceiptsTab.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -171,24 +171,14 @@ const getCurrentTabComponent = computed(() => {
     purchaseOrders: PurchaseOrdersTab,
     rfqs: RFQsTab,
     invoices: InvoicesTab,
-    payments: PaymentsTab
+    payments: PaymentsTab,
+    purchaseReceipts: PurchaseReceiptsTab
   }
 
   const component = components[currentTab.value]
   if (component) {
     return component
   }
-
-  // Return ComingSoon component with current tab props
-  return defineComponent({
-    setup() {
-      return () => h(ComingSoon, {
-        icon: getCurrentTabIcon.value,
-        label: getCurrentTabLabel.value,
-        projectResource: props.projectResource
-      })
-    }
-  })
 })
 
 // Methods

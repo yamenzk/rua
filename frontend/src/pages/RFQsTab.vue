@@ -28,8 +28,8 @@
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-5 gap-4">
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <div class="flex-1 grid grid-cols-6 gap-4">
+            <div class="flex items-center gap-2 col-span-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="user" class="w-4 h-4" />
               Party
             </div>
@@ -111,8 +111,9 @@
                       @click="navigateToRFQ(rfq)"
                     >
                       <div class="flex items-center px-6 py-3 pl-16">
-                        <div class="flex-1 grid grid-cols-5 gap-4">
+                        <div class="flex-1 grid grid-cols-6 gap-4">
                           <!-- Party -->
+                           <div class="flex flex-col col-span-2">
                           <div class="flex items-center gap-2">
                             <Avatar
                               v-if="getPartyData(rfq.party)?.image"
@@ -122,6 +123,10 @@
                             />
                             <span class="text-sm text-gray-900">{{ rfq.party }}</span>
                           </div>
+                          <div class="text-sm text-gray-400 flex items-center ml-7">
+                            {{ rfq.name }}
+                          </div>
+                        </div>
                           <!-- Date -->
                           <div class="text-sm text-gray-600 flex items-center">
                             {{ new Date(rfq.date).toLocaleDateString('en-AE') }}

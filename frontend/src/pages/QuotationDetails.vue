@@ -5,8 +5,15 @@
     <LoadingIndicator />
   </div>
 
+  <div v-else-if="quotationResource.error" class="flex items-center justify-center min-h-[60vh]">
+    <div class="text-center">
+      <FeatherIcon name="alert-circle" class="w-8 h-8 text-red-500 mx-auto mb-2" />
+      <p class="text-gray-600">Failed to load quotation details</p>
+    </div>
+  </div>
+
   <div v-else>
-    <!-- Document Actions -->
+    <!-- Document Header -->
     <div class="sticky top-0 z-10 bg-white border-b">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
@@ -24,8 +31,7 @@
               {{ quotationResource.doc.name }}
             </h1>
             <p class="text-sm text-gray-600 hidden md:inline">
-              Created on {{ formatDate(quotationResource.doc.creation) }} by
-              {{ quotationResource.doc.owner }}
+              Created on {{ formatDate(quotationResource.doc.creation) }} by {{ quotationResource.doc.owner }}
             </p>
           </div>
         </div>
@@ -56,138 +62,129 @@
 
     <!-- Main Content -->
     <div class="space-y-8 px-6 py-4">
-      <!-- Summary Section -->
-      <div class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Quotation Details</h2>
-          <div class="text-sm text-gray-600 hidden md:inline">
-            Last modified: {{ formatDate(quotationResource.doc.modified) }} by
-            {{ quotationResource.doc.modified_by }}
+      <!-- Summary Card -->
+      <div class="bg-white rounded-lg border shadow-sm">
+        <!-- Party Information -->
+        <div class="p-6 border-b">
+          <div class="flex items-start space-x-4">
+            <!-- Party Image -->
+            <div class="flex-shrink-0 flex align-center align-middle self-center">
+              <Avatar
+                v-if="partyData?.image"
+                :image="partyData.image"
+                size="3xl"
+                shape="square"
+              />
+              <div v-else class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                <FeatherIcon name="user" class="w-8 h-8 text-gray-400" />
+              </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="flex-1 grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-medium text-gray-600">Party</label>
+                <p class="mt-1 text-sm text-gray-900">{{ quotationResource.doc.party }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Date</label>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(quotationResource.doc.date, true) }}</p>
+              </div>
+
+              <!-- Show rejection reason if rejected -->
+              <div v-if="quotationResource.doc.status === 'Rejected'" class="col-span-2">
+                <label class="text-sm font-medium text-red-600">Rejection Reason</label>
+                <p class="mt-1 text-sm text-red-600">{{ quotationResource.doc.reject_reason }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Details Card -->
-        <div class="bg-white border rounded-lg shadow-sm">
-          <!-- Party Information -->
-          <div class="p-6 border-b">
-            <div class="flex items-start space-x-4">
-              <!-- Party Image -->
-              <div class="flex-shrink-0">
-                <img
-                  v-if="partyData?.image"
-                  :src="partyData.image"
-                  :alt="quotationResource.doc.party"
-                  class="w-16 h-16 rounded-lg object-cover"
-                />
-                <div
-                  v-else
-                  class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center"
-                >
-                  <FeatherIcon name="briefcase" class="w-8 h-8 text-gray-400" />
-                </div>
-              </div>
-
-              <!-- Party Details -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-medium text-gray-900">
-                      {{ quotationResource.doc.party }}
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                      <span class="hidden md:inline">Quotation Date:</span>
-                      {{ formatDate(quotationResource.doc.date, true) }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Metrics Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
-            <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Total Items</label>
-              <div class="mt-2">
-                <span class="text-2xl font-semibold text-gray-900">
-                  {{ quotationResource.doc.total_items }}
-                </span>
-              </div>
-            </div>
-            <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Net Total</label>
-              <div class="mt-2">
-                <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(quotationResource.doc.total) }}
-                </span>
-              </div>
-            </div>
-            <div class="p-6">
-              <label class="text-sm font-medium text-gray-600">Grand Total</label>
-              <div class="mt-2">
-                <span class="text-2xl font-semibold text-gray-900">
-                  {{ formatCurrency(quotationResource.doc.grand_total) }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Rejection Notice -->
-          <div
-            v-if="quotationResource.doc.status === 'Rejected'"
-            class="p-6 bg-red-50 border-t"
-          >
-            <div class="flex items-start">
-              <div class="flex-shrink-0">
-                <FeatherIcon name="alert-circle" class="w-5 h-5 text-red-400" />
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Rejection Reason</h3>
-                <div class="mt-2 text-sm text-red-700">
-                  {{ quotationResource.doc.reject_reason }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Signed Document Preview -->
-          <div
-            v-if="quotationResource.doc.status === 'Final' && quotationResource.doc.signed_document"
-            class="border-t"
-          >
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x border-b">
           <div class="p-6">
-              <h3 class="text-sm font-medium text-gray-900 mb-4">Signed Quotation</h3>
-              <iframe
-                v-if="isPDF"
-                :src="quotationResource.doc.signed_document"
-                class="w-full h-[1200px] border rounded-lg"
-                frameborder="0"
-              ></iframe>
-              <div v-else class="text-center py-8">
-                <a 
-                  :href="quotationResource.doc.signed_document" 
-                  target="_blank"
-                  rel="noopener noreferrer" 
-                  class="text-gray-600 hover:text-gray-800"
-                >
-                  <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
-                  <span>Download Signed Quotation</span>
-                </a>
-              </div>
+            <label class="text-sm font-medium text-gray-600">Total Items</label>
+            <div class="mt-2">
+              <span class="text-2xl font-semibold text-gray-900">
+                {{ quotationResource.doc.total_items }}
+              </span>
             </div>
           </div>
+          <div class="p-6">
+            <label class="text-sm font-medium text-gray-600">Total Amount</label>
+            <div class="mt-2">
+              <span class="text-2xl font-semibold text-gray-900">
+                {{ formatCurrency(quotationResource.doc.total) }}
+              </span>
+            </div>
+          </div>
+          <div class="p-6">
+            <label class="text-sm font-medium text-gray-600">Grand Total (Inc. VAT)</label>
+            <div class="mt-2">
+              <span class="text-2xl font-semibold text-gray-900">
+                {{ formatCurrency(quotationResource.doc.grand_total) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="quotationResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+          Last modified: {{ formatDate(quotationResource.doc.modified) }} by {{ quotationResource.doc.modified_by }}
         </div>
       </div>
 
-      <!-- Items List -->
-      <QuotationItems 
-        :items="quotationResource.doc.items"
-        :totals="{
-          net: quotationResource.doc.total,
-          vat: quotationResource.doc.vat_amount,
-          grand: quotationResource.doc.grand_total
-        }"
-      />
+      <!-- Items Table -->
+      <div class="bg-white rounded-lg border shadow-sm">
+        <div class="px-6 py-4 border-b">
+          <h2 class="text-lg font-medium text-gray-900">Items</h2>
+        </div>
+        <QuotationItems 
+          :items="quotationResource.doc.items"
+          :totals="{
+            net: quotationResource.doc.total,
+            vat: quotationResource.doc.vat_amount,
+            grand: quotationResource.doc.grand_total
+          }"
+        />
+      </div>
+
+      <!-- Signed Document -->
+      <div 
+        v-if="quotationResource.doc.status === 'Final' && quotationResource.doc.signed_document" 
+        class="bg-white rounded-lg border shadow-sm"
+      >
+        <div class="flex items-center justify-between border-b px-6 py-4">
+          <h2 class="text-lg font-medium text-gray-900">Signed Quotation</h2>
+          <a 
+            :href="quotationResource.doc.signed_document" 
+            target="_blank"
+            rel="noopener noreferrer" 
+            class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-2"
+          >
+            <FeatherIcon name="external-link" class="w-4 h-4" />
+            <span>Open in New Tab</span>
+          </a>
+        </div>
+        <div class="p-6">
+          <iframe
+            v-if="isPDF"
+            :src="quotationResource.doc.signed_document"
+            class="w-full h-[600px] border rounded-lg"
+            frameborder="0"
+          ></iframe>
+          <div v-else class="text-center py-8">
+            <a 
+              :href="quotationResource.doc.signed_document" 
+              target="_blank"
+              rel="noopener noreferrer" 
+              class="text-gray-600 hover:text-gray-800"
+            >
+              <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
+              <span>Download Signed Quotation</span>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -316,6 +313,7 @@ import {
   Dropdown,
   Dialog,
   Textarea,
+  Avatar,
   FileUploader,
   LoadingIndicator
 } from 'frappe-ui'

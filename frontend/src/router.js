@@ -150,6 +150,11 @@ const routes = [
         component: () => import('@/pages/PaymentDetails.vue'),
       },
       {
+        path: 'invoicing/receipt/:receiptId',
+        name: 'PurchaseReceiptDetails',
+        component: () => import('@/pages/PurchaseReceiptDetails.vue'),
+      },
+      {
         path: 'sub-projects',
         name: 'ProjectSubProjects',
         component: () => import('@/pages/ProjectSubProjects.vue'),

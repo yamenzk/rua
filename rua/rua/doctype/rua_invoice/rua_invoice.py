@@ -54,31 +54,6 @@ class RUAInvoice(Document):
     def on_update(self):
         self.publish_update()
 
-        if self.has_value_changed('status') and self.status == "Final":
-            invoices = frappe.get_list('RUA Invoice', fields=['serial_number'], filters=[{'project': self.project}, {'status': 'Final'}, {'type': 'Tax Invoice'}], order_by='serial_number desc', limit=1)
-            highest_serial = invoices[0].serial_number if invoices else 0
-            self.serial_number = highest_serial + 1
-        
-        # Handle status changes (except Draft)
-        if self.has_value_changed('status') and self.status != "Draft":
-            ChatMessageHandler(self).handle_status_update(self.STATUS_HANDLERS)
-        
-        # Handle payment status changes (only if status is Final)
-        if self.status == "Final" and self.has_value_changed('payment_status'):
-            handler = self.PAYMENT_STATUS_HANDLERS.get(self.payment_status)
-            if handler:
-                ChatMessageHandler(self).handle_status_update({self.payment_status: handler})
-
-    def on_trash(self):
-        self.publish_update()
-    
-    def before_save(self):
-        if self.status == "Final" and self.serial_number == 0:
-            invoices = frappe.get_list('RUA Invoice', fields=['serial_number'], filters=[{'project': self.project}, {'status': 'Final'}, {'type': 'Tax Invoice'}], order_by='serial_number desc', limit=1)
-            highest_serial = invoices[0].serial_number if invoices else 0
-            self.serial_number = highest_serial + 1
-    
-    def validate(self):
         if not self.project:
             frappe.throw("Project is mandatory")
 
@@ -120,6 +95,30 @@ class RUAInvoice(Document):
 
         except Exception as e:
             frappe.log_error(f"Error in invoice validation: {str(e)}")
+
+        if self.has_value_changed('status') and self.status == "Final":
+            invoices = frappe.get_list('RUA Invoice', fields=['serial_number'], filters=[{'project': self.project}, {'status': 'Final'}, {'type': 'Tax Invoice'}], order_by='serial_number desc', limit=1)
+            highest_serial = invoices[0].serial_number if invoices else 0
+            self.serial_number = highest_serial + 1
+        
+        # Handle status changes (except Draft)
+        if self.has_value_changed('status') and self.status != "Draft":
+            ChatMessageHandler(self).handle_status_update(self.STATUS_HANDLERS)
+        
+        # Handle payment status changes (only if status is Final)
+        if self.status == "Final" and self.has_value_changed('payment_status'):
+            handler = self.PAYMENT_STATUS_HANDLERS.get(self.payment_status)
+            if handler:
+                ChatMessageHandler(self).handle_status_update({self.payment_status: handler})
+
+    def on_trash(self):
+        self.publish_update()
+    
+    def before_save(self):
+        if self.status == "Final" and self.serial_number == 0:
+            invoices = frappe.get_list('RUA Invoice', fields=['serial_number'], filters=[{'project': self.project}, {'status': 'Final'}, {'type': 'Tax Invoice'}], order_by='serial_number desc', limit=1)
+            highest_serial = invoices[0].serial_number if invoices else 0
+            self.serial_number = highest_serial + 1
 
     def after_insert(self):
         self.publish_update()

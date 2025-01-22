@@ -278,6 +278,7 @@ import { lpoResource } from '@/data/lpo'
 import { invoiceResource } from '@/data/invoice'
 import { employeeResource } from '@/data/employee'
 import { paymentResource } from '@/data/payment'
+import { purchaseReceiptResource } from '@/data/purchaseReceipt'
 
 // Props
 const props = defineProps({
@@ -400,7 +401,18 @@ const references = computed(() => {
 		link: `/project/${projectName}/invoicing/payment/${i.name}`,
 	}))
 
-	return [...quotations, ...rfqs, ...lpos, ...invoices, ...payments]
+	const receipts = (purchaseReceiptResource.data || [])
+	.filter((i) => i.project === projectName)
+	.map((i) => ({
+		name: i.name,
+		doctype: 'RUA Purchase Receipt',
+		party: i.party,
+		date: i.date,
+		link: `/project/${projectName}/invoicing/receipt/${i.name}`,
+	}))
+
+
+	return [...quotations, ...rfqs, ...lpos, ...invoices, ...payments, ...receipts]
 })
 
 const users = computed(() => {

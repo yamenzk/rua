@@ -5,8 +5,15 @@
     <LoadingIndicator />
   </div>
 
+  <div v-else-if="invoiceResource.error" class="flex items-center justify-center min-h-[60vh]">
+    <div class="text-center">
+      <FeatherIcon name="alert-circle" class="w-8 h-8 text-red-500 mx-auto mb-2" />
+      <p class="text-gray-600">Failed to load invoice details</p>
+    </div>
+  </div>
+
   <div v-else>
-    <!-- Document Actions -->
+    <!-- Document Header -->
     <div class="sticky top-0 z-10 bg-white border-b">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
@@ -21,11 +28,11 @@
           <!-- Document Info -->
           <div class="flex flex-col">
             <h1 class="text-xl font-bold text-gray-900">
-              {{ invoiceResource.doc.name }} <span v-if="invoiceResource.doc.serial_number">(#{{ invoiceResource.doc.serial_number }})</span>
+              {{ invoiceResource.doc.name }} 
+              <span v-if="invoiceResource.doc.serial_number" class="text-gray-600">(#{{ invoiceResource.doc.serial_number }})</span>
             </h1>
             <p class="text-sm text-gray-600 hidden md:inline">
-              Created on {{ formatDate(invoiceResource.doc.creation) }} by
-              {{ invoiceResource.doc.owner }}
+              Created on {{ formatDate(invoiceResource.doc.creation) }} by {{ invoiceResource.doc.owner }}
             </p>
           </div>
         </div>
@@ -65,144 +72,169 @@
 
     <!-- Main Content -->
     <div class="space-y-8 px-6 py-4">
-      <!-- Summary Section -->
-      <div class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Invoice Details</h2>
-          <div class="text-sm text-gray-600 hidden md:inline">
-            Last modified: {{ formatDate(invoiceResource.doc.modified) }} by
-            {{ invoiceResource.doc.modified_by }}
+      <!-- Summary Card -->
+      <div class="bg-white rounded-lg border shadow-sm">
+        <!-- Party Information -->
+        <div class="p-6 border-b">
+          <div class="flex items-start space-x-4">
+            <!-- Party Image -->
+            <div class="flex-shrink-0 align-center align-middle self-center">
+              <Avatar
+                v-if="partyData?.image"
+                :image="partyData.image"
+                size="3xl"
+                shape="square"
+              />
+              <div v-else class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                <FeatherIcon name="user" class="w-8 h-8 text-gray-400" />
+              </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="flex-1 grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-medium text-gray-600">Party</label>
+                <p class="mt-1 text-sm text-gray-900">{{ invoiceResource.doc.party }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Type</label>
+                <p class="mt-1 text-sm text-gray-900">{{ invoiceResource.doc.type }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Invoice Number</label>
+                <p class="mt-1 text-sm text-gray-900">{{ invoiceResource.doc.serial_number || '-' }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Date</label>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(invoiceResource.doc.date, true) }}</p>
+              </div>
+              
+              <!-- Show remarks if cancelled -->
+              <div v-if="invoiceResource.doc.status === 'Cancelled'" class="col-span-2">
+                <label class="text-sm font-medium text-red-600">Cancellation Remarks</label>
+                <p class="mt-1 text-sm text-red-600">{{ invoiceResource.doc.remarks }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Details Card -->
-        <div class="bg-white border rounded-lg shadow-sm">
-          <!-- Party Information -->
-          <div class="p-6 border-b">
-            <div class="flex items-start space-x-4">
-              <!-- Party Image -->
-              <div class="flex-shrink-0">
-                <img
-                  v-if="partyData?.image"
-                  :src="partyData.image"
-                  :alt="invoiceResource.doc.party"
-                  class="w-16 h-16 rounded-lg object-cover"
-                />
-                <div
-                  v-else
-                  class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center"
-                >
-                  <FeatherIcon name="user" class="w-8 h-8 text-gray-400" />
-                </div>
+        <!-- Amount Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-b">
+          <!-- Left Column -->
+          <div class="p-6 space-y-6">
+            <div>
+              <label class="text-sm font-medium text-gray-600">Amount</label>
+              <div class="mt-2">
+                <span class="text-2xl font-semibold text-gray-900">
+                  {{ formatCurrency(invoiceResource.doc.amount) }}
+                </span>
               </div>
-
-              <!-- Party Details -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-medium text-gray-900">
-                      {{ invoiceResource.doc.party }}
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                      <span class="hidden md:inline">Invoice Date:</span>{{ formatDate(invoiceResource.doc.date, true) }}
-                    </p>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Type: {{ invoiceResource.doc.type }}
-                    </p>
-                  </div>
-                </div>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-600">Amount After Retention</label>
+              <div class="mt-2">
+                <span class="text-2xl font-semibold text-gray-900">
+                  {{ formatCurrency(invoiceResource.doc.amount_after_retention) }}
+                </span>
               </div>
             </div>
           </div>
 
-          <!-- Amount Information -->
-          <div class="p-6">
-            <div class="grid grid-cols-2 gap-6">
-              <!-- Column 1 -->
-              <div class="space-y-4">
-                <div>
-                  <label class="text-sm font-medium text-gray-600">Amount</label>
-                  <div class="mt-1">
-                    <span class="text-2xl font-semibold text-gray-900">
-                      {{ formatCurrency(invoiceResource.doc.amount) }}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label class="text-sm font-medium text-gray-600">Amount After Retention</label>
-                  <div class="mt-1">
-                    <span class="text-2xl font-semibold text-gray-900">
-                      {{ formatCurrency(invoiceResource.doc.amount_after_retention) }}
-                    </span>
-                  </div>
-                </div>
+          <!-- Right Column -->
+          <div class="p-6 space-y-6">
+            <div>
+              <label class="text-sm font-medium text-gray-600">VAT After Retention</label>
+              <div class="mt-2">
+                <span class="text-2xl font-semibold text-gray-900">
+                  {{ formatCurrency(invoiceResource.doc.vat_after_retention) }}
+                </span>
               </div>
-
-              <!-- Column 2 -->
-              <div class="space-y-4">
-                <div>
-                  <label class="text-sm font-medium text-gray-600">VAT After Retention</label>
-                  <div class="mt-1">
-                    <span class="text-2xl font-semibold text-gray-900">
-                      {{ formatCurrency(invoiceResource.doc.vat_after_retention) }}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label class="text-sm font-medium text-gray-600">Grand Total</label>
-                  <div class="mt-1">
-                    <span class="text-2xl font-semibold text-gray-900">
-                      {{ formatCurrency(invoiceResource.doc.grand_total) }}
-                    </span>
-                  </div>
-                </div>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-600">Grand Total</label>
+              <div class="mt-2">
+                <span class="text-2xl font-semibold text-gray-900">
+                  {{ formatCurrency(invoiceResource.doc.grand_total) }}
+                </span>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Cancellation Notice -->
-          <div
-            v-if="invoiceResource.doc.status === 'Cancelled'"
-            class="p-6 bg-red-50 border-t"
+        <div v-if="invoiceResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+          Last modified: {{ formatDate(invoiceResource.doc.modified) }} by {{ invoiceResource.doc.modified_by }}
+        </div>
+      </div>
+
+      <!-- Payments Card -->
+<div class="bg-white rounded-lg border shadow-sm">
+  <div class="px-6 py-4 border-b">
+    <h2 class="text-lg font-medium text-gray-900">Related Payments</h2>
+  </div>
+  <div class="divide-y">
+    <template v-if="linkedPayments.length">
+      <div 
+        v-for="payment in linkedPayments" 
+        :key="payment.name"
+        class="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+        @click="router.push(`/project/${projectResource.doc.name}/invoicing/payment/${payment.name}`)"
+      >
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <div class="text-sm font-medium text-gray-900">{{ payment.name }}</div>
+            <div class="text-sm text-gray-600">
+              Date: {{ formatDate(payment.date, true) }}
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-sm font-medium text-gray-900">
+              {{ formatCurrency(payment.amount) }}
+            </div>
+            <FeatherIcon name="chevron-right" class="w-4 h-4 text-gray-400" />
+          </div>
+        </div>
+      </div>
+    </template>
+    <div v-else class="px-6 py-8 text-center text-sm text-gray-600">
+      No payments found
+    </div>
+  </div>
+</div>
+
+      <!-- Invoice Document -->
+      <div 
+        v-if="invoiceResource.doc.status === 'Final' && invoiceResource.doc.invoice_file" 
+        class="bg-white rounded-lg border shadow-sm"
+      >
+        <div class="flex items-center justify-between border-b px-6 py-4">
+          <h2 class="text-lg font-medium text-gray-900">Invoice Document</h2>
+          <a 
+            :href="invoiceResource.doc.invoice_file" 
+            target="_blank"
+            rel="noopener noreferrer" 
+            class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-2"
           >
-            <div class="flex items-start">
-              <div class="flex-shrink-0">
-                <FeatherIcon name="alert-circle" class="w-5 h-5 text-red-400" />
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Cancellation Remarks</h3>
-                <div class="mt-2 text-sm text-red-700">
-                  {{ invoiceResource.doc.remarks }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Invoice Preview -->
-          <div
-            v-if="invoiceResource.doc.status === 'Final' && invoiceResource.doc.invoice_file"
-            class="border-t"
-          >
-            <div class="p-6">
-              <h3 class="text-sm font-medium text-gray-900 mb-4">Invoice Document</h3>
-              <iframe
-                v-if="isPDF"
-                :src="invoiceResource.doc.invoice_file"
-                class="w-full h-[1200px] border rounded-lg"
-                frameborder="0"
-              ></iframe>
-              <div v-else class="text-center py-8">
-                <a 
-                  :href="invoiceResource.doc.invoice_file" 
-                  target="_blank"
-                  rel="noopener noreferrer" 
-                  class="text-gray-600 hover:text-gray-800"
-                >
-                  <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
-                  <span>Download Invoice File</span>
-                </a>
-              </div>
-            </div>
+            <FeatherIcon name="external-link" class="w-4 h-4" />
+            <span>Open in New Tab</span>
+          </a>
+        </div>
+        <div class="p-6">
+          <iframe
+            v-if="isPDF"
+            :src="invoiceResource.doc.invoice_file"
+            class="w-full h-[600px] border rounded-lg"
+            frameborder="0"
+          ></iframe>
+          <div v-else class="text-center py-8">
+            <a 
+              :href="invoiceResource.doc.invoice_file" 
+              target="_blank"
+              rel="noopener noreferrer" 
+              class="text-gray-600 hover:text-gray-800"
+            >
+              <FeatherIcon name="download" class="w-8 h-8 mx-auto mb-2" />
+              <span>Download Invoice File</span>
+            </a>
           </div>
         </div>
       </div>
@@ -347,6 +379,7 @@ import {
   Tooltip,
   Dropdown,
   Dialog,
+  Avatar,
   Textarea,
   FileUploader,
   LoadingIndicator
@@ -354,6 +387,7 @@ import {
 import { formatDate, formatCurrency } from '@/utils/format'
 import { createInvoiceResource } from '@/data/invoice'
 import CreatePaymentDialog from './CreatePaymentDialog.vue'
+import { paymentResource } from '@/data/payment'
 
 const props = defineProps({
   projectResource: {
@@ -387,6 +421,13 @@ const partyData = computed(() => {
 const isPDF = computed(() => {
   const file = invoiceResource.value?.doc?.invoice_file
   return file?.toLowerCase().endsWith('.pdf')
+})
+
+const linkedPayments = computed(() => {
+  return paymentResource.data?.filter(payment => 
+    payment.related_docname === invoiceResource.value?.doc?.name &&
+    payment.status === 'Submitted'
+  ) || []
 })
 
 const availableStatuses = computed(() => 
@@ -463,6 +504,8 @@ const radioClasses = {
   radio: 'w-5 h-5 border-2 rounded-full peer-checked:border-gray-900 peer-checked:border-8 transition-all',
   label: 'ml-3 text-sm font-medium text-gray-900 peer-checked:text-gray-900'
 }
+
+
 
 // Methods
 function getStatusVariant(status) {
