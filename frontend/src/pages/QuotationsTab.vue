@@ -23,16 +23,12 @@
 			<!-- Table Header -->
 			<div class="border-b min-w-[800px]">
 				<div class="flex items-center px-6 py-2">
-					<div class="flex-1 grid grid-cols-6 gap-4">
+					<div class="flex-1 grid grid-cols-5 gap-4">
 						<div
 							class="flex items-center gap-2 text-sm font-medium text-gray-700 col-span-2"
 						>
 							<FeatherIcon name="user" class="w-4 h-4" />
 							Party
-						</div>
-						<div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-							<FeatherIcon name="calendar" class="w-4 h-4" />
-							Date
 						</div>
 						<div class="flex items-center gap-2 text-sm font-medium text-gray-700">
 							<FeatherIcon name="dollar-sign" class="w-4 h-4" />
@@ -92,31 +88,39 @@
 								@click="navigateToQuotation(quotation)"
 							>
 								<div class="flex items-center px-6 py-3">
-									<div class="flex-1 grid grid-cols-6 gap-4">
+									<div class="flex-1 grid grid-cols-5 gap-4">
 										<!-- Party -->
-										<div class="flex flex-col col-span-2">
-											<div class="flex items-center gap-2">
-												<Avatar
-													v-if="getPartyData(quotation.party)?.image"
-													:image="getPartyData(quotation.party)?.image"
-													size="sm"
-													shape="circle"
-												/>
-												<span class="text-sm text-gray-900">{{
-													quotation.party
-												}}</span>
-											</div>
-											<div
-												class="ml-7 text-sm text-gray-400 flex items-center"
-											>
-												{{ quotation.name }}
+										<div class="flex col-span-2">
+											<Avatar
+												v-if="getPartyData(quotation.party)?.image"
+												:image="getPartyData(quotation.party)?.image"
+												size="3xl"
+												shape="square"
+												class="mr-2 border border-gray-300"
+											/>
+											<div class="flex flex-col">
+												<div class="flex items-center gap-2">
+													<div class="text-sm text-gray-900">
+														{{ quotation.party }}
+													</div>
+												</div>
+												<div
+													class="text-sm text-gray-500 flex items-center"
+												>
+													{{ quotation.name }}
+												</div>
+												<div
+													class="text-sm text-gray-400 flex items-center"
+												>
+													{{
+														new Date(
+															quotation.date,
+														).toLocaleDateString('en-AE')
+													}}
+												</div>
 											</div>
 										</div>
 
-										<!-- Date -->
-										<div class="text-sm text-gray-600 flex items-center">
-											{{ formatDate(quotation.date) }}
-										</div>
 										<!-- Grand Total -->
 										<div
 											class="text-sm text-gray-900 font-medium flex items-center"
@@ -366,7 +370,7 @@ function getStatusVariant(status) {
 		case 'draft':
 			return 'orange'
 		case 'submitted':
-			return 'green'
+			return 'blue'
 		case 'rejected':
 			return 'red'
 		case 'final':

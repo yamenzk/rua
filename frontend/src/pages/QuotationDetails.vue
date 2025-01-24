@@ -18,12 +18,18 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
           <!-- Back Button -->
-          <Button @click="router.push(`/project/${projectResource.doc.name}/invoicing/quotations`)">
-            <template #prefix>
-              <FeatherIcon name="arrow-left" class="w-4 h-4" />
-            </template>
-            <span class="hidden md:inline">Back to Quotations</span>
-          </Button>
+          <Button
+						:variant="'solid'"
+						:ref_for="true"
+						theme="gray"
+						size="sm"
+						icon="arrow-left"
+						@click="
+							router.push(
+								`/project/${projectResource.doc.name}/invoicing/quotations`,
+							)
+						"
+					></Button>
 
           <!-- Document Info -->
           <div class="flex flex-col">
@@ -42,8 +48,6 @@
           <Badge
             :variant="quotationResource.doc.status === 'Final' ? 'solid' : 'subtle'"
             :theme="getStatusVariant(quotationResource.doc.status)"
-            class="cursor-pointer"
-            @click="showStatusDialog = true"
           >
             {{ quotationResource.doc.status }}
           </Badge>
@@ -59,6 +63,68 @@
         </div>
       </div>
     </div>
+
+    <!-- Add these status banners after the header section -->
+<div v-if="quotationResource.doc.status === 'Draft'" class="bg-orange-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="alert-triangle" class="h-5 w-5 text-orange-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-orange-800">
+        {{ quotationResource.doc.status }} Quotation
+      </h3>
+      <div class="mt-2 text-sm text-orange-700">
+        Quotation is still in {{ quotationResource.doc.status }} status. Please submit it to {{ quotationResource.doc.party }}.
+      </div>
+      <div class="mt-4">
+        <Button variant="solid" size="sm" @click="showStatusDialog = true">
+          Mark as Submitted
+        </Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div v-if="quotationResource.doc.status === 'Submitted'" class="bg-blue-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="info" class="h-5 w-5 text-blue-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-blue-800">
+        {{ quotationResource.doc.status }} Quotation
+      </h3>
+      <div class="mt-2 text-sm text-blue-700">
+        Quotation submitted to {{ quotationResource.doc.party }}. Please review their response and finalize or reject accordingly.
+      </div>
+      <div class="mt-4 flex gap-3">
+        <Button variant="solid" size="sm" @click="showFinalizeDialog = true">
+          Finalize Quotation
+        </Button>
+        <Button variant="solid" theme="red" size="sm" @click="showRejectDialog = true">
+          Reject
+        </Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div v-if="quotationResource.doc.status === 'Rejected'" class="bg-red-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="x-circle" class="h-5 w-5 text-red-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-red-800">
+        {{ quotationResource.doc.status }} Quotation
+      </h3>
+      <div class="mt-2 text-sm text-red-700">
+        This quotation has been rejected by {{ quotationResource.doc.party }} and cannot be processed further.
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Main Content -->
     <div class="space-y-8 px-6 py-4">
@@ -187,119 +253,141 @@
       </div>
     </div>
   </div>
-
-  <!-- Status Update Dialog -->
-  <Dialog
-    v-model="showStatusDialog"
-    :options="statusDialogOptions"
-  >
-    <template #body-content>
-      <div class="space-y-4">
-        <!-- Status Selection -->
-        <div class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
-            {{ hasAvailableStatuses ? 'Change Status' : 'Status' }}
-          </label>
-
-          <div v-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
-            Reason: {{ quotationResource.doc.reject_reason }}.
-          </div>
-
-          <div v-else class="space-y-3">
-            <div
-              v-for="status in availableStatuses"
-              :key="status"
-              :class="radioClasses.container"
-            >
-              <input
-                type="radio"
-                :id="status"
-                name="status"
-                :value="status"
-                v-model="newStatus"
-                :class="radioClasses.input"
-              />
-              <div :class="radioClasses.radio"></div>
-              <label :for="status" :class="radioClasses.label">
-                {{ status }}
-              </label>
-            </div>
-          </div>
-
-          <!-- Rejection Reason -->
-          <div v-if="newStatus === 'Rejected'" class="mt-4">
-            <Textarea
-              v-model="rejectReason"
-              label="Rejection Reason"
-              placeholder="Please provide a reason for rejection"
-              variant="outline"
-              size="sm"
-              class="w-full"
-            />
-          </div>
-
-          <!-- Status Update Error -->
-          <div v-if="statusError" class="text-sm text-red-500 mt-1">
-            {{ statusError }}
-          </div>
-        </div>
-
-        <!-- Signed Document Upload -->
-        <div v-if="newStatus === 'Final'" class="space-y-4">
-          <div class="text-sm font-medium text-gray-700">Signed Document</div>
-          <FileUploader
-            v-model="signedDocument"
-            :accept="['application/pdf']"
-            :max-size="5000000"
-            :upload-args="uploadArgs"
-            @success="handleUploadSuccess"
-            v-slot="{ openFileSelector, file, uploading, progress, error }"
-          >
-          <div
-  class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
-  @click="openFileSelector"
-  @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
-  @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
-  @drop.prevent="handleDrop($event)"
+<!-- Submit Dialog -->
+<Dialog
+  v-model="showStatusDialog"
+  :options="{
+    title: 'Submit Quotation',
+    size: 'sm',
+    actions: [{
+      label: 'Submit',
+      variant: 'solid',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Submitted'),
+    }],
+  }"
 >
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <div v-if="!file" class="text-center">
-                  <FeatherIcon name="upload-cloud" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <div class="text-sm font-medium text-gray-900">Click to upload PDF</div>
-                  <div class="text-xs text-gray-500">or drag and drop</div>
+  <template #body-content>
+    <div class="text-sm text-gray-600">
+      Are you sure you want to submit this quotation?
+    </div>
+  </template>
+</Dialog>
+<!-- Finalize Dialog -->
+<Dialog
+  v-model="showFinalizeDialog"
+  :options="{
+    title: 'Finalize Quotation',
+    size: 'sm',
+    actions: [{
+      label: 'Finalize',
+      variant: 'solid',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Final'),
+      disabled: !uploadedResult?.file_url || isUpdatingStatus,
+    }],
+  }"
+>
+  <template #body-content>
+    <div class="space-y-4">
+      <div class="text-sm text-gray-600">
+        Please upload the finalized quotation <span class="font-bold text-red-500">signed by {{ quotationResource.doc.party }}</span> to complete this process.
+      </div>
+      
+      <FileUploader
+        v-model="signedDocument"
+        :accept="['application/pdf']"
+        :max-size="5000000"
+        :upload-args="uploadArgs"
+        @success="handleUploadSuccess"
+        v-slot="{ openFileSelector, file, uploading, progress, error }"
+      >
+        <div
+          class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
+          @click="openFileSelector"
+          @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
+          @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
+          @drop.prevent="handleFileDrop($event, openFileSelector)"
+          @dragenter.prevent
+        >
+          <div class="flex flex-col items-center justify-center space-y-2">
+            <div v-if="!file" class="flex flex-col items-center justify-center">
+              <FeatherIcon
+                name="upload-cloud"
+                class="w-8 h-8 text-gray-400 mx-auto mb-2"
+              />
+              <div class="text-sm font-medium text-gray-900">
+                Upload Signed Quotation
+              </div>
+              <div class="text-xs text-gray-500">PDF files up to 5MB</div>
+            </div>
+            <div v-else class="w-full">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                  <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
+                  <span class="text-sm text-gray-900 truncate max-w-[90%]">{{ file.name }}</span>
                 </div>
-                <div v-else class="w-full">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-2">
-                      <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
-                      <span class="text-sm text-gray-900">{{ file.name }}</span>
-                    </div>
-                    <button
-                      v-if="!uploading"
-                      class="text-sm text-red-500 hover:text-red-700"
-                      @click.stop="signedDocument = null"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      class="bg-gray-900 h-2 rounded-full transition-all duration-300"
-                      :style="{ width: progress + '%' }"
-                    ></div>
-                  </div>
-                </div>
-                <div v-if="error" class="text-sm text-red-500">{{ error }}</div>
+                <button
+                  v-if="!uploading"
+                  class="text-sm text-red-500 hover:text-red-700"
+                  @click.stop="signedDocument = null"
+                >
+                  X
+                </button>
+              </div>
+              <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  class="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                  :style="{ width: progress + '%' }"
+                ></div>
               </div>
             </div>
-          </FileUploader>
-          <div class="text-sm text-gray-500">
-            Maximum file size: 5MB. Supported format: PDF
+            <div v-if="error" class="text-sm text-red-500">{{ error }}</div>
           </div>
         </div>
+      </FileUploader>
+      <div class="text-sm text-gray-500">
+        Maximum file size: 5MB. Supported format: PDF
       </div>
-    </template>
-  </Dialog>
+      <div v-if="statusError" class="text-sm text-red-500">
+        {{ statusError }}
+      </div>
+    </div>
+  </template>
+</Dialog>
+
+<!-- Reject Dialog -->
+<Dialog
+  v-model="showRejectDialog"
+  :options="{
+    title: 'Reject Quotation',
+    size: 'sm',
+    actions: [{
+      label: 'Reject',
+      variant: 'solid',
+      theme: 'red',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Rejected'),
+      disabled: !rejectReason || isUpdatingStatus,
+    }],
+  }"
+>
+  <template #body-content>
+    <div class="space-y-4">
+      <Textarea
+        v-model="rejectReason"
+        label="Rejection Reason"
+        placeholder="Please provide a reason for rejection"
+        variant="outline"
+        size="sm"
+        class="w-full"
+      />
+      <div v-if="statusError" class="text-sm text-red-500">
+        {{ statusError }}
+      </div>
+    </div>
+  </template>
+</Dialog>
 </template>
 
 <script setup>
@@ -317,12 +405,10 @@ import {
   FileUploader,
   LoadingIndicator
 } from 'frappe-ui'
-import { inject } from 'vue'
 import { partyResource } from '@/data/party'
 import QuotationItems from './QuotationItems.vue'
 import { formatDate, formatCurrency } from '@/utils/format'
 
-const $socket = inject('$socket')
 const props = defineProps({
   projectResource: { 
     type: Object,
@@ -340,25 +426,18 @@ const isPDF = computed(() => {
 // State Management
 const quotationResource = ref(null)
 const showStatusDialog = ref(false)
-const newStatus = ref('')
 const statusError = ref('')
 const signedDocument = ref(null)
 const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
 const rejectReason = ref('')
+const showFinalizeDialog = ref(false)
+const showRejectDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
   return partyResource.data?.find(p => p.name === quotationResource.value?.doc?.party)
 })
-
-const availableStatuses = computed(() => 
-  getAvailableStatuses(quotationResource.value?.doc?.status)
-)
-
-const hasAvailableStatuses = computed(() => 
-  availableStatuses.value.length > 0
-)
 
 const actionDropdownOptions = computed(() => [
   {
@@ -370,21 +449,13 @@ const actionDropdownOptions = computed(() => [
     label: 'Print',
     icon: 'printer',
     onClick: printQuotation
-  }
+  },
+  {
+			label: 'Reject Quotation',
+			icon: 'x-circle',
+			onClick: () => (showRejectDialog.value = true),
+		}
 ])
-
-const statusDialogOptions = computed(() => ({
-  title: hasAvailableStatuses.value ? 'Update Quotation Status' : 'Quotation Status',
-  size: 'sm',
-  actions: hasAvailableStatuses.value ? [
-    {
-      label: 'Update Status',
-      loading: isUpdatingStatus.value,
-      variant: 'solid',
-      onClick: updateStatus
-    }
-  ] : []
-}))
 
 const uploadArgs = computed(() => ({
   doctype: 'RUA Quotation',
@@ -393,21 +464,13 @@ const uploadArgs = computed(() => ({
   private: true
 }))
 
-// Style Classes
-const radioClasses = {
-  container: 'relative flex items-center p-4 cursor-pointer rounded-lg border hover:border-gray-500 transition-colors',
-  input: 'peer absolute opacity-0 w-full h-full cursor-pointer',
-  radio: 'w-5 h-5 border-2 rounded-full peer-checked:border-gray-900 peer-checked:border-8 transition-all',
-  label: 'ml-3 text-sm font-medium text-gray-900 peer-checked:text-gray-900',
-}
-
 // Methods
 function getStatusVariant(status) {
   switch (status?.toLowerCase()) {
     case 'draft':
       return 'orange'
     case 'submitted':
-      return 'green'
+      return 'blue'
     case 'rejected':
       return 'red'
     case 'final':
@@ -417,26 +480,11 @@ function getStatusVariant(status) {
   }
 }
 
-function getAvailableStatuses(currentStatus) {
-  switch (currentStatus?.toLowerCase()) {
-    case 'draft':
-      return ['Submitted']
-    case 'submitted':
-      return ['Final', 'Rejected']
-    case 'final':
-      return ['Rejected']
-    case 'rejected':
-      return [] // No transitions allowed from rejected
-    default:
-      return []
-  }
-}
-
 function handleUploadSuccess(result) {
   uploadedResult.value = result
 }
 
-function handleDrop(event) {
+function handleFileDrop(event, openFileSelector) {
   const file = event.dataTransfer?.files?.[0]
   if (file && file.type === 'application/pdf') {
     event.currentTarget.classList.remove('border-gray-900')
@@ -447,40 +495,20 @@ function handleDrop(event) {
       input.files = dataTransfer.files
       input.dispatchEvent(new Event('change', { bubbles: true }))
     }
-  } else if (file) {
+  } else {
     statusError.value = 'Please upload a PDF file'
   }
 }
 
-function resetStatusDialog() {
-  showStatusDialog.value = false
-  newStatus.value = ''
-  statusError.value = ''
-  signedDocument.value = null
-  uploadedResult.value = null
-  rejectReason.value = ''
-}
-
-async function updateStatus() {
+async function updateStatus(status) {
   statusError.value = ''
 
-  // Validate status change
-  if (!availableStatuses.value.includes(newStatus.value)) {
-    statusError.value = 'Invalid status transition'
-    return
-  }
-
-  if (!newStatus.value) {
-    statusError.value = 'Please select a status'
-    return
-  }
-
-  if (newStatus.value === 'Rejected' && !rejectReason.value.trim()) {
+  if (status === 'Rejected' && !rejectReason.value.trim()) {
     statusError.value = 'Please provide a rejection reason'
     return
   }
 
-  if (newStatus.value === 'Final' && !uploadedResult.value?.file_url) {
+  if (status === 'Final' && !uploadedResult.value?.file_url) {
     statusError.value = 'Please upload the signed document'
     return
   }
@@ -489,25 +517,36 @@ async function updateStatus() {
     isUpdatingStatus.value = true
     const updateData = {
       name: quotationResource.value.doc.name,
-      status: newStatus.value,
+      status: status,
     }
 
-    if (newStatus.value === 'Final') {
+    if (status === 'Final') {
       updateData.signed_document = uploadedResult.value.file_url
     }
 
-    if (newStatus.value === 'Rejected') {
+    if (status === 'Rejected') {
       updateData.reject_reason = rejectReason.value
     }
 
     await quotationResource.value.setValue.submit(updateData)
     await quotationResource.value.reload()
-    resetStatusDialog()
+    resetDialogs()
   } catch (error) {
     statusError.value = 'Failed to update status'
   } finally {
     isUpdatingStatus.value = false
   }
+}
+
+// Add resetDialogs function
+function resetDialogs() {
+  showStatusDialog.value = false
+  showFinalizeDialog.value = false
+  showRejectDialog.value = false
+  statusError.value = ''
+  signedDocument.value = null
+  uploadedResult.value = null
+  rejectReason.value = ''
 }
 
 async function downloadPDF() {

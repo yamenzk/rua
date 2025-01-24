@@ -18,7 +18,9 @@
   "amount",
   "ref_number",
   "bank",
-  "status"
+  "status",
+  "claim_date",
+  "attach_payment"
  ],
  "fields": [
   {
@@ -92,11 +94,21 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date"
+  },
+  {
+   "fieldname": "claim_date",
+   "fieldtype": "Date",
+   "label": "Claim Date"
+  },
+  {
+   "fieldname": "attach_payment",
+   "fieldtype": "Attach",
+   "label": "Attach Payment"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-20 04:56:11.349927",
+ "modified": "2025-01-24 05:29:36.619697",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Payment",

@@ -18,12 +18,18 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
           <!-- Back Button -->
-          <Button @click="router.push(`/project/${projectResource.doc.name}/invoicing/invoices`)">
-            <template #prefix>
-              <FeatherIcon name="arrow-left" class="w-4 h-4" />
-            </template>
-            <span class="hidden md:inline">Back to Invoices</span>
-          </Button>
+          <Button
+						:variant="'solid'"
+						:ref_for="true"
+						theme="gray"
+						size="sm"
+						icon="arrow-left"
+						@click="
+							router.push(
+								`/project/${projectResource.doc.name}/invoicing/invoices`,
+							)
+						"
+					></Button>
 
           <!-- Document Info -->
           <div class="flex flex-col">
@@ -43,8 +49,6 @@
           <Badge
             :variant="invoiceResource.doc.status === 'Final' ? 'solid' : 'subtle'"
             :theme="getStatusVariant(invoiceResource.doc.status)"
-            class="cursor-pointer"
-            @click="showStatusDialog = true"
           >
             {{ invoiceResource.doc.status }}
           </Badge>
@@ -69,6 +73,68 @@
         </div>
       </div>
     </div>
+
+    <!-- Add these status banners after the header section -->
+<div v-if="invoiceResource.doc.status === 'Draft'" class="bg-orange-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="alert-triangle" class="h-5 w-5 text-orange-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-orange-800">
+        {{ invoiceResource.doc.status }} Invoice
+      </h3>
+      <div class="mt-2 text-sm text-orange-700">
+        Invoice is still in Draft status. Please submit to {{ invoiceResource.doc.party }}.
+      </div>
+      <div class="mt-4">
+        <Button variant="solid" size="sm" @click="showSubmitDialog = true">
+          Mark as Submitted
+        </Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div v-if="invoiceResource.doc.status === 'Submitted'" class="bg-blue-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="info" class="h-5 w-5 text-blue-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-blue-800">
+        {{ invoiceResource.doc.status }} Invoice
+      </h3>
+      <div class="mt-2 text-sm text-blue-700">
+        Invoice submitted to {{ invoiceResource.doc.party }}. Please request their signature to finalize. For any adjustments, kindly cancel this invoice and create a new one.
+      </div>
+      <div class="mt-4 flex gap-3">
+        <Button variant="solid" size="sm" @click="showFinalizeDialog = true">
+          Finalize Invoice
+        </Button>
+        <Button variant="solid" theme="red" size="sm" @click="showCancelDialog = true">
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div v-if="invoiceResource.doc.status === 'Cancelled'" class="bg-red-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="x-circle" class="h-5 w-5 text-red-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-red-800">
+        {{ invoiceResource.doc.status }} Invoice
+      </h3>
+      <div class="mt-2 text-sm text-red-700">
+        This invoice has been cancelled and cannot be processed further.
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Main Content -->
     <div class="space-y-8 px-6 py-4">
@@ -167,7 +233,7 @@
       </div>
 
       <!-- Payments Card -->
-<div class="bg-white rounded-lg border shadow-sm">
+<div class="bg-white rounded-lg border shadow-sm" v-if="linkedPayments.length">
   <div class="px-6 py-4 border-b">
     <h2 class="text-lg font-medium text-gray-900">Related Payments</h2>
   </div>
@@ -242,124 +308,139 @@
   </div>
 
   <!-- Status Update Dialog -->
-  <Dialog
-    v-model="showStatusDialog"
-    :options="statusDialogOptions"
-  >
+<!-- Submit Dialog -->
+<Dialog
+  v-model="showSubmitDialog"
+  :options="{
+    title: 'Submit Invoice',
+    size: 'sm',
+    actions: [{
+      label: 'Submit',
+      variant: 'solid',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Submitted'),
+    }],
+  }"
+>
   <template #body-content>
-  <div class="space-y-4">
-    <!-- Status Selection -->
+    <div class="text-sm text-gray-600">
+      Are you sure you want to submit this invoice?
+    </div>
+  </template>
+</Dialog>
+
+<!-- Finalize Dialog -->
+<Dialog
+  v-model="showFinalizeDialog"
+  :options="{
+    title: 'Finalize Invoice',
+    size: 'sm',
+    actions: [{
+      label: 'Finalize',
+      variant: 'solid',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Final'),
+      disabled: !uploadedResult?.file_url || isUpdatingStatus,
+    }],
+  }"
+>
+  <template #body-content>
     <div class="space-y-4">
-      <label class="block text-sm font-medium text-gray-700">
-        {{ hasAvailableStatuses ? 'Change Status' : 'Status' }}
-      </label>
-
-      <div 
-        v-if="invoiceResource.doc.payment_linked" 
-        class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg"
+      <div class="text-sm text-gray-600">
+        Please upload the invoice <span class="font-bold text-red-500">signed by {{ invoiceResource.doc.party }}</span> to complete this process.
+      </div>
+      
+      <FileUploader
+        v-model="invoiceFile"
+        :accept="['application/pdf']"
+        :max-size="5000000"
+        :upload-args="uploadArgs"
+        @success="handleUploadSuccess"
+        v-slot="{ openFileSelector, file, uploading, progress, error }"
       >
-        This invoice has linked payments and cannot be modified. You must first cancel all related payments before changing the invoice status.
-      </div>
-
-      <div v-else-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
-        {{ invoiceResource.doc.remarks }}
-      </div>
-
-          <div v-else class="space-y-3">
-            <div
-              v-for="status in availableStatuses"
-              :key="status"
-              :class="radioClasses.container"
-            >
-              <input
-                type="radio"
-                :id="status"
-                name="status"
-                :value="status"
-                v-model="newStatus"
-                :class="radioClasses.input"
+        <div
+          class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
+          @click="openFileSelector"
+          @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
+          @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
+          @drop.prevent="handleFileDrop($event, openFileSelector)"
+          @dragenter.prevent
+        >
+        <div class="flex flex-col items-center justify-center space-y-2">
+            <div v-if="!file" class="flex flex-col items-center justify-center">
+              <FeatherIcon
+                name="upload-cloud"
+                class="w-8 h-8 text-gray-400 mx-auto mb-2"
               />
-              <div :class="radioClasses.radio"></div>
-              <label :for="status" :class="radioClasses.label">
-                {{ status }}
-              </label>
-            </div>
-          </div>
-
-          <!-- Cancellation Remarks -->
-          <div v-if="newStatus === 'Cancelled'" class="mt-4">
-            <Textarea
-              v-model="remarks"
-              label="Cancellation Remarks"
-              placeholder="Please provide a reason for cancellation"
-              variant="outline"
-              size="sm"
-              class="w-full"
-            />
-          </div>
-
-          <!-- Invoice File Upload -->
-          <div v-if="newStatus === 'Final'" class="space-y-4">
-            <div class="text-sm font-medium text-gray-700">Invoice File</div>
-            <FileUploader
-              v-model="invoiceFile"
-              :accept="['application/pdf']"
-              :max-size="5000000"
-              :upload-args="uploadArgs"
-              @success="handleUploadSuccess"
-              v-slot="{ openFileSelector, file, uploading, progress, error }"
-            >
-            <div
-                class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
-                @click="openFileSelector"
-                @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
-                @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
-                @drop.prevent="handleDrop($event, openFileSelector)"
-              >
-                <div class="flex flex-col items-center justify-center space-y-2">
-                  <div v-if="!file" class="text-center">
-                    <FeatherIcon name="upload-cloud" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <div class="text-sm font-medium text-gray-900">Click to upload PDF</div>
-                    <div class="text-xs text-gray-500">or drag and drop</div>
-                  </div>
-                  <div v-else class="w-full">
-                    <div class="flex items-center justify-between mb-2">
-                      <div class="flex items-center space-x-2">
-                        <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
-                        <span class="text-sm text-gray-900">{{ file.name }}</span>
-                      </div>
-                      <button
-                        v-if="!uploading"
-                        class="text-sm text-red-500 hover:text-red-700"
-                        @click.stop="invoiceFile = null"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        class="bg-gray-900 h-2 rounded-full transition-all duration-300"
-                        :style="{ width: progress + '%' }"
-                      ></div>
-                    </div>
-                  </div>
-                  <div v-if="error" class="text-sm text-red-500">{{ error }}</div>
-                </div>
+              <div class="text-sm font-medium text-gray-900">
+                Upload Signed Invoice
               </div>
-            </FileUploader>
-            <div class="text-sm text-gray-500">
-              Maximum file size: 5MB. Supported format: PDF
+              <div class="text-xs text-gray-500">PDF files up to 5MB</div>
             </div>
-          </div>
-
-          <!-- Status Update Error -->
-          <div v-if="statusError" class="text-sm text-red-500 mt-1">
-            {{ statusError }}
+            <div v-else class="w-full">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                  <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
+                  <span class="text-sm text-gray-900 truncate max-w-[90%]">{{ file.name }}</span>
+                </div>
+                <button
+                  v-if="!uploading"
+                  class="text-sm text-red-500 hover:text-red-700"
+                  @click.stop="signedDocument = null"
+                >
+                  X
+                </button>
+              </div>
+              <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  class="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                  :style="{ width: progress + '%' }"
+                ></div>
+              </div>
+            </div>
+            <div v-if="error" class="text-sm text-red-500">{{ error }}</div>
           </div>
         </div>
+      </FileUploader>
+    </div>
+  </template>
+</Dialog>
+
+<!-- Cancel Dialog -->
+<Dialog
+  v-model="showCancelDialog"
+  :options="{
+    title: 'Cancel Invoice',
+    size: 'sm',
+    actions: [{
+      label: 'Cancel Invoice',
+      variant: 'solid',
+      theme: 'red',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Cancelled'),
+      disabled: !remarks || isUpdatingStatus || linkedPayments.length > 0,
+    }],
+  }"
+>
+  <template #body-content>
+    <div class="space-y-4" v-if="linkedPayments.length === 0">
+      <Textarea
+        v-model="remarks"
+        label="Cancellation Remarks"
+        placeholder="Please provide a reason for cancellation"
+        variant="outline"
+        size="sm"
+        class="w-full"
+      />
+      <div v-if="statusError" class="text-sm text-red-500">
+        {{ statusError }}
       </div>
-    </template>
-  </Dialog>
+    </div>
+    <div v-else>
+      <p class="text-sm text-gray-600">You cannot cancel this invoice because it has linked payments.</p>
+    </div>
+  </template>
+</Dialog>
   <CreatePaymentDialog
   v-if="invoiceResource?.doc"
   v-model="showCreatePaymentDialog"
@@ -376,7 +457,6 @@ import {
   Button,
   Badge,
   FeatherIcon,
-  Tooltip,
   Dropdown,
   Dialog,
   Avatar,
@@ -404,14 +484,15 @@ const router = useRouter()
 
 // State Management
 const invoiceResource = ref(null)
-const showStatusDialog = ref(false)
-const newStatus = ref('')
 const statusError = ref('')
 const invoiceFile = ref(null)
 const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
 const remarks = ref('')
 const showCreatePaymentDialog = ref(false)
+const showSubmitDialog = ref(false)
+const showFinalizeDialog = ref(false)
+const showCancelDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
@@ -430,16 +511,21 @@ const linkedPayments = computed(() => {
   ) || []
 })
 
-const availableStatuses = computed(() => 
-  getAvailableStatuses(
-    invoiceResource.value?.doc?.status,
-    invoiceResource.value?.doc?.payment_linked
-  )
-)
-
-const hasAvailableStatuses = computed(() => 
-  availableStatuses.value.length > 0
-)
+function handleFileDrop(event, openFileSelector) {
+  const file = event.dataTransfer?.files?.[0]
+  if (file && file.type === 'application/pdf') {
+    event.currentTarget.classList.remove('border-gray-900')
+    const input = document.querySelector('input[type="file"]')
+    if (input) {
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(file)
+      input.files = dataTransfer.files
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+  } else {
+    statusError.value = 'Please upload a PDF file'
+  }
+}
 
 const actionDropdownOptions = computed(() => {
   const doc = invoiceResource.value?.doc
@@ -459,7 +545,12 @@ const actionDropdownOptions = computed(() => {
       label: 'Print',
       icon: 'printer',
       onClick: printInvoice
-    }
+    },
+    {
+			label: 'Cancel Invoice',
+			icon: 'x-circle',
+			onClick: () => (showCancelDialog.value = true),
+		}
   ]
 
   // Only show create payment option for Final Tax Invoices that aren't fully paid
@@ -476,35 +567,12 @@ const actionDropdownOptions = computed(() => {
   return options
 })
 
-const statusDialogOptions = computed(() => ({
-  title: hasAvailableStatuses.value ? 'Update Invoice Status' : 'Invoice Status',
-  size: 'sm',
-  actions: hasAvailableStatuses.value ? [
-    {
-      label: 'Update Status',
-      variant: 'solid',
-      loading: isUpdatingStatus.value,
-      disabled: newStatus.value === 'Final' && !uploadedResult.value?.file_url,
-      onClick: updateStatus
-    }
-  ] : []
-}))
-
 const uploadArgs = computed(() => ({
   doctype: 'RUA Invoice',
   docname: invoiceResource.value?.doc?.name,
   fieldname: 'invoice_file',
   private: true
 }))
-
-// Style Classes
-const radioClasses = {
-  container: 'relative flex items-center p-4 cursor-pointer rounded-lg border hover:border-gray-500 transition-colors',
-  input: 'peer absolute opacity-0 w-full h-full cursor-pointer',
-  radio: 'w-5 h-5 border-2 rounded-full peer-checked:border-gray-900 peer-checked:border-8 transition-all',
-  label: 'ml-3 text-sm font-medium text-gray-900 peer-checked:text-gray-900'
-}
-
 
 
 // Methods
@@ -513,7 +581,7 @@ function getStatusVariant(status) {
     case 'draft':
       return 'orange'
     case 'submitted':
-      return 'green'
+      return 'blue'
     case 'final':
       return 'gray'
     case 'cancelled':
@@ -561,59 +629,27 @@ function handleUploadSuccess(result) {
   uploadedResult.value = result
 }
 
-function handleDrop(event) {
-  const file = event.dataTransfer?.files?.[0]
-  if (file) {
-    const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 
-      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ]
-    
-    if (acceptedTypes.includes(file.type)) {
-      event.currentTarget.classList.remove('border-gray-900')
-      const input = document.querySelector('input[type="file"]')
-      if (input) {
-        const dataTransfer = new DataTransfer()
-        dataTransfer.items.add(file)
-        input.files = dataTransfer.files
-        input.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    } else {
-      statusError.value = 'Please upload a supported file type (PDF, Images, Word, or Excel)'
-    }
-  }
-}
-
-function resetStatusDialog() {
-  showStatusDialog.value = false
-  newStatus.value = ''
+function resetDialogs() {
+  showSubmitDialog.value = false
+  showFinalizeDialog.value = false
+  showCancelDialog.value = false
   statusError.value = ''
   invoiceFile.value = null
   uploadedResult.value = null
   remarks.value = ''
 }
 
-async function updateStatus() {
+// Update the status update function
+async function updateStatus(status) {
   statusError.value = ''
 
-  // Validate status change
-  if (!availableStatuses.value.includes(newStatus.value)) {
-    statusError.value = 'Invalid status transition'
-    return
-  }
-
-  if (!newStatus.value) {
-    statusError.value = 'Please select a status'
-    return
-  }
-
-  if (newStatus.value === 'Cancelled' && !remarks.value.trim()) {
+  if (status === 'Cancelled' && !remarks.value.trim()) {
     statusError.value = 'Please provide cancellation remarks'
     return
   }
 
-  if (newStatus.value === 'Final' && !uploadedResult.value?.file_url) {
-    statusError.value = 'Please upload the invoice file'
+  if (status === 'Final' && !uploadedResult.value?.file_url) {
+    statusError.value = 'Please upload the signed invoice'
     return
   }
 
@@ -621,20 +657,20 @@ async function updateStatus() {
     isUpdatingStatus.value = true
     const updateData = {
       name: invoiceResource.value.doc.name,
-      status: newStatus.value,
+      status: status,
     }
 
-    if (newStatus.value === 'Final') {
+    if (status === 'Final') {
       updateData.invoice_file = uploadedResult.value.file_url
     }
 
-    if (newStatus.value === 'Cancelled') {
+    if (status === 'Cancelled') {
       updateData.remarks = remarks.value
     }
 
     await invoiceResource.value.setValue.submit(updateData)
     await invoiceResource.value.reload()
-    resetStatusDialog()
+    resetDialogs()
   } catch (error) {
     statusError.value = 'Failed to update status'
   } finally {

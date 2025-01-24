@@ -18,12 +18,18 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-4">
           <!-- Back Button -->
-          <Button @click="router.push(`/project/${projectResource.doc.name}/invoicing/purchase-orders`)">
-            <template #prefix>
-              <FeatherIcon name="arrow-left" class="w-4 h-4" />
-            </template>
-            <span class="hidden md:inline">Back to Purchase Orders</span>
-          </Button>
+          <Button
+						:variant="'solid'"
+						:ref_for="true"
+						theme="gray"
+						size="sm"
+						icon="arrow-left"
+						@click="
+							router.push(
+								`/project/${projectResource.doc.name}/invoicing/purchase-orders`,
+							)
+						"
+					></Button>
 
           <!-- Document Info -->
           <div class="flex flex-col">
@@ -42,8 +48,6 @@
           <Badge
             :variant="lpoResource.doc.status === 'Final' ? 'solid' : 'subtle'"
             :theme="getStatusVariant(lpoResource.doc.status)"
-            class="cursor-pointer"
-            @click="showStatusDialog = true"
           >
             {{ lpoResource.doc.status }}
           </Badge>
@@ -56,6 +60,13 @@
             {{ lpoResource.doc.payment_status }}
           </Badge>
 
+          <Badge v-if="lpoResource.doc.all_items_received" variant="solid" theme="green">
+                              Received
+                            </Badge>
+                            <Badge v-else variant="outline" theme="orange">
+                              Pending Delivery
+                            </Badge>
+
           <!-- Actions Dropdown -->
           <Dropdown :options="actionDropdownOptions">
             <Button>
@@ -67,6 +78,67 @@
         </div>
       </div>
     </div>
+
+    <!-- Add these status banners after the header section -->
+<div v-if="lpoResource.doc.status === 'Draft'" class="bg-orange-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="alert-triangle" class="h-5 w-5 text-orange-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-orange-800">
+        {{ lpoResource.doc.status }} Purchase Order
+      </h3>
+      <div class="mt-2 text-sm text-orange-700">
+        LPO is still in Draft status. Please submit to {{ lpoResource.doc.party }}.
+      </div>
+      <div class="mt-4">
+        <Button variant="solid" size="sm" @click="showSubmitDialog = true">
+          Mark as Submitted
+        </Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div v-if="lpoResource.doc.status === 'Submitted'" class="bg-blue-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="info" class="h-5 w-5 text-blue-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-blue-800">
+        {{ lpoResource.doc.status }} Purchase Order
+      </h3>
+      <div class="mt-2 text-sm text-blue-700">
+        LPO submitted. Please await confirmation from {{ lpoResource.doc.party }}, then proceed to finalize.
+      </div>
+      <div class="mt-4 flex gap-3">
+        <Button variant="solid" size="sm" @click="showFinalizeDialog = true">
+          Finalize Purchase Order
+        </Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div v-if="lpoResource.doc.status === 'Cancelled'" class="bg-red-100 px-6 py-4">
+  <div class="flex items-start rounded-lg">
+    <div class="flex-shrink-0">
+      <FeatherIcon name="x-circle" class="h-5 w-5 text-red-400" />
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium text-red-800">
+        {{ lpoResource.doc.status }} Purchase Order
+      </h3>
+      <div class="mt-2 text-sm text-red-700">
+        This purchase order has been cancelled and cannot be processed further.
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
     <!-- Main Content -->
     <div class="space-y-8 px-6 py-4">
@@ -163,7 +235,7 @@
       </div>
 
       <!-- Purchase Receipts Card -->
-<div class="bg-white rounded-lg border shadow-sm">
+<div class="bg-white rounded-lg border shadow-sm" v-if="linkedReceipts.length">
   <div class="px-6 py-4 border-b">
     <h2 class="text-lg font-medium text-gray-900">Purchase Receipts</h2>
   </div>
@@ -201,7 +273,7 @@
 </div>
 
 <!-- Payments Card -->
-<div class="bg-white rounded-lg border shadow-sm">
+<div class="bg-white rounded-lg border shadow-sm" v-if="linkedPayments.length">
   <div class="px-6 py-4 border-b">
     <h2 class="text-lg font-medium text-gray-900">Related Payments</h2>
   </div>
@@ -276,125 +348,141 @@
   </div>
 
   <!-- Status Update Dialog -->
-  <Dialog
-    v-model="showStatusDialog"
-    :options="statusDialogOptions"
-  >
-  <template #body-content>
-  <div class="space-y-4">
-    <!-- Status Selection -->
-    <div class="space-y-4">
-      <label class="block text-sm font-medium text-gray-700">
-        {{ hasAvailableStatuses ? 'Change Status' : 'Status' }}
-      </label>
-
-      <div 
-        v-if="lpoResource.doc.payment_linked" 
-        class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg"
-      >
-        This LPO has linked payments and cannot be modified. You must first cancel all related payments before changing the LPO status.
-      </div>
-
-      <div v-else-if="!hasAvailableStatuses" class="text-sm text-gray-600 italic">
-        {{ lpoResource.doc.remarks }}
-      </div>
-
-          <div v-else class="space-y-3">
-            <div
-              v-for="status in availableStatuses"
-              :key="status"
-              :class="radioClasses.container"
-            >
-              <input
-                type="radio"
-                :id="status"
-                name="status"
-                :value="status"
-                v-model="newStatus"
-                :class="radioClasses.input"
-              />
-              <div :class="radioClasses.radio"></div>
-              <label :for="status" :class="radioClasses.label">
-                {{ status }}
-              </label>
-            </div>
-          </div>
-
-          <!-- Cancellation Remarks -->
-          <div v-if="newStatus === 'Cancelled'" class="mt-4">
-            <Textarea
-              v-model="remarks"
-              label="Cancellation Remarks"
-              placeholder="Please provide a reason for cancellation"
-              variant="outline"
-              size="sm"
-              class="w-full"
-            />
-          </div>
-
-          <!-- Status Update Error -->
-          <div v-if="statusError" class="text-sm text-red-500 mt-1">
-            {{ statusError }}
-          </div>
-        </div>
-
-        <!-- Final LPO Upload -->
-        <div v-if="newStatus === 'Final'" class="space-y-4">
-          <div class="text-sm font-medium text-gray-700">Final LPO Document</div>
-          <FileUploader
-            v-model="finalLPO"
-            :accept="['application/pdf']"
-            :max-size="5000000"
-            :upload-args="uploadArgs"
-            @success="handleUploadSuccess"
-            v-slot="{ openFileSelector, file, uploading, progress, error }"
-          >
-          <div
-  class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
-  @click="openFileSelector"
-  @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
-  @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
-  @drop.prevent="handleDrop($event)"
-  @dragenter.prevent
+  <!-- Submit Dialog -->
+<Dialog
+  v-model="showSubmitDialog"
+  :options="{
+    title: 'Submit Purchase Order',
+    size: 'sm',
+    actions: [{
+      label: 'Submit',
+      variant: 'solid',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Submitted'),
+    }],
+  }"
 >
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <div v-if="!file" class="text-center">
-                  <FeatherIcon name="upload-cloud" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <div class="text-sm font-medium text-gray-900">Click to upload PDF</div>
-                  <div class="text-xs text-gray-500">or drag and drop</div>
+  <template #body-content>
+    <div class="text-sm text-gray-600">
+      Are you sure you want to submit this purchase order?
+    </div>
+  </template>
+</Dialog>
+
+<!-- Finalize Dialog -->
+<Dialog
+  v-model="showFinalizeDialog"
+  :options="{
+    title: 'Finalize Purchase Order',
+    size: 'sm',
+    actions: [{
+      label: 'Finalize',
+      variant: 'solid',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Final'),
+      disabled: !uploadedResult?.file_url || isUpdatingStatus,
+    }],
+  }"
+>
+  <template #body-content>
+    <div class="space-y-4">
+      <div class="text-sm text-gray-600">
+        Please upload the<span class="font-bold text-red-500"> finalized LPO</span> to complete this process.
+      </div>
+      
+      <FileUploader
+        v-model="finalLPO"
+        :accept="['application/pdf']"
+        :max-size="5000000"
+        :upload-args="uploadArgs"
+        @success="handleUploadSuccess"
+        v-slot="{ openFileSelector, file, uploading, progress, error }"
+      >
+        <div
+          class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-900 transition-colors cursor-pointer"
+          @click="openFileSelector"
+          @dragover.prevent="$event.currentTarget.classList.add('border-gray-900')"
+          @dragleave.prevent="$event.currentTarget.classList.remove('border-gray-900')"
+          @drop.prevent="handleFileDrop($event, openFileSelector)"
+          @dragenter.prevent
+        >
+          <div class="flex flex-col items-center justify-center space-y-2">
+            <div v-if="!file" class="flex flex-col items-center justify-center">
+              <FeatherIcon
+                name="upload-cloud"
+                class="w-8 h-8 text-gray-400 mx-auto mb-2"
+              />
+              <div class="text-sm font-medium text-gray-900">
+                Upload Finalized Purchase Order
+              </div>
+              <div class="text-xs text-gray-500">PDF files up to 5MB</div>
+            </div>
+            <div v-else class="w-full">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                  <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
+                  <span class="text-sm text-gray-900 truncate max-w-[90%]">{{ file.name }}</span>
                 </div>
-                <div v-else class="w-full">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-2">
-                      <FeatherIcon name="file" class="w-4 h-4 text-gray-400" />
-                      <span class="text-sm text-gray-900">{{ file.name }}</span>
-                    </div>
-                    <button
-                      v-if="!uploading"
-                      class="text-sm text-red-500 hover:text-red-700"
-                      @click.stop="finalLPO = null"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      class="bg-gray-900 h-2 rounded-full transition-all duration-300"
-                      :style="{ width: progress + '%' }"
-                    ></div>
-                  </div>
-                </div>
-                <div v-if="error" class="text-sm text-red-500">{{ error }}</div>
+                <button
+                  v-if="!uploading"
+                  class="text-sm text-red-500 hover:text-red-700"
+                  @click.stop="signedDocument = null"
+                >
+                  X
+                </button>
+              </div>
+              <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  class="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                  :style="{ width: progress + '%' }"
+                ></div>
               </div>
             </div>
-          </FileUploader>
-          <div class="text-sm text-gray-500">
-            Maximum file size: 5MB. Supported format: PDF
           </div>
         </div>
+      </FileUploader>
+      <div v-if="statusError" class="text-sm text-red-500">
+        {{ statusError }}
       </div>
-    </template>
-  </Dialog>
+    </div>
+  </template>
+</Dialog>
+
+<!-- Cancel Dialog -->
+<Dialog
+  v-model="showCancelDialog"
+  :options="{
+    title: 'Cancel Purchase Order',
+    size: 'sm',
+    actions: [{
+      label: 'Cancel Purchase Order',
+      variant: 'solid',
+      theme: 'red',
+      loading: isUpdatingStatus,
+      onClick: () => updateStatus('Cancelled'),
+      disabled: !remarks || isUpdatingStatus || linkedPayments.length > 0 || linkedReceipts.length > 0,
+    }],
+  }"
+>
+  <template #body-content>
+    <div class="space-y-4" v-if="linkedPayments.length === 0 && linkedReceipts.length === 0">
+      <Textarea
+        v-model="remarks"
+        label="Cancellation Remarks"
+        placeholder="Please provide a reason for cancellation"
+        variant="outline"
+        size="sm"
+        class="w-full"
+      />
+      <div v-if="statusError" class="text-sm text-red-500">
+        {{ statusError }}
+      </div>
+    </div>
+    <div v-else>
+      <p class="text-sm text-gray-600">You cannot cancel this LPO because it has linked payments.</p>
+    </div>
+  </template>
+</Dialog>
   <CreatePaymentDialog
   v-if="lpoResource?.doc"
   v-model="showCreatePaymentDialog"
@@ -405,7 +493,7 @@
 <Dialog
       v-model="showItemReceiptDialog"
       :options="{
-        title: 'Create Item Receipt',
+        title: 'Purchase Receipt',
         size: 'sm',
         actions: [
           {
@@ -478,7 +566,6 @@ const router = useRouter()
 
 // State Management
 const lpoResource = ref(null)
-const showStatusDialog = ref(false)
 const newStatus = ref('')
 const statusError = ref('')
 const finalLPO = ref(null)
@@ -490,6 +577,9 @@ const supplierDeliveryNote = ref('')
 const isCreatingReceipt = ref(false)
 const receiptError = ref('')
 const showCreatePaymentDialog = ref(false)
+const showSubmitDialog = ref(false)
+const showFinalizeDialog = ref(false)
+const showCancelDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
@@ -511,16 +601,6 @@ const linkedPayments = computed(() => {
   ) || []
 })
 
-const availableStatuses = computed(() => 
-  getAvailableStatuses(
-    lpoResource.value?.doc?.status,
-    lpoResource.value?.doc?.payment_linked
-  )
-)
-
-const hasAvailableStatuses = computed(() => 
-  availableStatuses.value.length > 0
-)
 
 const actionDropdownOptions = computed(() => {
   const doc = lpoResource.value?.doc
@@ -540,7 +620,12 @@ const actionDropdownOptions = computed(() => {
       label: 'Print',
       icon: 'printer',
       onClick: printLPO
-    }
+    },
+    {
+			label: 'Cancel LPO',
+			icon: 'x-circle',
+			onClick: () => (showCancelDialog.value = true),
+		}
   ]
 
   if (doc.status === 'Final') {
@@ -553,7 +638,7 @@ const actionDropdownOptions = computed(() => {
     }
     if (doc.all_items_received == 0){
     options.push({
-      label: 'Create Item Receipt',
+      label: 'Purchase Receipt',
       icon: 'clipboard',
       onClick: () => {
         showItemReceiptDialog.value = true
@@ -566,19 +651,6 @@ const actionDropdownOptions = computed(() => {
 
   return options
 })
-
-const statusDialogOptions = computed(() => ({
-  title: hasAvailableStatuses.value ? 'Update LPO Status' : 'LPO Status',
-  size: 'sm',
-  actions: hasAvailableStatuses.value ? [
-    {
-      label: 'Update Status',
-      variant: 'solid',
-      loading: isUpdatingStatus.value,
-      onClick: updateStatus
-    }
-  ] : []
-}))
 
 const uploadArgs = computed(() => ({
   doctype: 'RUA LPO',
@@ -601,7 +673,7 @@ function getStatusVariant(status) {
     case 'draft':
       return 'orange'
     case 'submitted':
-      return 'green'
+      return 'blue'
     case 'cancelled':
       return 'red'
     case 'final':
@@ -635,27 +707,6 @@ function getPaymentStatusVariant(status) {
   }
 }
 
-function getAvailableStatuses(currentStatus, paymentLinked) {
-  // If payment is linked, only allow viewing the status
-  if (paymentLinked) {
-    return []
-  }
-
-  // Regular status flow if no payments are linked
-  switch (currentStatus?.toLowerCase()) {
-    case 'draft':
-      return ['Submitted', 'Cancelled']
-    case 'submitted':
-      return ['Final', 'Cancelled']
-    case 'final':
-      return ['Cancelled']
-    case 'cancelled':
-      return []
-    default:
-      return []
-  }
-}
-
 async function createItemReceipt() {
   if (!supplierDeliveryNote.value.trim()) {
     receiptError.value = 'Please enter a supplier delivery note reference'
@@ -682,7 +733,7 @@ async function createItemReceipt() {
     showItemReceiptDialog.value = false
     supplierDeliveryNote.value = ''
   } catch (error) {
-    receiptError.value = error.message || 'Failed to create item receipt'
+    receiptError.value = error.message || 'Failed to create purchase receipt'
   } finally {
     isCreatingReceipt.value = false
   }
@@ -697,52 +748,49 @@ const isPDF = computed(() => {
   return file?.toLowerCase().endsWith('.pdf')
 })
 
-function handleDrop(event) {
-  const file = event.dataTransfer?.files?.[0]
-  if (file && file.type === 'application/pdf') {
-    event.currentTarget.classList.remove('border-gray-900')
-    const input = document.querySelector('input[type="file"]')
-    if (input) {
-      const dataTransfer = new DataTransfer()
-      dataTransfer.items.add(file)
-      input.files = dataTransfer.files
-      input.dispatchEvent(new Event('change', { bubbles: true }))
-    }
-  } else {
-    statusError.value = 'Please upload a PDF file'
-  }
+function handleFileDrop(event, openFileSelector) {
+	const file = event.dataTransfer?.files?.[0]
+	if (file && file.type === 'application/pdf') {
+		event.currentTarget.classList.remove('border-gray-900')
+		const input = document.querySelector('input[type="file"]')
+		if (input) {
+			const dataTransfer = new DataTransfer()
+			dataTransfer.items.add(file)
+			input.files = dataTransfer.files
+			input.dispatchEvent(new Event('change', { bubbles: true }))
+		}
+	} else {
+		statusError.value = 'Please upload a PDF file'
+	}
 }
 
-function resetStatusDialog() {
-  showStatusDialog.value = false
-  newStatus.value = ''
+function resetDialogs() {
+  showSubmitDialog.value = false
+  showFinalizeDialog.value = false
+  showCancelDialog.value = false
   statusError.value = ''
   finalLPO.value = null
   uploadedResult.value = null
   remarks.value = ''
 }
 
-async function updateStatus() {
+
+async function updateStatus(status) {
   statusError.value = ''
 
-  // Validate status change
-  if (!availableStatuses.value.includes(newStatus.value)) {
-    statusError.value = 'Invalid status transition'
-    return
-  }
-
-  if (!newStatus.value) {
-    statusError.value = 'Please select a status'
-    return
-  }
-
-  if (newStatus.value === 'Cancelled' && !remarks.value.trim()) {
+  if (status === 'Cancelled' && !remarks.value.trim()) {
     statusError.value = 'Please provide cancellation remarks'
     return
   }
 
-  if (newStatus.value === 'Final' && !uploadedResult.value?.file_url) {
-    statusError.value = 'Please upload the final LPO document'
+  if (status === 'Final' && !uploadedResult.value?.file_url) {
+    statusError.value = 'Please upload the signed purchase order'
+    return
+  }
+
+  // Check if the LPO has linked payments
+  if (lpoResource.value?.doc?.payment_linked) {
+    statusError.value = 'Cannot update status. This purchase order has linked payments'
     return
   }
 
@@ -750,20 +798,20 @@ async function updateStatus() {
     isUpdatingStatus.value = true
     const updateData = {
       name: lpoResource.value.doc.name,
-      status: newStatus.value,
+      status: status,
     }
 
-    if (newStatus.value === 'Final') {
+    if (status === 'Final') {
       updateData.final_lpo = uploadedResult.value.file_url
     }
 
-    if (newStatus.value === 'Cancelled') {
+    if (status === 'Cancelled') {
       updateData.remarks = remarks.value
     }
 
     await lpoResource.value.setValue.submit(updateData)
     await lpoResource.value.reload()
-    resetStatusDialog()
+    resetDialogs()
   } catch (error) {
     statusError.value = 'Failed to update status'
   } finally {

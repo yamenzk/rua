@@ -28,14 +28,10 @@
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-6 gap-4">
+          <div class="flex-1 grid grid-cols-5 gap-4">
             <div class="flex items-center gap-2 col-span-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="user" class="w-4 h-4" />
               Party
-            </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="calendar" class="w-4 h-4" />
-              Date
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="tag" class="w-4 h-4" />
@@ -111,26 +107,36 @@
                       @click="navigateToRFQ(rfq)"
                     >
                       <div class="flex items-center px-6 py-3 pl-16">
-                        <div class="flex-1 grid grid-cols-6 gap-4">
+                        <div class="flex-1 grid grid-cols-5 gap-4">
                           <!-- Party -->
-                           <div class="flex flex-col col-span-2">
-                          <div class="flex items-center gap-2">
-                            <Avatar
-                              v-if="getPartyData(rfq.party)?.image"
-                              :image="getPartyData(rfq.party)?.image"
-                              size="sm"
-                              shape="circle"
-                            />
-                            <span class="text-sm text-gray-900">{{ rfq.party }}</span>
-                          </div>
-                          <div class="text-sm text-gray-400 flex items-center ml-7">
-                            {{ rfq.name }}
-                          </div>
+                          <div class="flex col-span-2">
+                      <Avatar
+													v-if="getPartyData(rfq.party)?.image"
+													:image="getPartyData(rfq.party)?.image"
+													size="3xl"
+													shape="square"
+                          class="mr-2 border border-gray-300"
+												/>
+                      <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                          <div class="text-sm text-gray-900">{{rfq.party}}</div>
                         </div>
-                          <!-- Date -->
-                          <div class="text-sm text-gray-600 flex items-center">
-                            {{ new Date(rfq.date).toLocaleDateString('en-AE') }}
-                          </div>
+                        <div
+                          class="text-sm text-gray-500 flex items-center"
+                        >
+                          {{ rfq.name }}
+                        </div>
+                        <div
+                          class="text-sm text-gray-400 flex items-center"
+                        >
+                          {{
+                            new Date(rfq.date).toLocaleDateString(
+                              'en-AE',
+                            )
+                          }}
+                        </div>
+                      </div>
+										</div>
                           <!-- Type -->
                           <div class="text-sm text-gray-600 flex items-center">
                             {{ rfq.type }}
@@ -145,20 +151,34 @@
                             </Badge>
                           </div>
                           <!-- Additional Info -->
-                          <div class="flex items-center">
+                          <div class="flex items-center space-x-2">
                             <div 
                               v-if="rfq.status === 'Quotation Received' && rfq.quotation_file" 
-                              class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                              class="flex items-center text-sm text-blue-600 hover:text-blue-800"
                               @click="openQuotationFile(rfq.quotation_file, $event)"
                             >
                               <FeatherIcon name="file-text" class="w-4 h-4" />
-                              View Quotation
+                              View
                             </div>
                             <div 
                               v-if="rfq.status === 'Cancelled' && rfq.remarks" 
                               class="text-sm text-gray-600 italic"
                             >
                               {{ rfq.remarks }}
+                            </div>
+                            <div v-if="rfq.type === 'Link' && rfq.status !== 'Cancelled'" class="flex items-center">
+                              <FeatherIcon 
+                                name="link" 
+                                class="w-4 h-4 text-blue-600"
+                              />
+                              <a 
+                                :href="`https://${rfq.link}`"
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                class="text-sm text-blue-600 hover:text-blue-800 break-all"
+                              >
+                                Open
+                              </a>
                             </div>
                           </div>
                         </div>

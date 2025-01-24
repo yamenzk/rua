@@ -28,14 +28,10 @@
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-7 gap-4">
+          <div class="flex-1 grid grid-cols-6 gap-4">
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700 col-span-2">
               <FeatherIcon name="file-text" class="w-4 h-4" />
               Invoice Number
-            </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="calendar" class="w-4 h-4" />
-              Date
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="tag" class="w-4 h-4" />
@@ -115,30 +111,36 @@
                       @click="navigateToInvoice(invoice)"
                     >
                       <div class="flex items-center px-6 py-3 pl-16">
-                        <div class="flex-1 grid grid-cols-7 gap-4">
+                        <div class="flex-1 grid grid-cols-6 gap-4">
                           <!-- Invoice Number -->
-                          <div class="flex flex-col col-span-2">
-											<div class="flex items-center gap-2">
-												<Avatar
+                          <div class="flex col-span-2">
+                      <Avatar
 													v-if="getPartyData(invoice.party)?.image"
 													:image="getPartyData(invoice.party)?.image"
-													size="sm"
-													shape="circle"
+													size="3xl"
+													shape="square"
+                          class="mr-2 border border-gray-300"
 												/>
-												<span class="text-sm text-gray-900">{{
-													invoice.party
-												}}</span>
-											</div>
-											<div
-												class="ml-7 text-sm text-gray-400 flex items-center"
-											>
-												{{ invoice.name }}
-											</div>
+                      <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                          <div class="text-sm text-gray-900">{{invoice.party}}</div>
+                        </div>
+                        <div
+                          class="text-sm text-gray-500 flex items-center"
+                        >
+                          {{ invoice.name }}
+                        </div>
+                        <div
+                          class="text-sm text-gray-400 flex items-center"
+                        >
+                          {{
+                            new Date(invoice.date).toLocaleDateString(
+                              'en-AE',
+                            )
+                          }}
+                        </div>
+                      </div>
 										</div>
-                          <!-- Date -->
-                          <div class="text-sm text-gray-600 flex items-center">
-                            {{ new Date(invoice.date).toLocaleDateString('en-AE') }}
-                          </div>
                           <!-- Type -->
                           <div class="text-sm text-gray-600 flex items-center">
                             {{ invoice.type }}
@@ -148,7 +150,7 @@
                             {{ formatCurrency(invoice.amount) }}
                           </div>
                           <!-- Status -->
-                          <div class="flex items-center">
+                          <div class="flex items-center gap-2">
                             <Badge
                               :variant="getStatusVariant(invoice.status) === 'gray' ? 'solid' : 'subtle'"
                               :theme="getStatusVariant(invoice.status)"
@@ -348,7 +350,7 @@ function getStatusVariant(status) {
     case 'draft':
       return 'orange'
     case 'submitted':
-      return 'green'
+      return 'blue'
     case 'final':
       return 'gray'
     case 'cancelled':

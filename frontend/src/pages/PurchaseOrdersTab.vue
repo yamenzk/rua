@@ -28,14 +28,10 @@
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-8 gap-4">
+          <div class="flex-1 grid grid-cols-7 gap-4">
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700 col-span-2">
               <FeatherIcon name="user" class="w-4 h-4" />
               Party
-            </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="calendar" class="w-4 h-4" />
-              Date
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="dollar-sign" class="w-4 h-4" />
@@ -115,30 +111,36 @@
                       @click="navigateToLPO(lpo)"
                     >
                       <div class="flex items-center px-6 py-3 pl-16">
-                        <div class="flex-1 grid grid-cols-8 gap-4">
+                        <div class="flex-1 grid grid-cols-7 gap-4">
                           <!-- Party -->
-                          <div class="flex flex-col col-span-2">
-											<div class="flex items-center gap-2">
-												<Avatar
+                          <div class="flex col-span-2">
+                      <Avatar
 													v-if="getPartyData(lpo.party)?.image"
 													:image="getPartyData(lpo.party)?.image"
-													size="sm"
-													shape="circle"
+													size="3xl"
+													shape="square"
+                          class="mr-2 border border-gray-300"
 												/>
-												<span class="text-sm text-gray-900">{{
-													lpo.party
-												}}</span>
-											</div>
-											<div
-												class="ml-7 text-sm text-gray-400 flex items-center"
-											>
-												{{ lpo.name }}
-											</div>
+                      <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                          <div class="text-sm text-gray-900">{{lpo.party}}</div>
+                        </div>
+                        <div
+                          class="text-sm text-gray-500 flex items-center"
+                        >
+                          {{ lpo.name }}
+                        </div>
+                        <div
+                          class="text-sm text-gray-400 flex items-center"
+                        >
+                          {{
+                            new Date(lpo.date).toLocaleDateString(
+                              'en-AE',
+                            )
+                          }}
+                        </div>
+                      </div>
 										</div>
-                          <!-- Date -->
-                          <div class="text-sm text-gray-600 flex items-center">
-                            {{ new Date(lpo.date).toLocaleDateString('en-AE') }}
-                          </div>
                           <!-- Grand Total -->
                           <div class="text-sm text-gray-900 font-medium flex items-center">
                             {{ formatCurrency(lpo.grand_total) }}
@@ -162,8 +164,11 @@
                             >
                               {{ lpo.payment_status }}
                             </Badge>
-                            <Badge v-if="lpo.all_items_received" variant="solid" theme="green">
+                            <Badge v-if="lpo.all_items_received && lpo.status === 'Final'" variant="solid" theme="green">
                               Received
+                            </Badge>
+                            <Badge v-if="!lpo.all_items_received && lpo.status === 'Final'" variant="outline" theme="orange">
+                              Pending
                             </Badge>
                           </div>
                           <!-- Additional Info -->
@@ -282,7 +287,7 @@ function getStatusVariant(status) {
     case 'draft':
       return 'orange'
     case 'submitted':
-      return 'green'
+      return 'blue'
     case 'cancelled':
       return 'red'
     case 'final':

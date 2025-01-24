@@ -41,8 +41,8 @@
       <!-- Table Header -->
       <div class="border-b min-w-[800px]">
         <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-5 gap-4">
-            <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <div class="flex-1 grid grid-cols-6 gap-4">
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 col-span-2">
               <FeatherIcon name="user" class="w-4 h-4" />
               Party
             </div>
@@ -100,18 +100,37 @@
                 class="hover:bg-gray-50 transition-colors cursor-pointer min-w-[800px]"
                 @click="navigateToPayment(payment)"
               >
-                <div class="flex items-center px-6 py-3 pl-16">
-                  <div class="flex-1 grid grid-cols-5 gap-4">
+                <div class="flex items-center px-6 py-3">
+                  <div class="flex-1 grid grid-cols-6 gap-4">
                     <!-- Party -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex col-span-2">
                       <Avatar
-                        v-if="getPartyData(payment.party)?.image"
-                        :image="getPartyData(payment.party)?.image"
-                        size="sm"
-                        shape="circle"
-                      />
-                      <span class="text-sm text-gray-900">{{ payment.party }}</span>
-                    </div>
+													v-if="getPartyData(payment.party)?.image"
+													:image="getPartyData(payment.party)?.image"
+													size="3xl"
+													shape="square"
+                          class="mr-2 border border-gray-300"
+												/>
+                      <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                          <div class="text-sm text-gray-900">{{payment.party}}</div>
+                        </div>
+                        <div
+                          class="text-sm text-gray-500 flex items-center"
+                        >
+                          {{ payment.name }}
+                        </div>
+                        <div
+                          class="text-sm text-gray-400 flex items-center"
+                        >
+                          {{
+                            new Date(payment.date).toLocaleDateString(
+                              'en-AE',
+                            )
+                          }}
+                        </div>
+                      </div>
+										</div>
                     <!-- Amount -->
                     <div class="text-sm text-gray-900 font-medium flex items-center">
                       {{ formatCurrency(payment.amount) }}
