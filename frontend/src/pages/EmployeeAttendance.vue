@@ -165,7 +165,7 @@
 			</div>
 
 			<!-- Leave Setup Button -->
-			<div v-if="isManager" class="border rounded-lg bg-white flex items-center justify-center">
+			<div class="border rounded-lg bg-white flex items-center justify-center">
     <div 
       v-if="currentOngoingLeave"
       class="w-full h-full py-6 flex flex-col items-center justify-center bg-blue-50 text-center cursor-pointer"
@@ -512,7 +512,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { leaveResource } from '@/data/leave'
 import { Calendar, FeatherIcon, Badge, Dialog, FormControl } from 'frappe-ui'
-import { hasRole } from '@/data/roles'
 import { DialogPanel } from '@headlessui/vue'
 import { attendanceResource } from '@/data/attendance'
 import { formatAttendanceDate, getMonthName } from '@/utils/format'
@@ -532,7 +531,6 @@ const showEventDetails = ref(false)
 const showEarlyReturnDialog = ref(false)
 const earlyReturnConfirmation = ref('')
 const selectedEvent = ref(null)
-const isManager = hasRole('RUA Manager')
 const showLeaveSetupDialog = ref(false)
 const newLeave = ref({
   leave_date: '',

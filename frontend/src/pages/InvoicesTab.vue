@@ -5,7 +5,6 @@
     <div class="flex items-center justify-between mt-6 mb-4 px-6">
       <h2 class="text-lg font-medium text-gray-900">Invoices</h2>
       <Button
-        v-if="isManager"
         variant="solid"
         size="sm"
         @click="handleNewInvoice"
@@ -261,7 +260,6 @@ import {
   Avatar,
   LoadingIndicator
 } from 'frappe-ui'
-import { hasRole } from '@/data/roles'
 import { invoiceResource } from '@/data/invoice'
 import { formatDate, formatCurrency } from '@/utils/format'
 import NewInvoiceDialog from './NewInvoiceDialog.vue'
@@ -324,8 +322,6 @@ const noClientDialogOptions = computed(() => ({
 const statusCollapsed = ref({})
 const showNewInvoiceDialog = ref(false)
 
-// Role-based access control
-const isManager = hasRole('RUA Project Manager')
 
 // Computed
 const filteredInvoices = computed(() => {

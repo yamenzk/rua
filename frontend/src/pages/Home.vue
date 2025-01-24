@@ -5,42 +5,82 @@
     :onComplete="handleWelcomeComplete"
   />
   
-  <h2 class="font-bold text-lg text-gray-600 mb-4">
-    Welcome {{ session.user }}!
-  </h2>
+  <div class="space-y-6">
+    <!-- Welcome Section -->
+    <div class="flex items-center justify-between">
+      <h2 class="font-bold text-lg text-gray-900">
+        Welcome {{ session.employee_name }}!
+      </h2>
+      <div class="text-sm text-gray-500">
+        {{ getCurrentDate() }}
+      </div>
+    </div>
 
-  <Button @click="session.logout.submit()">Logout</Button>
+    <!-- Quick Stats Section -->
+    <QuickStats />
+
+    <!-- Action Items Section -->
+    <ActionItems />
+
+    <!-- Project Map Section -->
+    <UAEMap />
+
+    
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { createResource } from 'frappe-ui'
+import { ref, onMounted, h, inject } from 'vue'
+import { Avatar, Dropdown, FeatherIcon } from 'frappe-ui'
 import { session } from '../data/session'
 import WelcomeScreen from './WelcomeScreen.vue'
+import UAEMap from './UAEMap.vue'
+import QuickStats from './QuickStats.vue'
+import ActionItems from './ActionItems.vue'
 
 const showWelcome = ref(false)
+const setHeaderAction = inject('setHeaderAction')
 
-onMounted(() => {
-  // Only show welcome screen if user just logged in
-  if (session.justLoggedIn) {
-    showWelcome.value = true
+function getCurrentDate() {
+  return new Date().toLocaleDateString('en-AE', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+onMounted(async () => {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    setHeaderAction(
+      h(Dropdown, {
+        options: [{
+          group: 'Account',
+          items: [{
+            label: 'Logout',
+            icon: () => h(FeatherIcon, { name: 'log-out' }),
+            onClick: () => session.logout.submit()
+          }]
+        }]
+      }, () => [
+        h(Avatar, {
+          shape: 'circle',
+          image: session.employee_image,
+          label: session.employee_name?.substring(0, 2)?.toUpperCase(),
+          size: 'xl',
+          class: 'cursor-pointer ring-2 ring-gray-900 hover:ring-gray-700'
+        })
+      ])
+    )
+  } catch (error) {
+    console.error('Error loading employee:', error)
   }
 })
 
+
 const handleWelcomeComplete = () => {
   showWelcome.value = false
-  session.justLoggedIn = false  // Reset the flag after welcome screen is done
+  session.justLoggedIn = false
 }
-
-const ping = createResource({
-  url: 'ping',
-  auto: true,
-})
-
-const navigation = [
-  { name: 'Projects', to: '/projects', icon: 'briefcase' },
-  { name: 'Inventory', to: '/inventory', icon: 'box' },
-  { name: 'Employees', to: '/employees', icon: 'users' },
-  { name: 'Settings', to: '/settings', icon: 'settings' },
-]
 </script>

@@ -4,7 +4,7 @@
 		<!-- Header -->
 		<div class="flex items-center justify-between mt-6 mb-4 px-6">
 			<h2 class="text-lg font-medium text-gray-900">Quotations</h2>
-			<Button v-if="isManager" variant="solid" size="sm" @click="handleNewQuotation">
+			<Button variant="solid" size="sm" @click="handleNewQuotation">
 				<template #default>
 					<div class="flex items-center gap-2">
 						<FeatherIcon name="plus" class="w-4 h-4" />
@@ -229,7 +229,7 @@ import {
 	createResource,
 	LoadingIndicator,
 } from 'frappe-ui'
-import { hasRole } from '@/data/roles'
+
 import { quotationResource } from '@/data/quotation'
 import { partyResource } from '@/data/party'
 
@@ -265,8 +265,6 @@ const serverDateResource = createResource({
 	params: { date: true },
 })
 
-// Role-based access control
-const isManager = hasRole('RUA Project Manager')
 
 // Computed
 const filteredQuotations = computed(() => {

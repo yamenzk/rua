@@ -8,17 +8,21 @@
  "engine": "InnoDB",
  "field_order": [
   "date",
+  "due_date",
   "assigned_to",
   "related_doctype",
   "related_docname",
   "project",
   "column_break_bxzv",
   "status",
+  "priority",
   "naming_series",
-  "details"
+  "details",
+  "remarks"
  ],
  "fields": [
   {
+   "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date"
@@ -50,7 +54,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nCompleted"
+   "options": "\nOpen\nDelayed\nCompleted\nCancelled"
   },
   {
    "fieldname": "naming_series",
@@ -68,12 +72,28 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "RUA Project"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "\nHigh\nMedium\nLow"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-14 12:49:17.369638",
+ "modified": "2025-01-24 21:25:00.521529",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Todo",

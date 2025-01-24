@@ -255,7 +255,6 @@
 							<FeatherIcon name="share-2" class="w-4 h-4" />
 						</button>
 						<button
-							v-if="isManager"
 							@click.stop="deleteDocument(doc)"
 							class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
 							title="Delete"
@@ -670,7 +669,6 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Button, Dialog, FileUploader, FormControl, FeatherIcon } from 'frappe-ui'
 import { documentResource } from '@/data/document'
-import { hasRole } from '@/data/roles'
 import VueDraggable from 'vuedraggable'
 import { PDFDocument } from 'pdf-lib'
 import * as UPNG from '@pdf-lib/upng'
@@ -760,8 +758,6 @@ const newDocument = ref({
 // Check if sharing is supported
 const canShare = computed(() => typeof navigator.share !== 'undefined')
 
-// Role-based access
-const isManager = hasRole('RUA Manager')
 
 // File type validation
 function isValidFileType(url) {

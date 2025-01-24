@@ -265,20 +265,15 @@ import { ref, inject, h, onMounted } from 'vue'
 import { Button, Input, Dialog, Badge, FeatherIcon, LoadingIndicator, FormControl, debounce } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { projectResource } from '@/data/project'
-import { hasRole } from '@/data/roles'
 
 const router = useRouter()
-const isManager = hasRole('RUA Manager')
 const setHeaderAction = inject('setHeaderAction')
 
-if (isManager) {
+
   setHeaderAction(h(Button, {
     variant: 'solid',
     onClick: () => showNewProject.value = true,
   }, () => 'New Project'))
-} else {
-  setHeaderAction(null)
-}
 
 // State
 const searchQuery = ref('')

@@ -308,3 +308,17 @@ def delete_rua_document(docname, passkey):
             "RUA Document Deletion Error"
         )
         frappe.throw(str(e))
+
+@frappe.whitelist()
+def get_employee_by_user(user):
+    employees = frappe.get_all("RUA Employee", filters={"user": user}, limit=1)
+    result = {}
+    if employees:
+        employee = frappe.get_doc("RUA Employee", employees[0])
+        result = {
+            "name": employee.name,
+            "employee_name": employee.employee_name,
+            "image": employee.image
+        }
+    # Always return a message structure
+    return {"message": result}

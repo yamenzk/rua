@@ -5,7 +5,6 @@
     <div class="flex items-center justify-between mt-6 mb-4 px-6">
       <h2 class="text-lg font-medium text-gray-900">Purchase Orders</h2>
       <Button
-        v-if="isManager"
         variant="solid"
         size="sm"
         @click="handleNewLPO"
@@ -232,9 +231,8 @@ import {
   Button,
   LoadingIndicator
 } from 'frappe-ui'
-import { hasRole } from '@/data/roles'
 import { lpoResource } from '@/data/lpo'
-import { formatDate, formatCurrency } from '@/utils/format'
+import { formatCurrency } from '@/utils/format'
 import NewLPODialog from './NewLPODialog.vue'
 import { partyResource } from '@/data/party'
 
@@ -260,8 +258,6 @@ const typeCollapsed = ref({
 const statusCollapsed = ref({})
 const showNewLPODialog = ref(false)
 
-// Role-based access control
-const isManager = hasRole('RUA Project Manager')
 
 // Computed
 const filteredLPOs = computed(() => {

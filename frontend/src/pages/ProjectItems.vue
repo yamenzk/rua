@@ -36,7 +36,7 @@
 
         <!-- Lock/Unlock Button -->
         <Button
-          v-if="isManager || isLocked"
+          v-if="isLocked"
           :variant="'outline'"
           theme="gray"
           size="sm"
@@ -181,7 +181,6 @@ import { createUniver, defaultTheme, LocaleType, merge } from '@univerjs/presets
 import { UniverSheetsCorePreset } from '@univerjs/presets/preset-sheets-core'
 import UniverPresetSheetsCoreEnUS from '@univerjs/presets/preset-sheets-core/locales/en-US'
 import '@univerjs/presets/lib/styles/preset-sheets-core.css'
-import { hasRole } from '../data/roles'
 
 // Props
 const props = defineProps({
@@ -221,10 +220,6 @@ let univerAPI = null
 let saveTimeout = null
 let documentWatcher = null
 const lockedData = ref(null)
-
-// Computed Properties
-const isManager = hasRole('RUA Manager') || hasRole('RUA Project Manager')
-
 const isLocked = computed(() => {
   const locked = props.projectResource.doc?.locked
   return locked && 

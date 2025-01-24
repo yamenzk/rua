@@ -64,7 +64,7 @@
                               Received
                             </Badge>
                             <Badge v-else variant="outline" theme="orange">
-                              Pending Delivery
+                              Pending
                             </Badge>
 
           <!-- Actions Dropdown -->

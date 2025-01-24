@@ -60,10 +60,6 @@ const props = defineProps({
     type: [String, Object],
     default: null
   },
-  isManager: {
-    type: Boolean,
-    default: false
-  }
 })
 
 const emit = defineEmits(['update:coords'])
@@ -165,12 +161,12 @@ function initializeMap() {
 
   // Initialize marker with custom icon
   marker.value = L.marker(initialCoords, {
-    draggable: props.isManager,
+    draggable: true,
     icon: customIcon
   }).addTo(map.value)
 
   // Handle marker drag events for managers
-  if (props.isManager) {
+  if (true) {
     marker.value.on('dragend', (event) => {
       const { lat, lng } = event.target.getLatLng()
       emit('update:coords', { lat, lng })
@@ -203,7 +199,7 @@ function handleMapClick(e) {
     })
     
     marker.value = L.marker([lat, lng], {
-      draggable: props.isManager,
+      draggable: true,
       icon: customIcon
     }).addTo(map.value)
   }

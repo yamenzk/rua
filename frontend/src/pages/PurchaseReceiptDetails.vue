@@ -317,8 +317,10 @@
 						</div>
 					</div>
 
-					<!-- Save Changes Button -->
-					<div
+					
+				</div>
+				<!-- Save Changes Button -->
+				<div
 						v-if="isDraft && hasChanges"
 						class="flex justify-end px-6 py-4 bg-gray-50 border-t"
 					>
@@ -334,7 +336,6 @@
 							{{ isSaving ? 'Saving...' : 'Save Changes' }}
 						</Button>
 					</div>
-				</div>
 			</div>
 
 <!-- Verification Card -->
@@ -346,7 +347,8 @@
     <Checkbox
       size="sm"
       v-model="hasVerifiedQuantities"
-      :label="`I confirm that I, ${session.user}, have physically counted all received items and verified that the quantities entered above are accurate.`"
+	  :disabled="hasChanges"
+      :label="`I confirm that I, ${session.employee_name}, have physically counted all received items and verified that the quantities entered above are accurate.`"
     />
   </div>
 </div>
@@ -522,7 +524,7 @@
                 <button
                   v-if="!uploading"
                   class="text-sm text-red-500 hover:text-red-700"
-                  @click.stop="signedDocument = null"
+                  @click.stop="signedDeliveryNote = null"
                 >
                   X
                 </button>
@@ -866,11 +868,20 @@ function initializeReceiptResource() {
 
 // Watch for route changes
 watch(
-	() => route.params.receiptId,
-	(newId) => {
-		if (newId) {
-			receiptResource.value = createPurchaseReceiptResource(newId)
-		}
-	},
+    () => route.params.receiptId,
+    (newId) => {
+        if (newId) {
+            receiptResource.value = createPurchaseReceiptResource(newId)
+            hasVerifiedQuantities.value = false  // Reset verification
+        }
+    },
 )
+watch(
+	() => hasChanges.value,
+	(newHasChanges) => {
+		if (newHasChanges && hasVerifiedQuantities.value) {
+			hasVerifiedQuantities.value = false;
+		}
+	}
+);
 </script>

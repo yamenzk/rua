@@ -77,11 +77,10 @@
 					<div class="px-4 pb-4 mt-auto">
 						<ProjectMap
 							:coords="selectedProject?.coords"
-							:is-manager="isManager"
 							:mini-map="true"
 							@update:coords="updateProjectCoords"
 						/>
-						<div v-if="isManager" class="mt-2">
+						<div class="mt-2">
 							<Button
 								variant="solid"
 								theme="gray"
@@ -387,7 +386,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Avatar, FeatherIcon, Button, Dialog, FormControl, Badge } from 'frappe-ui'
 import { projectResource, createProjectResource } from '@/data/project'
-import { hasRole } from '@/data/roles'
+
 import ProjectMap from '../pages/ProjectMap.vue'
 import { inject } from 'vue'
 import { invoiceResource } from '@/data/invoice'
@@ -599,8 +598,7 @@ onMounted(async () => {
 	}
 })
 
-// Role-based access control
-const isManager = hasRole('RUA Project Manager')
+
 
 // Handle map coordinate updates
 async function updateProjectCoords(newCoords) {

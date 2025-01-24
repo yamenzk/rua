@@ -109,7 +109,6 @@
       <template #actions>
         <div class="flex justify-between w-full">
           <Button
-            v-if="isManager"
             variant="danger"
             :loading="removing"
             @click="confirmRemove"
@@ -225,7 +224,6 @@ import {
 } from 'frappe-ui'
 import { session } from '../data/session'
 import { partyResource } from '../data/party'
-import { hasRole } from '../data/roles'
 
 
 const props = defineProps({
@@ -259,8 +257,6 @@ const showPartyDialog = ref(false)
 const removing = ref(false)
 const searchQuery = ref('')
 
-// Role-based access control
-const isManager = computed(() => hasRole('RUA Manager'))
 
 // Party list resource
 const partyList = partyResource
@@ -326,19 +322,10 @@ function showDetails() {
 }
 
 function openPartyDialog() {
-  //console.log('Open Party Dialog called')
-  //console.log('Is Manager:', isManager.value)
-  if (!isManager.value) {
-    return
-  }
-  //console.log('Opening party dialog')
   showPartyDialog.value = true
 }
 
 function confirmRemove() {
-  if (!isManager.value) {
-    return
-  }
   showConfirmDialog.value = true
 }
 

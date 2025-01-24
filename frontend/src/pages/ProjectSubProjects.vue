@@ -8,7 +8,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between">
           <h1 class="text-2xl font-bold text-gray-900">Sub Projects</h1>
-          <Button v-if="isManager" variant="solid" @click="showNewSubProject = true">
+          <Button variant="solid" @click="showNewSubProject = true">
             <template #prefix>
               <FeatherIcon name="plus" class="w-4 h-4" />
             </template>
@@ -24,7 +24,7 @@
             <p class="text-gray-500 mb-6">
               This project doesn't have any sub projects yet.
             </p>
-            <Button v-if="isManager" variant="solid" @click="showNewSubProject = true">
+            <Button variant="solid" @click="showNewSubProject = true">
               Create Sub Project
             </Button>
           </div>
@@ -173,7 +173,6 @@
   import { ref, computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { Button, Badge, FeatherIcon, LoadingIndicator, Dialog, FormControl } from 'frappe-ui'
-  import { hasRole } from '@/data/roles'
   import { projectResource } from '@/data/project'
   import { formatCurrency } from '@/utils/format'
   
@@ -185,7 +184,6 @@
   })
   
   const router = useRouter()
-  const isManager = hasRole('RUA Project Manager')
   const showNewSubProject = ref(false)
   const creating = ref(false)
   const newProject = ref({

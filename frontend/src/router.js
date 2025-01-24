@@ -44,9 +44,9 @@ const routes = [
         component: () => import('@/pages/Parties.vue'),
       },
       {
-        path: 'settings',
-        name: 'Settings',
-        component: () => import('@/pages/Settings.vue'),
+        path: 'tasks',
+        name: 'Tasks',
+        component: () => import('@/pages/Tasks.vue'),
       },
     ],
   },

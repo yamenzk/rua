@@ -392,23 +392,23 @@ const references = computed(() => {
 		}))
 	
 	const payments = (paymentResource.data || [])
-	.filter((i) => i.project === projectName)
-	.map((i) => ({
-		name: i.name,
+	.filter((p) => p.project === projectName)
+	.map((p) => ({
+		name: p.name,
 		doctype: 'RUA Payment',
-		party: i.party,
-		date: i.date,
-		link: `/project/${projectName}/invoicing/payment/${i.name}`,
+		party: p.party,
+		date: p.date,
+		link: `/project/${projectName}/invoicing/payment/${p.name}`,
 	}))
 
 	const receipts = (purchaseReceiptResource.data || [])
-	.filter((i) => i.project === projectName)
-	.map((i) => ({
-		name: i.name,
+	.filter((r) => r.project === projectName)
+	.map((r) => ({
+		name: r.name,
 		doctype: 'RUA Purchase Receipt',
-		party: i.party,
-		date: i.date,
-		link: `/project/${projectName}/invoicing/receipt/${i.name}`,
+		party: r.party,
+		date: r.date,
+		link: `/project/${projectName}/invoicing/receipt/${r.name}`,
 	}))
 
 

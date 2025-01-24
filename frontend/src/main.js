@@ -4,7 +4,7 @@ import router from './router'
 import App from './App.vue'
 import { initSocket } from './socket'
 import { session } from "@/data/session"
-import { resources, reloadResources } from '@/data/resourceManager'
+import { resources } from '@/data/resourceManager'
 import {
   Button,
   Card,
@@ -15,20 +15,21 @@ import {
 } from 'frappe-ui'
 
 const app = createApp(App)
+
+// Configure Frappe UI
 setConfig('resourceFetcher', async (...args) => {
   try {
-    const response = await frappeRequest(...args);
-    return response;
+    const response = await frappeRequest(...args)
+    return response
   } catch (error) {
     if (error.response?.headers?.get('content-type')?.includes('text/html')) {
-      // If we got HTML instead of JSON, throw a more meaningful error
-      throw new Error('Received HTML response instead of JSON. Server might be down or returning an error page.');
+      throw new Error('Received HTML response instead of JSON. Server might be down or returning an error page.')
     }
-    throw error;
+    throw error
   }
-});
+})
 
-// Register components
+// Register components and plugins
 app.use(router)
 app.use(resourcesPlugin)
 
@@ -41,37 +42,30 @@ Object.entries(resources).forEach(([key, resource]) => {
   app.provide(`$${key}`, resource)
 })
 
-// Initial resource load
-//console.log('Starting initial resource load...')
-if (session?.isLoggedIn) {
-  reloadResources()
-}
-
 // Initialize app based on environment
-if (import.meta.env.DEV) {
-  //console.log('Initializing app in DEV mode...')
-  frappeRequest({ url: '/api/method/rua.www.rua.get_context_for_dev' })
-    .then((values) => {
-      //console.log('Received dev context values:', Object.keys(values))
+const initializeApp = async () => {
+  try {
+    // If user is logged in, initialize session first
+    if (session.isLoggedIn) {
+      await session.initialize()
+    }
+
+    if (import.meta.env.DEV) {
+      const values = await frappeRequest({ url: '/api/method/rua.www.rua.get_context_for_dev' })
       for (let key in values) {
         window[key] = values[key]
       }
-      const socket = initSocket()
-      //console.log('Socket initialized in DEV mode:', socket)
-      window.$socket = socket
-      app.provide('$socket', socket)
-      app.mount('#app')
-      //console.log('App mounted in DEV mode')
-    })
-    .catch(error => {
-      //console.error('Failed to initialize app in DEV mode:', error)
-    })
-} else {
-  //console.log('Initializing app in PROD mode...')
-  const socket = initSocket()
-  //console.log('Socket initialized in PROD mode:', socket)
-  window.$socket = socket
-  app.provide('$socket', socket)
-  app.mount('#app')
-  //console.log('App mounted in PROD mode')
+    }
+
+    const socket = initSocket()
+    window.$socket = socket
+    app.provide('$socket', socket)
+    app.mount('#app')
+
+  } catch (error) {
+    console.error('Failed to initialize app:', error)
+    // Handle initialization error appropriately
+  }
 }
+
+initializeApp()

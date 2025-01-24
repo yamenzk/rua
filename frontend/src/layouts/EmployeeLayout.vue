@@ -83,8 +83,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Avatar, FeatherIcon } from 'frappe-ui'
 import { employeeResource, createEmployeeResource } from '@/data/employee'
-import { hasRole } from '@/data/roles'
-
 const router = useRouter()
 const route = useRoute()
 const isLoading = ref(true)
@@ -135,8 +133,6 @@ onMounted(() => {
   }, 5000)
 })
 
-// Role-based access control
-const isManager = hasRole('RUA Manager')
 
 const navigation = computed(() => [
   { name: 'Overview', to: `/employee/${route.params.id}/overview`, icon: 'user' },

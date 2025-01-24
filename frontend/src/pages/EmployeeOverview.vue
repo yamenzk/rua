@@ -50,7 +50,7 @@
 			<div class="mb-8">
 				<div class="flex items-center justify-between mb-4">
 				<h3 class="text-sm font-medium text-gray-500 mb-4">Personal Information</h3>
-				<div class="flex gap-2" v-if="isManager">
+				<div class="flex gap-2">
 					<Button variant="solid" size="sm" @click="openEditDialog">
 						<div class="flex items-center">
 							<FeatherIcon name="edit" class="w-4 h-4 mr-2" />
@@ -607,10 +607,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { FeatherIcon, Dialog, Button, FileUploader, FormControl, Autocomplete } from 'frappe-ui'
-import { session } from '@/data/session'
 import { attendanceResource } from '@/data/attendance'
 import { leaveResource } from '@/data/leave' 
-import { hasRole } from '@/data/roles'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 import { genderOptions, positionOptions } from '../data/employeeOptions'
@@ -629,7 +627,6 @@ const props = defineProps({
 })
 
 // Role-based access control
-const isManager = hasRole('RUA Manager')
 const leaveRecords = computed(() => {
   if (!leaveResource.data || !props.employee?.name) return []
 

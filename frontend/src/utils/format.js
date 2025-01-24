@@ -77,3 +77,57 @@ export function formatAttendanceDate(date) {
 export function getMonthName(month) {
   return new Date(2000, month - 1).toLocaleString('default', { month: 'long' })
 }
+
+
+// format.js
+
+export function getIconByDoctype(doctype) {
+	switch (doctype) {
+	  case 'RUA Invoice':
+		return 'file-text'
+	  case 'RUA Payment':
+		return 'credit-card'
+	  case 'RUA Project':
+		return 'briefcase'
+	  case 'RUA LPO':
+		return 'shopping-cart'
+	  case 'RUA RFQ':
+		return 'clipboard'
+	  case 'RUA Purchase Receipt':
+		return 'package'
+	  case 'RUA Quotation':
+		return 'file'
+	  case 'RUA Employee':
+		return 'user'
+	  default:
+		return 'file'
+	}
+  }
+  
+  export function getStatusTheme(status) {
+	switch (status) {
+	  case 'Completed':
+		return 'green'
+	  case 'Open':
+		return 'blue'
+	  case 'Delayed':
+		return 'orange'
+	  case 'Cancelled':
+		return 'red'
+	  default:
+		return 'gray'
+	}
+  }
+  
+  export function getPriorityTheme(priority) {
+	switch (priority) {
+	  case 'High':
+		return 'red'
+	  case 'Medium':
+		return 'blue'
+	  case 'Low':
+		return 'green'
+	  default:
+		return 'gray'
+	}
+  }

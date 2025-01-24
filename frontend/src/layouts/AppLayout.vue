@@ -9,7 +9,11 @@
           <template v-else>{{ pageTitle }}</template>
         </h1>
       </div>
-      <component v-if="headerAction" :is="headerAction" />
+      
+      <!-- Right side of header with conditional rendering -->
+      <div class="flex items-center gap-4">
+        <component v-if="headerAction" :is="headerAction" />
+      </div>
     </header>
 
     <!-- Main container with proper spacing -->
@@ -84,6 +88,6 @@ const navigation = [
   { name: 'Inventory', to: '/inventory', icon: 'box' },
   { name: 'Employees', to: '/employees', icon: 'users' },
   { name: 'Parties', to: '/parties', icon: 'truck' },
-  { name: 'Settings', to: '/settings', icon: 'settings' },
+  { name: 'Tasks', to: '/tasks', icon: 'check-square' },
 ]
 </script>

@@ -5,7 +5,6 @@
     <div class="flex items-center justify-between mt-6 mb-4 px-6">
       <h2 class="text-lg font-medium text-gray-900">Request for Quotations</h2>
       <Button
-        v-if="isManager"
         variant="solid"
         size="sm"
         @click="handleNewRFQ"
@@ -225,7 +224,7 @@ import {
   Button,
   LoadingIndicator
 } from 'frappe-ui'
-import { hasRole } from '@/data/roles'
+
 import { rfqResource } from '@/data/rfq'
 import { formatDate } from '@/utils/format'
 import NewRFQDialog from './NewRFQDialog.vue'
@@ -254,8 +253,7 @@ const typeCollapsed = ref({
 const statusCollapsed = ref({})
 const showNewRFQDialog = ref(false)
 
-// Role-based access control
-const isManager = hasRole('RUA Project Manager')
+
 
 // Computed
 const filteredRFQs = computed(() => {

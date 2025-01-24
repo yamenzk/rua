@@ -199,7 +199,7 @@ import {
   LoadingIndicator,
   TabButtons
 } from 'frappe-ui'
-import { hasRole } from '@/data/roles'
+
 import { paymentResource } from '@/data/payment'
 import { formatDate, formatCurrency } from '@/utils/format'
 import { partyResource } from '@/data/party'

@@ -6,9 +6,21 @@ export const userRoles = createResource({
   params: {
     user: userResource.data
   },
+  method: 'GET',
   cache: 'UserRoles',
 })
 
-export const hasRole = (role) => {
-  return userRoles.data?.includes(role)
-}
+export const userDetails = createResource({
+  url: 'rua.api.get_employee_by_user',
+  makeParams() {
+    return {
+      user: userResource.data
+    }
+  },
+  method: 'GET',
+  cache: 'UserDetails',
+  transform(response) {
+    return response?.message || {};
+  }
+})
+

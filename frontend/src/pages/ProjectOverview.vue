@@ -8,9 +8,8 @@
     <!-- Hero Image Section -->
     <div class="relative h-64 md:h-96">
       <div 
-        class="w-full h-full group"
-        :class="{ 'cursor-pointer': isManager }"
-        @click.stop="isManager && handleImageClick()"
+        class="w-full h-full group cursor-pointer"
+        @click.stop="handleImageClick()"
       >
         <img
           v-if="projectResource.doc?.image"
@@ -25,7 +24,6 @@
         
         <!-- Hover overlay -->
         <div 
-          v-if="isManager"
           class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
         >
           <div class="text-white flex items-center">
@@ -146,7 +144,7 @@
               :party="client" 
               :project-resource="projectResource"
               party-type="Client"
-              :show-add-button="!client && isManager"
+              :show-add-button="!client"
             />
           </div>
         </div>
@@ -169,7 +167,7 @@
               />
             </div>
           </template>
-          <div v-if="isManager" class="min-w-[250px]">
+          <div class="min-w-[250px]">
             <PartyCard 
               :project-resource="projectResource"
               party-type="Supplier"
@@ -188,7 +186,7 @@
               :party="consultant" 
               :project-resource="projectResource"
               party-type="Consultant"
-              :show-add-button="!consultant && isManager"
+              :show-add-button="!consultant"
             />
           </div>
         </div>
@@ -286,7 +284,6 @@ import {
   Button,
   FileUploader 
 } from 'frappe-ui'
-import { hasRole } from '@/data/roles'
 import PartyCard from './PartyCard.vue'
 
 const props = defineProps({
@@ -298,9 +295,6 @@ const props = defineProps({
     }
   }
 })
-
-// Role-based access control
-const isManager = hasRole('RUA Project Manager')
 
 // Image upload state
 const showImageDialog = ref(false)
@@ -382,7 +376,6 @@ function handleDrop(event) {
 }
 
 function handleImageClick() {
-  if (!isManager) return
   showImageDialog.value = true
 }
 
