@@ -1,4 +1,3 @@
-# NewTaskModal.vue
 <template>
   <Dialog v-model="show" :options="dialogOptions">
     <template #body-content>
@@ -13,11 +12,11 @@
               v-for="(step, index) in ['Basic Info', 'Details', 'Review']" 
               :key="step"
               class="flex items-center space-x-2"
-              :class="currentStep === index ? 'text-blue-600' : 'text-gray-500'"
+              :class="currentStep === index ? 'text-gray-900' : 'text-gray-500'"
             >
               <span 
                 class="relative flex h-7 w-7 items-center justify-center rounded-full border-2"
-                :class="currentStep === index ? 'border-blue-600 bg-blue-50' : 'border-gray-300 bg-white'"
+                :class="currentStep === index ? 'border-gray-900 bg-gray-200' : 'border-gray-300 bg-white'"
               >
                 {{ index + 1 }}
               </span>
@@ -28,41 +27,48 @@
 
         <!-- Step 1: Basic Info -->
         <div v-if="currentStep === 0" class="space-y-6">
-          <!-- Project Selection with Icon -->
-          <div class="relative">
-            <FormControl
-              type="select"
+          <!-- Project Selection with Autocomplete -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-900">Project</label>
+            <CustomAutocomplete
               v-model="formData.project"
               :options="projectOptions"
-              label="Project"
-              required
               placeholder="Select project..."
             >
               <template #prefix>
-                <FeatherIcon name="briefcase" class="w-4 h-4 text-gray-400" />
+                <FeatherIcon name="briefcase" class="w-4 h-4 text-gray-400 mr-2" />
               </template>
-            </FormControl>
+              <template #item-prefix="{ option }">
+                <FeatherIcon name="briefcase" class="w-4 h-4 text-gray-400 mr-2" />
+              </template>
+            </CustomAutocomplete>
           </div>
 
-          <!-- Assignee with Avatar Preview -->
+          <!-- Assignee with Autocomplete -->
           <div class="space-y-2">
             <label class="block text-sm font-medium text-gray-900">Assignee</label>
-            <div class="relative">
-              <FormControl
-                type="select"
-                v-model="formData.assigned_to"
-                :options="assigneeOptions"
-                required
-                placeholder="Select assignee..."
-              />
-              <div v-if="selectedAssigneeAvatar" class="absolute inset-y-0 left-3 flex items-center">
+            <CustomAutocomplete
+              v-model="formData.assigned_to"
+              :options="assigneeOptions"
+              placeholder="Select assignee..."
+            >
+              <template #prefix v-if="selectedAssigneeAvatar">
                 <Avatar
                   :image="selectedAssigneeAvatar"
                   :label="getAssigneeName(formData.assigned_to)?.substring(0, 2)"
                   size="sm"
+                  class="mr-2"
                 />
-              </div>
-            </div>
+              </template>
+              <template #item-prefix="{ option }">
+                <Avatar
+                  :image="option.image"
+                  :label="option.label.substring(0, 2)"
+                  size="sm"
+                  class="mr-2"
+                />
+              </template>
+            </CustomAutocomplete>
           </div>
 
           <!-- Priority Selection with Colored Buttons -->
@@ -100,7 +106,7 @@
             <textarea
               v-model="formData.details"
               rows="4"
-              class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
               placeholder="Describe the task in detail..."
             />
           </div>
@@ -110,11 +116,11 @@
             <label class="block text-sm font-medium text-gray-900">Due Date</label>
             <div class="relative">
               <input
-                type="date"
-                v-model="formData.due_date"
-                :min="getTodayDate()"
-                class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500"
-              />
+  type="date"
+  v-model="formData.due_date"
+  :min="getServerDate()"
+  class="block w-full rounded-lg border-gray-300 pl-10 focus:border-gray-900 focus:ring-gray-900"
+/>
               <FeatherIcon 
                 name="calendar" 
                 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -122,32 +128,45 @@
             </div>
           </div>
 
-          <!-- Related Document Selection -->
+          <!-- Related Document Selection with Autocomplete -->
           <div class="space-y-4">
             <label class="block text-sm font-medium text-gray-900">Related Document</label>
             <div class="space-y-3">
-              <FormControl
-                type="select"
+              <CustomAutocomplete
                 v-model="formData.related_doctype"
                 :options="doctypeOptions"
                 placeholder="Select document type..."
               >
                 <template #prefix>
                   <FeatherIcon 
-                    :name="getIconByDoctype(formData.related_doctype)" 
-                    class="w-4 h-4 text-gray-400"
+                    :name="getIconByDoctype(formData.related_doctype || '')" 
+                    class="w-4 h-4 text-gray-400 mr-2"
                   />
                 </template>
-              </FormControl>
+                <template #item-prefix="{ option }">
+                  <FeatherIcon 
+                    :name="getIconByDoctype(option.value)" 
+                    class="w-4 h-4 text-gray-400 mr-2"
+                  />
+                </template>
+              </CustomAutocomplete>
 
-              <FormControl
-                v-if="formData.related_doctype"
-                type="select"
-                v-model="formData.related_docname"
-                :options="documentOptions"
-                :disabled="!documentOptions.length"
-                placeholder="Select document..."
-              />
+              <div v-if="formData.related_doctype">
+                <CustomAutocomplete
+                  v-model="formData.related_docname"
+                  :options="documentOptions"
+                  placeholder="Select document..."
+                >
+                  <template #item="{ option }">
+                    <div class="flex flex-col">
+                      <span>{{ option.label }}</span>
+                      <span v-if="option.description" class="text-xs text-gray-500">
+                        {{ option.description }}
+                      </span>
+                    </div>
+                  </template>
+                </CustomAutocomplete>
+              </div>
             </div>
           </div>
         </div>
@@ -188,7 +207,7 @@
               <div>
                 <div class="text-sm text-gray-500">Due Date</div>
                 <div class="text-sm font-medium text-gray-900">
-                  {{ formData.due_date ? formatDate(formData.due_date) : '—' }}
+                  {{ formData.due_date ? formatDate(formData.due_date, DATE_FORMATS.SHORT) : '—' }}
                 </div>
               </div>
             </div>
@@ -263,15 +282,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import {
   Dialog,
   Button,
-  FormControl,
   Avatar,
   Badge,
   FeatherIcon,
 } from 'frappe-ui'
+import CustomAutocomplete from './CustomAutocomplete.vue'
 import { todoResource } from '@/data/todo'
 import { userDetails } from '@/data/roles'
 import { employeeResource } from '@/data/employee'
@@ -282,6 +301,7 @@ import { lpoResource } from '@/data/lpo'
 import { rfqResource } from '@/data/rfq'
 import { quotationResource } from '@/data/quotation'
 import { projectResource } from '@/data/project'
+import { formatDate, getServerDate, DATE_FORMATS } from '@/utils/format'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -296,79 +316,6 @@ const emit = defineEmits(['update:modelValue', 'created'])
 // State
 const currentStep = ref(0)
 const creating = ref(false)
-
-const show = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
-})
-const doctypeOptions = computed(() => [
-  { label: 'None', value: '' },
-  { label: 'Purchase Receipt', value: 'RUA Purchase Receipt' },
-  { label: 'Payment', value: 'RUA Payment' },
-  { label: 'Invoice', value: 'RUA Invoice' },
-  { label: 'LPO', value: 'RUA LPO' },
-  { label: 'RFQ', value: 'RUA RFQ' },
-  { label: 'Quotation', value: 'RUA Quotation' },
-  { label: 'Project', value: 'RUA Project' },
-  { label: 'Employee', value: 'RUA Employee' }
-])
-const documentOptions = computed(() => {
-  if (!formData.value.related_doctype) return []
-  
-  switch (formData.value.related_doctype) {
-    case 'RUA Purchase Receipt':
-      return purchaseReceiptResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party || 'No Supplier'}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Payment':
-      return paymentResource.data?.map(doc => ({
-        label: `${doc.name} - ${formatCurrency(doc.amount)}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Invoice':
-      return invoiceResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party} (${formatCurrency(doc.amount)})`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA LPO':
-      return lpoResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA RFQ':
-      return rfqResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party || 'Multiple Suppliers'}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Quotation':
-      return quotationResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Project':
-      return projectResource.data?.filter(proj => !proj.is_child).map(doc => ({
-        label: `${doc.project_name} ${doc.serial_number ? `#${doc.serial_number}` : ''}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Employee':
-      return employeeResource.data?.map(doc => ({
-        label: doc.employee_name,
-        value: doc.name
-      })) || []
-      
-    default:
-      return []
-  }
-})
-
 const formData = ref({
   project: '',
   assigned_to: '',
@@ -376,10 +323,14 @@ const formData = ref({
   details: '',
   due_date: '',
   related_doctype: '',
-  related_docname: '',
+  related_docname: ''
 })
 
-// Computed
+const show = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+
 const dialogOptions = computed(() => ({
   title: 'Create New Task',
   size: 'xl',
@@ -402,6 +353,83 @@ const selectedAssigneeAvatar = computed(() => {
   return employee?.image
 })
 
+const doctypeOptions = computed(() => [
+  { label: 'None', value: '' },
+  { label: 'Purchase Receipt', value: 'RUA Purchase Receipt' },
+  { label: 'Payment', value: 'RUA Payment' },
+  { label: 'Invoice', value: 'RUA Invoice' },
+  { label: 'LPO', value: 'RUA LPO' },
+  { label: 'RFQ', value: 'RUA RFQ' },
+  { label: 'Quotation', value: 'RUA Quotation' },
+  { label: 'Project', value: 'RUA Project' },
+  { label: 'Employee', value: 'RUA Employee' }
+])
+
+const documentOptions = computed(() => {
+  const doctype = formData.value.related_doctype
+  if (!doctype) return []
+
+  switch (doctype) {
+    case 'RUA Purchase Receipt':
+      return purchaseReceiptResource.data?.map(doc => ({
+        label: doc.name,
+        value: doc.name,
+        description: doc.party ? `Supplier: ${doc.party}` : 'No Supplier'
+      })) || []
+    
+    case 'RUA Payment':
+      return paymentResource.data?.map(doc => ({
+        label: doc.name,
+        value: doc.name,
+        description: `Amount: ${formatCurrency(doc.amount)}`
+      })) || []
+    
+    case 'RUA Invoice':
+      return invoiceResource.data?.map(doc => ({
+        label: doc.name,
+        value: doc.name,
+        description: `${doc.party} (${formatCurrency(doc.amount)})`
+      })) || []
+    
+    case 'RUA LPO':
+      return lpoResource.data?.map(doc => ({
+        label: doc.name,
+        value: doc.name,
+        description: doc.party
+      })) || []
+    
+    case 'RUA RFQ':
+      return rfqResource.data?.map(doc => ({
+        label: doc.name,
+        value: doc.name,
+        description: doc.party || 'Multiple Suppliers'
+      })) || []
+    
+    case 'RUA Quotation':
+      return quotationResource.data?.map(doc => ({
+        label: doc.name,
+        value: doc.name,
+        description: doc.party
+      })) || []
+    
+    case 'RUA Project':
+      return projectResource.data?.filter(proj => !proj.is_child).map(doc => ({
+        label: doc.project_name,
+        value: doc.name,
+        description: doc.serial_number ? `#${doc.serial_number}` : ''
+      })) || []
+    
+    case 'RUA Employee':
+      return employeeResource.data?.map(doc => ({
+        label: doc.employee_name,
+        value: doc.name
+      })) || []
+    
+    default:
+      return []
+  }
+})
+
 const canProceed = computed(() => {
   if (currentStep.value === 0) {
     return formData.value.project && 
@@ -419,6 +447,13 @@ const isFormValid = computed(() => {
          formData.value.assigned_to && 
          formData.value.priority &&
          formData.value.details
+})
+
+// Watch for changes in doctype to reset docname
+watchEffect(() => {
+  if (formData.value.related_doctype) {
+    formData.value.related_docname = ''
+  }
 })
 
 // Methods
@@ -466,18 +501,7 @@ function getProjectName(projectId) {
   return project?.label || projectId
 }
 
-function formatDate(date) {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('en-AE', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
 
-function getTodayDate() {
-  return new Date().toISOString().split('T')[0]
-}
 
 function closeModal() {
   currentStep.value = 0

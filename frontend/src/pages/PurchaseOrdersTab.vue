@@ -132,11 +132,7 @@
                         <div
                           class="text-sm text-gray-400 flex items-center"
                         >
-                          {{
-                            new Date(lpo.date).toLocaleDateString(
-                              'en-AE',
-                            )
-                          }}
+                        {{ formatDate(lpo.date) }}
                         </div>
                       </div>
 										</div>
@@ -235,6 +231,7 @@ import { lpoResource } from '@/data/lpo'
 import { formatCurrency } from '@/utils/format'
 import NewLPODialog from './NewLPODialog.vue'
 import { partyResource } from '@/data/party'
+import { formatDate } from '@/utils/format'
 
 const router = useRouter()
 
@@ -254,8 +251,20 @@ const typeCollapsed = ref({
   Glass: false,
   Material: false
 })
-
-const statusCollapsed = ref({})
+const statusCollapsed = ref({
+  'Aluminum-Final': false,
+  'Aluminum-Submitted': false,
+  'Aluminum-Draft': false,
+  'Aluminum-Cancelled': true,
+  'Glass-Final': false,
+  'Glass-Submitted': false,
+  'Glass-Draft': false,
+  'Glass-Cancelled': true,
+  'Material-Final': false,
+  'Material-Submitted': false,
+  'Material-Draft': false,
+  'Material-Cancelled': true
+})
 const showNewLPODialog = ref(false)
 
 
@@ -342,7 +351,7 @@ async function handleLPOSubmit(formData) {
     const response = await lpoResource.insert.submit({
       project: props.projectResource.doc.name,
       date: formData.date,
-      party: formData.party.name,
+      party: formData.party,
       type: formData.type,
       supplier_reference_number: formData.supplier_reference_number,
       doctype: 'RUA LPO'

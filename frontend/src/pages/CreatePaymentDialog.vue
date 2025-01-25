@@ -107,7 +107,7 @@ import { ref, computed, watch } from 'vue'
 import { Dialog, FeatherIcon } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { paymentResource } from '@/data/payment'
-import { getCurrentDubaiDate } from '@/utils/format'
+import { getServerDate } from '@/utils/format'
 
 const router = useRouter()
 
@@ -183,12 +183,12 @@ function validateAmount() {
 
 function resetForm() {
 	formData.value = {
-		date: getCurrentDubaiDate(),
+		date: getServerDate(),
 		amount: props.sourceDoc?.grand_total || 0,
 		bank: '',
 		reference_no: '',
 		remarks: '',
-    claim_date: getCurrentDubaiDate()
+    claim_date: getServerDate()
 	}
 	amountError.value = ''
 	isSubmitting.value = false

@@ -36,7 +36,6 @@
 
         <!-- Lock/Unlock Button -->
         <Button
-          v-if="isLocked"
           :variant="'outline'"
           theme="gray"
           size="sm"
@@ -181,6 +180,7 @@ import { createUniver, defaultTheme, LocaleType, merge } from '@univerjs/presets
 import { UniverSheetsCorePreset } from '@univerjs/presets/preset-sheets-core'
 import UniverPresetSheetsCoreEnUS from '@univerjs/presets/preset-sheets-core/locales/en-US'
 import '@univerjs/presets/lib/styles/preset-sheets-core.css'
+import { getServerDate } from '@/utils/format'
 
 // Props
 const props = defineProps({
@@ -228,6 +228,7 @@ const isLocked = computed(() => {
          locked !== '[]' && 
          locked !== '{}'
 })
+
 
 const lockedRows = computed(() => {
   if (!lockedData.value?.data?.rows) return []
@@ -546,7 +547,11 @@ async function handleSave() {
     clearTimeout(saveTimeout)
   }
 
+  // Add a flag to prevent multiple simultaneous save attempts
+  if (window.isSaving) return
+
   saveStatus.value = 'saving'
+  window.isSaving = true
 
   saveTimeout = setTimeout(async () => {
     try {
@@ -554,8 +559,10 @@ async function handleSave() {
     } catch (error) {
       console.error('Failed to save sheet data:', error)
       saveStatus.value = 'error'
+    } finally {
+      window.isSaving = false
     }
-  }, 1000)
+  }, 300)
 }
 
 async function forceSave() {
@@ -604,9 +611,17 @@ function setupDocumentChangeWatcher() {
   documentWatcher = watch(
     () => props.projectResource.doc?.univer,
     async (newValue, oldValue) => {
-      if (!isInitialized.value || !newValue || newValue === oldValue) return
+      // Additional checks to prevent unnecessary updates
+      if (!isInitialized.value || 
+          !newValue || 
+          newValue === oldValue || 
+          window.isReinitializingDocument) {
+        return
+      }
 
       try {
+        window.isReinitializingDocument = true
+
         const parsedData = JSON.parse(newValue)
         const currentData = univerAPI.getActiveWorkbook().save()
 
@@ -615,6 +630,11 @@ function setupDocumentChangeWatcher() {
         }
       } catch (error) {
         console.error('Failed to update from document change:', error)
+      } finally {
+        // Reset the flag after a delay
+        setTimeout(() => {
+          window.isReinitializingDocument = false
+        }, 1000)
       }
     },
     { deep: true }
@@ -645,7 +665,12 @@ function parseActiveUsers(activeUsersStr) {
 async function updateActiveUsers(users, operation = 'add') {
   if (!props.projectResource.doc) return
 
+  // Add a flag to prevent rapid successive calls
+  if (window.isUpdatingActiveUsers) return
+
   try {
+    window.isUpdatingActiveUsers = true
+
     const currentUsers = parseActiveUsers(props.projectResource.doc.active_users)
     let updatedUsers
 
@@ -655,6 +680,7 @@ async function updateActiveUsers(users, operation = 'add') {
       updatedUsers = currentUsers.filter(user => !users.includes(user))
     }
 
+    // Only update if there's an actual change
     if (JSON.stringify(currentUsers) !== JSON.stringify(updatedUsers)) {
       await props.projectResource.setValue.submit({
         name: props.projectResource.doc.name,
@@ -663,6 +689,11 @@ async function updateActiveUsers(users, operation = 'add') {
     }
   } catch (error) {
     console.error('Failed to update active users:', error)
+  } finally {
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      window.isUpdatingActiveUsers = false
+    }, 1000)
   }
 }
 
@@ -890,21 +921,26 @@ watch(
 watch(
   () => props.projectResource.doc,
   async (newDoc) => {
-    if (newDoc && !document.hidden) {
+    // Only handle arrival if not hidden and user not already in active users
+    if (newDoc && !document.hidden && newDoc.active_users && 
+        !parseActiveUsers(newDoc.active_users).includes(session.user)) {
       await handleUserArrival()
     }
-  },
-  { immediate: true }
+  }
 )
 
 watch(
   () => props.projectResource.doc?.active_users,
   (newValue) => {
     if (newValue !== undefined) {
-      activeUsers.value = parseActiveUsers(newValue)
+      const parsedUsers = parseActiveUsers(newValue)
+      
+      // Only update if the parsed users are different from current active users
+      if (JSON.stringify(parsedUsers) !== JSON.stringify(activeUsers.value)) {
+        activeUsers.value = parsedUsers
+      }
     }
-  },
-  { immediate: true }
+  }
 )
 
 watch(

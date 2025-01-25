@@ -128,11 +128,7 @@
                         <div
                           class="text-sm text-gray-400 flex items-center"
                         >
-                          {{
-                            new Date(rfq.date).toLocaleDateString(
-                              'en-AE',
-                            )
-                          }}
+                        {{ formatDate(rfq.date) }}
                         </div>
                       </div>
 										</div>
@@ -226,7 +222,7 @@ import {
 } from 'frappe-ui'
 
 import { rfqResource } from '@/data/rfq'
-import { formatDate } from '@/utils/format'
+import { formatDate, getServerDate } from '@/utils/format'
 import NewRFQDialog from './NewRFQDialog.vue'
 import { partyResource } from '@/data/party'
 
@@ -325,7 +321,7 @@ async function handleRFQSubmit(formData) {
     const response = await rfqResource.insert.submit({
       project: props.projectResource.doc.name,
       date: formData.date,
-      party: formData.party.name,
+      party: formData.party,
       type: formData.type,
       link: formData.link,
       doctype: 'RUA RFQ'

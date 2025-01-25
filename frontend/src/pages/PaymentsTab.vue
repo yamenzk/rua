@@ -123,11 +123,7 @@
                         <div
                           class="text-sm text-gray-400 flex items-center"
                         >
-                          {{
-                            new Date(payment.date).toLocaleDateString(
-                              'en-AE',
-                            )
-                          }}
+                        {{ formatDate(payment.date) }}
                         </div>
                       </div>
 										</div>
@@ -197,7 +193,6 @@ import {
   FeatherIcon,
   Button,
   LoadingIndicator,
-  TabButtons
 } from 'frappe-ui'
 
 import { paymentResource } from '@/data/payment'

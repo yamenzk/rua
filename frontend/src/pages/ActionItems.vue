@@ -115,11 +115,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { FeatherIcon, Badge } from 'frappe-ui'
+import { FeatherIcon, Badge, dayjs } from 'frappe-ui'
 import { todoResource } from '@/data/todo'
 import { session } from '@/data/session'
 import { projectResource } from '@/data/project'
 import TaskDetailsDialog from './TaskDetailsDialog.vue'
+import { getRelativeTime, isBeforeToday } from '@/utils/format'
 
 // State
 const showTaskDetailsDialog = ref(false)
@@ -144,7 +145,7 @@ const sortedTodos = computed(() => {
     
     // Then by due date if exists
     if (a.due_date && b.due_date) {
-      return new Date(a.due_date) - new Date(b.due_date)
+      return dayjs(a.due_date).diff(dayjs(b.due_date))
     }
     
     // Put tasks with due dates before those without
@@ -152,7 +153,7 @@ const sortedTodos = computed(() => {
     if (b.due_date) return 1
     
     // Finally sort by creation date
-    return new Date(b.creation) - new Date(a.creation)
+    return dayjs(b.creation).diff(dayjs(a.creation))
   })
 })
 
@@ -230,25 +231,12 @@ function getIconByDoctype(doctype) {
 
 function getDueStatus(dueDate) {
   if (!dueDate) return ''
-  
-  const today = new Date()
-  const due = new Date(dueDate)
-  const diffTime = due - today
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-  if (diffDays < 0) {
-    return `Overdue by ${Math.abs(diffDays)} days`
-  } else if (diffDays === 0) {
-    return 'Due today'
-  } else if (diffDays === 1) {
-    return 'Due tomorrow'
-  } else {
-    return `Due in ${diffDays} days`
-  }
+  return getRelativeTime(dueDate)
 }
 
 function isOverdue(dueDate) {
   if (!dueDate) return false
-  return new Date(dueDate) < new Date()
+  return isBeforeToday(dueDate)
 }
+
 </script>

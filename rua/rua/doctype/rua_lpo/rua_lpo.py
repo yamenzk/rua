@@ -73,12 +73,6 @@ class RUALPO(Document):
             except Exception as e:
                 frappe.log_error(f"Error updating project cost: {str(e)}")  
         
-        # Send message when all items are newly received
-        previous_all_items_received = self.get_doc_before_save().all_items_received or 0
-        current_all_items_received = 1
-
-        if current_all_items_received and not previous_all_items_received:
-            ChatMessageHandler(self).handle_status_update(self.ITEMS_RECEIVED_HANDLER)
         
         # Handle status changes (except Draft)
         if self.has_value_changed('status') and self.status != "Draft":
@@ -90,6 +84,7 @@ class RUALPO(Document):
             if handler:
                 ChatMessageHandler(self).handle_status_update({self.payment_status: handler})
 
+        current_all_items_received = 1
         for item in self.items:
             if item.received_quantity < item.qty:
                 current_all_items_received = 0

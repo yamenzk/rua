@@ -116,13 +116,14 @@
   
   <script setup>
   import { computed } from 'vue'
-  import { FeatherIcon, Badge } from 'frappe-ui'
+  import { FeatherIcon, Badge, dayjs } from 'frappe-ui'
   import { projectResource } from '@/data/project'
   import { invoiceResource } from '@/data/invoice'
   import { paymentResource } from '@/data/payment'
   import { lpoResource } from '@/data/lpo'
   import { todoResource } from '@/data/todo'
-  
+  import { isWithinRange } from '@/utils/format'
+ 
   // Active Projects Calculation
   const activeProjects = computed(() => {
     return projectResource.data?.filter(project => 
@@ -134,20 +135,19 @@
   
   // Project Trend Calculation
   const projectTrend = computed(() => {
-    const now = new Date()
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    
-    const thisMonthProjects = projectResource.data?.filter(project => 
-      !project.is_child &&
-      new Date(project.creation) >= thisMonth
-    ).length || 0
+  const thisMonth = dayjs().startOf('month')
+  const lastMonth = dayjs().subtract(1, 'month').startOf('month')
   
-    const lastMonthProjects = projectResource.data?.filter(project => 
-      !project.is_child &&
-      new Date(project.creation) >= lastMonth &&
-      new Date(project.creation) < thisMonth
-    ).length || 0
+  const thisMonthProjects = projectResource.data?.filter(project => 
+    !project.is_child &&
+    dayjs(project.creation).isAfter(thisMonth)
+  ).length || 0
+
+  const lastMonthProjects = projectResource.data?.filter(project => 
+    !project.is_child &&
+    dayjs(project.creation).isAfter(lastMonth) &&
+    dayjs(project.creation).isBefore(thisMonth)
+  ).length || 0
   
     const trend = lastMonthProjects === 0 
       ? 100 
@@ -190,28 +190,26 @@
   
   // Monthly Revenue Calculation
   const monthlyRevenue = computed(() => {
-    const now = new Date()
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    
-    // Current month revenue
-    const currentRevenue = paymentResource.data
-      ?.filter(payment => 
-        payment.status === 'Submitted' && 
-        payment.type === 'Receive' &&
-        new Date(payment.date) >= thisMonth
-      )
-      .reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0
+  const thisMonth = dayjs().startOf('month')
+  const lastMonth = dayjs().subtract(1, 'month').startOf('month')
+  
+  // Current month revenue
+  const currentRevenue = paymentResource.data
+    ?.filter(payment => 
+      payment.status === 'Submitted' && 
+      payment.type === 'Receive' &&
+      dayjs(payment.date).isAfter(thisMonth)
+    )
+    .reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0
   
     // Last month revenue
     const lastMonthRevenue = paymentResource.data
-      ?.filter(payment => 
-        payment.status === 'Submitted' && 
-        payment.type === 'Receive' &&
-        new Date(payment.date) >= lastMonth &&
-        new Date(payment.date) < thisMonth
-      )
-      .reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0
+  ?.filter(payment => 
+    payment.status === 'Submitted' && 
+    payment.type === 'Receive' &&
+    isWithinRange(payment.date, lastMonth, thisMonth)
+  )
+  .reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0
   
     const trend = lastMonthRevenue === 0 
       ? 100 

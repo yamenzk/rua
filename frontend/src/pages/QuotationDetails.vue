@@ -154,7 +154,7 @@
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-600">Date</label>
-                <p class="mt-1 text-sm text-gray-900">{{ formatDate(quotationResource.doc.date, true) }}</p>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(quotationResource.doc.date) }}</p>
               </div>
 
               <!-- Show rejection reason if rejected -->
@@ -195,7 +195,7 @@
         </div>
 
         <div v-if="quotationResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
-          Last modified: {{ formatDate(quotationResource.doc.modified) }} by {{ quotationResource.doc.modified_by }}
+          Last modified: {{ formatDate(quotationResource.doc.modified, DATE_FORMATS.FULL_DATE_TIME) }} by {{ quotationResource.doc.modified_by }}
         </div>
       </div>
 
@@ -407,7 +407,7 @@ import {
 } from 'frappe-ui'
 import { partyResource } from '@/data/party'
 import QuotationItems from './QuotationItems.vue'
-import { formatDate, formatCurrency } from '@/utils/format'
+import { formatDate, formatCurrency, DATE_FORMATS } from '@/utils/format'
 
 const props = defineProps({
   projectResource: { 

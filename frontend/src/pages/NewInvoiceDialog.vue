@@ -46,7 +46,7 @@
             <div>
               <label class="text-xs text-gray-500">Project Completion</label>
               <div class="text-sm font-medium text-gray-900">
-                {{ projectResource.doc.completion }}%
+                {{ Math.round(projectResource.doc.completion) }}%
               </div>
             </div>
           </div>
@@ -115,7 +115,7 @@
               <input
                 type="number"
                 v-model.number="formData.amount"
-                class="block w-full rounded-md border-gray-300 pl-12 pr-4 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                class="block w-full rounded-md border-gray-300 pl-12 pr-4 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
                 placeholder="0.00"
                 :max="availableAmount"
                 step="0.01"
@@ -133,7 +133,7 @@
               <input
                 type="number"
                 v-model.number="completionPercentage"
-                class="block w-full rounded-md border-gray-300 pr-8 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                class="block w-full rounded-md border-gray-300 pr-8 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
                 placeholder="0"
                 :max="maxAllowedPercentage"
                 step="0.01"
@@ -158,8 +158,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Dialog, Button, DatePicker, Switch, Badge } from 'frappe-ui'
-import { formatDate, formatCurrency } from '@/utils/format'
+import { Dialog, DatePicker, Switch, Badge } from 'frappe-ui'
+import { formatDate, formatCurrency, getServerDate } from '@/utils/format'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -198,7 +198,7 @@ const completionPercentage = ref(null)
 const amountError = ref('')
 const percentageError = ref('')
 const formData = ref({
-  date: new Date().toISOString().split('T')[0],
+  date: getServerDate(),
   type: '',
   amount: null,
   party: getClientParty()?.name
@@ -286,7 +286,7 @@ function handlePercentageChange() {
 
 function resetForm() {
   formData.value = {
-    date: new Date().toISOString().split('T')[0],
+    date: getServerDate(),
     type: '',
     amount: null,
     party: getClientParty()?.name

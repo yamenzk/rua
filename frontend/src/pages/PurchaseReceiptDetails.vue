@@ -163,7 +163,7 @@
 							<div>
 								<label class="text-sm font-medium text-gray-600">Date</label>
 								<p class="mt-1 text-sm text-gray-900">
-									{{ formatDate(receiptResource.doc.date, true) }}
+									{{ formatDate(receiptResource.doc.date) }}
 								</p>
 							</div>
 
@@ -188,7 +188,7 @@
 					v-if="receiptResource.doc.modified_by"
 					class="px-6 py-3 bg-gray-50 text-sm text-gray-600"
 				>
-					Last modified: {{ formatDate(receiptResource.doc.modified) }} by
+					Last modified: {{ formatDate(receiptResource.doc.modified, DATE_FORMATS.FULL_DATE_TIME) }} by
 					{{ receiptResource.doc.modified_by }}
 				</div>
 			</div>
@@ -559,7 +559,7 @@ import {
 	LoadingIndicator,
 	createResource,
 } from 'frappe-ui'
-import { formatDate, formatNumber } from '@/utils/format'
+import { formatDate, formatNumber, DATE_FORMATS } from '@/utils/format'
 import { partyResource } from '@/data/party'
 import { createPurchaseReceiptResource } from '@/data/purchaseReceipt'
 import { session } from '@/data/session'

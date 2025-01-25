@@ -112,11 +112,7 @@
 												<div
 													class="text-sm text-gray-400 flex items-center"
 												>
-													{{
-														new Date(
-															quotation.date,
-														).toLocaleDateString('en-AE')
-													}}
+												{{ formatDate(quotation.date) }}
 												</div>
 											</div>
 										</div>
@@ -232,6 +228,7 @@ import {
 
 import { quotationResource } from '@/data/quotation'
 import { partyResource } from '@/data/party'
+import { getServerDate, formatCurrency, formatDate } from '@/utils/format'
 
 const router = useRouter()
 
@@ -250,19 +247,13 @@ const showNewQuotationDialog = ref(false)
 const showNoClientDialog = ref(false)
 const showNotLockedDialog = ref(false)
 const newQuotation = ref({
-	date: new Date().toISOString().split('T')[0],
+  date: getServerDate(),
 })
 const statusCollapsed = ref({
 	Final: false,
 	Submitted: false,
 	Draft: false,
-	Rejected: false,
-})
-
-// Server date resource
-const serverDateResource = createResource({
-	url: 'rua.api.get_server_time',
-	params: { date: true },
+	Rejected: true,
 })
 
 
@@ -353,15 +344,6 @@ const newQuotationDialogOptions = computed(() => ({
 }))
 
 // Methods
-function formatDate(date) {
-	if (!date) return ''
-	return new Date(date).toLocaleDateString()
-}
-
-function formatCurrency(value) {
-	if (!value) return 'AED 0'
-	return `AED ${Number(value).toLocaleString()}`
-}
 
 function getStatusVariant(status) {
 	switch (status?.toLowerCase()) {
@@ -454,9 +436,7 @@ async function createQuotation() {
 			return
 		}
 
-		// Get fresh server date before creating quotation
-		await serverDateResource.fetch()
-		const quotationDate = serverDateResource.data || newQuotation.value.date
+		const quotationDate = getServerDate()
 
 		await quotationResource.insert.submit({
 			project: props.projectResource.doc.name,
@@ -466,10 +446,7 @@ async function createQuotation() {
 		})
 
 		showNewQuotationDialog.value = false
-
-		// Reset with new server date
-		await serverDateResource.fetch()
-		newQuotation.value.date = serverDateResource.data || new Date().toISOString().split('T')[0]
+		newQuotation.value.date = getServerDate()
 	} catch (error) {
 		console.error('Failed to create quotation:', error)
 	}

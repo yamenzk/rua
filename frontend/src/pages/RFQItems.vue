@@ -665,7 +665,7 @@ async function exportToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, 'RFQ Items')
 
     // Generate filename
-    const filename = `RFQ_Items_${props.rfqName}_${new Date().toISOString().split('T')[0]}.xlsx`
+    const filename = `RFQ_Items_${props.rfqName}.xlsx`
 
     // Save file
     XLSX.writeFile(wb, filename)

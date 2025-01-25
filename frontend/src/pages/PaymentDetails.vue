@@ -230,7 +230,7 @@
 
         <!-- Last Modified -->
         <div v-if="paymentResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
-          Last modified: {{ formatDate(paymentResource.doc.modified) }} by {{ paymentResource.doc.modified_by }}
+          Last modified: {{ formatDate(paymentResource.doc.modified,  DATE_FORMATS.FULL_DATE_TIME) }} by {{ paymentResource.doc.modified_by }}
         </div>
       </div>
 
@@ -449,7 +449,7 @@ import {
   LoadingIndicator
 } from 'frappe-ui'
 import { partyResource } from '@/data/party'
-import { formatDate, formatCurrency } from '@/utils/format'
+import { formatDate, formatCurrency, DATE_FORMATS} from '@/utils/format'
 
 
 const props = defineProps({

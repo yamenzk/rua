@@ -605,8 +605,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { FeatherIcon, Dialog, Button, FileUploader, FormControl, Autocomplete } from 'frappe-ui'
+import { ref, computed } from 'vue'
+import { FeatherIcon, Dialog, Button, FileUploader, FormControl, Autocomplete, dayjs } from 'frappe-ui'
 import { attendanceResource } from '@/data/attendance'
 import { leaveResource } from '@/data/leave' 
 import { useRouter } from 'vue-router'
@@ -614,6 +614,14 @@ const router = useRouter()
 import { genderOptions, positionOptions } from '../data/employeeOptions'
 import countries from '../data/countries.json'
 import flags from '../data/flags.json'
+import { 
+  getServerDate,
+  isBeforeToday,
+  isWithinRange,
+  formatDateDuration,
+  formatDate,
+  formatCurrency
+} from '@/utils/format'
 
 const props = defineProps({
 	employee: {
@@ -632,34 +640,25 @@ const leaveRecords = computed(() => {
 
   return leaveResource.data
     .filter(leave => leave.employee === props.employee.name)
-    .sort((a, b) => new Date(b.leave_date) - new Date(a.leave_date))
+    .sort((a, b) => dayjs(b.leave_date).diff(dayjs(a.leave_date)))
 })
+
 const currentLeave = computed(() => {
-  const today = new Date()
-  return leaveRecords.value.find(leave => {
-    const leaveStart = new Date(leave.leave_date)
-    const leaveEnd = new Date(leave.return_date)
-    return leaveStart <= today && today <= leaveEnd
-  })
+  return leaveRecords.value.find(leave => 
+    isWithinRange(getServerDate(), leave.leave_date, leave.return_date)
+  )
 })
+
 function calculateLeaveDuration(leaveDate, returnDate) {
-  const start = new Date(leaveDate)
-  const end = new Date(returnDate)
-  const diffTime = Math.abs(end - start)
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  return `${diffDays} day${diffDays !== 1 ? 's' : ''}`
+  return formatDateDuration(leaveDate, returnDate)
 }
+
 function isLeaveCompleted(leave) {
-  const today = new Date()
-  const returnDate = new Date(leave.return_date)
-  return returnDate < today
+  return isBeforeToday(leave.return_date)
 }
 
 function isLeaveOngoing(leave) {
-  const today = new Date()
-  const leaveStart = new Date(leave.leave_date)
-  const leaveEnd = new Date(leave.return_date)
-  return leaveStart <= today && today <= leaveEnd
+  return isWithinRange(getServerDate(), leave.leave_date, leave.return_date)
 }
 
 function getLeaveStatus(leave) {
@@ -842,34 +841,17 @@ function handleDrop(event) {
 	}
 }
 
-// Utility functions
-function formatDate(date) {
-	if (!date) return 'Not specified'
-	return new Date(date).toLocaleDateString('en-AE', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	})
-}
-
-function formatCurrency(value) {
-	if (!value) return 'AED 0'
-	return `AED ${Math.floor(value).toLocaleString()}`
-}
-
 // Computed properties for date handling
 const currentMonth = computed(() => {
-	return new Date().toLocaleString('default', { month: 'long' })
+  return dayjs().format('MMMM')
 })
 
 const currentMonthStart = computed(() => {
-	const date = new Date()
-	return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0]
+  return dayjs().startOf('month').format('YYYY-MM-DD')
 })
 
 const currentMonthEnd = computed(() => {
-	const date = new Date()
-	return new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0]
+  return dayjs().endOf('month').format('YYYY-MM-DD')
 })
 
 // Process attendance data
@@ -912,14 +894,17 @@ const totalOvertime = computed(() => {
 })
 
 const monthlyAttendanceRecords = computed(() => {
-	return processedAttendance.value
-		.filter((record) => {
-			return (
-				record.date >= currentMonthStart.value &&
-				record.date <= currentMonthEnd.value &&
-				(record.status !== 'present' || record.overtime > 0)
-			)
-		})
-		.sort((a, b) => new Date(b.date) - new Date(a.date))
+  return processedAttendance.value
+    .filter((record) => {
+      return (
+        isWithinRange(
+          record.date, 
+          currentMonthStart.value, 
+          currentMonthEnd.value
+        ) &&
+        (record.status !== 'present' || record.overtime > 0)
+      )
+    })
+    .sort((a, b) => dayjs(b.date).diff(dayjs(a.date)))
 })
 </script>

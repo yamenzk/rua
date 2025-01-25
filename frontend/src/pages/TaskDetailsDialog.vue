@@ -84,7 +84,7 @@
                   @click="navigateToDocument(task.related_doctype, task.related_docname, task.project)"
                 >
                   <div class="flex items-center">
-                    <div class="p-2 rounded-lg bg-gray-50">
+                    <div class="p-2">
                       <FeatherIcon 
                         :name="getIconByDoctype(task.related_doctype)" 
                         class="w-4 h-4 text-gray-800"
@@ -153,7 +153,7 @@
                     <div 
                       class="w-2 h-2 rounded-full"
                       :class="[
-                        task.status === status ? 'bg-blue-500' : 'bg-gray-300',
+                        task.status === status ? 'bg-gray-900' : 'bg-gray-300',
                         index === 2 ? '' : 'relative after:absolute after:top-2 after:left-1 after:w-px after:h-4 after:bg-gray-200'
                       ]"
                     ></div>
@@ -223,6 +223,7 @@
   import { projectResource } from '@/data/project'
   import { userDetails } from '@/data/roles'
   import { employeeResource } from '@/data/employee'
+  import { formatDate, getDueStatus, isBeforeToday } from '@/utils/format'
   
   const router = useRouter()
   
@@ -274,46 +275,19 @@
         return 'text-gray-500'
     }
   }
-  
-  function formatDate(date) {
-    if (!date) return ''
-    return new Date(date).toLocaleDateString('en-AE', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-  
+
   function getProjectName(projectId) {
     return projectResource.data?.find(p => p.name === projectId)?.project_name || projectId
   }
   
-  function getDueStatus(dueDate) {
-    if (!dueDate) return ''
-    
-    const today = new Date()
-    const due = new Date(dueDate)
-    const diffTime = due - today
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
-    if (diffDays < 0) {
-      return `Overdue by ${Math.abs(diffDays)} days`
-    } else if (diffDays === 0) {
-      return 'Due today'
-    } else if (diffDays === 1) {
-      return 'Due tomorrow'
-    } else {
-      return `Due in ${diffDays} days`
-    }
-  }
-  
   function isOverdue(dueDate) {
-    if (!dueDate) return false
-    return new Date(dueDate) < new Date()
-  }
+  if (!dueDate) return false
+  return isBeforeToday(dueDate)
+}
   
   function getAssigneeName(userId) {
-    return userDetails.data?.[userId]?.full_name || userId
+    const employee = employeeResource.data?.find(employee => employee.user === userId)
+    return employee?.employee_name
   }
   
   function getUserAvatar(userId) {

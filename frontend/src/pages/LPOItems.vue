@@ -570,7 +570,7 @@ async function exportToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, 'LPO Items')
 
     // Generate filename
-    const filename = `LPO_Items_${props.lpoName}_${new Date().toISOString().split('T')[0]}.xlsx`
+    const filename = `LPO_Items_${props.lpoName}.xlsx`
 
     // Save file
     XLSX.writeFile(wb, filename)

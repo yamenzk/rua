@@ -132,11 +132,7 @@
                         <div
                           class="text-sm text-gray-400 flex items-center"
                         >
-                          {{
-                            new Date(invoice.date).toLocaleDateString(
-                              'en-AE',
-                            )
-                          }}
+                        {{ formatDate(invoice.date, DATE_FORMATS.SHORT) }}
                         </div>
                       </div>
 										</div>
@@ -261,7 +257,7 @@ import {
   LoadingIndicator
 } from 'frappe-ui'
 import { invoiceResource } from '@/data/invoice'
-import { formatDate, formatCurrency } from '@/utils/format'
+import { formatDate, formatCurrency, DATE_FORMATS } from '@/utils/format'
 import NewInvoiceDialog from './NewInvoiceDialog.vue'
 import { partyResource } from '@/data/party'
 
@@ -319,7 +315,16 @@ const noClientDialogOptions = computed(() => ({
   ]
 }))
 
-const statusCollapsed = ref({})
+const statusCollapsed = ref({
+  'Tax Invoice-Final': false,
+  'Tax Invoice-Submitted': false,
+  'Tax Invoice-Draft': false,
+  'Tax Invoice-Cancelled': true,
+  'Proforma-Final': false,
+  'Proforma-Submitted': false,
+  'Proforma-Draft': false,
+  'Proforma-Cancelled': true
+})
 const showNewInvoiceDialog = ref(false)
 
 

@@ -103,11 +103,7 @@
                         <div
                           class="text-sm text-gray-400 flex items-center"
                         >
-                          {{
-                            new Date(receipt.date).toLocaleDateString(
-                              'en-AE',
-                            )
-                          }}
+						{{ formatDate(receipt.date) }}
                         </div>
                       </div>
 										</div>
@@ -199,6 +195,7 @@ import { useRouter } from 'vue-router'
 import { Avatar, Badge, FeatherIcon, LoadingIndicator } from 'frappe-ui'
 import { purchaseReceiptResource } from '@/data/purchaseReceipt'
 import { partyResource } from '@/data/party'
+import { getServerDate, formatDate } from '@/utils/format'
 
 const router = useRouter()
 
@@ -216,7 +213,7 @@ const props = defineProps({
 const statusCollapsed = ref({
 	Received: false,
 	Draft: false,
-	Cancelled: false,
+	Cancelled: true,
 })
 
 // Computed

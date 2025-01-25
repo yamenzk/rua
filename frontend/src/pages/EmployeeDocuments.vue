@@ -669,6 +669,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Button, Dialog, FileUploader, FormControl, FeatherIcon } from 'frappe-ui'
 import { documentResource } from '@/data/document'
+import { isBeforeToday, getDaysDifference } from '@/utils/format'
 import VueDraggable from 'vuedraggable'
 import { PDFDocument } from 'pdf-lib'
 import * as UPNG from '@pdf-lib/upng'
@@ -884,26 +885,25 @@ const filteredDocuments = computed(() => {
 
 // Expiry calculation functions
 function isExpired(date) {
-	if (!date) return false
-	return new Date(date) < new Date().setHours(0, 0, 0, 0)
+  if (!date) return false
+  return isBeforeToday(date)
 }
 
 function getDaysUntilExpiry(date) {
-	if (!date) return
-	const today = new Date().setHours(0, 0, 0, 0)
-	const expiryDate = new Date(date).setHours(0, 0, 0, 0)
-	return Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
+  if (!date) return
+  return getDaysDifference(date)
 }
 
 function getExpiryStatus(date) {
-	if (!date) return
-	const daysUntilExpiry = getDaysUntilExpiry(date)
+  if (!date) return
+  const daysUntilExpiry = getDaysUntilExpiry(date)
 
-	if (daysUntilExpiry < 0) return 'Expired'
-	if (daysUntilExpiry === 0) return 'Expires Today'
-	if (daysUntilExpiry === 1) return 'Expires in 1 day'
-	return `Expires in ${daysUntilExpiry} days`
+  if (daysUntilExpiry < 0) return 'Expired'
+  if (daysUntilExpiry === 0) return 'Expires Today'
+  if (daysUntilExpiry === 1) return 'Expires in 1 day'
+  return `Expires in ${daysUntilExpiry} days`
 }
+
 
 function getExpiryStatusClass(date) {
 	if (!date) return 'bg-gray-50 text-gray-700'

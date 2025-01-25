@@ -9,42 +9,29 @@
         <div class="space-y-6">
           <!-- Party Selection -->
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Party</label>
-            <!-- Selected Party Display -->
-            <div 
-              v-if="formData.party" 
-              class="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg group"
-            >
-              <div class="flex items-center gap-2">
-                <Avatar
-                  v-if="selectedParty?.image"
-                  :image="selectedParty.image"
-                  size="sm"
-                  shape="circle"
-                />
-                <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <FeatherIcon name="user" class="w-4 h-4 text-gray-500" />
-                </div>
-                <span class="text-sm font-medium text-gray-900">{{ selectedParty?.name }}</span>
-              </div>
-              <button 
-                @click="openPartySelect"
-                class="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <FeatherIcon name="edit-2" class="w-4 h-4" />
-              </button>
-            </div>
-
-            <!-- Party Selection Dialog Trigger -->
-            <button
-              v-else
-              @click="openPartySelect"
-              class="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-600 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              <FeatherIcon name="plus" class="w-4 h-4" />
-              Select Party
-            </button>
-          </div>
+  <label class="block text-sm font-medium text-gray-700">Party</label>
+  <CustomAutocomplete
+    v-model="formData.party"
+    :options="partyOptions"
+    placeholder="Select a party"
+  >
+    <template #item="{ option }">
+      <div class="flex items-center">
+        <Avatar
+          v-if="option.image"
+          :image="option.image"
+          size="sm"
+          shape="circle"
+          class="mr-2"
+        />
+        <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+          <FeatherIcon name="user" class="w-4 h-4 text-gray-500" />
+        </div>
+        <span>{{ option.label }}</span>
+      </div>
+    </template>
+  </CustomAutocomplete>
+</div>
 
           <!-- Amount Input -->
           <div class="space-y-2">
@@ -200,6 +187,8 @@ import {
   Button
 } from 'frappe-ui'
 import { partyResource } from '@/data/party'
+import CustomAutocomplete from './CustomAutocomplete.vue'
+import { getServerDate } from '@/utils/format'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -219,7 +208,7 @@ const showPartyDialog = ref(false)
 const partySearch = ref('')
 const amountError = ref('')
 const formData = ref({
-  date: new Date().toISOString().split('T')[0],
+  date: getServerDate(),
   party: '',
   amount: null,
   bank: '',
@@ -249,13 +238,6 @@ const partyOptions = computed(() => {
       value: party.name,
       image: party.image
     }))
-})
-
-const filteredParties = computed(() => {
-  const search = partySearch.value.toLowerCase()
-  return partyOptions.value.filter(party => 
-    party.label.toLowerCase().includes(search)
-  )
 })
 
 const selectedParty = computed(() => {
@@ -307,7 +289,7 @@ function selectParty(party) {
 
 function resetForm() {
   formData.value = {
-    date: new Date().toISOString().split('T')[0],
+    date: getServerDate(),
     party: '',
     amount: null,
     bank: '',

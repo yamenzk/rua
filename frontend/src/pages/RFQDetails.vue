@@ -157,7 +157,7 @@
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-600">RFQ Date</label>
-                <p class="mt-1 text-sm text-gray-900">{{ formatDate(rfqResource.doc.date, true) }}</p>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(rfqResource.doc.date) }}</p>
               </div>
               <!-- Link field for Link type -->
               <div v-if="isLinkType">
@@ -183,7 +183,7 @@
           </div>
         </div>
         <div v-if="rfqResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
-          Last modified: {{ formatDate(rfqResource.doc.modified) }} by {{ rfqResource.doc.modified_by }}
+          Last modified: {{ formatDate(rfqResource.doc.modified, DATE_FORMATS.FULL_DATE_TIME) }} by {{ rfqResource.doc.modified_by }}
         </div>
       </div>
 
@@ -391,7 +391,7 @@ import {
   LoadingIndicator
 } from 'frappe-ui'
 import RFQItems from './RFQItems.vue'
-import { formatDate } from '@/utils/format'
+import { formatDate, DATE_FORMATS } from '@/utils/format'
 
 const props = defineProps({
   projectResource: {

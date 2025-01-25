@@ -335,52 +335,42 @@
 
 								<!-- Days within the month -->
 								<template v-if="!monthCollapsed[`${year}-${month}`]">
-									<div
-										v-for="record in groupedAttendance[year][month].sort(
-											(a, b) => new Date(b.date) - new Date(a.date),
-										)"
-										:key="record.date"
-										class="hover:bg-gray-50 transition-colors min-w-[800px] pl-16"
-									>
-										<div class="flex items-center px-6 py-3">
-											<div class="flex-1 grid grid-cols-3 gap-4">
-												<!-- Date -->
-												<div class="text-sm text-gray-900">
-													{{ formatAttendanceDate(record.date) }}
-												</div>
-												<!-- Status -->
-												<div class="flex items-center">
-													<div class="flex items-center gap-2">
-														<span
-															class="w-2.5 h-2.5 rounded-full"
-															:class="{
-																'bg-green-500':
-																	record.status === 'present',
-																	'bg-blue-500':
-																	record.status === 'leave',
-																'bg-yellow-400':
-																	record.status === 'late',
-																'bg-red-500':
-																	record.status === 'absent',
-															}"
-														></span>
-														<span class="text-sm capitalize">{{
-															record.status
-														}}</span>
-													</div>
-												</div>
-												<!-- Overtime -->
-												<div class="text-sm text-gray-900">
-													{{
-														record.overtime > 0
-															? `${Number(record.overtime).toString()}h`
-															: '-'
-													}}
-												</div>
-											</div>
-										</div>
-									</div>
-								</template>
+    <div
+        v-for="record in groupedAttendance[year][month].sort(
+            (a, b) => dayjs(b.date).diff(dayjs(a.date))
+        )"
+        :key="record.date"
+        class="hover:bg-gray-50 transition-colors min-w-[800px] pl-16"
+    >
+        <div class="flex items-center px-6 py-3">
+            <div class="flex-1 grid grid-cols-3 gap-4">
+                <!-- Date -->
+                <div class="text-sm text-gray-900">
+                    {{ formatDate(record.date, DATE_FORMATS.ATTENDANCE) }}
+                </div>
+                <!-- Status -->
+                <div class="flex items-center">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="w-2.5 h-2.5 rounded-full"
+                            :class="{
+                                'bg-green-500': record.status === 'present',
+                                'bg-blue-500': record.status === 'leave',
+                                'bg-yellow-400': record.status === 'late',
+                                'bg-red-500': record.status === 'absent',
+                            }"
+                        ></span>
+                        <span class="text-sm capitalize">{{ record.status }}</span>
+                    </div>
+                </div>
+                <!-- Overtime -->
+                <div class="text-sm text-gray-900">
+                    {{ record.overtime > 0 ? `${formatNumber(record.overtime)}h` : '-' }}
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 							</template>
 						</template>
 					</template>
@@ -509,19 +499,30 @@
 </template>
 
 <script setup>
+const props = defineProps({
+  employee: {
+    type: Object,
+    required: true,
+  },
+})
+
 import { ref, computed, onMounted } from 'vue'
 import { leaveResource } from '@/data/leave'
-import { Calendar, FeatherIcon, Badge, Dialog, FormControl } from 'frappe-ui'
-import { DialogPanel } from '@headlessui/vue'
+import { Calendar, FeatherIcon, Badge, Dialog, FormControl, dayjs } from 'frappe-ui'
 import { attendanceResource } from '@/data/attendance'
-import { formatAttendanceDate, getMonthName } from '@/utils/format'
 
-const props = defineProps({
-	employee: {
-		type: Object,
-		required: true,
-	},
-})
+import { 
+  getServerDate, 
+  isBeforeToday, 
+  isAfterToday, 
+  formatDate, 
+  formatDateDuration,
+  formatNumber,
+  isWithinRange,
+  addDays, 
+  DATE_FORMATS,
+  getMonthName 
+} from '@/utils/format'
 
 // View state
 const currentView = ref('List')
@@ -539,31 +540,28 @@ const newLeave = ref({
 const attendanceList = attendanceResource
 
 const currentOngoingLeave = computed(() => {
-  const today = new Date()
+  const today = getServerDate() // Using our utility
   return leaveResource.data?.find(leave => 
     leave.employee === props.employee.name &&
-    new Date(leave.leave_date) <= today &&
-    today <= new Date(leave.return_date)
+    !isBeforeToday(leave.leave_date) && // Using date comparison utility
+    !isAfterToday(leave.return_date)    // Using date comparison utility
   )
 })
 
 
 const todayFormatted = computed(() => {
-  return new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format
+  return getServerDate() // Direct replacement using our utility
 })
 
 function getMinLeaveDate() {
   // If there's a last leave, suggest the day after the last leave
   if (lastLeave.value) {
-    const lastLeaveEnd = new Date(lastLeave.value.return_date)
-    lastLeaveEnd.setDate(lastLeaveEnd.getDate() + 1)
-    return lastLeaveEnd.toISOString().split('T')[0]
+    return addDays(lastLeave.value.return_date, 1) // Using our date manipulation utility
   }
   
   // Otherwise, use today's date
-  return new Date().toISOString().split('T')[0]
+  return getServerDate()
 }
-
 
 const lastLeave = computed(() => {
   if (!leaveResource.data?.length) return null
@@ -571,7 +569,10 @@ const lastLeave = computed(() => {
   // Filter leaves for this employee and sort by return date in descending order
   const employeeLeaves = leaveResource.data
     .filter(leave => leave.employee === props.employee.name)
-    .sort((a, b) => new Date(b.return_date) - new Date(a.return_date))
+    .sort((a, b) => {
+      // Using dayjs for consistent date comparison
+      return dayjs(b.return_date).diff(dayjs(a.return_date))
+    })
 
   // Return the most recent leave (excluding current ongoing leave)
   return employeeLeaves[0]
@@ -645,28 +646,27 @@ const calendarEvents = computed(() => {
 
   // Add leave events with individual daily events
   leaveResource.data?.forEach(leave => {
-    if (leave.employee === props.employee.name) {
-      const startDate = new Date(leave.leave_date)
-      const endDate = new Date(leave.return_date)
+  if (leave.employee === props.employee.name) {
+    let startDate = leave.leave_date
+    const endDate = leave.return_date
 
-      // Create an event for each day of the leave period
-      while (startDate <= endDate) {
-        const currentDate = new Date(startDate)
-        events.push({
-          id: `leave-${leave.name}-${currentDate.toISOString().split('T')[0]}`,
-          title: 'On Leave',
-          fromDate: `${currentDate.toISOString().split('T')[0]} 00:00:00`,
-          toDate: `${currentDate.toISOString().split('T')[0]} 23:59:59`,
-          color: 'blue',
-          isFullDay: true,
-          type: 'leave'
-        })
+    // Create an event for each day of the leave period
+    while (dayjs(startDate).isSameOrBefore(endDate)) {
+      events.push({
+        id: `leave-${leave.name}-${startDate}`,
+        title: 'On Leave',
+        fromDate: `${startDate} 00:00:00`,
+        toDate: `${startDate} 23:59:59`,
+        color: 'blue',
+        isFullDay: true,
+        type: 'leave'
+      })
 
-        // Move to the next day
-        startDate.setDate(startDate.getDate() + 1)
-      }
+      // Move to the next day using addDays utility
+      startDate = addDays(startDate, 1)
     }
-  })
+  }
+})
 
   return events
 })
@@ -702,8 +702,7 @@ async function confirmEarlyReturn() {
 function isOnLeave(date) {
   return leaveResource.data?.some(leave => 
     leave.employee === props.employee.name && 
-    new Date(leave.leave_date) <= new Date(date) && 
-    new Date(date) <= new Date(leave.return_date)
+    isWithinRange(date, leave.leave_date, leave.return_date)
   )
 }
 
@@ -727,17 +726,17 @@ async function saveLeave() {
 
 // Group records by year and month
 const groupedAttendance = computed(() => {
-	return processedRecords.value.reduce((acc, record) => {
-		const date = new Date(record.date)
-		const year = date.getFullYear()
-		const month = date.getMonth() + 1
+  return processedRecords.value.reduce((acc, record) => {
+    const date = dayjs(record.date)
+    const year = date.year()
+    const month = date.month() + 1
 
-		if (!acc[year]) acc[year] = {}
-		if (!acc[year][month]) acc[year][month] = []
+    if (!acc[year]) acc[year] = {}
+    if (!acc[year][month]) acc[year][month] = []
 
-		acc[year][month].push(record)
-		return acc
-	}, {})
+    acc[year][month].push(record)
+    return acc
+  }, {})
 })
 
 const yearStats = computed(() => {
@@ -818,21 +817,9 @@ function handleEventClick(event) {
 	showEventDetails.value = true
 }
 
-function formatDate(date) {
-  if (!date) return 'Not specified'
-  return new Date(date).toLocaleDateString('en-AE', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
 
 function formatLeaveDuration(startDate, endDate) {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  const diffTime = Math.abs(end - start)
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  return `${diffDays} day${diffDays !== 1 ? 's' : ''}`
+  return formatDateDuration(startDate, endDate)
 }
 
 // Initialize

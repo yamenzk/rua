@@ -4,69 +4,26 @@
 			<div class="space-y-6">
 				<!-- Party Selection -->
 				<div class="space-y-2">
-					<label class="block text-sm font-medium text-gray-700">Party</label>
-					<div class="relative">
-						<Combobox v-model="formData.party">
-							<div class="relative">
-								<ComboboxInput
-									:display-value="(party) => party?.name || ''"
-									class="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-sm leading-5 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-									@change="query = $event.target.value"
-									placeholder="Select a party"
-								/>
-								<ComboboxButton
-									class="absolute inset-y-0 right-0 flex items-center pr-2"
-								>
-									<FeatherIcon
-										name="chevron-down"
-										class="h-4 w-4 text-gray-400"
-									/>
-								</ComboboxButton>
-							</div>
-							<ComboboxOptions
-								class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
-							>
-								<div
-									v-if="filteredParties.length === 0"
-									class="relative cursor-default select-none py-2 px-4 text-gray-700"
-								>
-									No parties found.
-								</div>
-								<ComboboxOption
-									v-for="party in filteredParties"
-									:key="party.name"
-									:value="party"
-									v-slot="{ selected, active }"
-								>
-									<div
-										:class="[
-											'relative cursor-pointer select-none py-2 px-4',
-											active ? 'bg-gray-50' : '',
-										]"
-									>
-										<div class="flex items-center">
-											<Avatar
-												v-if="party.image"
-												:image="party.image"
-												size="sm"
-												shape="circle"
-												class="mr-2"
-											/>
-											<span
-												:class="[
-													'block truncate',
-													selected ? 'font-semibold' : '',
-												]"
-											>
-												{{ party.name }}
-											</span>
-										</div>
-									</div>
-								</ComboboxOption>
-							</ComboboxOptions>
-						</Combobox>
-					</div>
-				</div>
+          <label class="block text-sm font-medium text-gray-700">Party</label>
+          <CustomAutocomplete
+            v-model="formData.party"
+            :options="partyOptions"
+            placeholder="Select a party"
+          >
+            <template #item="{ option }">
+              <div class="flex items-center">
+                <Avatar
+                  v-if="option.image"
+                  :image="option.image"
+                  size="sm"
+                  shape="circle"
+                  class="mr-2"
+                />
+                <span>{{ option.label }}</span>
+              </div>
+            </template>
+          </CustomAutocomplete>
+        </div>
 
 				<!-- Amount Input -->
 				<div class="space-y-2">
@@ -156,15 +113,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Dialog, Avatar, FeatherIcon } from 'frappe-ui'
-import {
-	Combobox,
-	ComboboxInput,
-	ComboboxButton,
-	ComboboxOptions,
-	ComboboxOption,
-} from '@headlessui/vue'
-import { getCurrentDubaiDate } from '@/utils/format'
+import { Dialog, Avatar } from 'frappe-ui'
+import { getServerDate } from '@/utils/format'
+import CustomAutocomplete from './CustomAutocomplete.vue'
 
 const props = defineProps({
 	modelValue: Boolean,
@@ -177,16 +128,15 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 // State
-const query = ref('')
 const isSubmitting = ref(false)
 const formData = ref({
-	party: null,
-	date: getCurrentDubaiDate(),
-	amount: 0,
-	bank: '',
-	reference_no: '',
-	remarks: '',
-	claim_date: getCurrentDubaiDate(),
+  party: '',  // Change this from null to empty string to match Autocomplete's expected value type
+  date: getServerDate(),
+  amount: 0,
+  bank: '',
+  reference_no: '',
+  remarks: '',
+  claim_date: getServerDate(),
 })
 
 // Computed Properties
@@ -195,20 +145,22 @@ const show = computed({
 	set: (value) => emit('update:modelValue', value),
 })
 
-const filteredParties = computed(() => {
-	const parties = props.projectResource.doc?.parties
-		? typeof props.projectResource.doc.parties === 'string'
-			? JSON.parse(props.projectResource.doc.parties)
-			: props.projectResource.doc.parties
-		: []
+const partyOptions = computed(() => {
+  const parties = props.projectResource.doc?.parties
+    ? typeof props.projectResource.doc.parties === 'string'
+      ? JSON.parse(props.projectResource.doc.parties)
+      : props.projectResource.doc.parties
+    : []
 
-	return query.value === ''
-		? parties
-		: parties.filter((party) => party.name.toLowerCase().includes(query.value.toLowerCase()))
+  return parties.map(party => ({
+    label: party.name,
+    value: party.name,
+    image: party.image
+  }))
 })
 
 const isFormValid = computed(() => {
-	return formData.value.party && formData.value.amount > 0 && formData.value.date
+  return formData.value.party && formData.value.amount > 0 && formData.value.date
 })
 
 const dialogOptions = computed(() => ({
@@ -226,29 +178,29 @@ const dialogOptions = computed(() => ({
 }))
 
 async function handleSubmit() {
-	if (!isFormValid.value) return
+  if (!isFormValid.value) return
 
-	try {
-		isSubmitting.value = true
+  try {
+    isSubmitting.value = true
 
-		const data = {
-			project: props.projectResource.doc.name,
-			party: formData.value.party.name,
-			date: formData.value.date,
-			amount: formData.value.amount,
-			bank: formData.value.bank,
-			reference_no: formData.value.reference_no,
-			remarks: formData.value.remarks,
-			type: 'Receive',
-			naming_series: 'RC-REC-.YY.',
-			doctype: 'RUA Payment',
-			status: 'Draft',
+    const data = {
+      project: props.projectResource.doc.name,
+      party: formData.value.party, // No longer need .name since party is now the string value
+      date: formData.value.date,
+      amount: formData.value.amount,
+      bank: formData.value.bank,
+      reference_no: formData.value.reference_no,
+      remarks: formData.value.remarks,
+      type: 'Receive',
+      naming_series: 'RC-REC-.YY.',
+      doctype: 'RUA Payment',
+      status: 'Draft',
       claim_date: formData.value.claim_date,
-		}
+    }
 
-		emit('submit', data)
-	} finally {
-		isSubmitting.value = false
-	}
+    emit('submit', data)
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>

@@ -1,4 +1,3 @@
-# NewRFQDialog.vue
 <template>
   <Dialog
     v-model="show"
@@ -17,50 +16,29 @@
         <!-- Party Selection -->
         <div class="space-y-2">
           <label class="block text-sm font-medium text-gray-700">Party</label>
-          <div class="relative">
-            <Combobox v-model="formData.party">
-              <div class="relative">
-                <ComboboxInput
-                  :display-value="(party) => party?.name || ''"
-                  class="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-sm leading-5 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                  @change="query = $event.target.value"
-                  placeholder="Select a party"
-                />
-                <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2">
-                  <FeatherIcon name="chevron-down" class="h-4 w-4 text-gray-400" />
-                </ComboboxButton>
+          <CustomAutocomplete
+            v-model="formData.party"
+            :options="partyOptions"
+            placeholder="Select a party"
+          >
+            <template #item-prefix="{ option }">
+              <Avatar
+                v-if="option.image"
+                :image="option.image"
+                size="sm"
+                shape="circle"
+                class="mr-2"
+              />
+            </template>
+            <template #item="{ option }">
+              <div class="flex flex-col">
+                <span class="block truncate">{{ option.label }}</span>
+                <span v-if="option.type" class="text-xs text-gray-500">
+                  {{ option.type }}
+                </span>
               </div>
-              <ComboboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                <div v-if="filteredParties.length === 0" class="relative cursor-default select-none py-2 px-4 text-gray-700">
-                  No parties found.
-                </div>
-                <ComboboxOption
-                  v-for="party in filteredParties"
-                  :key="party.name"
-                  :value="party"
-                  v-slot="{ selected, active }"
-                >
-                  <div :class="['relative cursor-pointer select-none py-2 px-4', active ? 'bg-gray-50' : '']">
-                    <div class="flex items-center">
-                      <Avatar
-                        v-if="party.image"
-                        :image="party.image"
-                        size="sm"
-                        shape="circle"
-                        class="mr-2"
-                      />
-                      <span :class="['block truncate', selected ? 'font-semibold' : '']">
-                        {{ party.name }}
-                      </span>
-                    </div>
-                    <span v-if="party.type" class="text-xs text-gray-500">
-                      {{ party.type }}
-                    </span>
-                  </div>
-                </ComboboxOption>
-              </ComboboxOptions>
-            </Combobox>
-          </div>
+            </template>
+          </CustomAutocomplete>
         </div>
 
         <!-- Type Selection -->
@@ -101,9 +79,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Dialog, Button, DatePicker, Avatar, FeatherIcon } from 'frappe-ui'
-import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/vue'
-import { formatDate } from '@/utils/format'
+import { Dialog, DatePicker, Avatar, FeatherIcon } from 'frappe-ui'
+import CustomAutocomplete from './CustomAutocomplete.vue'
+import { formatDate, getServerDate } from '@/utils/format'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -116,9 +94,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 // State
-const query = ref('')
 const formData = ref({
-  date: new Date().toISOString().split('T')[0],
+  date: getServerDate(),
   party: null,
   type: '',
   link: ''
@@ -144,7 +121,7 @@ const dialogOptions = computed(() => ({
   ]
 }))
 
-const parties = computed(() => {
+const partyOptions = computed(() => {
   try {
     const parties = props.projectResource.doc?.parties ? 
       (typeof props.projectResource.doc.parties === 'string' ? 
@@ -152,23 +129,18 @@ const parties = computed(() => {
         props.projectResource.doc.parties
       ) : []
     
-    return parties.filter(party => 
-      party.type.toLowerCase().includes('supplier')
-    )
+    return parties
+      .filter(party => party.type.toLowerCase().includes('supplier'))
+      .map(party => ({
+        value: party.name,
+        label: party.name,
+        type: party.type,
+        image: party.image
+      }))
   } catch (error) {
     console.error('Error parsing parties:', error)
     return []
   }
-})
-
-const filteredParties = computed(() => {
-  return query.value === ''
-    ? parties.value
-    : parties.value.filter((party) =>
-        party.name
-          .toLowerCase()
-          .includes(query.value.toLowerCase())
-      )
 })
 
 const isFormValid = computed(() => {
@@ -202,11 +174,6 @@ function isValidUrl(string) {
   }
 
   // Check for common patterns without protocol
-  // - www.example.com
-  // - example.com/path
-  // - internal.network/share
-  // - //networkshare/path
-  // - file paths
   const patterns = [
     /^www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/, // www.example.com
     /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/, // example.com

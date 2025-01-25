@@ -12,7 +12,7 @@
         Welcome {{ session.employee_name }}!
       </h2>
       <div class="text-sm text-gray-500">
-        {{ getCurrentDate() }}
+        {{ formatDate(getServerDate(), DATE_FORMATS.FULL_LONG) }}
       </div>
     </div>
 
@@ -37,18 +37,10 @@ import WelcomeScreen from './WelcomeScreen.vue'
 import UAEMap from './UAEMap.vue'
 import QuickStats from './QuickStats.vue'
 import ActionItems from './ActionItems.vue'
+import { formatDate, getServerDate, DATE_FORMATS } from '@/utils/format'
 
 const showWelcome = ref(false)
 const setHeaderAction = inject('setHeaderAction')
-
-function getCurrentDate() {
-  return new Date().toLocaleDateString('en-AE', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
 
 onMounted(async () => {
   try {

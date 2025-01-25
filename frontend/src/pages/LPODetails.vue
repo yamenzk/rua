@@ -176,7 +176,7 @@
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-600">Date</label>
-                <p class="mt-1 text-sm text-gray-900">{{ formatDate(lpoResource.doc.date, true) }}</p>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(lpoResource.doc.date) }}</p>
               </div>
               
               <!-- Show remarks if cancelled -->
@@ -217,7 +217,7 @@
         </div>
 
         <div v-if="lpoResource.doc.modified_by" class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
-          Last modified: {{ formatDate(lpoResource.doc.modified) }} by {{ lpoResource.doc.modified_by }}
+          Last modified: {{ formatDate(lpoResource.doc.modified, DATE_FORMATS.FULL_DATE_TIME) }} by {{ lpoResource.doc.modified_by }}
         </div>
       </div>
 
@@ -289,7 +289,7 @@
           <div class="space-y-1">
             <div class="text-sm font-medium text-gray-900">{{ payment.name }}</div>
             <div class="text-sm text-gray-600">
-              Date: {{ formatDate(payment.date, true) }}
+              Date: {{ formatDate(payment.date) }}
             </div>
           </div>
           <div class="flex items-center gap-4">
@@ -547,7 +547,7 @@ import {
   LoadingIndicator
 } from 'frappe-ui'
 import LPOItems from './LPOItems.vue'
-import { formatDate, formatCurrency } from '@/utils/format'
+import { formatDate, formatCurrency, DATE_FORMATS } from '@/utils/format'
 import CreatePaymentDialog from './CreatePaymentDialog.vue'
 import { createLPOResource } from '@/data/lpo'
 

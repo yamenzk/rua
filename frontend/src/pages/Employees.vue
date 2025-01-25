@@ -112,7 +112,7 @@
 					<!-- Month Selector -->
 					<div class="flex items-center justify-between">
 						<h3 class="text-lg font-medium">
-							{{ formatMonth(selectedMonth) }} {{ currentYear }}
+							{{ getMonthName(selectedMonth) }} {{ currentYear }}
 						</h3>
 						<div class="flex items-center gap-2">
 							<Button variant="subtle" size="sm" @click="previousMonth">
@@ -795,6 +795,7 @@ import {
 	LoadingIndicator,
 	debounce,
 	Autocomplete,
+	dayjs
 } from 'frappe-ui'
 import countries from '../data/countries.json'
 import flags from '../data/flags.json'
@@ -803,6 +804,14 @@ import { attendanceResource } from '../data/attendance'
 import { genderOptions, positionOptions } from '../data/employeeOptions'
 import { documentResource } from '@/data/document'
 import { leaveResource } from '@/data/leave'
+import { 
+  getServerDate,
+  formatDate,
+  getMonthName,
+  isWithinRange,
+  getCurrentHour,
+  getDaysDifference
+} from '@/utils/format'
 
 const router = useRouter()
 
@@ -835,46 +844,40 @@ const noAttendanceDialog = ref(false)
 
 const showMonthlyAttendanceDialog = ref(false)
 const monthlyAttendanceSearch = ref('')
-const selectedMonth = ref(new Date().getMonth())
-const currentYear = ref(new Date().getFullYear())
-
-function getDubaiDateTime() {
-	const now = new Date()
-	return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }))
-}
+const selectedMonth = ref(dayjs().month())
+const currentYear = ref(dayjs().year())
 
 const attendanceButtonLabel = computed(() => {
-	const currentDate = formatDate(getDubaiDateTime())
-	const todayRecord = findAttendanceRecord(currentDate)
-	return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
+  const currentDate = formatDate(getServerDate())
+  const todayRecord = findAttendanceRecord(currentDate)
+  return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
 })
 
 const isCurrentMonth = computed(() => {
-	const now = new Date()
-	return selectedMonth.value === now.getMonth() && currentYear.value === now.getFullYear()
+  const now = dayjs()
+  return selectedMonth.value === now.month() && currentYear.value === now.year()
 })
 
 const monthlyAttendance = computed(() => {
   if (!list.data || !attendanceList.data || !leaveResource.data) return []
 
-  const monthStart = new Date(currentYear.value, selectedMonth.value, 1)
-  const monthEnd = new Date(currentYear.value, selectedMonth.value + 1, 0)
+  const monthStart = dayjs().year(currentYear.value).month(selectedMonth.value).startOf('month')
+  const monthEnd = monthStart.endOf('month')
 
   // Get all attendance records for the selected month
   const monthRecords = attendanceList.data.filter(record => {
-    const recordDate = new Date(record.date)
-    return recordDate >= monthStart && recordDate <= monthEnd
+    return dayjs(record.date).isBetween(monthStart, monthEnd, 'day', '[]')
   })
 
   // Get leave records for the selected month
   const monthLeaves = leaveResource.data.filter(leave => {
-    const leaveStart = new Date(leave.leave_date)
-    const leaveEnd = new Date(leave.return_date)
+    const leaveStart = dayjs(leave.leave_date)
+    const leaveEnd = dayjs(leave.return_date)
     
     return (
-      (leaveStart >= monthStart && leaveStart <= monthEnd) ||
-      (leaveEnd >= monthStart && leaveEnd <= monthEnd) ||
-      (leaveStart <= monthStart && leaveEnd >= monthEnd)
+      leaveStart.isBetween(monthStart, monthEnd, 'day', '[]') ||
+      leaveEnd.isBetween(monthStart, monthEnd, 'day', '[]') ||
+      (leaveStart.isBefore(monthStart) && leaveEnd.isAfter(monthEnd))
     )
   })
 
@@ -904,15 +907,15 @@ const monthlyAttendance = computed(() => {
     // Calculate leave days
     monthLeaves.forEach(leave => {
       if (leave.employee === employee.name) {
-        const leaveStart = new Date(leave.leave_date)
-        const leaveEnd = new Date(leave.return_date)
+        const leaveStart = dayjs(leave.leave_date)
+        const leaveEnd = dayjs(leave.return_date)
         
         // Adjust start and end to month boundaries
-        const start = leaveStart < monthStart ? monthStart : leaveStart
-        const end = leaveEnd > monthEnd ? monthEnd : leaveEnd
+        const start = leaveStart.isBefore(monthStart) ? monthStart : leaveStart
+        const end = leaveEnd.isAfter(monthEnd) ? monthEnd : leaveEnd
         
         // Calculate days of leave within the month
-        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+        const days = end.diff(start, 'day') + 1
         leaveDays += days
       }
     })
@@ -944,10 +947,6 @@ const filteredMonthlyAttendance = computed(() => {
 	)
 })
 
-// Add these methods
-function formatMonth(month) {
-	return new Date(2000, month).toLocaleString('default', { month: 'long' })
-}
 
 function previousMonth() {
 	if (selectedMonth.value === 0) {
@@ -973,23 +972,8 @@ function getAttendanceRateColor(rate) {
 	return 'bg-red-500'
 }
 
-function formatDate(date) {
-	// Handle different input types
-	if (!(date instanceof Date)) {
-		date = new Date(date)
-	}
-
-	// Check if date is valid
-	if (isNaN(date.getTime())) {
-		return 'N/A'
-	}
-
-	return date.toLocaleDateString('en-CA')
-}
-
 const isReadOnly = computed(() => {
-	const dubaiTime = getDubaiDateTime()
-	return dubaiTime.getHours() >= 22
+  return getCurrentHour() >= 22
 })
 
 const newEmployee = ref({
@@ -1009,12 +993,9 @@ const newFilter = ref({
 
 function isEmployeeOnLeave(employeeId) {
   if (!leaveResource.data) return false
-  
-  const today = new Date()
   return leaveResource.data.some(leave => 
     leave.employee === employeeId && 
-    new Date(leave.leave_date) <= today && 
-    today <= new Date(leave.return_date)
+    isWithinRange(getServerDate(), leave.leave_date, leave.return_date)
   )
 }
 
@@ -1248,10 +1229,8 @@ function formatDaysSinceExpiry(days) {
 }
 
 function getDaysUntilExpiry(date) {
-	if (!date) return Infinity
-	const today = new Date().setHours(0, 0, 0, 0)
-	const expiryDate = new Date(date).setHours(0, 0, 0, 0)
-	return Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
+  if (!date) return Infinity
+  return getDaysDifference(date)
 }
 
 function formatExpiryText(days) {
@@ -1326,10 +1305,9 @@ const filteredEmployees = computed(() => {
 	if (!list.data || !leaveResource.data) return []
 
 	// Find employees currently on leave
-	const currentLeaves = leaveResource.data.filter((leave) => {
-		const today = new Date()
-		return new Date(leave.leave_date) <= today && today <= new Date(leave.return_date)
-	})
+	const currentLeaves = leaveResource.data.filter((leave) => 
+  isWithinRange(getServerDate(), leave.leave_date, leave.return_date)
+)
 
 	const leaveEmployeeIds = new Set(currentLeaves.map((leave) => leave.employee))
 
@@ -1410,10 +1388,9 @@ async function initializeAttendanceData() {
   list.data.forEach((employee) => {
     // Check if employee is on leave today
     const isOnLeave = leaveResource.data.some(leave => 
-      leave.employee === employee.name && 
-      new Date(leave.leave_date) <= new Date(today) && 
-      new Date(today) <= new Date(leave.return_date)
-    )
+  leave.employee === employee.name && 
+  isWithinRange(today, leave.leave_date, leave.return_date)
+)
 
     attendance.value[employee.name] = isOnLeave 
       ? {

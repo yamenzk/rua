@@ -51,7 +51,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center text-gray-500 text-sm">
             <FeatherIcon name="clock" class="w-4 h-4 mr-1" />
-            {{ formatDate(message.timestamp) }}
+            {{ formatDate(message.timestamp, DATE_FORMATS.SHORT_DATE_TIME) }}
           </div>
 
           <template v-if="parseMessageAction(message.message)">
@@ -138,7 +138,7 @@
 										></span>
 									</div>
 									<span class="text-xs text-gray-500">
-										{{ formatDate(message.timestamp) }}
+										{{ formatDate(ref.date, DATE_FORMATS.SHORT_DATE_TIME) }}
 									</span>
 								</div>
 							</div>
@@ -209,7 +209,7 @@
 									</div>
 								</div>
 								<span class="text-xs text-gray-500 shrink-0">
-									{{ formatReferenceDate(ref.date) }}
+									{{ formatDate(ref.date, DATE_FORMATS.SHORT_DATE) }}
 								</span>
 							</div>
 						</div>
@@ -279,6 +279,7 @@ import { invoiceResource } from '@/data/invoice'
 import { employeeResource } from '@/data/employee'
 import { paymentResource } from '@/data/payment'
 import { purchaseReceiptResource } from '@/data/purchaseReceipt'
+import { formatDate, DATE_FORMATS, getDatabaseTimestamp  } from '@/utils/format'
 
 // Props
 const props = defineProps({
@@ -553,28 +554,8 @@ function getSystemMessageIcon(type) {
 	}
 }
 
-function formatDateForFrappe(date) {
-	const day = String(date.getDate()).padStart(2, '0')
-	const month = String(date.getMonth() + 1).padStart(2, '0')
-	const year = date.getFullYear()
-	const hours = String(date.getHours()).padStart(2, '0')
-	const minutes = String(date.getMinutes()).padStart(2, '0')
-	const seconds = String(date.getSeconds()).padStart(2, '0')
 
-	return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
 
-function formatDate(dateString) {
-	if (!dateString) return ''
-	const date = new Date(dateString)
-	return date.toLocaleString('en-US', {
-		hour: 'numeric',
-		minute: 'numeric',
-		hour12: true,
-		month: 'short',
-		day: 'numeric',
-	})
-}
 
 async function sendMessage() {
 	if (!newMessage.value.trim() || !chatResource) return
@@ -585,7 +566,7 @@ async function sendMessage() {
 			user: session.user,
 			message: newMessage.value.trim(),
 			type: 'Chat Message',
-			timestamp: formatDateForFrappe(new Date()),
+			timestamp: getDatabaseTimestamp(),
 		})
 
 		newMessage.value = ''
@@ -714,14 +695,6 @@ function stripRUAPrefix(doctype) {
 	return doctype.replace(/^RUA\s+/, '')
 }
 
-function formatReferenceDate(dateString) {
-	if (!dateString) return ''
-	const date = new Date(dateString)
-	return date.toLocaleDateString('en-US', {
-		month: 'short',
-		day: 'numeric',
-	})
-}
 
 function formatMessageWithReferences(message, isUserMessage = false, isSystemMessage = false) {
     if (!message) return ''

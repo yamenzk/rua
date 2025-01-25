@@ -243,13 +243,12 @@ import {
   Avatar, 
   Badge, 
   Button, 
-  Dialog, 
   FormControl,
-  LoadingIndicator
+  LoadingIndicator,
+  dayjs
 } from 'frappe-ui'
 import { todoResource } from '@/data/todo'
 import { projectResource } from '@/data/project'
-import { userDetails } from '@/data/roles'
 import { employeeResource } from '@/data/employee'
 import { quotationResource } from "@/data/quotation"
 import { rfqResource } from "@/data/rfq"
@@ -259,6 +258,7 @@ import { paymentResource } from "@/data/payment"
 import { purchaseReceiptResource } from "@/data/purchaseReceipt"
 import TaskDetailsDialog from './TaskDetailsDialog.vue'
 import NewTaskModal from './NewTaskModal.vue'
+import { getServerDate, getDueStatus, isBeforeToday, formatDate } from '@/utils/format'
 
 // State
 const isLoading = ref(false)
@@ -270,8 +270,8 @@ const selectedTask = ref(null)
 const statusCollapsed = ref({
   Open: false,
   Delayed: false,
-  Completed: false,
-  Cancelled: false
+  Completed: true,
+  Cancelled: true
 })
 
   setHeaderAction(h(Button, {
@@ -375,7 +375,7 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(task => task.project === filters.value.project)
   }
 
-  return tasks.sort((a, b) => new Date(b.creation) - new Date(a.creation))
+  return tasks.sort((a, b) => dayjs(b.creation).diff(dayjs(a.creation)))
 })
 
 
@@ -529,45 +529,17 @@ function getIconByDoctype(doctype) {
   }
 }
 
-function formatDate(date) {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('en-AE', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-function getTodayDate() {
-  return new Date().toISOString().split('T')[0]
-}
-
-function getDueStatus(dueDate) {
-  if (!dueDate) return ''
-  
-  const today = new Date()
-  const due = new Date(dueDate)
-  const diffTime = due - today
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-  if (diffDays < 0) {
-    return `Overdue by ${Math.abs(diffDays)} days`
-  } else if (diffDays === 0) {
-    return 'Due today'
-  } else if (diffDays === 1) {
-    return 'Due tomorrow'
-  } else {
-    return `Due in ${diffDays} days`
-  }
-}
 
 function isOverdue(dueDate) {
   if (!dueDate) return false
-  return new Date(dueDate) < new Date()
+  return isBeforeToday(dueDate)
 }
 
+
+
 function getAssigneeName(userId) {
-  return userDetails.data?.[userId]?.full_name || userId
+  const employee = employeeResource.data?.find(employee => employee.user === userId)
+  return employee?.employee_name || userId
 }
 
 function getUserAvatar(userId) {
@@ -586,6 +558,7 @@ function toggleStatusCollapse(status) {
 }
 
 function showTaskDetails(task) {
+  console.log('Server Date', getServerDate())
   selectedTask.value = task
   showTaskDetailsDialog.value = true
 }
