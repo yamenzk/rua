@@ -78,7 +78,7 @@
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
       <div
-        v-for="project in list.data"
+        v-for="project in filteredProjects"
         :key="project.name"
         class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden cursor-pointer"
         @click="router.push(`/project/${project.name}/overview`)"
@@ -261,7 +261,7 @@
 </template>
 
 <script setup>
-import { ref, inject, h, onMounted } from 'vue'
+import { ref, inject, h, onMounted, computed} from 'vue'
 import { Button, Input, Dialog, Badge, FeatherIcon, LoadingIndicator, FormControl, debounce } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { projectResource } from '@/data/project'
@@ -331,13 +331,55 @@ const statusOptions = [
 ]
 
 const list = projectResource
-onMounted(async () => {
-  // Initialize with default filter to exclude child projects
-  list.filters = [
-    ['is_child', '!=', 1],
-    ['status', '=', 'In Progress']
-  ]
-  await list.reload()  // Add await here
+
+function updateListFilters() {
+  const baseFilters = [['is_child', '!=', 1]]  // Always include this filter
+  
+  // Only apply server-side filtering for specific cases
+  const userFilters = activeFilters.value
+    .filter(filter => 
+      // Only apply server-side filtering for project_name (search)
+      filter.field === 'project_name' && filter.operator === 'like'
+    )
+    .map(filter => {
+      let value = filter.value
+      value = `%${value}%`
+      return [filter.field, filter.operator, value]
+    })
+
+  // Combine base filters with user filters
+  list.filters = [...baseFilters, ...userFilters]
+  list.reload()
+}
+
+const filteredProjects = computed(() => {
+  return list.data?.filter(project => {
+    // Apply all filters except project_name (which is already handled server-side)
+    return activeFilters.value
+      .filter(filter => filter.field !== 'project_name')
+      .every(filter => {
+        const projectValue = project[filter.field]
+        
+        switch(filter.operator) {
+          case '=':
+            return projectValue == filter.value
+          case '!=':
+            return projectValue != filter.value
+          case '>':
+            return projectValue > filter.value
+          case '<':
+            return projectValue < filter.value
+          case '>=':
+            return projectValue >= filter.value
+          case '<=':
+            return projectValue <= filter.value
+          case 'like':
+            return projectValue.toString().toLowerCase().includes(filter.value.toLowerCase())
+          default:
+            return true
+        }
+      })
+  }) || []
 })
 
 
@@ -384,21 +426,6 @@ function removeFilter(index) {
   updateListFilters()
 }
 
-function updateListFilters() {
-  const baseFilters = [['is_child', '!=', 1]]  // Always include this filter
-  
-  const userFilters = activeFilters.value.map(filter => {
-    let value = filter.value
-    if (filter.operator === 'like') {
-      value = `%${value}%`
-    }
-    return [filter.field, filter.operator, value]
-  })
-
-  // Combine base filters with user filters
-  list.filters = [...baseFilters, ...userFilters]
-  list.reload()
-}
 
 function getFieldLabel(fieldValue) {
   return filterFieldOptions.find(option => option.value === fieldValue)?.label || fieldValue
@@ -443,4 +470,10 @@ function formatCurrency(value) {
   if (!value) return '0'
   return `${Number(value).toLocaleString()}` // Changed from Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 }) to Number(value).toLocaleString()
 }
+
+onMounted(async () => {
+  // Initialize with only excluding child projects
+  list.filters = [['is_child', '!=', 1]]
+  await list.reload()
+})
 </script>

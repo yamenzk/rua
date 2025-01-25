@@ -169,6 +169,7 @@
   }
   
   onMounted(() => {
+    
     if (!mapContainer.value) return
   
     // Initialize map

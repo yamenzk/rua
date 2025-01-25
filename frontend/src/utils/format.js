@@ -154,6 +154,10 @@ export function getDueStatus(dueDate) {
   }
 }
 
+export function getMonthName(month) {
+	return dayjs().month(month - 1).format('MMMM')
+  }
+
 // Database timestamp formatting
 export function formatDateForFrappe(date) {
   const day = String(date.getDate()).padStart(2, '0')

@@ -810,7 +810,8 @@ import {
   getMonthName,
   isWithinRange,
   getCurrentHour,
-  getDaysDifference
+  getDaysDifference,
+  DATE_FORMATS
 } from '@/utils/format'
 
 const router = useRouter()
@@ -844,11 +845,11 @@ const noAttendanceDialog = ref(false)
 
 const showMonthlyAttendanceDialog = ref(false)
 const monthlyAttendanceSearch = ref('')
-const selectedMonth = ref(dayjs().month())
+const selectedMonth = ref(dayjs().month() + 1) 
 const currentYear = ref(dayjs().year())
 
 const attendanceButtonLabel = computed(() => {
-  const currentDate = formatDate(getServerDate())
+  const currentDate = getServerDate()
   const todayRecord = findAttendanceRecord(currentDate)
   return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
 })
@@ -861,23 +862,23 @@ const isCurrentMonth = computed(() => {
 const monthlyAttendance = computed(() => {
   if (!list.data || !attendanceList.data || !leaveResource.data) return []
 
-  const monthStart = dayjs().year(currentYear.value).month(selectedMonth.value).startOf('month')
+  const monthStart = dayjs().year(currentYear.value).month(selectedMonth.value - 1).startOf('month')
   const monthEnd = monthStart.endOf('month')
 
   // Get all attendance records for the selected month
-  const monthRecords = attendanceList.data.filter(record => {
-    return dayjs(record.date).isBetween(monthStart, monthEnd, 'day', '[]')
-  })
+  const monthRecords = attendanceList.data.filter(record => 
+    isWithinRange(record.date, monthStart.format('YYYY-MM-DD'), monthEnd.format('YYYY-MM-DD'))
+  )
 
   // Get leave records for the selected month
   const monthLeaves = leaveResource.data.filter(leave => {
-    const leaveStart = dayjs(leave.leave_date)
-    const leaveEnd = dayjs(leave.return_date)
+    const leaveStart = leave.leave_date
+    const leaveEnd = leave.return_date
     
     return (
-      leaveStart.isBetween(monthStart, monthEnd, 'day', '[]') ||
-      leaveEnd.isBetween(monthStart, monthEnd, 'day', '[]') ||
-      (leaveStart.isBefore(monthStart) && leaveEnd.isAfter(monthEnd))
+      isWithinRange(leaveStart, monthStart.format('YYYY-MM-DD'), monthEnd.format('YYYY-MM-DD')) ||
+      isWithinRange(leaveEnd, monthStart.format('YYYY-MM-DD'), monthEnd.format('YYYY-MM-DD')) ||
+      (dayjs(leaveStart).isBefore(monthStart) && dayjs(leaveEnd).isAfter(monthEnd))
     )
   })
 
@@ -949,21 +950,21 @@ const filteredMonthlyAttendance = computed(() => {
 
 
 function previousMonth() {
-	if (selectedMonth.value === 0) {
-		selectedMonth.value = 11
-		currentYear.value--
-	} else {
-		selectedMonth.value--
-	}
+  if (selectedMonth.value === 1) {
+    selectedMonth.value = 12
+    currentYear.value--
+  } else {
+    selectedMonth.value--
+  }
 }
 
 function nextMonth() {
-	if (selectedMonth.value === 11) {
-		selectedMonth.value = 0
-		currentYear.value++
-	} else {
-		selectedMonth.value++
-	}
+  if (selectedMonth.value === 12) {
+    selectedMonth.value = 1
+    currentYear.value++
+  } else {
+    selectedMonth.value++
+  }
 }
 
 function getAttendanceRateColor(rate) {
@@ -1374,7 +1375,7 @@ function handleAttendanceChange(employeeId, type) {
 }
 
 function findAttendanceRecord(date) {
-	return attendanceList.data?.find((record) => record.date === date)
+	return attendanceList.data?.find((record) => record.date === formatDate(date, DATE_FORMATS.ISO))
 }
 
 async function initializeAttendanceData() {
@@ -1382,7 +1383,7 @@ async function initializeAttendanceData() {
     return false
   }
 
-  const today = formatDate(getDubaiDateTime())
+  const today = getServerDate()
   
   attendance.value = {}
   list.data.forEach((employee) => {
@@ -1445,8 +1446,7 @@ async function showAttendanceDialog() {
 			return
 		}
 
-		const dubaiTime = getDubaiDateTime()
-		const currentDate = formatDate(dubaiTime)
+		const currentDate = getServerDate()
 
 		if (isReadOnly.value) {
 			// After 8 PM, only allow viewing of existing records
@@ -1478,7 +1478,7 @@ async function saveAttendance() {
 		return
 	}
 
-	const currentDate = formatDate(getDubaiDateTime())
+	const currentDate = getServerDate()
 	const attendanceData = JSON.stringify(attendance.value)
 
 	try {
