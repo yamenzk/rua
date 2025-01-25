@@ -620,6 +620,7 @@ const navigation = computed(() => {
     { name: 'Chat', to: `/project/${route.params.id}/chat`, icon: 'message-square' },
     { name: 'Items', to: `/project/${route.params.id}/items`, icon: 'package' },
     { name: 'Invoicing', to: `/project/${route.params.id}/invoicing`, icon: 'file-text' },
+	{ name: 'Files', to: `/project/${route.params.id}/files`, icon: 'folder' }
   ]
 
   // Add Sub Projects section only if this is NOT a child project

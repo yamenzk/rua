@@ -441,10 +441,11 @@
     </div>
   </template>
 </Dialog>
-  <CreatePaymentDialog
+<CreatePaymentDialog
   v-if="invoiceResource?.doc"
   v-model="showCreatePaymentDialog"
   :source-doc="invoiceResource.doc"
+  :paid-amount="totalPaidAmount"
   source-type="RUA Invoice"
 />
 </template>
@@ -493,6 +494,9 @@ const showCreatePaymentDialog = ref(false)
 const showSubmitDialog = ref(false)
 const showFinalizeDialog = ref(false)
 const showCancelDialog = ref(false)
+const totalPaidAmount = computed(() => {
+  return linkedPayments.value.reduce((sum, payment) => sum + payment.amount, 0)
+})
 
 // Computed Properties
 const partyData = computed(() => {

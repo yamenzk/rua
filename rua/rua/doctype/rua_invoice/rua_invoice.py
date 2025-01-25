@@ -50,6 +50,30 @@ class RUAInvoice(Document):
 
     def publish_update(self):
         rua.refetch_resource("rua:invoice")
+    
+    def before_insert(self):
+        project_doc = frappe.get_doc("RUA Project", self.project)
+            
+        # Calculate amounts based on retention status
+        retention_enabled = (
+            project_doc 
+            and project_doc.retention_status == "Enabled" 
+            and project_doc.retention_percentage > 0
+            and project_doc.enable_retention_invoicing
+        )
+
+        if retention_enabled:
+            if project_doc.retention_percentage > 100:
+                frappe.throw("Retention percentage cannot exceed 100%")
+                
+            retention_factor = (1 - project_doc.retention_percentage / 100)
+            self.amount_after_retention = flt(self.amount * retention_factor)
+        else:
+            self.amount_after_retention = flt(self.amount)
+
+        # Calculate VAT and grand total
+        self.vat_after_retention = flt(self.amount_after_retention * 0.05)
+        self.grand_total = flt(self.amount_after_retention + self.vat_after_retention)
 
     def on_update(self):
         self.publish_update()

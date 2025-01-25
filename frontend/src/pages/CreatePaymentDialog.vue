@@ -122,6 +122,10 @@ const props = defineProps({
 		required: true,
 		validator: (value) => ['RUA LPO', 'RUA Invoice'].includes(value),
 	},
+	paidAmount: {
+		type: Number,
+		default: 0
+	}
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -166,25 +170,28 @@ const dialogOptions = computed(() => ({
 
 // Methods
 function validateAmount() {
-	amountError.value = ''
+  amountError.value = ''
+  const remainingAmount = props.sourceDoc.grand_total - props.paidAmount
 
-	if (formData.value.amount < 0) {
-		amountError.value = 'Amount cannot be negative'
-		return false
-	}
+  if (formData.value.amount < 0) {
+    amountError.value = 'Amount cannot be negative'
+    return false
+  }
 
-	if (props.sourceDoc && formData.value.amount > props.sourceDoc.grand_total) {
-		amountError.value = 'Amount cannot exceed the document total'
-		return false
-	}
+  if (formData.value.amount > remainingAmount) {
+    amountError.value = `Amount cannot exceed remaining balance of ${remainingAmount}`
+    return false
+  }
 
-	return true
+  return true
 }
 
+
 function resetForm() {
+	const remainingAmount = props.sourceDoc?.grand_total - props.paidAmount
 	formData.value = {
 		date: getServerDate(),
-		amount: props.sourceDoc?.grand_total || 0,
+		amount: remainingAmount,
 		bank: '',
 		reference_no: '',
 		remarks: '',

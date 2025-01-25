@@ -370,7 +370,7 @@
   <template #body-content>
     <div class="space-y-4">
       <div class="text-sm text-gray-600">
-        To submit this payment, please confirm the payment amount below:
+        To submit this payment, please confirm the payment amount {{ paymentResource.doc.amount }}:
       </div>
       <div class="relative">
         <input

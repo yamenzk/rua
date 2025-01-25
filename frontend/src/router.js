@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { session } from './data/session'
 import { userResource } from '@/data/user'
+import { createProjectResource } from '@/data/project'
 
 const routes = [
   {
@@ -159,6 +160,11 @@ const routes = [
         name: 'ProjectSubProjects',
         component: () => import('@/pages/ProjectSubProjects.vue'),
       },
+      {
+        path: 'files',
+        name: 'ProjectFiles',
+        component: () => import('@/pages/ProjectFiles.vue'),
+      }
     ],
   },
   {

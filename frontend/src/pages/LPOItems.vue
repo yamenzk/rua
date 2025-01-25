@@ -114,19 +114,54 @@
             <div class="flex items-center px-6 py-3">
               <div class="flex-1 grid items-center gap-4" :class="gridColsClass">
                 <!-- Common Fields -->
-                <div>
-                  <input
-                    v-if="isDraft"
-                    type="text"
-                    v-model="item.item"
-                    class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900"
-                    placeholder="Item name"
-                    @input="debouncedInput"
-                  />
-                  <div v-else class="text-sm text-gray-900">
-                    {{ item.item }}
-                  </div>
-                </div>
+                <div class="relative">
+  <input
+    v-if="isDraft"
+    type="text"
+    v-model="item.item"
+    class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900"
+    placeholder="Item name"
+    @input="(e) => { 
+      debouncedInput();
+      debouncedCheckInventory(e.target.value, index);
+    }"
+  />
+  <div v-else class="text-sm text-gray-900">
+    {{ item.item }}
+  </div>
+
+  <!-- Stock Indicator -->
+  <div 
+    v-if="isDraft && itemStockInfo[index]"
+    class="absolute left-0 top-full mt-1 z-10 bg-white rounded-lg border shadow-lg p-3 w-64"
+  >
+    <div class="flex items-start gap-2">
+      <button 
+          class="p-1 text-gray-400 hover:text-gray-600"
+          @click="itemStockInfo[index] = null"
+        >
+          <FeatherIcon name="x" class="w-4 h-4" />
+        </button>
+      <div class="p-1.5 rounded bg-green-50">
+        <FeatherIcon name="package" class="w-4 h-4 text-green-600" />
+      </div>
+      <div>
+        <div class="text-sm font-medium text-gray-900">In Stock</div>
+        <div class="text-xs text-gray-600">
+          Available quantity: {{ itemStockInfo[index].qty }}
+        </div>
+        <button 
+          v-if="item.qty > itemStockInfo[index].qty"
+          class="mt-2 text-xs text-blue-600 hover:text-blue-800"
+          @click="item.qty -= itemStockInfo[index].qty; debouncedInput(); itemStockInfo[index] = null"
+        >
+          Adjust to available quantity
+        </button>
+        
+      </div>
+    </div>
+  </div>
+</div>
 
                 <!-- Type-specific Fields -->
                 <template v-if="type === 'Glass'">
@@ -335,6 +370,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { Button, FeatherIcon, Dialog, debounce, createResource } from 'frappe-ui'
 import { formatNumber, formatCurrency } from '@/utils/format'
+import { inventoryResource } from '@/data/inventory'
 
 const props = defineProps({
 	items: {
@@ -364,6 +400,7 @@ const originalItems = ref(JSON.parse(JSON.stringify(props.items)))
 const showPasteDialog = ref(false)
 const pasteContent = ref('')
 const isExporting = ref(false)
+const itemStockInfo = ref({})
 
 // Computed
 const isDraft = computed(() => props.status === 'Draft')
@@ -456,10 +493,32 @@ const pasteDialogOptions = computed(() => ({
 	],
 }))
 
+
+
 // Methods
 const debouncedInput = debounce(() => {
 	emit('update:items', localItems.value)
 }, 500)
+
+const debouncedCheckInventory = debounce((value, index) => {
+  if (!value) {
+    itemStockInfo.value[index] = null
+    return
+  }
+
+  const inventoryItem = inventoryResource.data?.find(item => 
+    item.item.toLowerCase() === value.toLowerCase()
+  )
+
+  if (inventoryItem && inventoryItem.qty > 0) {
+    itemStockInfo.value[index] = {
+      qty: inventoryItem.qty,
+      item: inventoryItem.item
+    }
+  } else {
+    itemStockInfo.value[index] = null
+  }
+}, 300)
 
 function addNewRow() {
 	const newRow = {
