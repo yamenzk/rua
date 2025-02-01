@@ -198,22 +198,157 @@
 
 		<!-- New Quotation Dialog -->
 		<Dialog v-model="showNewQuotationDialog" :options="newQuotationDialogOptions">
-			<template #body-content>
-				<div class="space-y-4">
-					<DatePicker
-						v-model="newQuotation.date"
-						label="Date"
-						:default-value="newQuotation.date"
-						:format="formatDate"
-					/>
-				</div>
-			</template>
-		</Dialog>
+    <template #body-content>
+      <div class="space-y-6">
+        <!-- Step Indicator -->
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center" aria-hidden="true">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-around">
+            <div 
+              v-for="(step, index) in ['Date', 'Specifications', 'Scope', 'Notes', 'Review']" 
+              :key="step"
+              class="flex items-center space-x-2"
+              :class="currentStep === index ? 'text-gray-900' : 'text-gray-500'"
+            >
+              <span 
+                class="relative flex h-7 w-7 items-center justify-center rounded-full border-2"
+                :class="currentStep === index ? 'text-white bg-gray-900 bg-gray-200' : 'border-gray-300 bg-white'"
+              >
+                {{ index + 1 }}
+              </span>
+              <span class="font-medium text-sm">{{ step }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1: Date Selection -->
+        <div v-if="currentStep === 0" class="space-y-4">
+          <DatePicker
+            v-model="formData.date"
+            label="Quotation Date"
+            :default-value="formData.date"
+            :formatter="(date) => formatDate(date, DATE_FORMATS.UAE)"
+          />
+        </div>
+
+        <!-- Step 2: Specifications -->
+        <div v-if="currentStep === 1" class="space-y-4">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Aluminum</label>
+            <TextInput
+              v-model="formData.specifications.aluminum"
+              placeholder="Enter aluminum specifications"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Glass</label>
+            <TextInput
+              v-model="formData.specifications.glass"
+              placeholder="Enter glass specifications"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Finishes</label>
+            <TextInput
+              v-model="formData.specifications.finishes"
+              placeholder="Enter finish specifications"
+            />
+          </div>
+        </div>
+
+        <!-- Step 3: Scope Selection -->
+        <div v-if="currentStep === 2" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div
+              v-for="scope in scopes"
+              :key="scope.id"
+              class="flex items-center gap-2 p-2 border rounded hover:bg-gray-50"
+            >
+              <Checkbox
+                size="sm"
+                v-model="formData.scopes[scope.id]"
+                :label="scope.label"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Notes & Exclusions -->
+        <div v-if="currentStep === 3" class="space-y-6">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Notes</label>
+            <TextEditor
+              editor-class="h-32 overflow-y-auto border rounded-lg p-2"
+              :content="formData.notes"
+              placeholder="Add any additional notes..."
+              @change="(val) => formData.notes = val"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Exclusions</label>
+            <TextEditor
+              editor-class="h-32 overflow-y-auto border rounded-lg p-2"
+              :content="formData.exclusions"
+              placeholder="Add exclusions..."
+              @change="(val) => formData.exclusions = val"
+            />
+          </div>
+        </div>
+
+        <!-- Step 5: Review -->
+        <div v-if="currentStep === 4" class="space-y-4">
+          <TextEditor
+            editor-class="h-[500px] overflow-y-auto border rounded-lg p-2"
+            :content="generatedContent"
+            @change="(val) => formData.quotation_details = val"
+          />
+        </div>
+      </div>
+    </template>
+
+    <template #actions>
+      <div class="flex justify-between w-full">
+        <Button
+          v-if="currentStep > 0"
+          variant="subtle"
+          @click="currentStep--"
+        >
+          Back
+        </Button>
+        <div class="flex gap-2">
+          <Button
+            variant="subtle"
+            @click="showNewQuotationDialog = false"
+          >
+            Cancel
+          </Button>
+          <Button
+            v-if="currentStep < 4"
+            variant="solid"
+            @click="currentStep++"
+          >
+            Next
+          </Button>
+          <Button
+            v-else
+            variant="solid"
+            theme="green"
+            :loading="quotationResource.insert.loading"
+            @click="createQuotation"
+          >
+            Create Quotation
+          </Button>
+        </div>
+      </div>
+    </template>
+  </Dialog>
 	</div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
 	Avatar,
@@ -222,13 +357,15 @@ import {
 	Button,
 	Dialog,
 	DatePicker,
-	createResource,
 	LoadingIndicator,
+	TextInput,
+	Checkbox,
+	TextEditor
 } from 'frappe-ui'
 
 import { quotationResource } from '@/data/quotation'
 import { partyResource } from '@/data/party'
-import { getServerDate, formatCurrency, formatDate } from '@/utils/format'
+import { getServerDate, formatCurrency, formatDate, DATE_FORMATS } from '@/utils/format'
 
 const router = useRouter()
 
@@ -248,6 +385,7 @@ const showNoClientDialog = ref(false)
 const showNotLockedDialog = ref(false)
 const newQuotation = ref({
   date: getServerDate(),
+  quotation_details: '',
 })
 const statusCollapsed = ref({
 	Final: false,
@@ -255,9 +393,144 @@ const statusCollapsed = ref({
 	Draft: false,
 	Rejected: true,
 })
+const showTextEditor = ref(false)
+const currentStep = ref(0)
+const formData = ref({
+  date: getServerDate(),
+  specifications: {
+    aluminum: 'GULF EXTRUSION ATTESTED SYSTEM',
+    glass: 'GUARDIAN GLASS DOUBLE TEMPERED GLASS (8mm CLEAR TEMPERED GLASS + 16mm SILICONE AIR SPACER + 8mm REFLECTIVE TEMPERED GLASS)',
+    finishes: 'SDF POWDER COATED'
+  },
+  scopes: {
+    doors_windows: true,
+    curtain_walls: true,
+    skylight: false,
+    steel: false,
+    fire_rated: false,
+    balcony_handrail: false,
+    stair_handrail: false,
+    pergola: false
+  },
+  notes: '',
+  exclusions: `
+    <ul>
+      <li>ALUMINUM CLADDING</li>
+      <li>DOOR CLOSER</li>
+      <li>STEEL & STAINLESS STEEL WORK</li>
+      <li>CAT LADDER</li>
+      <li>CANOPY</li>
+      <li>FIRE RATED CURTAIN WALLS</li>
+      <li>DOOR & WINDOWS</li>
+      <li>CRANE</li>
+      <li>SCAFFOLDING</li>
+      <li>CRADLE</li>
+      <li>ELECTRICITY</li>
+      <li>WATER</li>
+      <li>ANY ITEM NOT MENTIONED OR INCLUDED IN THE ATTACHED DOCUMENTS</li>
+    </ul>
+  `,
+  quotation_details: ''
+})
+
+const scopes = ref([
+  { id: 'doors_windows', label: 'ALUMINUM DOORS & WINDOWS' },
+  { id: 'curtain_walls', label: 'CURTAIN WALLS' },
+  { id: 'skylight', label: 'ALUMINUM SKYLIGHT' },
+  { id: 'steel', label: 'STEEL' },
+  { id: 'fire_rated', label: 'ANY FIRE RATED WORKS' },
+  { id: 'balcony_handrail', label: 'ALUMINUM HANDRAIL FOR BALCONY AREA' },
+  { id: 'stair_handrail', label: 'ALUMINUM HANDRAIL FOR STAIR' },
+  { id: 'pergola', label: 'ALUMINUM PERGOLA' }
+])
+
+
 
 
 // Computed
+
+const generatedContent = computed(() => {
+  const clientParty = getProjectParties().find(p => p.type.toLowerCase() === 'client')
+  if (!clientParty) return ''
+
+  const specs = Object.entries(formData.value.specifications)
+    .map(([key, value]) => `<li><strong>${key.toUpperCase()}: </strong>${value.toUpperCase()}</li>`)
+    .join('')
+
+  const selectedScopes = scopes.value
+    .map(scope => `<p>${formData.value.scopes[scope.id] ? '☑' : '☐'} ${scope.label}</p>`)
+    .join('')
+
+  return `
+    <p>TO: <strong>${clientParty.name}</strong>,</p>
+    <p>SUBJECT: <strong>${props.projectResource.doc.name}</strong></p>
+	<p></p>
+
+    <p>Dear <strong>${clientParty.name}</strong>,<p>
+    <p>Thank you for reaching out to us and requesting a quotation for your project...</p>
+	<p></p>
+
+    <hr><p></p>
+    <p><strong>SPECIFICATIONS:</strong></p>
+    <ul>${specs}</ul>
+
+    <hr><p></p>
+    <p><strong>EXCLUSIONS</strong></p>
+    ${formData.value.exclusions}
+
+    ${formData.value.notes ? `<hr><p></p><p><strong>NOTES</strong></p>${formData.value.notes}` : ''}
+
+	<hr><p></p>
+	 <p><strong>STANDARD QUALIFICATIONS</strong></p>
+    <p>OUR OFFER IS PER ITEMS HAVING BEEN PRICED IN ACCORDANCE WITH YOUR RECEIVED BOQ AND DRAWING (RE-MEASURABLE AT SITE). ANY ITEMS WHICH DO NOT APPEAR IN BOQ HAVE BEEN OMITTED FROM OUR BID. ANY ADDITIONAL ITEMS WILL BE SUBJECTED TO PRICE VARIATION</p>
+
+    <hr><p></p>
+    <p><strong>SCOPE OF WORK</strong></p>
+    ${selectedScopes}
+
+	<hr><p></p>
+
+    <p><strong>TERMS AND CONDITIONS</strong></p>
+    <ul>
+      <li>The proposal is strictly based on items as described in the BOQ and this letter. Items not specifically mentioned in the Bill of Quantity or this letter should not be considered as forming part of this scope of works/quotation.</li>
+      <li>Cutting list will be based on the approved shop drawings.</li>
+      <li>All access requirements and equipment are to be provided by the main contractor free of charge.</li>
+      <li>Electricity, water, storage areas and/or adequate site offices required for the execution of project shall be provided by the main contractor.</li>
+      <li>Third Party testing charges for aluminum and cladding works (if applicable) are payable for the main contractor only.</li>
+      <li>Main contractor to pay for all inspection charges for aluminum, glass and cladding.</li>
+      <li>We have not made any provision for carnage, monorails, cradles and scaffolding. All access requirements and equipment are to be provided by the main contractor free of charge.</li>
+    </ul>
+
+    <hr><p></p>
+
+    <p><strong>PROPOSAL BASIS</strong></p>
+    <p>THE PROPOSAL WILL BE BASED ON THE FOLLOWING DOCUMENTS</p>
+    <ul>
+      <li>AS PER ATTACHED BOQ</li>
+      <li>AS PER ATTACHED DRAWINGS</li>
+    </ul>
+
+    <hr><p></p>
+
+    <p><strong>DURATION</strong></p>
+    <p>AS AGREED</p>
+
+    <hr><p></p>
+
+    <p><strong>PAYMENT TERMS</strong></p>
+    <p>TO BE DISCUSSED</p>
+
+    <hr><p></p>
+
+    <p><strong>MAINTENANCE AND WARRANTY</strong></p>
+    <p>RUA Company Aluminum And Glass L.L.C. O.P.C is pleased to offer a one-year warranty for all aluminum items supplied for this project. This warranty covers any technical faults that may occur and begins on the date of initial hand-over. Please note that damages resulting from mishandling are not covered under this maintenance guarantee. For other items such as glass, aluminum finishing, etc., our standard warranty applies. We are committed to providing top-quality products and stand behind the work that we do. If you have any questions about our warranties, please do not hesitate to ask.</p>
+    <p>We are excited to work with you and look forward to a successful partnership. If you have any questions or need any additional clarification, please do not hesitate to reach out to us.</p>
+    <p></p><p>Thank you for considering RUA Company Aluminum And Glass L.L.C. O.P.C for your project. We value your business and look forward to the opportunity to serve you.</p>
+    <p></p><p>Best regards,<p></p>RUA Company Aluminum And Glass L.L.C. O.P.C</p>
+  `
+})
+
+
 const filteredQuotations = computed(() => {
 	return (
 		quotationResource.data?.filter((q) => q.project === props.projectResource.doc?.name) || []
@@ -265,16 +538,26 @@ const filteredQuotations = computed(() => {
 })
 
 const quotationsByStatus = computed(() => {
-	if (!filteredQuotations.value?.length) return {}
+  if (!filteredQuotations.value?.length) return {}
 
-	return filteredQuotations.value.reduce((acc, quotation) => {
-		const status = quotation.status || 'Draft'
-		if (!acc[status]) {
-			acc[status] = []
-		}
-		acc[status].push(quotation)
-		return acc
-	}, {})
+  // First group by status
+  const grouped = filteredQuotations.value.reduce((acc, quotation) => {
+    const status = quotation.status || 'Draft'
+    if (!acc[status]) {
+      acc[status] = []
+    }
+    acc[status].push(quotation)
+    return acc
+  }, {})
+
+  // Then sort each group by date (newest first)
+  Object.keys(grouped).forEach(status => {
+    grouped[status].sort((a, b) => {
+      return new Date(b.date) - new Date(a.date)
+    })
+  })
+
+  return grouped
 })
 
 // Dialog Options
@@ -379,21 +662,26 @@ function navigateToQuotation(quotation) {
 }
 
 function validateAndShowQuotationDialog() {
-	const parties = getProjectParties()
-	const hasClient = parties.some((party) => party.type.toLowerCase() === 'client')
+  const parties = getProjectParties()
+  const hasClient = parties.some((party) => party.type.toLowerCase() === 'client')
+  
+  if (!hasClient) {
+    showNoClientDialog.value = true
+    return
+  }
 
-	if (!hasClient) {
-		showNoClientDialog.value = true
-		return
-	}
+  const isLocked = checkProjectLocked()
+  if (!isLocked) {
+    showNotLockedDialog.value = true
+    return
+  }
 
-	const isLocked = checkProjectLocked()
-	if (!isLocked) {
-		showNotLockedDialog.value = true
-		return
-	}
-
-	showNewQuotationDialog.value = true
+  // Reset scopes to default
+  scopes.value.forEach(scope => {
+    scope.selected = ['doors_windows', 'curtain_walls'].includes(scope.id)
+  })
+  
+  showNewQuotationDialog.value = true
 }
 
 function getProjectParties() {
@@ -415,7 +703,8 @@ function checkProjectLocked() {
 }
 
 function handleNewQuotation() {
-	validateAndShowQuotationDialog()
+  showTextEditor.value = false
+  validateAndShowQuotationDialog()
 }
 
 function openSignedDocument(url, event) {
@@ -424,31 +713,81 @@ function openSignedDocument(url, event) {
 	window.open(url, '_blank', 'noopener,noreferrer')
 }
 
+// Watch for step changes to update quotation_details
+watch(currentStep, (newStep) => {
+  if (newStep === 4) { // When reaching review step
+    formData.value.quotation_details = generatedContent.value
+  }
+})
+
+function resetForm() {
+  formData.value = {
+    date: getServerDate(),
+    specifications: {
+      aluminum: 'GULF EXTRUSION ATTESTED SYSTEM',
+      glass: 'GUARDIAN GLASS DOUBLE TEMPERED GLASS (8mm CLEAR TEMPERED GLASS + 16mm SILICONE AIR SPACER + 8mm REFLECTIVE TEMPERED GLASS)',
+      finishes: 'SDF POWDER COATED'
+    },
+    scopes: {
+      doors_windows: true,
+      curtain_walls: true,
+      skylight: false,
+      steel: false,
+      fire_rated: false,
+      balcony_handrail: false,
+      stair_handrail: false,
+      pergola: false
+    },
+    notes: '',
+    exclusions: `
+      <ul>
+        <li>ALUMINUM CLADDING</li>
+        <li>DOOR CLOSER</li>
+        <li>STEEL & STAINLESS STEEL WORK</li>
+        <li>CAT LADDER</li>
+        <li>CANOPY</li>
+        <li>FIRE RATED CURTAIN WALLS</li>
+        <li>DOOR & WINDOWS</li>
+        <li>CRANE</li>
+        <li>SCAFFOLDING</li>
+        <li>CRADLE</li>
+        <li>ELECTRICITY</li>
+        <li>WATER</li>
+        <li>ANY ITEM NOT MENTIONED OR INCLUDED IN THE ATTACHED DOCUMENTS</li>
+      </ul>
+    `,
+    quotation_details: ''
+  }
+}
+
 async function createQuotation() {
-	if (!props.projectResource.doc?.name) return
+  if (!props.projectResource.doc?.name) return
 
-	try {
-		const parties = getProjectParties()
-		const clientParty = parties.find((party) => party.type.toLowerCase() === 'client')
+  try {
+    const parties = getProjectParties()
+    const clientParty = parties.find((party) => party.type.toLowerCase() === 'client')
 
-		if (!clientParty) {
-			console.error('Client party not found')
-			return
-		}
+    if (!clientParty) {
+      console.error('Client party not found')
+      return
+    }
 
-		const quotationDate = getServerDate()
+    // Ensure we have the latest content
+    const finalContent = formData.value.quotation_details || generatedContent.value
 
-		await quotationResource.insert.submit({
-			project: props.projectResource.doc.name,
-			date: quotationDate,
-			party: clientParty.name,
-			doctype: 'RUA Quotation',
-		})
+    await quotationResource.insert.submit({
+      project: props.projectResource.doc.name,
+      date: formData.value.date,
+      party: clientParty.name,
+      doctype: 'RUA Quotation',
+      quotation_details: finalContent
+    })
 
-		showNewQuotationDialog.value = false
-		newQuotation.value.date = getServerDate()
-	} catch (error) {
-		console.error('Failed to create quotation:', error)
-	}
+    showNewQuotationDialog.value = false
+    resetForm()
+    currentStep.value = 0
+  } catch (error) {
+    console.error('Failed to create quotation:', error)
+  }
 }
 </script>

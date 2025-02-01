@@ -66,7 +66,7 @@
           v-model="formData.date"
           label="Date"
           :default-value="formData.date"
-          :format="formatDate"
+          :formatter="(date) => formatDate(date, DATE_FORMATS.UAE)"
         />
 
         <!-- Type Selection -->
@@ -159,7 +159,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Dialog, DatePicker, Switch, Badge } from 'frappe-ui'
-import { formatDate, formatCurrency, getServerDate } from '@/utils/format'
+import { formatDate, formatCurrency, getServerDate, DATE_FORMATS } from '@/utils/format'
 
 const props = defineProps({
   modelValue: Boolean,

@@ -5,6 +5,12 @@ app_description = "Frappe App for Rua Company"
 app_email = "yz.kh@icloud.com"
 app_license = "mit"
 
+fixtures = [
+    {
+        "doctype": "RUA App Update",
+    }
+]
+
 # Apps
 # ------------------
 

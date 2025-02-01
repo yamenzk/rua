@@ -12,8 +12,57 @@
       
       <!-- Right side of header with conditional rendering -->
       <div class="flex items-center gap-4">
-        <component v-if="headerAction" :is="headerAction" />
-      </div>
+  <!-- What's New Button -->
+  <button 
+  @click="showWhatsNew = true"
+  class="whats-new-btn relative flex items-center gap-2 px-4 py-1.5 text-sm 
+         font-medium rounded-full overflow-hidden group hidden md:flex"
+>
+  <!-- Animated border -->
+  <div class="absolute inset-0 border-2 rounded-full border-transparent
+              bg-clip-border animate-gradient-border"></div>
+
+  <!-- Content container -->
+  <div class="relative z-10 flex items-center gap-2">
+    <span class="text-gray-700">What's New</span>
+    <!-- Custom Sparkle Icon -->
+    <div class="relative">
+      <svg 
+        width="20" 
+        height="20" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        class="sparkle-group"
+      >
+        <!-- Large sparkle -->
+        <path 
+          d="M16 8L19 9L16 10L15 13L14 10L11 9L14 8L15 5L16 8Z" 
+          class="sparkle large-sparkle"
+          style="--delay: 0s;"
+        />
+        <!-- Medium sparkle -->
+        <path 
+          d="M8.5 14L10.5 14.75L8.5 15.5L7.75 17.5L7 15.5L5 14.75L7 14L7.75 12L8.5 14Z"
+          class="sparkle medium-sparkle"
+          style="--delay: 0.2s;"
+        />
+        <!-- Small sparkle -->
+        <path 
+          d="M19 13.5L20 14L19 14.5L18.5 15.5L18 14.5L17 14L18 13.5L18.5 12.5L19 13.5Z"
+          class="sparkle small-sparkle"
+          style="--delay: 0.4s;"
+        />
+      </svg>
+      <!-- Notification dot -->
+      <!-- <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-pink-500 
+                   animate-pulse"></span> -->
+    </div>
+  </div>
+</button>
+
+  <component v-if="headerAction" :is="headerAction" />
+</div>
     </header>
 
     <!-- Main container with proper spacing -->
@@ -64,18 +113,173 @@
       </div>
     </nav>
   </div>
+  <!-- What's New Dialog -->
+  <WhatsNewDialog v-model="showWhatsNew" />
+  <!-- Issue Report Dialog -->
+  <IssueReportDialog v-model="showIssueReport" />
 </template>
 
+<style scoped>
+.whats-new-btn {
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.whats-new-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    115deg,
+    #FF1B6B,
+    #45CAFF,
+    #FF1B6B,
+    #FF9FDB,
+    #45CAFF
+  );
+  background-size: 300% 300%;
+  border-radius: 9999px;
+  animation: borderAnimation 3s linear infinite;
+  z-index: 0;
+}
+
+.whats-new-btn::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: white;
+  border-radius: 9999px;
+  z-index: 1;
+}
+
+.whats-new-btn:hover {
+  transform: translateY(-1px);
+}
+
+.whats-new-btn:hover::before {
+  animation: borderAnimation 2s linear infinite;
+}
+
+/* Sparkle animations */
+.sparkle {
+  fill: currentColor;
+  transform-origin: center;
+  animation: sparkleAnimation 2s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.large-sparkle {
+  color: #FF1B6B;
+}
+
+.medium-sparkle {
+  color: #45CAFF;
+}
+
+.small-sparkle {
+  color: #FF9FDB;
+}
+
+.sparkle-group:hover .sparkle {
+  animation-duration: 1.5s;
+}
+
+@keyframes borderAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes sparkleAnimation {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2) rotate(20deg);
+    opacity: 1;
+  }
+}
+</style>
+
 <script setup>
-import { FeatherIcon } from 'frappe-ui'
-import { computed, provide, ref } from 'vue'
+import { FeatherIcon, Dialog } from 'frappe-ui'
+import { computed, provide, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import WhatsNewDialog from '@/pages/WhatsNewDialog.vue'
+import IssueReportDialog from '@/pages/IssueReportDialog.vue'
 
 const headerAction = ref(null)
 provide('setHeaderAction', (action) => {
   headerAction.value = action
 })
 
+const showWhatsNew = ref(false)
+const showIssueReport = ref(false)
+onMounted(() => {
+  // Keyboard shortcuts for desktop (Alt + I, Alt + H, or Ctrl + Alt + Shift)
+  window.addEventListener('keydown', (e) => {
+    // Alt + I
+    if (e.altKey && e.key.toLowerCase() === 'i') {
+      e.preventDefault()
+      showIssueReport.value = true
+      return
+    }
+    
+    // Alt + H
+    if (e.altKey && e.key.toLowerCase() === 'h') {
+      e.preventDefault()
+      showIssueReport.value = true
+      return
+    }
+    
+    // Ctrl + Alt + Shift
+    if (e.ctrlKey && e.altKey && e.shiftKey) {
+      e.preventDefault()
+      showIssueReport.value = true
+      return
+    }
+  })
+
+  // Shake detection for mobile devices
+  if ('DeviceMotionEvent' in window) {
+    let lastUpdate = 0
+    let lastX = 0
+    let lastY = 0
+    let lastZ = 0
+    const shakeThreshold = 15
+
+    window.addEventListener('devicemotion', (e) => {
+      const current = e.accelerationIncludingGravity
+      if (!current) return
+
+      const currentTime = new Date().getTime()
+      if ((currentTime - lastUpdate) > 100) {
+        const diffTime = currentTime - lastUpdate
+        lastUpdate = currentTime
+
+        // Calculate movement speed
+        const speed = Math.abs(
+          current.x + current.y + current.z - lastX - lastY - lastZ
+        ) / diffTime * 10000
+
+        if (speed > shakeThreshold) {
+          showIssueReport.value = true
+        }
+
+        lastX = current.x
+        lastY = current.y
+        lastZ = current.z
+      }
+    })
+  }
+})
 const route = useRoute()
 const pageTitle = computed(() => {
   const matchedRoute = navigation.find(item => item.to === route.path)

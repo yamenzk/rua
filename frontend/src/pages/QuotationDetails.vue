@@ -214,6 +214,16 @@
         />
       </div>
 
+      <div v-if="quotationResource.doc.quotation_details" class="bg-white rounded-lg border shadow-sm">
+  <div class="px-6 py-4 border-b">
+    <h2 class="text-lg font-medium text-gray-900">Quotation Details</h2>
+  </div>
+  <div 
+    class="px-6 py-4 prose max-w-none" 
+    v-html="quotationResource.doc.quotation_details"
+  ></div>
+</div>
+
       <!-- Signed Document -->
       <div 
         v-if="quotationResource.doc.status === 'Final' && quotationResource.doc.signed_document" 

@@ -10,7 +10,7 @@
           v-model="formData.date"
           label="Date"
           :default-value="formData.date"
-          :format="formatDate"
+          :formatter="(date) => formatDate(date, DATE_FORMATS.UAE)"
         />
 
         <!-- Party Selection -->
@@ -79,7 +79,7 @@
 import { ref, computed } from 'vue'
 import { Dialog, DatePicker, Avatar } from 'frappe-ui'
 import CustomAutocomplete from './CustomAutocomplete.vue'
-import { formatDate, getServerDate } from '@/utils/format'
+import { formatDate, getServerDate, DATE_FORMATS } from '@/utils/format'
 
 const props = defineProps({
   modelValue: Boolean,

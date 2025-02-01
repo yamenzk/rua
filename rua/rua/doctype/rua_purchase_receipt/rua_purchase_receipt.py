@@ -4,30 +4,9 @@
 import frappe
 from frappe.model.document import Document
 import rua
-from rua import ChatMessageHandler
 
 
 class RUAPurchaseReceipt(Document):
-    STATUS_HANDLERS = {
-        "Received": {
-            "type": "Success",
-            "timeline": 1,
-            "message": lambda doc: (
-                f"Some/all items for Purchase Receipt #{doc.purchase_order} from {doc.party} has been received as of #{doc.name}."
-                + (f"Supplier DN: {doc.supplier_delivery_note}. " if doc.supplier_delivery_note else "")
-                + (f'["View Signed DN", "{doc.signed_delivery_note}"]' if doc.signed_delivery_note else "")
-            )
-        },
-        "Cancelled": {
-            "type": "Danger",
-            "timeline": 1,
-            "message": lambda doc: (
-                f"Purchase Receipt #{doc.name} for {doc.party} has been cancelled. "
-                + (f"Reason: {doc.remarks}" if doc.remarks else "")
-            )
-        }
-    }
-
     def publish_update(self):
         rua.refetch_resource("rua:purchase_receipt")
 
@@ -36,11 +15,7 @@ class RUAPurchaseReceipt(Document):
 
     def after_insert(self):
         self.publish_update()
-        # Only create insert message if not Draft
-        if self.status != "Draft":
-            ChatMessageHandler(self).handle_insert(
-                lambda doc: f"@{doc.owner} has created Purchase Receipt #{doc.name} for {doc.party}"
-            )
+
 
     def before_insert(self):
         if not self.purchase_order:
@@ -62,7 +37,6 @@ class RUAPurchaseReceipt(Document):
             fields=["name"]
         )
 
-                # Handle cancellation of a received receipt
         
         
         # Create a dictionary to store previously received quantities per item
@@ -114,10 +88,6 @@ class RUAPurchaseReceipt(Document):
 
     def on_update(self):
         self.publish_update()
-
-        if self.has_value_changed('status') and self.status != "Draft":
-            ChatMessageHandler(self).handle_status_update(self.STATUS_HANDLERS)
-            
 
         if (self.has_value_changed('status') and 
             self.status == 'Cancelled' and 

@@ -1,0 +1,101 @@
+[
+ {
+  "details": "<div class=\"ql-editor read-mode\"><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Fixed early comparison with received count</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Fixed import _ from frappe</li></ul></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 04:24:52.534209",
+  "name": "sk1gobp4j7",
+  "resolves": null,
+  "title": "LPO Creation Issue",
+  "type": "Fix",
+  "version": "1.1.4"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Removed all chat handlers</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span><strong style=\"color: rgb(102, 185, 102);\">TODO: Rewrite chat notifications</strong></li></ul></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 04:26:07.428584",
+  "name": "48u0l6enjj",
+  "resolves": null,
+  "title": "Chat Handlers",
+  "type": "Remove",
+  "version": "1.1.4"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Formatted date pickers in all invoicing to render as DD-MM-YYYY.</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 06:13:37.919243",
+  "name": "9nfieuadqp",
+  "resolves": null,
+  "title": "Date Picker Formatting: DD-MM-YYYY",
+  "type": "UX",
+  "version": "1.1.4"
+ },
+ {
+  "details": null,
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 06:13:57.043844",
+  "name": "csjkjljb1n",
+  "resolves": null,
+  "title": "Quotations not considering user-picked date",
+  "type": "Fix",
+  "version": "1.1.4"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><h1>Updated Quotation Creation</h1><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Specify a date (in dd-mm-yyyy format)</li></ol><p><img src=\"https://i.postimg.cc/fyyrwyCt/Screenshot-2025-02-01-042817.png\" width=\"256\"></p><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Write specifications (predefined templates can be added)</li></ol><p><img src=\"https://i.postimg.cc/Vv39tkqV/Screenshot-2025-02-01-044225.png\" width=\"257\"></p><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Pick Scopes</li></ol><p><img src=\"https://i.postimg.cc/VN88R9sY/Screenshot-2025-02-01-044725.png\" width=\"259\"></p><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Specify notes <strong style=\"background-color: rgb(255, 255, 0);\">(if any)</strong>, keep it blank to prevent rendering notes. You can also add to exclusions here</li></ol><p><img src=\"https://i.postimg.cc/MZQJhrcW/Screenshot-2025-02-01-044903.png\" width=\"258\"></p><p><br></p><p>Quotation Template is rendered, you can do any modifications here.</p><p><span style=\"color: rgb(230, 0, 0);\">Note: after this step you can </span><u style=\"color: rgb(230, 0, 0);\">NOT</u><span style=\"color: rgb(230, 0, 0);\"> edit the template. </span></p><p><br></p><p><img src=\"https://i.postimg.cc/j582m3C6/Screenshot-2025-02-01-045127.png\" width=\"254\"></p><p><br></p><p><br></p><h1>Updated Quotation Details</h1><p>Now you can see the rendered template inside every quotation</p><p><br></p><p><img src=\"https://i.postimg.cc/gk4pDLXR/Screenshot-2025-02-01-045455.png\" width=\"483\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 06:10:35.890396",
+  "name": "cldgc3l37f",
+  "resolves": "",
+  "title": "New Quotation Details with multi-step dialog.",
+  "type": "Feature",
+  "version": "1.1.4"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>All invoices are now ordered from newest to oldest per group per type per status.</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 06:21:04.970539",
+  "name": "dcg56hobqf",
+  "resolves": null,
+  "title": "Improved Invoice Document Ordering",
+  "type": "UX",
+  "version": "1.1.4"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><h2>You can now add as many project images you want through the \"Files\" section inside every project.</h2><h3><br></h3><p>When you upload an image file (png/jpg/jpeg) you can now pick \"Project Image\" as a tag.</p><p><br></p><p><img src=\"https://i.postimg.cc/ZnKbZ5KF/Screenshot-2025-02-01-045932.png\"></p><p><br></p><p>After uploading, a new autoplay image slider will load in the overview page and cycles between all images</p><p><br></p><p><img src=\"https://i.postimg.cc/6Qfx3xPH/Screenshot-2025-02-01-050810.png\"></p><p><br></p><p><br></p><p><br></p><p><strong style=\"color: rgb(230, 0, 0); background-color: rgb(255, 255, 0);\">You still need to set a 'cover' photo for a project to be used in map and project cards </strong></p><p><strong style=\"color: rgb(230, 0, 0);\">to set a cover photo for a project now you should <u>CTRL + Click</u> on the image hero section</strong></p><p><br></p><p><br></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 06:11:17.980189",
+  "name": "2q5qk30h10",
+  "resolves": null,
+  "title": "Project Gallery (Multi-image Support)",
+  "type": "Feature",
+  "version": "1.1.4"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><h2>CTRL + Click on the project mini-map to view a larger version and set a location.</h2><p><img src=\"https://i.postimg.cc/kgNpNFyG/Screenshot-2025-02-01-051452.png\"></p><p><br></p><h2>You can then set a location by double-clicking, dragging the pin or manually setting the longitude and latitude</h2><p><br></p><p><img src=\"https://i.postimg.cc/HLBvRYRC/Screenshot-2025-02-01-051700.png\"></p><p><br></p><p><br></p><p><strong style=\"color: rgb(230, 0, 0);\">Note: if you want to get coordinates through google maps, right click on the map </strong></p><p><img src=\"https://i.postimg.cc/SRzZnWsy/Screenshot-2025-02-01-051828.png\" style=\"\" width=\"341\"></p><p><br></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 06:10:52.345551",
+  "name": "suk0n15r4r",
+  "resolves": null,
+  "title": "Better Project Map Controls",
+  "type": "Feature",
+  "version": "1.1.4"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p><br></p><p>You can now use the following combinations anywhere in the app to open the <strong style=\"background-color: rgb(235, 214, 255);\">new issue dialog</strong><strong>.</strong></p><p><strong><u>on desktop devices</u></strong>:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>CTRL + ALT + SHIFT</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ALT + H</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ALT + I</li></ul><p><br></p><p><strong><u>on mobile devices:</u></strong></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span><strong>Shake </strong>your device to open the <strong style=\"background-color: rgb(235, 214, 255);\">new issue dialog</strong>.</li></ul><p><br></p><p><br></p><p><span style=\"color: rgb(0, 71, 178);\">From this dialog you can</span></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Request a new feature</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Report an issue/bug</li></ul><p><br></p><p><br></p><p><strong><u>Issue created here are directly linked to the dev server 🤓 so I don't forget anything. </u></strong></p><p><br></p><p><strong><u><span class=\"ql-cursor\">﻿</span></u></strong></p><p><img src=\"https://i.postimg.cc/VsGXKVz4/Screenshot-2025-02-01-065804.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 07:01:59.042448",
+  "name": "4lpnrfo5j7",
+  "resolves": null,
+  "title": "Issue Tracking System: Report & Request",
+  "type": "Feature",
+  "version": "1.1.5"
+ }
+]

@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.utils import cint, flt
 from frappe.model.document import Document
 from frappe.utils.response import build_response
@@ -322,3 +323,30 @@ def get_employee_by_user(user):
         }
     # Always return a message structure
     return {"message": result}
+
+@frappe.whitelist(allow_guest=True)
+def get_issues():
+    """Fetch all RUA Issues"""
+    try:
+        issues = frappe.get_all(
+            "RUA Issue",
+            fields=["name", "type", "status", "details", "creation", "modified"],
+            order_by="creation desc"
+        )
+        return {"status": "success", "data": issues}
+    except Exception as e:
+        frappe.log_error("Error fetching RUA Issues", str(e))
+        return {"status": "error", "message": str(e)}
+
+@frappe.whitelist(allow_guest=True)
+def mark_resolved(issue):
+    """Mark an issue as resolved"""
+    try:
+        doc = frappe.get_doc("RUA Issue", issue)
+        doc.status = "Resolved"
+        doc.save(ignore_permissions=True)
+        frappe.db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        frappe.log_error("Error marking issue as resolved", str(e))
+        return {"status": "error", "message": str(e)}

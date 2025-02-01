@@ -5,55 +5,97 @@
     <LoadingIndicator />
   </div>
   <div class="space-y-8" v-else>
-    <!-- Hero Image Section -->
-    <div class="relative h-64 md:h-96">
-      <div 
-        class="w-full h-full group cursor-pointer"
-        @click.stop="handleImageClick()"
-      >
+   <!-- Hero Image Section -->
+<div class="relative h-64 md:h-96">
+  <!-- Carousel -->
+  <div 
+    class="w-full h-full"
+    @click.ctrl="handleImageClick()"
+    @mouseenter="pauseAutoSlide"
+    @mouseleave="resumeAutoSlide"
+  >
+    <!-- Images -->
+    <div class="relative w-full h-full overflow-hidden">
+      <TransitionGroup name="carousel">
         <img
-          v-if="projectResource.doc?.image"
-          :src="projectResource.doc.image"
+          v-for="(image, index) in allProjectImages"
+          :key="image"
+          :src="image"
           :alt="projectResource.doc?.project_name"
-          class="w-full h-full object-cover"
+          class="absolute w-full h-full object-cover transition-all duration-500"
+          :class="index === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'"
           @error="$event.target.style.display='none'"
         />
-        <div v-else class="w-full h-full bg-gray-100 flex items-center justify-center">
-          <FeatherIcon name="image" class="w-12 h-12 text-gray-400" />
-        </div>
-        
-        <!-- Hover overlay -->
-        <div 
-          class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+      </TransitionGroup>
+
+      <!-- Fallback when no images -->
+      <div 
+        v-if="!allProjectImages.length" 
+        class="w-full h-full bg-gray-100 flex items-center justify-center"
+      >
+        <FeatherIcon name="image" class="w-12 h-12 text-gray-400" />
+      </div>
+
+      <!-- Navigation Arrows (only show if multiple images) -->
+      <template v-if="allProjectImages.length > 1">
+        <button 
+          @click.stop="previousImage"
+          class="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full
+                 bg-black/20 hover:bg-black/40 transition-colors text-white"
         >
-          <div class="text-white flex items-center">
-            <FeatherIcon name="edit-2" class="w-5 h-5 mr-2" />
-            <span>Change Image</span>
-          </div>
-        </div>
+          <FeatherIcon name="chevron-left" class="w-6 h-6" />
+        </button>
+        <button 
+          @click.stop="nextImage"
+          class="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full
+                 bg-black/20 hover:bg-black/40 transition-colors text-white"
+        >
+          <FeatherIcon name="chevron-right" class="w-6 h-6" />
+        </button>
+
         
-        <!-- Completion overlay -->
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-          <div class="w-full p-6 text-white">
-            <div class="flex items-center justify-between">
-              <div>
-                <h1 class="text-2xl font-bold">
-                  {{ projectResource.doc?.project_name }}
-                </h1>
-                <div class="flex items-center mt-2 text-white/80">
-                  <FeatherIcon name="map-pin" class="w-4 h-4 mr-1" />
-                  <span class="text-sm">{{ projectResource.doc?.location || 'No location set' }}</span>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-3xl font-bold">{{  Math.round(projectResource.doc?.completion || 0) }}%</div>
-                <div class="text-sm text-white/80">Completed</div>
-              </div>
-            </div>
-          </div>
-        </div>
+      </template>
+    </div>
+
+    <!-- Project Info Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end z-20">
+  <div class="w-full p-6">
+    <div class="flex items-center justify-between">
+      <div class="flex-1">
+        <h1 class="text-2xl font-bold text-white">
+          {{ projectResource.doc?.project_name }}
+        </h1>
+        <div class="flex items-center mt-2 text-white/80" v-if="projectResource.doc?.location">
+  <FeatherIcon name="map-pin" class="w-4 h-4 mr-1 flex-shrink-0" />
+  <span class="text-sm truncate max-w-[170px] sm:max-w-none sm:truncate-none">
+    {{ projectResource.doc?.location || '' }}
+  </span>
+</div>
+      </div>
+
+      <!-- Image Indicators - now inline -->
+      <div v-if="allProjectImages.length > 1" 
+           class="flex-1 flex justify-center items-center self-end space-x-2 hidden md:flex">
+        <button
+          v-for="(_, index) in allProjectImages"
+          :key="index"
+          @click.stop="currentImageIndex = index"
+          class="w-2 h-2 rounded-full transition-all duration-300"
+          :class="index === currentImageIndex 
+            ? 'bg-white w-4' 
+            : 'bg-white/50 hover:bg-white/80'"
+        />
+      </div>
+
+      <div class="flex-1 text-right text-white">
+        <div class="text-3xl font-bold">{{ Math.round(projectResource.doc?.completion || 0) }}%</div>
+        <div class="text-sm text-white/80">Completed</div>
       </div>
     </div>
+  </div>
+</div>
+  </div>
+</div>
 
     <!-- Project Details -->
     <div class="px-6">
@@ -275,8 +317,31 @@
   </Dialog>
 </template>
 
+<style scoped>
+.carousel-enter-active,
+.carousel-leave-active {
+  transition: all 0.5s ease;
+}
+
+.carousel-enter-from {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.carousel-leave-to {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.carousel-enter-to,
+.carousel-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+</style>
+
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { 
   FeatherIcon, 
   LoadingIndicator,
@@ -285,6 +350,12 @@ import {
   FileUploader 
 } from 'frappe-ui'
 import PartyCard from './PartyCard.vue'
+import { documentResource } from '@/data/document'
+
+const currentImageIndex = ref(0)
+const projectImages = ref([])
+const autoSlideInterval = ref(null)
+const isPaused = ref(false)
 
 const props = defineProps({
   projectResource: {
@@ -309,6 +380,13 @@ const client = computed(() => {
     ? JSON.parse(props.projectResource.doc.parties) 
     : props.projectResource.doc.parties
   return parties?.find(p => p.type === 'Client')
+})
+
+const allProjectImages = computed(() => {
+  const mainImage = props.projectResource.doc?.image
+  return mainImage 
+    ? [mainImage, ...projectImages.value]
+    : projectImages.value
 })
 
 const suppliers = computed(() => {
@@ -341,6 +419,73 @@ const calculateProfit = computed(() => {
 async function handleUploadSuccess(result) {
   uploadedResult.value = result
 }
+
+async function fetchProjectImages() {
+  documentResource.filters = [
+    ['source_doctype', '=', 'RUA Project'],
+    ['for_docname', '=', props.projectResource.doc?.name],
+    ['tags', 'like', '%Project Image%']
+  ]
+  
+  try {
+    await documentResource.reload()
+    if (documentResource.data) {
+      projectImages.value = documentResource.data
+        .map(doc => doc.document)
+        .filter(Boolean)
+      // Start autoplay after images are loaded
+      startAutoSlide()
+    }
+  } catch (error) {
+    console.error('Error fetching project images:', error)
+  }
+}
+
+onMounted(() => {
+  fetchProjectImages()
+})
+
+onUnmounted(() => {
+  stopAutoSlide()
+})
+
+
+function nextImage() {
+  currentImageIndex.value = (currentImageIndex.value + 1) % allProjectImages.value.length
+}
+
+function previousImage() {
+  currentImageIndex.value = currentImageIndex.value === 0 
+    ? allProjectImages.value.length - 1 
+    : currentImageIndex.value - 1
+}
+
+function startAutoSlide() {
+  if (allProjectImages.value.length <= 1) return
+  
+  autoSlideInterval.value = setInterval(() => {
+    if (!isPaused.value) {
+      nextImage()
+    }
+  }, 5000) // Change slide every 5 seconds
+}
+
+function stopAutoSlide() {
+  if (autoSlideInterval.value) {
+    clearInterval(autoSlideInterval.value)
+    autoSlideInterval.value = null
+  }
+}
+
+function pauseAutoSlide() {
+  isPaused.value = true
+}
+
+function resumeAutoSlide() {
+  isPaused.value = false
+}
+
+
 
 async function updateImage() {
   if (!uploadedResult.value?.file_url) return

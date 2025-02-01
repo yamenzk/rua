@@ -2,41 +2,13 @@ import frappe
 import json
 from frappe.model.document import Document
 import rua
-from rua import ChatMessageHandler
 
 
 
 class RUAQuotation(Document):
-    STATUS_HANDLERS = {
-        "Submitted": {
-            "type": "Info",
-            "message": lambda doc: f"@{doc.owner} has updated Quotation #{doc.name} status to {doc.status}."
-        },
-        "Final": {
-            "type": "Success",
-            "timeline": 1,
-            "message": lambda doc: (
-                f"@{doc.owner} has finalized Quotation #{doc.name} "
-                f"with {doc.total_items} items and a grand total of AED {doc.grand_total:,.2f}. "
-                f'["View Signed Quotation","{doc.signed_document}"]'
-            )
-        },
-        "Cancelled": {
-            "type": "Danger",
-            "message": lambda doc: (
-                f"@{doc.owner} has cancelled Quotation #{doc.name} "
-                f"for {doc.party}. Reason: {doc.reject_reason}"
-            )
-        }
-    }
-
     def publish_update(self):
         rua.refetch_resource("rua:quotation")
 
-    def on_update(self):
-        self.publish_update()
-        if self.has_value_changed('status') and self.status != "Draft":
-            ChatMessageHandler(self).handle_status_update(self.STATUS_HANDLERS)
 
     def on_trash(self):
         self.publish_update()
@@ -44,11 +16,6 @@ class RUAQuotation(Document):
     def after_insert(self):
         self.publish_update()
         
-        # Only create insert message if not Draft
-        if self.status != "Draft":
-            ChatMessageHandler(self).handle_insert(
-                lambda doc: f"@{doc.owner} has created Quotation #{doc.name} for {doc.party}"
-            )
 
     def before_insert(self):
         if not self.project:

@@ -42,13 +42,71 @@
         </a>
       </div>
     </Teleport>
+
+    <!-- Location Setting Dialog -->
+    <Dialog
+      v-model="showLocationDialog"
+      :options="{
+        title: 'Set Project Location',
+        size: 'xl',
+      }"
+    >
+      <template #body-content>
+        <div class="space-y-6">
+          <!-- Manual Coordinate Inputs -->
+          <div class="grid grid-cols-2 gap-4">
+            <FormControl
+              type="number"
+              label="Latitude"
+              v-model="tempCoords.lat"
+              step="0.0001"
+              @change="updateMapFromInputs"
+            />
+            <FormControl
+              type="number"
+              label="Longitude"
+              v-model="tempCoords.lng"
+              step="0.0001"
+              @change="updateMapFromInputs"
+            />
+          </div>
+
+          <!-- Large Map -->
+          <div class="rounded-lg overflow-hidden border bg-white w-full h-[60vh]">
+            <div :id="dialogMapId" class="w-full h-full"></div>
+          </div>
+
+          <!-- Instructions -->
+          <div class="text-sm text-gray-600">
+            <p>To set location:</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Drag the marker to the desired location</li>
+              <li>Double-click anywhere on the map to move the marker</li>
+              <li>Or enter coordinates manually above</li>
+            </ul>
+          </div>
+        </div>
+      </template>
+
+      <template #actions>
+        <div class="flex justify-end gap-2">
+          <Button variant="subtle" @click="closeLocationDialog">Cancel</Button>
+          <Button variant="solid" @click="saveLocation">Save Location</Button>
+        </div>
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { FeatherIcon } from 'frappe-ui'
+import { 
+  FeatherIcon,
+  FormControl, 
+  Dialog, 
+  Button 
+} from 'frappe-ui'
 import rua_pin from '../assets/rua_pin.png'
 import { useMediaQuery } from '@vueuse/core'
 import 'leaflet/dist/leaflet.css'
@@ -73,6 +131,13 @@ const map = ref(null)
 const marker = ref(null)
 const mapId = `map-${nanoid()}`
 const mapContainerId = computed(() => `${mapId}-container`)
+
+// Dialog map state
+const showLocationDialog = ref(false)
+const dialogMap = ref(null)
+const dialogMarker = ref(null)
+const dialogMapId = computed(() => `${mapId}-dialog`)
+const tempCoords = ref({ lat: 24.4539, lng: 54.3773 })
 
 // Show navigation only on overview page
 const showNavigation = computed(() => {
@@ -106,106 +171,121 @@ function getGoogleMapsUrl(coordinates) {
   return `https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`
 }
 
-function destroyMap() {
-  if (map.value) {
-    map.value.remove()
-    map.value = null
-    marker.value = null
-  }
-}
-
-// Initialize map
-function initializeMap() {
-  // Ensure old map is cleaned up
-  destroyMap()
-
+// Map initialization and cleanup
+function initializeMap(containerId, mapRef, markerRef, options = {}) {
   const mapOptions = {
     maxBounds: [
       [UAE_BOUNDS.south, UAE_BOUNDS.west],
       [UAE_BOUNDS.north, UAE_BOUNDS.east]
     ],
     minZoom: 7,
-    zoomControl: false,
+    zoomControl: options.zoomControl ?? false,
     dragging: true,
     scrollWheelZoom: true,
-    doubleClickZoom: false, // Disable default double-click zoom
+    doubleClickZoom: false,
     maxBoundsViscosity: 1.0,
     attributionControl: false
   }
 
-  // Wait for container to be available
-  const container = document.getElementById(mapContainerId.value)
+  const container = document.getElementById(containerId)
   if (!container) return
 
-  map.value = L.map(mapContainerId.value, mapOptions)
+  mapRef.value = L.map(containerId, mapOptions)
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
-  }).addTo(map.value)
+  }).addTo(mapRef.value)
 
-  let initialCoords = ABU_DHABI_COORDS
-  let initialZoom = 10
+  let initialCoords = coords.value ? [coords.value.lat, coords.value.lng] : ABU_DHABI_COORDS
+  let initialZoom = coords.value ? 13 : 10
 
-  if (coords.value) {
-    initialCoords = [coords.value.lat, coords.value.lng]
-    initialZoom = 13
-  }
-
-  // Create custom icon using imported pin image
   const customIcon = L.icon({
     iconUrl: rua_pin,
-    iconSize: [35, 50], // Maintaining aspect ratio (198:282) but scaled down
-    iconAnchor: [17.5, 50], // Half width and full height for bottom center anchoring
-    popupAnchor: [0, -50] // Open popup above the point
+    iconSize: [35, 50],
+    iconAnchor: [17.5, 50],
+    popupAnchor: [0, -50]
   })
 
-  // Initialize marker with custom icon
-  marker.value = L.marker(initialCoords, {
+  markerRef.value = L.marker(initialCoords, {
     draggable: true,
     icon: customIcon
-  }).addTo(map.value)
+  }).addTo(mapRef.value)
 
-  // Handle marker drag events for managers
-  if (true) {
-    marker.value.on('dragend', (event) => {
-      const { lat, lng } = event.target.getLatLng()
-      emit('update:coords', { lat, lng })
-    })
+  markerRef.value.on('dragend', (event) => {
+    const { lat, lng } = event.target.getLatLng()
+    tempCoords.value = { lat, lng }
+  })
 
-    map.value.on('dblclick', handleMapClick)
-  }
+  mapRef.value.on('dblclick', (e) => {
+    const { lat, lng } = e.latlng
+    markerRef.value.setLatLng([lat, lng])
+    tempCoords.value = { lat, lng }
+  })
 
-  map.value.setView(initialCoords, initialZoom)
+  mapRef.value.setView(initialCoords, initialZoom)
 
-  // Force a resize to ensure proper rendering
   setTimeout(() => {
-    map.value?.invalidateSize()
+    mapRef.value?.invalidateSize()
   }, 0)
 }
 
-// Update handleMapClick to use custom icon
-function handleMapClick(e) {
-  const { lat, lng } = e.latlng
-  
-  if (marker.value) {
-    marker.value.setLatLng([lat, lng])
-  } else {
-    // Create marker with custom icon if it doesn't exist
-    const customIcon = L.icon({
-      iconUrl: rua_pin,
-      iconSize: [35, 50], // Maintaining aspect ratio (198:282) but scaled down
-      iconAnchor: [17.5, 50], // Half width and full height for bottom center anchoring
-      popupAnchor: [0, -50] // Open popup above the point
-    })
-    
-    marker.value = L.marker([lat, lng], {
-      draggable: true,
-      icon: customIcon
-    }).addTo(map.value)
-  }
-  
-  emit('update:coords', { lat, lng })
+function initializeMainMap() {
+  initializeMap(mapContainerId.value, map, marker)
 }
+
+function initializeDialogMap() {
+  initializeMap(dialogMapId.value, dialogMap, dialogMarker, { zoomControl: true })
+}
+
+function destroyMap() {
+  if (map.value) {
+    map.value.remove()
+    map.value = null
+    marker.value = null
+  }
+  if (dialogMap.value) {
+    dialogMap.value.remove()
+    dialogMap.value = null
+    dialogMarker.value = null
+  }
+}
+
+// Dialog handlers
+function handleMapClick(event) {
+  if (event.ctrlKey) {
+    openLocationDialog()
+  }
+}
+
+function openLocationDialog() {
+  showLocationDialog.value = true
+  tempCoords.value = coords.value || { lat: 24.4539, lng: 54.3773 }
+  nextTick(() => {
+    initializeDialogMap()
+  })
+}
+
+function closeLocationDialog() {
+  showLocationDialog.value = false
+  if (dialogMap.value) {
+    dialogMap.value.remove()
+    dialogMap.value = null
+    dialogMarker.value = null
+  }
+}
+
+function saveLocation() {
+  emit('update:coords', tempCoords.value)
+  closeLocationDialog()
+}
+
+function updateMapFromInputs() {
+  if (!dialogMap.value || !dialogMarker.value) return
+  const newLatLng = [tempCoords.value.lat, tempCoords.value.lng]
+  dialogMarker.value.setLatLng(newLatLng)
+  dialogMap.value.setView(newLatLng, dialogMap.value.getZoom())
+}
+
 // Watch for coordinate changes
 watch(() => coords.value, (newCoords) => {
   if (!map.value || !newCoords) return
@@ -223,11 +303,20 @@ watch(() => coords.value, (newCoords) => {
 // Lifecycle hooks
 onMounted(() => {
   nextTick(() => {
-    initializeMap()
+    initializeMainMap()
+    // Add click handler to main map container
+    const container = document.getElementById(mapContainerId.value)
+    if (container) {
+      container.addEventListener('click', handleMapClick)
+    }
   })
 })
 
 onBeforeUnmount(() => {
+  const container = document.getElementById(mapContainerId.value)
+  if (container) {
+    container.removeEventListener('click', handleMapClick)
+  }
   destroyMap()
 })
 </script>
@@ -240,6 +329,7 @@ onBeforeUnmount(() => {
 .leaflet-control-zoom a {
   display: none !important;
 }
+
 .leaflet-control-zoom .leaflet-bar .leaflet-control {
   display: none !important;
 }

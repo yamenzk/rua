@@ -336,13 +336,23 @@ const filteredInvoices = computed(() => {
 const invoicesByType = computed(() => {
   if (!filteredInvoices.value?.length) return {}
   
-  return filteredInvoices.value.reduce((acc, invoice) => {
+  // First group by type
+  const grouped = filteredInvoices.value.reduce((acc, invoice) => {
     if (!acc[invoice.type]) {
       acc[invoice.type] = []
     }
     acc[invoice.type].push(invoice)
     return acc
   }, {})
+
+  // Then sort each type group by date (newest first)
+  Object.keys(grouped).forEach(type => {
+    grouped[type].sort((a, b) => {
+      return new Date(b.date) - new Date(a.date)
+    })
+  })
+
+  return grouped
 })
 
 // Methods

@@ -9,6 +9,7 @@ const dayjsSystem = () => dayjs().tz(TIMEZONE)
 export const DATE_FORMATS = {
   FULL_LONG: 'dddd, MMMM D, YYYY', // Added for full date with weekday
   ISO: 'YYYY-MM-DD',
+  UAE: 'DD-MM-YYYY',
   FULL_DATE: 'MMMM D, YYYY',
   FULL_DATE_TIME: 'MMMM D, YYYY, hh:mm A',
   SHORT_DATE_TIME: 'DD MMM YYYY, HH:mm',

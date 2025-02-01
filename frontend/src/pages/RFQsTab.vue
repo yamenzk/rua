@@ -259,7 +259,8 @@ const filteredRFQs = computed(() => {
 const rfqsByType = computed(() => {
   if (!filteredRFQs.value?.length) return {}
   
-  return filteredRFQs.value.reduce((acc, rfq) => {
+  // First group by type
+  const grouped = filteredRFQs.value.reduce((acc, rfq) => {
     const type = rfq.type || 'Material'
     if (!acc[type]) {
       acc[type] = []
@@ -267,6 +268,15 @@ const rfqsByType = computed(() => {
     acc[type].push(rfq)
     return acc
   }, {})
+
+  // Then sort each type group by date (newest first)
+  Object.keys(grouped).forEach(type => {
+    grouped[type].sort((a, b) => {
+      return new Date(b.date) - new Date(a.date)
+    })
+  })
+
+  return grouped
 })
 
 // Methods

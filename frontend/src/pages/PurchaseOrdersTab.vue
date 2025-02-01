@@ -276,7 +276,8 @@ const filteredLPOs = computed(() => {
 const lposByType = computed(() => {
   if (!filteredLPOs.value?.length) return {}
   
-  return filteredLPOs.value.reduce((acc, lpo) => {
+  // First group by type
+  const grouped = filteredLPOs.value.reduce((acc, lpo) => {
     const type = lpo.type || 'Material'
     if (!acc[type]) {
       acc[type] = []
@@ -284,6 +285,15 @@ const lposByType = computed(() => {
     acc[type].push(lpo)
     return acc
   }, {})
+
+  // Then sort each type group by date (newest first)
+  Object.keys(grouped).forEach(type => {
+    grouped[type].sort((a, b) => {
+      return new Date(b.date) - new Date(a.date)
+    })
+  })
+
+  return grouped
 })
 
 // Methods

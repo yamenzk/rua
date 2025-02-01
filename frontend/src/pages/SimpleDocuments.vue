@@ -229,30 +229,52 @@
               />
   
               <div class="space-y-2">
-                <FormControl
-                  type="text"
-                  label="Tags (comma separated)"
-                  v-model="newDocument.tags"
-                  placeholder="e.g. Drawings, Specifications"
-                />
+  <FormControl
+    type="text"
+    label="Tags (comma separated)"
+    v-model="newDocument.tags"
+    placeholder="e.g. Drawings, Specifications"
+  />
+
+  <div class="space-y-2">
+    <label class="text-sm text-gray-600">Common Tags</label>
+    <div class="flex flex-wrap gap-2">
+      <!-- Special Project Image tag -->
+      <button
+  v-if="showProjectImageTag"
+  @click="addTag('Project Image')"
+  class="project-image-tag inline-flex items-center gap-1 px-3 py-1 rounded-full 
+         text-sm relative overflow-hidden group"
+  :class="{ 'opacity-50 cursor-not-allowed': hasTag('Project Image') }"
+  :disabled="hasTag('Project Image')"
+>
+  <!-- Animated border effect -->
+  <div class="absolute inset-0 border-2 rounded-full border-transparent
+              bg-clip-border animate-gradient-border"></div>
   
-                <div class="space-y-2">
-                  <label class="text-sm text-gray-600">Common Tags</label>
-                  <div class="flex flex-wrap gap-2">
-                    <button
-                      v-for="(emoji, tag) in recommendedTags"
-                      :key="tag"
-                      @click="addTag(tag)"
-                      class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition-colors"
-                      :class="{ 'opacity-50 cursor-not-allowed': hasTag(tag) }"
-                      :disabled="hasTag(tag)"
-                    >
-                      <span>{{ emoji }}</span>
-                      <span>{{ tag }}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+  <!-- Content -->
+  <div class="relative z-10 flex items-center gap-1 text-slate-700 font-medium">
+    <span>🖼️</span>
+    <span>Project Image</span>
+  </div>
+</button>
+
+      <!-- Regular tags -->
+      <button
+        v-for="(emoji, tag) in recommendedTags"
+        :key="tag"
+        @click="addTag(tag)"
+        class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm 
+               bg-gray-100 hover:bg-gray-200 transition-colors"
+        :class="{ 'opacity-50 cursor-not-allowed': hasTag(tag) }"
+        :disabled="hasTag(tag)"
+      >
+        <span>{{ emoji }}</span>
+        <span>{{ tag }}</span>
+      </button>
+    </div>
+  </div>
+</div>
             </div>
           </div>
         </template>
@@ -325,9 +347,69 @@
       </Dialog>
     </div>
   </template>
+  <style scoped>
+  .project-image-tag {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+  }
+  
+  .project-image-tag::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(
+      115deg,
+      #FF1B6B,
+      #45CAFF,
+      #FF1B6B,
+      #FF9FDB,
+      #45CAFF
+    );
+    background-size: 300% 300%;
+    animation: borderAnimation 3s linear infinite;
+    border-radius: 9999px;
+    z-index: 0;
+  }
+  
+  .project-image-tag::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 9999px;
+    z-index: 1;
+  }
+  
+  @keyframes borderAnimation {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  /* Hover effect */
+  .project-image-tag:hover::before {
+    animation: borderAnimation 1.5s linear infinite;
+  }
+  
+  /* Subtle hover transition */
+  .project-image-tag::after {
+    transition: background-color 0.3s ease;
+  }
+  
+  .project-image-tag:hover::after {
+    background: rgba(255, 255, 255, 0.99);
+  }
+  </style>
   
   <script setup>
-  import { ref, computed } from 'vue'
+  import { ref, computed, watch } from 'vue'
   import {
     Button,
     FormControl,
@@ -350,6 +432,11 @@
   })
   
   // Recommended tags - customize these based on your needs
+  const specialTags = {
+  'Project Image': '🖼️'
+}
+const showProjectImageTag = ref(false)
+
   const recommendedTags = {
     'Drawings': '📐',
     'Specifications': '📋',
@@ -532,7 +619,15 @@ function hasTagInEditingDoc(tag) {
 // Upload and Edit Functions
 async function handleUploadSuccess(result) {
   newDocument.value.document = result.file_url
+  // Update the showProjectImageTag based on the file type
+  showProjectImageTag.value = isImageFile(result.file_url)
 }
+
+watch(showUploadDialog, (newValue) => {
+  if (!newValue) {
+    showProjectImageTag.value = false
+  }
+})
 
 async function submitDocument() {
   if (!isValidNewDocument.value) return
