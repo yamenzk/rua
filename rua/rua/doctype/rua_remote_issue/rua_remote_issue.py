@@ -1,10 +1,13 @@
-# rua/rua/doctype/rua_remote_issue/rua_remote_issue.py
-
 import frappe
 import requests
 from frappe.model.document import Document
 
 class RUARemoteIssue(Document):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._table_fieldnames = []
+        self._valid_columns = []
+
     @staticmethod
     def get_list(args):
         try:
@@ -13,7 +16,7 @@ class RUARemoteIssue(Document):
             )
             response.raise_for_status()
             
-            issues = response.json().get("message", {}).get("data", [])
+            issues = response.json().get("data", {}).get("data", [])
             return issues
             
         except Exception as e:
@@ -29,7 +32,7 @@ class RUARemoteIssue(Document):
             )
             response.raise_for_status()
             
-            issues = response.json().get("message", {}).get("data", [])
+            issues = response.json().get("data", {}).get("data", [])
             return len(issues)
             
         except Exception as e:
@@ -45,7 +48,7 @@ class RUARemoteIssue(Document):
             )
             response.raise_for_status()
             
-            issues = response.json().get("message", {}).get("data", [])
+            issues = response.json().get("data", {}).get("data", [])
             
             stats = {
                 "total": len(issues),
@@ -68,16 +71,30 @@ class RUARemoteIssue(Document):
             )
             response.raise_for_status()
             
-            issues = response.json().get("message", {}).get("data", [])
+            issues = response.json().get("data", {}).get("data", [])
             
             # Find the specific issue
             issue = next((i for i in issues if i["name"] == self.name), None)
             
             if issue:
-                self.update(issue)
-            
+                # Explicitly set each field
+                self.type = issue.get("type")
+                self.status = issue.get("status") 
+                self.details = issue.get("details")
+                self.creation = issue.get("creation")
+                self.modified = issue.get("modified")
+                
+                # Set doc as unmodified after loading
+                self.set_docstatus()
+                self.original_modified = self.modified
+                self._doc_before_save = None
+                
+            else:
+                frappe.throw(_("Remote Issue {0} not found").format(self.name))
+                
         except Exception as e:
             frappe.log_error("Error loading remote issue", str(e))
+            frappe.throw(_("Error loading remote issue"))
 
     def db_insert(self, *args, **kwargs):
         raise frappe.ValidationError("Cannot create remote issues locally")

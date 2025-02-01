@@ -19,17 +19,4 @@ class RUAAppUpdate(Document):
         self.publish_update()
         
     def before_insert(self):
-        """Automatically increment the version number before inserting a new document"""
-        current_version = rua.__version__
-        
-        # Split version into components
-        version_parts = current_version.split('.')
-        
-        # Increment the last number
-        version_parts[-1] = str(int(version_parts[-1]) + 1)
-        
-        # Join back together
-        new_version = '.'.join(version_parts)
-        
-        # Set the version field
-        self.version = new_version
+        self.version = rua.__version__

@@ -45,15 +45,13 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-02-01 04:23:31.599118",
+ "modified": "2025-02-01 07:19:42.122949",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Remote Issue",
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,

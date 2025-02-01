@@ -4,24 +4,41 @@
       v-if="!showDetails"
       v-model="show"
       :options="{
-        title: latestVersion ? `What's new in v${latestVersion}` : 'What\'s New',
-        size: 'lg',
+        title: `What's new in  ${selectedVersion ? 'v' + selectedVersion : ''}`,
+        size: '3xl',
       }"
     >
+      <template #actions>
+        <div class="flex justify-between items-center w-full">
+          <select 
+            v-model="selectedVersion"
+            class="pl-2 pr-8 py-1 text-sm rounded-md bg-white/50 backdrop-blur-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/40"
+          >
+            <option 
+              v-for="version in availableVersions" 
+              :key="version" 
+              :value="version"
+            >
+              v{{ version }}
+            </option>
+          </select>
+        </div>
+      </template>
+  
       <template #body-content>
         <div v-if="loading" class="flex justify-center py-12">
           <LoadingIndicator class="animate-pulse" />
         </div>
         
-        <div v-else-if="!updates.length" class="text-center py-12">
+        <div v-else-if="!filteredUpdates.length" class="text-center py-12">
           <div class="glass-panel p-8 rounded-2xl">
-            <p class="text-gray-500 text-lg">No updates available</p>
+            <p class="text-gray-500 text-lg">No updates available for this version</p>
           </div>
         </div>
         
         <div v-else class="space-y-6 max-h-[70vh] overflow-y-auto p-8 updates-container">
           <div 
-            v-for="(update, index) in sortedUpdates" 
+            v-for="(update, index) in filteredUpdates" 
             :key="update.name"
             class="update-card cursor-pointer"
             :style="{ '--delay': `${index * 0.1}s` }"
@@ -93,7 +110,7 @@
       v-model="showDetails"
       :options="{
         title: selectedUpdate?.title,
-        size: 'xl',
+        size: '3xl',
       }"
       @close="closeDetails"
     >
@@ -154,7 +171,7 @@
   </template>
   
   <script setup>
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, watch, onMounted } from 'vue'
   import { Dialog, LoadingIndicator, FeatherIcon, Button } from 'frappe-ui'
   import { updateResource } from '@/data/update'
   
@@ -174,12 +191,38 @@
   const updates = ref([])
   const showDetails = ref(false)
   const selectedUpdate = ref(null)
+  const selectedVersion = ref(null)
+  
+  // No need for custom title computed property anymore
+  
+  // Compare versions using semantic versioning logic
+  function compareVersions(a, b) {
+    const partsA = a.split('.').map(Number)
+    const partsB = b.split('.').map(Number)
+    
+    for (let i = 0; i < 3; i++) {
+      const partA = partsA[i] || 0
+      const partB = partsB[i] || 0
+      
+      if (partA !== partB) {
+        return partB - partA // Higher version first
+      }
+    }
+    return 0
+  }
   
   // Computed properties
-  const latestVersion = computed(() => {
-    if (!updates.value.length) return null
-    return updates.value[0].version
+  const availableVersions = computed(() => {
+    if (!updates.value.length) return []
+    return [...new Set(updates.value.map(u => u.version))].sort(compareVersions)
   })
+  
+  // Watch for updates to set initial version
+  watch(() => updates.value, (newUpdates) => {
+    if (newUpdates.length && !selectedVersion.value) {
+      selectedVersion.value = availableVersions.value[0]
+    }
+  }, { immediate: true })
   
   const sortedUpdates = computed(() => {
     const typeOrder = {
@@ -198,6 +241,11 @@
     })
   })
   
+  const filteredUpdates = computed(() => {
+    if (!selectedVersion.value) return sortedUpdates.value
+    return sortedUpdates.value.filter(update => update.version === selectedVersion.value)
+  })
+  
   // Methods
   async function fetchUpdates() {
     try {
@@ -205,6 +253,9 @@
       await updateResource.reload()
       if (updateResource.data) {
         updates.value = updateResource.data
+        if (!selectedVersion.value && updates.value.length) {
+          selectedVersion.value = availableVersions.value[0]
+        }
       }
     } catch (error) {
       console.error('Error fetching updates:', error)
