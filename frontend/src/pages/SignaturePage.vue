@@ -140,7 +140,7 @@
 								<template #prefix>
 									<FeatherIcon name="check" class="w-4 h-4" />
 								</template>
-								<span>Submit Signature</span>
+								<span>Submit</span>
 							</Button>
 						</div>
 					</div>

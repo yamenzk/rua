@@ -1,11 +1,110 @@
 [
  {
+  "details": "<div class=\"ql-editor read-mode\"><p>Added VAT handling improvements:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added <code>is_vat_inclusive</code> checkbox</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>When checked, amount entered includes VAT (needs to be extracted)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>When using percentage, automatically VAT inclusive since contract value includes VAT</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>All calculations now store VAT exclusive amounts internally</li></ul><p>Created a new multi-step invoice creation flow:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>First dialog for entering basic info</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>\"Review\" button opens second dialog showing calculations</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Clear breakdown of VAT and retention calculations</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Final confirmation before creating invoice</li></ul><p>Added retention settings:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Removed from project level, now set per invoice</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Toggle to enable/disable retention</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Configurable retention percentage (defaults to 10%)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Retention calculated on amount before VAT</li></ul><p>Fixed data reactivity issues:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Created local project resource in NewInvoiceDialog</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added proper loading states</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Implemented realtime updates for project data</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added proper cleanup on component unmount</li></ul><p>Updated calculation flow:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Extract VAT first if amount is VAT inclusive</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Apply retention to VAT exclusive amount</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Add VAT as final step</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Store consistent VAT exclusive amounts internally</li></ul></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 17:30:47.786556",
+  "name": "77h7ja7f7d",
+  "title": "Invoicing Logic",
+  "type": "Refactor",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Replaced DatePicker in creation of Invoice, RFQ, Quotation, LPO to FormControl</p><p><br></p><p><img src=\"https://i.postimg.cc/QxYq9cML/Screenshot-2025-02-01-173126.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 17:32:50.355959",
+  "name": "ev838m3o1n",
+  "title": "Replace DatePicker with FormControl",
+  "type": "UI",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Used <code>db_set()</code> instead of direct assignment to ensure the serial number is properly persisted</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added <code>update_modified=False</code> to prevent triggering unnecessary update cycles</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added a filter to exclude the current invoice when getting the highest serial number</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Moved the serial number assignment before other operations</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added a check for <code>not self.serial_number</code> to prevent overwriting existing serial numbers</li></ul></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 17:33:53.632030",
+  "name": "vkrreps4hm",
+  "title": "Invoice Numbering Issue",
+  "type": "Fix",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Makes more sense because additional work is on a parallel path with the existing project (Not hierarchical)</p><p><img src=\"https://i.postimg.cc/G3XFz16M/Screenshot-2025-02-01-174150.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-02 04:28:33.818445",
+  "name": "8g6fs1cb61",
+  "title": "Renamed \"Sub Projects\" to \"Branches\"",
+  "type": "UI",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p><div class=\"ql-editor read-mode\"><p>Created a Consistent Sub-Navigation Pattern:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Combined headers and navigation into a single sticky card</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added clear titles and descriptions</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Made navigation mobile-friendly with horizontal scrolling</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Used solid black background for active tabs with white text</li></ul><p>Improved Grid Layouts:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Switched to <code>grid-cols-[repeat(auto-fill,minmax(220px,1fr))]</code></li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Eliminated fixed breakpoints in favor of dynamic sizing</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Better space utilization and responsiveness</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Consistent card sizes across all views</li></ul><p>Enhanced Mobile Experience:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Buttons show icons only on mobile, text on desktop</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Responsive search bars that expand on mobile</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Scrollable navigation elements</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Better touch targets and spacing</li></ul><p>Applied This Pattern To:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Project Documents/Invoicing section</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Tasks management</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Documents section</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Project Files section</li></ul><p>Visual Consistency:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Standardized card layouts</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Consistent spacing and padding</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Uniform active states and hover effects</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Better visual hierarchy with clear sections</li></ul><p><br></p><p><img src=\"https://i.postimg.cc/dtzjjdzz/BEFORE.png\" style=\"max-width: 100%;\"></p><p><br></p></div></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 19:07:04.614496",
+  "name": "ue7vtiacv3",
+  "title": "UI redesign for all layouts.",
+  "type": "Feature",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Clickable Outstanding Amount card</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Dialog to view unpaid invoice details</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Direct navigation to specific invoices</li></ul><p><img src=\"https://i.postimg.cc/N0zQVsB2/Screenshot-2025-02-01-193842.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 19:40:35.204590",
+  "name": "92qor4es9h",
+  "title": "Add interactive Outstanding Invoices Dialog",
+  "type": "Feature",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Fixed task status update issues</p><p><br></p><p>From</p><pre class=\"ql-code-block-container\" spellcheck=\"false\"><div class=\"ql-code-block\">await todoResource.update.submit({</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;name: props.task.name,</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;status: status</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp;})</div></pre><p>To</p><pre class=\"ql-code-block-container\" spellcheck=\"false\"><div class=\"ql-code-block\">await todoResource.setValue.submit({</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;name: props.task.name,</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;status: status</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp;})</div></pre></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 19:43:06.854747",
+  "name": "3862u9p1rj",
+  "title": "Unable to update task status",
+  "type": "Fix",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><h2>Payment Allocation System</h2><p><br></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added AllocatePaymentDialog to link existing payments to invoices</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Updated server-side logic to handle various payment allocation scenarios</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added UI option to allocate payments in Invoice Details view</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Improved handling of payment and invoice status changes</li></ul><p><img src=\"https://i.postimg.cc/NLvgGpz6/Screenshot-2025-02-01-205638.png\"></p><p><img src=\"https://i.postimg.cc/447Vdy0y/Screenshot-2025-02-01-205645.png\"></p><p><img src=\"https://i.postimg.cc/BZrD1sWg/Screenshot-2025-02-01-205656.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 20:59:28.083308",
+  "name": "5rj5861a7o",
+  "title": "Payment Allocation",
+  "type": "Feature",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Set 'Cancelled' tab group to be automatically collapsed by default.</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-01 23:57:24.162424",
+  "name": "nmaf477bfv",
+  "title": "[Payments] Cancelled group collapsed by default",
+  "type": "UX",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Fixed an edge case where completion percentage remained as is if an invoice was cancelled and the total invoiced has become 0</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-02 00:04:33.479715",
+  "name": "0afbj9tl7p",
+  "title": "Handling project completion when total invoiced is 0",
+  "type": "Fix",
+  "version": "1.1.6"
+ },
+ {
   "details": "<div class=\"ql-editor read-mode\"><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Fixed early comparison with received count</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Fixed import _ from frappe</li></ul></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 04:24:52.534209",
+  "modified": "2025-02-02 04:27:36.168167",
   "name": "sk1gobp4j7",
-  "resolves": null,
   "title": "LPO Creation Issue",
   "type": "Fix",
   "version": "1.1.5"
@@ -14,9 +113,8 @@
   "details": "<div class=\"ql-editor read-mode\"><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Removed all chat handlers</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span><strong style=\"color: rgb(102, 185, 102);\">TODO: Rewrite chat notifications</strong></li></ul></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 04:26:07.428584",
+  "modified": "2025-02-02 04:27:36.143417",
   "name": "48u0l6enjj",
-  "resolves": null,
   "title": "Chat Handlers",
   "type": "Remove",
   "version": "1.1.5"
@@ -25,9 +123,8 @@
   "details": "<div class=\"ql-editor read-mode\"><p>Formatted date pickers in all invoicing to render as DD-MM-YYYY.</p></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 06:13:37.919243",
+  "modified": "2025-02-02 04:27:36.059169",
   "name": "9nfieuadqp",
-  "resolves": null,
   "title": "Date Picker Formatting: DD-MM-YYYY",
   "type": "UX",
   "version": "1.1.5"
@@ -36,9 +133,8 @@
   "details": null,
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 06:13:57.043844",
+  "modified": "2025-02-02 04:27:36.042881",
   "name": "csjkjljb1n",
-  "resolves": null,
   "title": "Quotations not considering user-picked date",
   "type": "Fix",
   "version": "1.1.5"
@@ -47,9 +143,8 @@
   "details": "<div class=\"ql-editor read-mode\"><h1>Updated Quotation Creation</h1><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Specify a date (in dd-mm-yyyy format)</li></ol><p><img src=\"https://i.postimg.cc/fyyrwyCt/Screenshot-2025-02-01-042817.png\" width=\"256\"></p><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Write specifications (predefined templates can be added)</li></ol><p><img src=\"https://i.postimg.cc/Vv39tkqV/Screenshot-2025-02-01-044225.png\" width=\"257\"></p><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Pick Scopes</li></ol><p><img src=\"https://i.postimg.cc/VN88R9sY/Screenshot-2025-02-01-044725.png\" width=\"259\"></p><p><br></p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Specify notes <strong style=\"background-color: rgb(255, 255, 0);\">(if any)</strong>, keep it blank to prevent rendering notes. You can also add to exclusions here</li></ol><p><img src=\"https://i.postimg.cc/MZQJhrcW/Screenshot-2025-02-01-044903.png\" width=\"258\"></p><p><br></p><p>Quotation Template is rendered, you can do any modifications here.</p><p><span style=\"color: rgb(230, 0, 0);\">Note: after this step you can </span><u style=\"color: rgb(230, 0, 0);\">NOT</u><span style=\"color: rgb(230, 0, 0);\"> edit the template. </span></p><p><br></p><p><img src=\"https://i.postimg.cc/j582m3C6/Screenshot-2025-02-01-045127.png\" width=\"254\"></p><p><br></p><p><br></p><h1>Updated Quotation Details</h1><p>Now you can see the rendered template inside every quotation</p><p><br></p><p><img src=\"https://i.postimg.cc/gk4pDLXR/Screenshot-2025-02-01-045455.png\" width=\"483\"></p></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 06:10:35.890396",
+  "modified": "2025-02-02 04:27:36.124452",
   "name": "cldgc3l37f",
-  "resolves": "",
   "title": "New Quotation Details with multi-step dialog.",
   "type": "Feature",
   "version": "1.1.5"
@@ -58,9 +153,8 @@
   "details": "<div class=\"ql-editor read-mode\"><p>All invoices are now ordered from newest to oldest per group per type per status.</p></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 06:21:04.970539",
+  "modified": "2025-02-02 04:27:36.011688",
   "name": "dcg56hobqf",
-  "resolves": null,
   "title": "Improved Invoice Document Ordering",
   "type": "UX",
   "version": "1.1.5"
@@ -69,9 +163,8 @@
   "details": "<div class=\"ql-editor read-mode\"><h2>You can now add as many project images you want through the \"Files\" section inside every project.</h2><h3><br></h3><p>When you upload an image file (png/jpg/jpeg) you can now pick \"Project Image\" as a tag.</p><p><br></p><p><img src=\"https://i.postimg.cc/ZnKbZ5KF/Screenshot-2025-02-01-045932.png\"></p><p><br></p><p>After uploading, a new autoplay image slider will load in the overview page and cycles between all images</p><p><br></p><p><img src=\"https://i.postimg.cc/6Qfx3xPH/Screenshot-2025-02-01-050810.png\"></p><p><br></p><p><br></p><p><br></p><p><strong style=\"color: rgb(230, 0, 0); background-color: rgb(255, 255, 0);\">You still need to set a 'cover' photo for a project to be used in map and project cards </strong></p><p><strong style=\"color: rgb(230, 0, 0);\">to set a cover photo for a project now you should <u>CTRL + Click</u> on the image hero section</strong></p><p><br></p><p><br></p></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 06:11:17.980189",
+  "modified": "2025-02-02 04:27:36.082483",
   "name": "2q5qk30h10",
-  "resolves": null,
   "title": "Project Gallery (Multi-image Support)",
   "type": "Feature",
   "version": "1.1.5"
@@ -80,9 +173,8 @@
   "details": "<div class=\"ql-editor read-mode\"><h2>CTRL + Click on the project mini-map to view a larger version and set a location.</h2><p><img src=\"https://i.postimg.cc/kgNpNFyG/Screenshot-2025-02-01-051452.png\"></p><p><br></p><h2>You can then set a location by double-clicking, dragging the pin or manually setting the longitude and latitude</h2><p><br></p><p><img src=\"https://i.postimg.cc/HLBvRYRC/Screenshot-2025-02-01-051700.png\"></p><p><br></p><p><br></p><p><strong style=\"color: rgb(230, 0, 0);\">Note: if you want to get coordinates through google maps, right click on the map </strong></p><p><img src=\"https://i.postimg.cc/SRzZnWsy/Screenshot-2025-02-01-051828.png\" style=\"\" width=\"341\"></p><p><br></p></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 06:10:52.345551",
+  "modified": "2025-02-02 04:27:36.099135",
   "name": "suk0n15r4r",
-  "resolves": null,
   "title": "Better Project Map Controls",
   "type": "Feature",
   "version": "1.1.5"
@@ -91,11 +183,50 @@
   "details": "<div class=\"ql-editor read-mode\"><p><br></p><p>You can now use the following combinations anywhere in the app to open the <strong style=\"background-color: rgb(235, 214, 255);\">new issue dialog</strong><strong>.</strong></p><p><strong><u>on desktop devices</u></strong>:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>CTRL + ALT + SHIFT</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ALT + H</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ALT + I</li></ul><p><br></p><p><strong><u>on mobile devices:</u></strong></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span><strong>Shake </strong>your device to open the <strong style=\"background-color: rgb(235, 214, 255);\">new issue dialog</strong>.</li></ul><p><br></p><p><br></p><p><span style=\"color: rgb(0, 71, 178);\">From this dialog you can</span></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Request a new feature</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Report an issue/bug</li></ul><p><br></p><p><br></p><p><strong><u>Issue created here are directly linked to the dev server 🤓 so I don't forget anything. </u></strong></p><p><br></p><p><strong><u><span class=\"ql-cursor\">﻿</span></u></strong></p><p><img src=\"https://i.postimg.cc/VsGXKVz4/Screenshot-2025-02-01-065804.png\"></p></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-01 07:01:59.042448",
+  "modified": "2025-02-02 04:27:35.989595",
   "name": "4lpnrfo5j7",
-  "resolves": null,
   "title": "Issue Tracking System: Report & Request",
   "type": "Feature",
   "version": "1.1.5"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p><strong>Issue i8hrelagg9</strong></p><blockquote><span style=\"font-size: 14px; color: rgb(124, 124, 124);\">For the excel table, Please let the unit rate have rounding ex: 8423 let it be 8425</span></blockquote><p><br></p><p><strong>Response</strong></p><p>Use =CEILING(8423, 5) to round-up numbers</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-02 04:24:10.571859",
+  "name": "cgp2bbte4f",
+  "title": "Response to Issue i8hrelagg9",
+  "type": "Message",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><h2>Secure Signature System</h2><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Supports:</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Quotations</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Invoices</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>LPOs</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>RFQs</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Purchase Receipts</li></ul><p><br></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Payments Signature Session can support<strong style=\"background-color: rgb(255, 255, 0);\"><u> Guests (not signed in users)</u></strong> useful if you want to request signatures online</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Extremely safe and secure with real-time encryption for signatures</li></ul><p><br></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Initiate a signature from the menu of the above documents</li></ul><p><img src=\"https://i.postimg.cc/SxWqJKYw/Screenshot-2025-02-02-043634.png\"></p><p><br></p><p><strong style=\"background-color: rgb(230, 0, 0); color: rgb(255, 255, 255);\">---&nbsp;(YOU DONT NEED TO UNDERSTAND ANYTHING BELOW THIS LINE -- BAS MSHAN MA ENSA SHU 3MLT) --- </strong></p><p><br></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>A <strong><u>signature session</u></strong> will be created</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Single-use session assigned to a unique token given to a self-destructing user, encrypted through a secret key.</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Session expires after 15 minutes or after successfully signing.</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>A temporary, self-destructing user will be created bearing the session token, signing user will be destroyed after successfully signing or after 60 minutes.</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Generates a QR Code to proceed signing on a mobile device with the complete session/token/secret combination and socket integration for real-time processing.</li></ul><p><br></p><p><img src=\"https://i.postimg.cc/mrK2pZCs/Session-Example.png\"></p><p><br></p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Technical Highlights:</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Server-side token/session/secret generation</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Secure signature submission endpoint</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Watermarking for document traceability</li></ul><p><br></p><p><br></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-02 05:05:45.554197",
+  "name": "g33mckn8rg",
+  "title": "Secure Signature System",
+  "type": "Feature",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>As per new invoicing scheme, retention is now per-invoice rather than per-project. </p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-02 05:19:57.237977",
+  "name": "jfgidbk4jp",
+  "title": "Project-wide Retention Settings",
+  "type": "Remove",
+  "version": "1.1.6"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p><strong style=\"background-color: rgb(230, 0, 0); color: rgb(255, 255, 255);\">Create a dummy project for testing - make sure to assign a contract value</strong></p><p><br></p><p>Create an invoice and try to </p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Set amount as vat inclusive</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Set amount as vat inclusive and include retention</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Set amount through percentage</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Set amount through percentage and include retention</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Adjust retention values </li></ol><p><br></p><p>Then try to make payments</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Don't put full amount to test payment status (Unpaid/Partially Paid/Paid)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Try to create a payment through \"Payments\" then try to allocate it to an invoice</li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"background-color: rgb(255, 255, 0);\">Note: Payment </span><u style=\"background-color: rgb(255, 255, 0);\">must</u><span style=\"background-color: rgb(255, 255, 0);\"> be </span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"background-color: rgb(255, 255, 0);\">Submitted</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"background-color: rgb(255, 255, 0);\">Has same party as the invoice</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"background-color: rgb(255, 255, 0);\">&gt; 0 </span></li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Try to create a payment though an invoice directly</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Try to cancel an unallocated payment</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Try to cancel an allocated payment </li></ul><p><br></p><p><strong style=\"background-color: rgb(255, 255, 0);\">Unallocated Payment</strong>: payment that is not linked to an invoice</p><p><strong style=\"background-color: rgb(255, 255, 0);\">Allocated payment</strong>: payment that is already linked to an invoice</p><p><br></p><p><br></p><p>While finalizing invoices and submitting payments, then canceling them watch how project's total_invoiced and total_paid are reflected. Also watch the project completion percentage how it updates.</p><p><br></p><p>After creating many invoices, go to the home screen and see the new outstanding payments dialog</p><p><br></p><p>Last, try signing invoices/payments on mobile + pc </p><p><br></p><p><br></p><p>Then delete dummy project through project settings (should automatically delete all related documents)</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-02 05:28:42.925255",
+  "name": "lub2e0dmmd",
+  "title": "[IMPORTANT] Things to test",
+  "type": "Message",
+  "version": "1.1.6"
  }
 ]
