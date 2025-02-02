@@ -11,6 +11,7 @@
   "dependencies": {
     "@grpc/grpc-js": "1.9.14",
     "@pdf-lib/upng": "^1.0.1",
+    "@selemondev/vue3-signature-pad": "^1.1.5",
     "@tiptap/core": "^2.0.0",
     "@tiptap/pm": "^2.7.0",
     "@univerjs/presets": "^0.5.4",
@@ -23,6 +24,7 @@
     "ol-contextmenu": "^5.4.0",
     "ol-ext": "^4.0.21",
     "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "rxjs": "^7.8.1",

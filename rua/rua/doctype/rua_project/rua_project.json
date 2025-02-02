@@ -13,10 +13,7 @@
   "completion",
   "location",
   "serial_number",
-  "retention_status",
-  "retention_percentage",
   "image",
-  "enable_retention_invoicing",
   "column_break_dmir",
   "description",
   "contract_value",
@@ -127,17 +124,6 @@
    "label": "Total Received"
   },
   {
-   "fieldname": "retention_percentage",
-   "fieldtype": "Percent",
-   "label": "Retention Percentage"
-  },
-  {
-   "fieldname": "retention_status",
-   "fieldtype": "Select",
-   "label": "Retention Status",
-   "options": "\nEnabled\nDisabled"
-  },
-  {
    "fieldname": "serial_number",
    "fieldtype": "Int",
    "label": "Serial Number"
@@ -151,12 +137,6 @@
    "fieldname": "additional_expenses",
    "fieldtype": "Currency",
    "label": "Additional Expenses"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_retention_invoicing",
-   "fieldtype": "Check",
-   "label": "Enable Retention Invoicing"
   },
   {
    "fieldname": "parent1",
@@ -176,7 +156,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2025-01-21 16:12:41.545402",
+ "modified": "2025-02-02 00:13:27.977538",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Project",

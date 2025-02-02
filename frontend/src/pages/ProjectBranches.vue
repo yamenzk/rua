@@ -7,35 +7,35 @@
       <template v-else>
         <!-- Header -->
         <div class="flex items-center justify-between">
-          <h1 class="text-2xl font-bold text-gray-900">Sub Projects</h1>
-          <Button variant="solid" @click="showNewSubProject = true">
+          <h1 class="text-2xl font-bold text-gray-900">Branches</h1>
+          <Button variant="solid" @click="showNewBranch = true">
             <template #prefix>
               <FeatherIcon name="plus" class="w-4 h-4" />
             </template>
-            New Sub Project
+            New Branch
           </Button>
         </div>
   
         <!-- Empty state -->
-        <div v-if="!subProjects.length" class="text-center py-12">
+        <div v-if="!branches.length" class="text-center py-12">
           <div class="max-w-sm mx-auto">
             <FeatherIcon name="git-branch" class="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No Sub Projects</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Branches</h3>
             <p class="text-gray-500 mb-6">
-              This project doesn't have any sub projects yet.
+              This project doesn't have any branches yet.
             </p>
-            <Button variant="solid" @click="showNewSubProject = true">
-              Create Sub Project
+            <Button variant="solid" @click="showNewBranch = true">
+              Create Branch
             </Button>
           </div>
         </div>
   
-        <!-- Sub Projects List -->
+        <!-- Branches List -->
         <div v-else class="space-y-4 max-w-4xl mx-auto">
-          <div v-for="(project, index) in subProjects" :key="project.name" class="relative">
+          <div v-for="(project, index) in branches" :key="project.name" class="relative">
             <!-- Connecting Line -->
             <div
-              v-if="index !== subProjects.length - 1"
+              v-if="index !== branches.length - 1"
               class="absolute left-6 top-16 bottom-0 w-0.5 bg-gray-200"
             ></div>
   
@@ -124,18 +124,18 @@
           </div>
         </div>
   
-        <!-- New Sub Project Dialog -->
+        <!-- New Branch Dialog -->
         <Dialog
-          v-model="showNewSubProject"
+          v-model="showNewBranch"
           :options="{
-            title: 'New Sub Project',
+            title: 'New Branch',
             size: 'md',
             actions: [
               {
                 label: 'Create',
                 variant: 'solid',
                 loading: creating,
-                onClick: createSubProject,
+                onClick: createBranch,
                 disabled: !newProject.additional_work || !props.projectResource.doc,
               },
             ],
@@ -184,15 +184,15 @@
   })
   
   const router = useRouter()
-  const showNewSubProject = ref(false)
+  const showNewBranch = ref(false)
   const creating = ref(false)
   const newProject = ref({
     additional_work: '',
   })
   
   
-  // Compute subprojects directly from projectResource data
-  const subProjects = computed(() => {
+  // Compute branches directly from projectResource data
+  const branches = computed(() => {
   // Ensure projectResource.data includes all projects, including child projects
   if (!props.projectResource.doc) return []
   
@@ -210,7 +210,7 @@
 })
 
   
-  async function createSubProject() {
+  async function createBranch() {
     if (!newProject.value.additional_work || !props.projectResource?.doc) return
   
     creating.value = true
@@ -229,13 +229,13 @@
         status: 'Tender',
       })
   
-      showNewSubProject.value = false
+      showNewBranch.value = false
       newProject.value = { additional_work: '' }
       
       // Reload project resource to refresh the list
       await projectResource.reload()
     } catch (error) {
-      console.error('Error creating sub project:', error)
+      console.error('Error creating branch:', error)
     } finally {
       creating.value = false
     }

@@ -26,5 +26,5 @@ class RUAProject(Document):
             self.serial_number = highest_serial + 1
 
     def before_save(self):
-        if self.total_invoiced and self.contract_value and self.contract_value > 0 and self.total_invoiced > 0:
+        if self.contract_value and self.contract_value > 0:
             self.completion = self.total_invoiced / self.contract_value * 100

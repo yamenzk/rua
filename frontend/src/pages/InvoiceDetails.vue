@@ -233,9 +233,20 @@
       </div>
 
       <!-- Payments Card -->
-<div class="bg-white rounded-lg border shadow-sm" v-if="linkedPayments.length">
-  <div class="px-6 py-4 border-b">
+      <div class="bg-white rounded-lg border shadow-sm" v-if="linkedPayments.length || canAllocatePayments">
+  <div class="flex items-center justify-between border-b px-6 py-4">
     <h2 class="text-lg font-medium text-gray-900">Related Payments</h2>
+    <Button 
+      v-if="canAllocatePayments"
+      variant="subtle" 
+      size="sm" 
+      @click="showAllocatePaymentDialog = true"
+    >
+      <template #prefix>
+        <FeatherIcon name="link" class="w-4 h-4" />
+      </template>
+      Allocate Payment
+    </Button>
   </div>
   <div class="divide-y">
     <template v-if="linkedPayments.length">
@@ -448,6 +459,20 @@
   :paid-amount="totalPaidAmount"
   source-type="RUA Invoice"
 />
+<AllocatePaymentDialog
+    v-if="invoiceResource?.doc"
+    v-model="showAllocatePaymentDialog"
+    :invoice-resource="invoiceResource"
+    :project-resource="projectResource"
+    @payment-allocated="handlePaymentAllocated"
+  />
+  <SignDocument
+  v-if="invoiceResource?.doc"
+  v-model="showSignDialog"
+  :doctype="'RUA Invoice'"
+  :docname="invoiceResource.doc.name"
+  @signature-complete="handleSignatureComplete"
+/>
 </template>
 
 <script setup>
@@ -469,6 +494,8 @@ import { formatDate, formatCurrency, DATE_FORMATS } from '@/utils/format'
 import { createInvoiceResource } from '@/data/invoice'
 import CreatePaymentDialog from './CreatePaymentDialog.vue'
 import { paymentResource } from '@/data/payment'
+import AllocatePaymentDialog from './AllocatePaymentDialog.vue'
+import SignDocument from './SignDocument.vue'
 
 const props = defineProps({
   projectResource: {
@@ -482,6 +509,8 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
+const showAllocatePaymentDialog = ref(false)
+const showSignDialog = ref(false)
 
 // State Management
 const invoiceResource = ref(null)
@@ -515,6 +544,33 @@ const linkedPayments = computed(() => {
   ) || []
 })
 
+const canAllocatePayments = computed(() => {
+  const doc = invoiceResource.value?.doc
+  return doc?.status === 'Final' && 
+         doc?.type === 'Tax Invoice' && 
+         doc?.payment_status !== 'Paid'
+})
+
+async function handleSignatureComplete(signatureUrl) {
+  try {
+    if (!invoiceResource.value?.doc?.name) return
+
+    await invoiceResource.value.setValue.submit({
+      name: invoiceResource.value.doc.name,
+      signature: signatureUrl
+    })
+    await invoiceResource.value.reload()
+  } catch (error) {
+    console.error('Failed to update signature:', error)
+  }
+}
+
+
+function handlePaymentAllocated() {
+  // Reload the invoice resource to update payment status
+  invoiceResource.value.reload()
+}
+
 function handleFileDrop(event, openFileSelector) {
   const file = event.dataTransfer?.files?.[0]
   if (file && file.type === 'application/pdf') {
@@ -545,6 +601,11 @@ const actionDropdownOptions = computed(() => {
       icon: 'file-text',
       onClick: downloadPDF
     },
+    {
+    label: 'Sign Invoice',
+    icon: 'pen-tool',
+    onClick: () => (showSignDialog.value = true)
+  },
     {
       label: 'Print',
       icon: 'printer',

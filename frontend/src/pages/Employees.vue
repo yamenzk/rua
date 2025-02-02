@@ -1,103 +1,130 @@
 <template>
-	<div class="space-y-6">
-		<!-- Search and Filters Section -->
-		<div class="flex items-center gap-2 overflow-x-auto p-2">
-			<!-- Search -->
-			<FormControl
-				type="search"
-				:ref_for="true"
-				size="sm"
-				variant="subtle"
-				placeholder="Search employees..."
-				:modelValue="searchQuery"
-				@update:modelValue="handleSearch"
-				class="w-40 min-w-[8rem]"
-			/>
+  <div class="space-y-6">
+    <!-- Sub Navigation Bar -->
+    <div class="sticky top-0 z-10 bg-white border-b">
+      <div class="px-4 py-3">
+        <div class="flex flex-col space-y-4">
+          <!-- Title and Primary Actions -->
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-semibold text-gray-900">Employees</h2>
+            
+            <!-- Primary Actions -->
+            <div class="flex items-center gap-2">
+              <!-- Attendance Actions Group -->
+              <Button
+                variant="subtle"
+                size="sm"
+                :label="attendanceButtonLabel"
+                @click="showAttendanceDialog"
+                class="bg-blue-50 text-blue-700 hover:bg-blue-100 gap-0"
+                :title="attendanceButtonLabel"
+              >
+                <template #prefix>
+                  <FeatherIcon name="calendar" class="w-4 h-4" />
+                </template>
+                <span class="hidden sm:inline ml-2">{{ attendanceButtonLabel }}</span>
+              </Button>
 
-			<!-- Sort Fields Dropdown -->
-			<FormControl
-				type="select"
-				:options="sortFieldOptions"
-				size="sm"
-				variant="subtle"
-				placeholder="Sort"
-				:modelValue="sortField"
-				@update:modelValue="handleSortFieldChange"
-				class="w-32 min-w-[6rem] flex-shrink-0"
-			/>
+              <Button
+                variant="subtle"
+                size="sm"
+                @click="showMonthlyAttendanceDialog = true"
+                class="bg-blue-50 text-blue-700 hover:bg-blue-100 gap-0"
+                title="Attendance List"
+              >
+                <template #prefix>
+                  <FeatherIcon name="list" class="w-4 h-4"/>
+                </template>
+                <span class="hidden sm:inline ml-2">Attendance List</span>
+              </Button>
 
-			<!-- Sort Direction Button -->
-			<Button variant="subtle" size="sm" @click="toggleSortDirection" class="flex-shrink-0">
-				<FeatherIcon
-					:name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
-					class="w-4 h-4"
-				/>
-			</Button>
+              <!-- Document Status Button -->
+              <Button
+                variant="solid"
+                size="sm"
+                @click="showExpiringDocumentsDialog = true"
+                class="bg-primary-600 text-white hover:bg-primary-700 gap-0"
+                title="Document Status"
+              >
+                <template #prefix>
+                  <FeatherIcon name="file-text" class="w-4 h-4" />
+                </template>
+                <span class="hidden sm:inline ml-2">Document Status</span>
+              </Button>
+            </div>
+          </div>
 
-			<!-- Add Filter Button -->
-			<Button
-				variant="subtle"
-				size="sm"
-				@click="showFilterDialog = true"
-				class="flex-shrink-0"
-			>
-				<FeatherIcon name="filter" class="w-4 h-4" />
-			</Button>
+          <!-- Search and Filters Row -->
+          <div class="flex items-center gap-3">
+            <FormControl
+              type="search"
+              :ref_for="true"
+              size="sm"
+              variant="subtle"
+              placeholder="Search employees..."
+              :modelValue="searchQuery"
+              @update:modelValue="handleSearch"
+              class="flex-1"
+            />
 
-			<!-- Active Filters Display -->
-			<div v-if="activeFilters.length" class="flex gap-1 overflow-x-auto flex-shrink-0">
-				<div
-					v-for="(filter, index) in activeFilters"
-					:key="index"
-					class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
-				>
-					<span>{{ getFieldLabel(filter.field) }}: {{ filter.value }}</span>
-					<button class="text-gray-500 hover:text-gray-700" @click="removeFilter(index)">
-						<FeatherIcon name="x" class="w-3 h-3" />
-					</button>
-				</div>
-			</div>
-			<div>
-				<div class="inline-flex rounded-md shadow-sm" role="group">
-					<Button
-						variant="outline"
-						size="sm"
-						:label="attendanceButtonLabel"
-						@click="showAttendanceDialog"
-						class="rounded-r-none border-r-0 min-w-[180px]"
-					>
-						<template #prefix>
-							<FeatherIcon name="calendar" class="w-4 h-4" />
-						</template>
-						{{ attendanceButtonLabel }}
-					</Button>
+            <div class="flex items-center gap-2">
+              <FormControl
+                type="select"
+                :options="sortFieldOptions"
+                size="sm"
+                variant="subtle"
+                placeholder="Sort"
+                :modelValue="sortField"
+                @update:modelValue="handleSortFieldChange"
+                class="w-36"
+              />
 
-					<Button
-						variant="outline"
-						size="sm"
-						@click="showMonthlyAttendanceDialog = true"
-						class="rounded-none border-r-0 min-w-[180px]"
-					>
-						<template #prefix>
-							<FeatherIcon name="list" class="w-4 h-4" />
-						</template>
-						Attendance List
-					</Button>
+              <Button 
+                variant="subtle" 
+                size="sm" 
+                @click="toggleSortDirection"
+                title="Toggle Sort Direction"
+              >
+                <FeatherIcon
+                  :name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
+                  class="w-4 h-4"
+                />
+              </Button>
 
-					<Button
-						variant="outline"
-						size="sm"
-						@click="showExpiringDocumentsDialog = true"
-						class="rounded-l-none min-w-[180px]"
-					>
-						<template #prefix>
-							<FeatherIcon name="file-text" class="w-4 h-4" />
-						</template>
-						Document Status
-					</Button>
-				</div>
-			</div>
-		</div>
+              <Button
+                variant="subtle"
+                size="sm"
+                @click="showFilterDialog = true"
+                title="Add Filter"
+              >
+                <FeatherIcon name="filter" class="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <!-- Active Filters -->
+          <div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
+            <span class="text-sm text-gray-500">Filters:</span>
+            <div class="flex gap-2">
+              <div
+                v-for="(filter, index) in activeFilters"
+                :key="index"
+                class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
+              >
+                <span>{{ getFieldLabel(filter.field) }}: {{ filter.value }}</span>
+                <button 
+                  class="text-gray-500 hover:text-gray-700" 
+                  @click="removeFilter(index)"
+                  title="Remove Filter"
+                >
+                  <FeatherIcon name="x" class="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
 		<!-- Monthly Attendance Dialog -->
 		<Dialog
@@ -328,7 +355,7 @@
 													{{ doc.document_name }}
 												</div>
 												<div class="text-sm text-gray-500">
-													Expires on {{ formatDate(doc.expiry_date) }}
+													Expired on {{ formatDate(doc.expiry_date) }}
 												</div>
 											</div>
 										</div>
@@ -423,7 +450,7 @@
 			}"
 		>
 			<template #body-content>
-				<div class="space-y-4">
+				<div class="space-y-4 overflow-auto max-h-[60vh]">
 					<!-- Search Bar -->
 					<FormControl
 						type="search"
@@ -536,11 +563,11 @@
 			<LoadingIndicator />
 		</div>
 
-		<div v-else-if="!list.data?.length" class="text-center py-8">
+		<div v-else-if="!list.data?.length" class="text-center py-8 px-6">
 			<div class="text-gray-600">No employees found</div>
 		</div>
 
-		<div v-else class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
+		<div v-else class="grid gap-6 px-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			<div
 				v-for="employee in list.data"
 				:key="employee.name"
@@ -1226,7 +1253,7 @@ const groupedExpiredDocuments = computed(() => {
 function formatDaysSinceExpiry(days) {
 	const absDays = Math.abs(Math.floor(days))
 	if (absDays === 1) return 'Expired yesterday'
-	return `Expired ${absDays} days ago`
+	return `${absDays} days ago`
 }
 
 function getDaysUntilExpiry(date) {

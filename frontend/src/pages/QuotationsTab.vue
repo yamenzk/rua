@@ -225,11 +225,15 @@
 
         <!-- Step 1: Date Selection -->
         <div v-if="currentStep === 0" class="space-y-4">
-          <DatePicker
+          <FormControl
+            :type="'date'"
+            :ref_for="true"
+            size="sm"
+            variant="subtle"
+            :disabled="false"
+            label="Date"
             v-model="formData.date"
-            label="Quotation Date"
             :default-value="formData.date"
-            :formatter="(date) => formatDate(date, DATE_FORMATS.UAE)"
           />
         </div>
 
@@ -356,7 +360,7 @@ import {
 	FeatherIcon,
 	Button,
 	Dialog,
-	DatePicker,
+	FormControl,
 	LoadingIndicator,
 	TextInput,
 	Checkbox,
@@ -365,7 +369,7 @@ import {
 
 import { quotationResource } from '@/data/quotation'
 import { partyResource } from '@/data/party'
-import { getServerDate, formatCurrency, formatDate, DATE_FORMATS } from '@/utils/format'
+import { getServerDate, formatCurrency, formatDate } from '@/utils/format'
 
 const router = useRouter()
 

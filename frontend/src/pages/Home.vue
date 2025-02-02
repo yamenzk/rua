@@ -5,7 +5,7 @@
     :onComplete="handleWelcomeComplete"
   />
   
-  <div class="space-y-6">
+  <div class="space-y-6 p-6">
     <!-- Welcome Section -->
     <div class="flex items-center justify-between">
       <h2 class="font-bold text-lg text-gray-900">

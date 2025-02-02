@@ -217,7 +217,9 @@ const props = defineProps({
 
 // State
 const currentTab = ref('received')
-const statusCollapsed = ref({})
+const statusCollapsed = ref({
+  Cancelled: true
+})
 const showNewPaymentDialog = ref(false)
 const showNewReceiptDialog = ref(false)
 
@@ -245,20 +247,22 @@ const showAddButton = computed(() => {
 const filteredPayments = computed(() => {
   if (!paymentResource.data) return []
   
-  return paymentResource.data.filter(payment => {
-    if (payment.project !== props.projectResource.doc?.name) return false
-    
-    switch (currentTab.value) {
-      case 'received':
-        return payment.type === 'Receive'
-      case 'paid':
-        return payment.type === 'Pay'
-      case 'additional':
-        return payment.type === 'Pay: Petty Cash'
-      default:
-        return false
-    }
-  })
+  return paymentResource.data
+    .filter(payment => {
+      if (payment.project !== props.projectResource.doc?.name) return false
+      
+      switch (currentTab.value) {
+        case 'received':
+          return payment.type === 'Receive'
+        case 'paid':
+          return payment.type === 'Pay'
+        case 'additional':
+          return payment.type === 'Pay: Petty Cash'
+        default:
+          return false
+      }
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
 })
 
 // Methods

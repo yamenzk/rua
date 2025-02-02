@@ -1,161 +1,186 @@
 <template>
-    <div class="space-y-6">
-      <!-- Header with Search and Upload -->
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-4">
-          <FormControl
-            type="search"
-            size="sm"
-            variant="subtle"
-            placeholder="Search documents..."
-            v-model="search"
-            class="w-64"
-          />
-        </div>
-        <Button variant="solid" @click="showUploadDialog = true">
-          <template #prefix>
-            <FeatherIcon name="upload" class="w-4 h-4" />
-          </template>
-          Upload
-        </Button>
-      </div>
-  
-      <!-- Tags Navigation -->
-      <div class="flex space-x-4 overflow-x-auto pb-2">
-        <button
-          @click="selectedTag = 'All'"
-          class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-          :class="[
-            selectedTag === 'All'
-              ? 'border-2 border-gray-900 text-gray-900'
-              : 'text-gray-600 hover:bg-gray-100',
-          ]"
-        >
-          📄 All
-        </button>
-  
-        <button
-          v-for="tag in uniqueTags"
-          :key="tag"
-          @click="selectedTag = tag"
-          class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-          :class="[
-            selectedTag === tag
-              ? 'border-2 border-gray-900 text-gray-900'
-              : 'text-gray-600 hover:bg-gray-100',
-          ]"
-        >
-          <span class="inline-flex items-center gap-1">
-            <span>{{ recommendedTags[tag] || '🏷️' }}</span>
-            <span>{{ tag }}</span>
-          </span>
-        </button>
-      </div>
-  
-      <!-- Document Grid -->
-      <div v-if="documentResource.loading" class="flex justify-center py-12">
-        <LoadingIndicator />
-      </div>
-  
-      <div v-else-if="!filteredDocuments.length" class="text-center py-12">
-        <FeatherIcon name="file" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p class="text-base font-medium text-gray-900">No documents found</p>
-        <p class="mt-1 text-sm text-gray-500">
-          {{ search ? 'Try adjusting your search' : 'Start by uploading a new document' }}
-        </p>
-      </div>
-  
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <div
-          v-for="doc in filteredDocuments"
-          :key="doc.name"
-          class="group bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
-        >
-          <!-- Preview -->
-          <div class="aspect-[4/3] rounded-t-lg overflow-hidden bg-gray-100 relative">
-            <div class="w-full h-full flex items-center justify-center">
-              <!-- Image Preview -->
-              <div v-if="isImageFile(doc.document)" class="w-full h-full">
-                <img
-                  :src="doc.document"
-                  :alt="doc.document_name"
-                  class="w-full h-full object-cover"
-                  @error="handlePreviewError"
-                />
+  <div class="space-y-4">
+    <!-- Combined Header and Navigation Card -->
+    <div class="bg-white">
+      <div class="sticky top-0 z-10 bg-white">
+        <div class="px-6 py-3">
+          <div class="flex flex-col space-y-4">
+            <!-- Title and Actions -->
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-medium text-gray-900">Project Files</h2>
+                <p class="text-sm text-gray-500">Manage project documents and files</p>
               </div>
-  
-              <!-- PDF Preview -->
-              <div v-else-if="isPdfFile(doc.document)" class="w-full h-full">
-                <iframe
-                  :src="doc.document"
-                  class="w-full h-full"
-                  frameborder="0"
-                ></iframe>
-              </div>
-  
-              <!-- Fallback Icon -->
-              <div v-else class="text-gray-400">
-                <FeatherIcon :name="getFileIcon(doc.document)" class="w-16 h-16" />
-              </div>
+              <Button variant="solid" @click="showUploadDialog = true">
+                <div class="flex items-center gap-2">
+                  <FeatherIcon name="upload" class="w-4 h-4" />
+                  <span class="hidden sm:inline">Upload</span>
+                </div>
+              </Button>
             </div>
-          </div>
-  
-          <!-- Document Info -->
-          <div class="p-4 space-y-3">
-            <div class="flex items-center gap-2">
-              <FeatherIcon
-                :name="getFileIcon(doc.document)"
-                class="w-4 h-4 text-gray-400"
+
+            <!-- Search and Tags Row -->
+            <div class="flex flex-wrap items-center gap-3">
+              <FormControl
+                type="search"
+                size="sm"
+                variant="subtle"
+                placeholder="Search documents..."
+                v-model="search"
+                class="flex-1 min-w-[200px]"
               />
-              <h3 class="font-medium text-gray-900 truncate">{{ doc.document_name }}</h3>
-            </div>
-  
-            <!-- Tags -->
-            <div class="flex flex-wrap gap-1" v-if="doc.tags">
-              <span
-                v-for="tag in doc.tags.split(',')"
-                :key="tag"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs"
-              >
-                <span v-if="recommendedTags[tag.trim()]">{{ recommendedTags[tag.trim()] }}</span>
-                <span>{{ tag.trim() }}</span>
-              </span>
-            </div>
-  
-            <!-- Actions -->
-            <div class="flex justify-center gap-2 pt-2 border-t">
-              <button
-                @click="openDocument(doc.document)"
-                class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                title="View"
-              >
-                <FeatherIcon name="eye" class="w-4 h-4" />
-              </button>
-              <button
-                @click="downloadDocument(doc.document)"
-                class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                title="Download"
-              >
-                <FeatherIcon name="download" class="w-4 h-4" />
-              </button>
-              <button
-                @click="openEditDialog(doc)"
-                class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                title="Edit"
-              >
-                <FeatherIcon name="edit-2" class="w-4 h-4" />
-              </button>
-              <button
-                @click="deleteDocument(doc)"
-                class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                title="Delete"
-              >
-                <FeatherIcon name="trash-2" class="w-4 h-4" />
-              </button>
+
+              <!-- Tags Navigation -->
+              <div class="flex items-center gap-2 overflow-x-auto">
+                <div 
+                  @click="selectedTag = 'All'"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
+                  :class="[
+                    selectedTag === 'All' 
+                      ? 'bg-gray-900 text-white' 
+                      : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+                  ]"
+                >
+                  <span class="text-sm whitespace-nowrap">📄 All</span>
+                </div>
+
+                <div 
+                  v-for="tag in uniqueTags"
+                  :key="tag"
+                  @click="selectedTag = tag"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
+                  :class="[
+                    selectedTag === tag 
+                      ? 'bg-gray-900 text-white' 
+                      : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+                  ]"
+                >
+                  <span class="text-sm whitespace-nowrap">
+                    {{ recommendedTags[tag] || '🏷️' }}
+                    {{ tag }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Document Grid Card -->
+    <div>
+      <div class="p-6">
+        <!-- Loading State -->
+        <div v-if="documentResource.loading" class="flex justify-center py-12">
+          <LoadingIndicator />
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!filteredDocuments.length" class="text-center py-12">
+          <FeatherIcon name="file" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p class="text-base font-medium text-gray-900">No documents found</p>
+          <p class="mt-1 text-sm text-gray-500">
+            {{ search ? 'Try adjusting your search' : 'Start by uploading a new document' }}
+          </p>
+        </div>
+
+        <!-- Document Grid -->
+        <div 
+          v-else 
+          class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]"
+        >
+          <div
+            v-for="doc in filteredDocuments"
+            :key="doc.name"
+            class="group bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            <!-- Preview -->
+            <div class="aspect-[4/3] rounded-t-lg overflow-hidden bg-gray-100 relative">
+              <div class="w-full h-full flex items-center justify-center">
+                <!-- Image Preview -->
+                <div v-if="isImageFile(doc.document)" class="w-full h-full">
+                  <img
+                    :src="doc.document"
+                    :alt="doc.document_name"
+                    class="w-full h-full object-cover"
+                    @error="handlePreviewError"
+                  />
+                </div>
+
+                <!-- PDF Preview -->
+                <div v-else-if="isPdfFile(doc.document)" class="w-full h-full">
+                  <iframe
+                    :src="doc.document"
+                    class="w-full h-full"
+                    frameborder="0"
+                  ></iframe>
+                </div>
+
+                <!-- Fallback Icon -->
+                <div v-else class="text-gray-400">
+                  <FeatherIcon :name="getFileIcon(doc.document)" class="w-16 h-16" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Document Info -->
+            <div class="p-4 space-y-3">
+              <div class="flex items-center gap-2">
+                <FeatherIcon
+                  :name="getFileIcon(doc.document)"
+                  class="w-4 h-4 text-gray-400"
+                />
+                <h3 class="font-medium text-gray-900 truncate">{{ doc.document_name }}</h3>
+              </div>
+
+              <!-- Tags -->
+              <div class="flex flex-wrap gap-1" v-if="doc.tags">
+                <span
+                  v-for="tag in doc.tags.split(',')"
+                  :key="tag"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs"
+                >
+                  <span v-if="recommendedTags[tag.trim()]">{{ recommendedTags[tag.trim()] }}</span>
+                  <span>{{ tag.trim() }}</span>
+                </span>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex justify-center gap-2 pt-2 border-t">
+                <button
+                  @click="openDocument(doc.document)"
+                  class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                  title="View"
+                >
+                  <FeatherIcon name="eye" class="w-4 h-4" />
+                </button>
+                <button
+                  @click="downloadDocument(doc.document)"
+                  class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                  title="Download"
+                >
+                  <FeatherIcon name="download" class="w-4 h-4" />
+                </button>
+                <button
+                  @click="openEditDialog(doc)"
+                  class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                  title="Edit"
+                >
+                  <FeatherIcon name="edit-2" class="w-4 h-4" />
+                </button>
+                <button
+                  @click="deleteDocument(doc)"
+                  class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                  title="Delete"
+                >
+                  <FeatherIcon name="trash-2" class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   
       <!-- Upload Dialog -->
       <Dialog

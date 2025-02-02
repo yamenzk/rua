@@ -15,6 +15,9 @@ class RUAQuotation(Document):
 
     def after_insert(self):
         self.publish_update()
+
+    def after_save(self):
+        self.publish_update()
         
 
     def before_insert(self):

@@ -431,6 +431,13 @@
     </div>
   </template>
 </Dialog>
+<SignDocument
+  v-if="paymentResource?.doc"
+  v-model="showSignDialog"
+  :doctype="'RUA Payment'"
+  :docname="paymentResource.doc.name"
+  @signature-complete="handleSignatureComplete"
+/>
 </template>
 
 <script setup>
@@ -450,6 +457,7 @@ import {
 } from 'frappe-ui'
 import { partyResource } from '@/data/party'
 import { formatDate, formatCurrency, DATE_FORMATS} from '@/utils/format'
+import SignDocument from './SignDocument.vue'
 
 
 const props = defineProps({
@@ -481,6 +489,7 @@ const showAttachDialog = ref(false)
 const attachmentFile = ref(null)
 const isUploading = ref(false)
 const uploadedResult = ref(null)
+const showSignDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
@@ -501,31 +510,6 @@ const isAttachmentViewable = computed(() => {
   return file.toLowerCase().endsWith('.pdf') || file.match(/\.(jpe?g|png|gif)$/i)
 })
 
-const canBeCancelled = computed(() => 
-  paymentResource.value?.doc?.status === 'Submitted'
-)
-
-const getDialogTitle = computed(() => {
-  const status = paymentResource.value?.doc?.status
-  if (status === 'Draft') return 'Submit Payment'
-  if (status === 'Submitted') return 'Cancel Payment'
-  return 'Payment Status'
-})
-
-const statusDialogOptions = computed(() => ({
-  title: getDialogTitle.value,
-  size: 'sm',
-  actions: [
-    {
-      label: paymentResource.value?.doc?.status === 'Draft' ? 'Submit Payment' : 'Cancel Payment',
-      loading: isUpdatingStatus.value,
-      variant: 'solid',
-      onClick: updateStatus,
-      disabled: paymentResource.value?.doc?.status === 'Cancelled' || 
-               (paymentResource.value?.doc?.status === 'Draft' && !isSubmitEnabled.value)
-    }
-  ]
-}))
 
 const relatedDocIcon = computed(() => {
   const doctype = paymentResource.value?.doc?.related_doctype
@@ -644,6 +628,22 @@ async function updateStatus(status) {
 }
 
 // Update resetDialogs function
+
+async function handleSignatureComplete(signatureUrl) {
+  try {
+    if (!paymentResource.value?.doc?.name) return
+
+    await paymentResource.value.setValue.submit({
+      name: paymentResource.value.doc.name,
+      signature: signatureUrl
+    })
+    await paymentResource.value.reload()
+  } catch (error) {
+    console.error('Failed to update signature:', error)
+  }
+}
+
+
 function resetDialogs() {
   showSubmitDialog.value = false
   showCancelDialog.value = false
@@ -736,6 +736,11 @@ const actionDropdownOptions = computed(() => {
 			icon: 'printer',
 			onClick: printPayment,
 		},
+    {
+    label: 'Sign Payment',
+    icon: 'pen-tool',
+    onClick: () => (showSignDialog.value = true)
+  },
     {
       label: 'Cancel Payment',
       icon: 'x-circle',

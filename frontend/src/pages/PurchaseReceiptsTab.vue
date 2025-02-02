@@ -218,11 +218,11 @@ const statusCollapsed = ref({
 
 // Computed
 const filteredReceipts = computed(() => {
-	return (
-		purchaseReceiptResource.data?.filter(
-			(receipt) => receipt.project === props.projectResource.doc?.name,
-		) || []
-	)
+  return (
+    purchaseReceiptResource.data?.filter(
+      (receipt) => receipt.project === props.projectResource.doc?.name,
+    ).sort((a, b) => new Date(b.date) - new Date(a.date)) || []
+  )
 })
 
 // Methods

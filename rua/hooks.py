@@ -157,23 +157,23 @@ fixtures = [
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"rua.tasks.all"
 # 	],
 # 	"daily": [
 # 		"rua.tasks.daily"
 # 	],
-# 	"hourly": [
-# 		"rua.tasks.hourly"
-# 	],
+    "hourly": [
+        "rua.api.cleanup_signature_users"
+    ]
 # 	"weekly": [
 # 		"rua.tasks.weekly"
 # 	],
 # 	"monthly": [
 # 		"rua.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------

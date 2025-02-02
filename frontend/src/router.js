@@ -156,9 +156,9 @@ const routes = [
         component: () => import('@/pages/PurchaseReceiptDetails.vue'),
       },
       {
-        path: 'sub-projects',
-        name: 'ProjectSubProjects',
-        component: () => import('@/pages/ProjectSubProjects.vue'),
+        path: 'branches',
+        name: 'ProjectBranches',
+        component: () => import('@/pages/ProjectBranches.vue'),
       },
       {
         path: 'files',
@@ -199,6 +199,14 @@ const routes = [
     path: '/account/login',
     component: () => import('@/pages/Login.vue'),
   },
+  {
+    path: '/sign/:token',
+    name: 'SignaturePage',
+    component: () => import('@/pages/SignaturePage.vue'),
+    meta: {
+      public: true // Mark as public route that doesn't require authentication
+    }
+  },
   // 404 route - must be last
   {
     path: '/:pathMatch(.*)*',
@@ -219,6 +227,12 @@ router.beforeEach(async (to, from, next) => {
     await userResource.promise
   } catch (error) {
     isLoggedIn = false
+  }
+
+  // Allow public routes to be accessed without authentication
+  if (to.meta.public) {
+    next()
+    return
   }
 
   // Allow NotFound page to be accessed regardless of auth status

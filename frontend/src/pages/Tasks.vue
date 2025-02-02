@@ -1,122 +1,133 @@
 <template>
-  <div class="bg-white rounded-lg border">
-    <!-- Header -->
-    <div class="flex items-center justify-between mt-6 mb-4 px-6">
-      <div>
-        <h2 class="text-lg font-medium text-gray-900">Tasks</h2>
-        <p class="text-sm text-gray-500">Manage and track all tasks</p>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="flex overflow-x-auto items-center gap-2 px-6 pb-4">
-      <!-- Search -->
-      <FormControl
-        type="search"
-        size="sm"
-        variant="subtle"
-        placeholder="Search tasks.."
-        v-model="filters.search"
-        class="w-full sm:w-40 min-w-[8rem]"
-      />
-
-      <!-- Project Dropdown -->
-      <FormControl
-        v-if="projectOptions.length"
-        type="select"
-        :options="projectOptions"
-        size="sm"
-        variant="subtle"
-        placeholder="Project"
-        v-model="filters.project"
-        class="w-full sm:w-40 min-w-[8rem]"
-      />
-
-      <!-- Assigned To Dropdown -->
-      <FormControl
-        type="select"
-        :options="userOptions"
-        size="sm"
-        variant="subtle"
-        placeholder="Assignee"
-        v-model="filters.assignedTo"
-        class="w-full sm:w-40 min-w-[8rem]"
-      />
-
-      <!-- Priority Dropdown -->
-      <FormControl
-        type="select"
-        :options="priorityOptions"
-        size="sm"
-        variant="subtle"
-        placeholder="Priority"
-        v-model="filters.priority"
-        class="w-full sm:w-32 min-w-[6rem]"
-      />
-    </div>
-
-    <!-- Tasks Table -->
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <LoadingIndicator />
-    </div>
-
-    <div v-else class="overflow-x-auto min-h-[60vh]">
-      <!-- Table Header -->
-      <div class="border-b min-w-[800px]">
-        <div class="flex items-center px-6 py-2">
-          <div class="flex-1 grid grid-cols-12 gap-4">
-            <div class="col-span-4 flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="check-square" class="w-4 h-4" />
-              Details
+  <div class="space-y-4">
+    <!-- Sub Navigation Card -->
+    <div class="bg-white rounded-lg">
+      <div class="sticky top-0 z-10 bg-white">
+        <div class="px-6 py-3">
+          <div class="flex flex-col space-y-4">
+            <!-- Title and Description -->
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-medium text-gray-900">Tasks</h2>
+              </div>
             </div>
-            <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="user" class="w-4 h-4" />
-              Assignee
-            </div>
-            <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="file" class="w-4 h-4" />
-              Related To
-            </div>
-            <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="calendar" class="w-4 h-4" />
-              Due Date
-            </div>
-            <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FeatherIcon name="flag" class="w-4 h-4" />
-              Priority
+
+            <!-- Filters Row -->
+            <div class="flex flex-wrap items-center gap-2">
+              <FormControl
+                type="search"
+                size="sm"
+                variant="subtle"
+                placeholder="Search tasks.."
+                v-model="filters.search"
+                class="flex-1 min-w-[200px]"
+              />
+
+              <div class="flex items-center gap-2 overflow-x-auto">
+                <!-- Project Filter -->
+                <FormControl
+                  v-if="projectOptions.length"
+                  type="select"
+                  :options="projectOptions"
+                  size="sm"
+                  variant="subtle"
+                  placeholder="Project"
+                  v-model="filters.project"
+                  class="w-36 sm:w-40"
+                />
+
+                <!-- Assignee Filter -->
+                <FormControl
+                  type="select"
+                  :options="userOptions"
+                  size="sm"
+                  variant="subtle"
+                  placeholder="Assignee"
+                  v-model="filters.assignedTo"
+                  class="w-36 sm:w-40"
+                />
+
+                <!-- Priority Filter -->
+                <FormControl
+                  type="select"
+                  :options="priorityOptions"
+                  size="sm"
+                  variant="subtle"
+                  placeholder="Priority"
+                  v-model="filters.priority"
+                  class="w-32"
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Table Body -->
-      <div class="divide-y">
-        <template v-for="status in ['Open', 'Delayed', 'Completed', 'Cancelled']" :key="status">
-          <template v-if="getTasksByStatus(status)?.length">
-            <!-- Status Group Header -->
-            <div
-              class="group bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer px-6 py-2 min-w-[800px]"
-              @click="toggleStatusCollapse(status)"
-            >
-              <div class="flex items-center gap-2">
-                <FeatherIcon
-                  :name="statusCollapsed[status] ? 'chevron-right' : 'chevron-down'"
-                  class="w-4 h-4 text-gray-500"
-                />
-                <Badge
-                  :variant="getStatusTheme(status) === 'gray' ? 'solid' : 'subtle'"
-                  :theme="getStatusTheme(status)"
-                >
-                  {{ status }}
-                </Badge>
-                <span class="text-sm text-gray-600">
-                  ({{ getTasksByStatus(status)?.length || 0 }})
-                </span>
+    <!-- Table Card -->
+    <div class="bg-white rounded-lg border mx-6">
+      <!-- Tasks Table -->
+      <div v-if="isLoading" class="flex justify-center py-12">
+        <LoadingIndicator />
+      </div>
+
+      <div v-else class="overflow-x-auto min-h-[60vh]">
+        <!-- Table Header -->
+        <div class="border-b min-w-[800px]">
+          <div class="flex items-center px-6 py-2">
+            <div class="flex-1 grid grid-cols-12 gap-4">
+              <div class="col-span-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="check-square" class="w-4 h-4" />
+                Details
+              </div>
+              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="user" class="w-4 h-4" />
+                Assignee
+              </div>
+              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="file" class="w-4 h-4" />
+                Related To
+              </div>
+              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="calendar" class="w-4 h-4" />
+                Due Date
+              </div>
+              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FeatherIcon name="flag" class="w-4 h-4" />
+                Priority
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Tasks in this status -->
-            <template v-if="!statusCollapsed[status]">
+        <!-- Table Body -->
+        <div class="divide-y">
+          <template v-for="status in ['Open', 'Delayed', 'Completed', 'Cancelled']" :key="status">
+            <template v-if="getTasksByStatus(status)?.length">
+              <!-- Status Group Header -->
+              <div
+                class="group bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer px-6 py-2 min-w-[800px]"
+                @click="toggleStatusCollapse(status)"
+              >
+                <div class="flex items-center gap-2">
+                  <FeatherIcon
+                    :name="statusCollapsed[status] ? 'chevron-right' : 'chevron-down'"
+                    class="w-4 h-4 text-gray-500"
+                  />
+                  <Badge
+                    :variant="getStatusTheme(status) === 'gray' ? 'solid' : 'subtle'"
+                    :theme="getStatusTheme(status)"
+                  >
+                    {{ status }}
+                  </Badge>
+                  <span class="text-sm text-gray-600">
+                    ({{ getTasksByStatus(status)?.length || 0 }})
+                  </span>
+                </div>
+              </div>
+
+              <!-- Tasks in this status -->
+              <template v-if="!statusCollapsed[status]">
               <div
                 v-for="task in getTasksByStatus(status)"
                 :key="task.name"
@@ -199,23 +210,24 @@
 
         <!-- Empty State -->
         <div
-          v-if="!filteredTasks.length"
-          class="flex flex-col items-center justify-center py-12 min-w-[800px]"
-        >
-          <FeatherIcon name="check-square" class="w-12 h-12 text-gray-400 mb-4" />
-          <p class="text-base font-medium text-gray-900">No tasks found</p>
-          <p class="text-sm text-gray-600">
-            {{ filters.search ? 'Try adjusting your search or filters' : 'Get started by creating a new task' }}
-          </p>
-          <Button
-            v-if="!filters.search"
-            variant="solid"
-            size="sm"
-            class="mt-3"
-            @click="showNewTaskModal = true"
+            v-if="!filteredTasks.length"
+            class="flex flex-col items-center justify-center py-12 min-w-[800px]"
           >
-            Create Task
-          </Button>
+            <FeatherIcon name="check-square" class="w-12 h-12 text-gray-400 mb-4" />
+            <p class="text-base font-medium text-gray-900">No tasks found</p>
+            <p class="text-sm text-gray-600">
+              {{ filters.search ? 'Try adjusting your search or filters' : 'Get started by creating a new task' }}
+            </p>
+            <Button
+              v-if="!filters.search"
+              variant="solid"
+              size="sm"
+              class="mt-3"
+              @click="showNewTaskModal = true"
+            >
+              Create Task
+            </Button>
+          </div>
         </div>
       </div>
     </div>

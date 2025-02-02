@@ -527,6 +527,13 @@
         </div>
       </template>
     </Dialog>
+    <SignDocument
+  v-if="lpoResource?.doc"
+  v-model="showSignDialog"
+  :doctype="'RUA LPO'"
+  :docname="lpoResource.doc.name"
+  @signature-complete="handleSignatureComplete"
+/>
 </template>
 
 <script setup>
@@ -550,6 +557,7 @@ import LPOItems from './LPOItems.vue'
 import { formatDate, formatCurrency, DATE_FORMATS } from '@/utils/format'
 import CreatePaymentDialog from './CreatePaymentDialog.vue'
 import { createLPOResource } from '@/data/lpo'
+import SignDocument from '@/pages/SignDocument.vue'
 
 const props = defineProps({
   projectResource: {
@@ -566,7 +574,6 @@ const router = useRouter()
 
 // State Management
 const lpoResource = ref(null)
-const newStatus = ref('')
 const statusError = ref('')
 const finalLPO = ref(null)
 const uploadedResult = ref(null)
@@ -580,6 +587,7 @@ const showCreatePaymentDialog = ref(false)
 const showSubmitDialog = ref(false)
 const showFinalizeDialog = ref(false)
 const showCancelDialog = ref(false)
+const showSignDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
@@ -622,6 +630,11 @@ const actionDropdownOptions = computed(() => {
       onClick: printLPO
     },
     {
+    label: 'Sign LPO',
+    icon: 'pen-tool',
+    onClick: () => (showSignDialog.value = true)
+  },
+    {
 			label: 'Cancel LPO',
 			icon: 'x-circle',
 			onClick: () => (showCancelDialog.value = true),
@@ -659,15 +672,22 @@ const uploadArgs = computed(() => ({
   private: true
 }))
 
-// Style Classes
-const radioClasses = {
-  container: 'relative flex items-center p-4 cursor-pointer rounded-lg border hover:border-gray-500 transition-colors',
-  input: 'peer absolute opacity-0 w-full h-full cursor-pointer',
-  radio: 'w-5 h-5 border-2 rounded-full peer-checked:border-gray-900 peer-checked:border-8 transition-all',
-  label: 'ml-3 text-sm font-medium text-gray-900 peer-checked:text-gray-900',
-}
 
 // Methods
+async function handleSignatureComplete(signatureUrl) {
+  try {
+    if (!lpoResource.value?.doc?.name) return
+
+    await lpoResource.value.setValue.submit({
+      name: lpoResource.value.doc.name,
+      signature: signatureUrl
+    })
+    await lpoResource.value.reload()
+  } catch (error) {
+    console.error('Failed to update signature:', error)
+  }
+}
+
 function getStatusVariant(status) {
   switch (status?.toLowerCase()) {
     case 'draft':

@@ -142,7 +142,7 @@
                           </div>
                           <!-- Amount -->
                           <div class="text-sm text-gray-900 font-medium flex items-center">
-                            {{ formatCurrency(invoice.amount) }}
+                            {{ formatCurrency(invoice.grand_total) }}
                           </div>
                           <!-- Status -->
                           <div class="flex items-center gap-2">
@@ -214,35 +214,6 @@
       v-model="showNoClientDialog"
       :options="noClientDialogOptions"
     ></Dialog>
-  <Dialog
-  v-model="showWarningDialog"
-  :options="{
-    title: 'Retention Settings Required',
-    icon: {
-      name: 'alert-triangle',
-      appearance: 'warning'
-    },
-    size: 'sm'
-  }"
->
-  <template #body-content>
-    <div class="space-y-4">
-      <p class="text-sm text-gray-600">
-        Please configure retention settings in Project Settings before creating invoices.
-      </p>
-    </div>
-  </template>
-  <template #actions>
-    <div class="flex justify-end">
-      <Button
-        variant="solid"
-        @click="showWarningDialog = false"
-      >
-        Got it
-      </Button>
-    </div>
-  </template>
-</Dialog>
 </template>
 
 <script setup>
@@ -262,7 +233,6 @@ import NewInvoiceDialog from './NewInvoiceDialog.vue'
 import { partyResource } from '@/data/party'
 
 const router = useRouter()
-const showWarningDialog = ref(false)
 const showNoClientDialog = ref(false)
 
 const props = defineProps({
@@ -285,10 +255,6 @@ const typeCollapsed = ref({
   'Proforma': false
 })
 
-const canCreateInvoice = computed(() => {
-  return props.projectResource.doc?.retention_status && 
-         props.projectResource.doc.retention_status !== ''
-})
 
 const noClientDialogOptions = computed(() => ({
   title: 'Missing Client',
@@ -356,6 +322,7 @@ const invoicesByType = computed(() => {
 })
 
 // Methods
+
 function getStatusVariant(status) {
   switch (status?.toLowerCase()) {
     case 'draft':
@@ -420,7 +387,7 @@ function getProjectParties() {
   }
 }
 
-function handleNewInvoice() {
+async function handleNewInvoice() {
   const parties = getProjectParties()
   const hasClient = parties.some(party => party.type.toLowerCase() === 'client')
   
@@ -429,12 +396,12 @@ function handleNewInvoice() {
     return
   }
 
-  if (!canCreateInvoice.value) {
-    showWarningDialog.value = true
-    return
+  try {
+    await props.projectResource.reload()
+    showNewInvoiceDialog.value = true
+  } catch (error) {
+    console.error('Failed to reload project resource:', error)
   }
-  
-  showNewInvoiceDialog.value = true
 }
 
 
@@ -445,6 +412,8 @@ async function handleInvoiceSubmit(formData) {
       date: formData.date,
       type: formData.type,
       amount: formData.amount,
+      grand_total: formData.grand_total,
+      is_vat_inclusive: formData.is_vat_inclusive,
       project: props.projectResource.doc.name,
       status: 'Draft',
       doctype: 'RUA Invoice',

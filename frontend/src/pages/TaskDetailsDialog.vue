@@ -351,7 +351,7 @@
     
     updating.value = true
     try {
-      await todoResource.update.submit({
+      await todoResource.setValue.submit({
         name: props.task.name,
         status: status
       })

@@ -398,12 +398,21 @@
     </div>
   </template>
 </Dialog>
+<SignDocument
+  v-if="quotationResource?.doc"
+  v-model="showSignDialog"
+  :doctype="'RUA Quotation'"
+  :docname="quotationResource.doc.name"
+  @signature-complete="handleSignatureComplete"
+/>
+
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createQuotationResource } from '@/data/quotation'
+import SignDocument from './SignDocument.vue'
 import {
   Button,
   Badge,
@@ -434,6 +443,7 @@ const isPDF = computed(() => {
 })
 
 // State Management
+const showSignDialog = ref(false)
 const quotationResource = ref(null)
 const showStatusDialog = ref(false)
 const statusError = ref('')
@@ -454,6 +464,11 @@ const actionDropdownOptions = computed(() => [
     label: 'Download PDF',
     icon: 'file-text',
     onClick: downloadPDF
+  },
+  {
+    label: 'Sign Quotation',
+    icon: 'pen-tool',
+    onClick: () => (showSignDialog.value = true)
   },
   {
     label: 'Print',
@@ -601,6 +616,19 @@ function printQuotation() {
   window.open(url, '_blank')
 }
 
+async function handleSignatureComplete(signatureUrl) {
+  try {
+    if (!quotationResource.value?.doc?.name) return
+
+    await quotationResource.value.setValue.submit({
+      name: quotationResource.value.doc.name,
+      signature: signatureUrl
+    })
+    await quotationResource.value.reload()
+  } catch (error) {
+    console.error('Failed to update signature:', error)
+  }
+}
 
 onMounted(() => {
   initializequotationResource()

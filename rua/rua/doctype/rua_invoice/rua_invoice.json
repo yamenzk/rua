@@ -12,6 +12,7 @@
   "remarks",
   "payment_linked",
   "serial_number",
+  "signature",
   "column_break_qayv",
   "type",
   "status",
@@ -21,6 +22,8 @@
   "invoice_file",
   "section_break_phmr",
   "column_break_ctrn",
+  "retention_percentage",
+  "is_vat_inclusive",
   "column_break_ikyt",
   "amount",
   "amount_after_retention",
@@ -31,6 +34,7 @@
   {
    "fieldname": "date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Date"
   },
   {
@@ -57,6 +61,7 @@
   {
    "fieldname": "type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Type",
    "options": "\nTax Invoice\nProforma"
   },
@@ -64,6 +69,7 @@
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
    "options": "Draft\nSubmitted\nFinal\nCancelled"
   },
@@ -110,6 +116,7 @@
   {
    "fieldname": "grand_total",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Grand Total",
    "non_negative": 1,
    "precision": "2"
@@ -118,6 +125,7 @@
    "default": "Unpaid",
    "fieldname": "payment_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Payment Status",
    "options": "Unpaid\nPartially Paid\nPaid"
   },
@@ -140,11 +148,28 @@
    "fieldname": "serial_number",
    "fieldtype": "Int",
    "label": "Serial Number"
+  },
+  {
+   "fieldname": "retention_percentage",
+   "fieldtype": "Percent",
+   "label": "Retention Percentage",
+   "precision": "0"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_vat_inclusive",
+   "fieldtype": "Check",
+   "label": "Is Vat Inclusive"
+  },
+  {
+   "fieldname": "signature",
+   "fieldtype": "Attach Image",
+   "label": "Signature"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-20 05:43:34.897949",
+ "modified": "2025-02-02 04:32:42.970330",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Invoice",
@@ -216,6 +241,16 @@
    "read": 1,
    "report": 1,
    "role": "RUA Project Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Signature User",
    "share": 1,
    "write": 1
   }

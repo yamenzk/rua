@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen bg-gray-50">
       <!-- Main Content -->
-      <div class="px-4 sm:px-6 lg:px-8 py-8">
+      <div>
           <SimpleDocuments 
             v-if="projectResource.doc"
             :source-type="'RUA Project'"

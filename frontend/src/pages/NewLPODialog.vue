@@ -6,11 +6,15 @@
     <template #body-content>
       <div class="space-y-6">
         <!-- Date Selection -->
-        <DatePicker
-          v-model="formData.date"
+        <FormControl
+          :type="'date'"
+          :ref_for="true"
+          size="sm"
+          variant="subtle"
+          :disabled="false"
           label="Date"
+          v-model="formData.date"
           :default-value="formData.date"
-          :formatter="(date) => formatDate(date, DATE_FORMATS.UAE)"
         />
 
         <!-- Party Selection -->
@@ -77,9 +81,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Dialog, DatePicker, Avatar } from 'frappe-ui'
+import { Dialog, FormControl, Avatar } from 'frappe-ui'
 import CustomAutocomplete from './CustomAutocomplete.vue'
-import { formatDate, getServerDate, DATE_FORMATS } from '@/utils/format'
+import { getServerDate } from '@/utils/format'
 
 const props = defineProps({
   modelValue: Boolean,

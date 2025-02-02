@@ -17,21 +17,6 @@
               </div>
             </div>
             <div>
-      <label class="text-xs text-gray-500">Retention Status</label>
-      <div class="flex items-center gap-1">
-        <Badge
-          :theme="projectResource.doc.retention_status === 'Enabled' ? 'blue' : 'gray'"
-          variant="subtle"
-          class="text-sm"
-        >
-          {{ projectResource.doc.retention_status || 'Not Configured' }}
-        </Badge>
-        <span v-if="projectResource.doc.retention_status === 'Enabled'" class="text-sm text-gray-600">
-          ({{ projectResource.doc.retention_percentage }}%)
-        </span>
-      </div>
-    </div>
-            <div>
               <label class="text-xs text-gray-500">Total Invoiced</label>
               <div class="text-sm font-medium text-gray-900">
                 {{ formatCurrency(projectResource.doc.total_invoiced) }}
@@ -60,14 +45,18 @@
           </div>
         </div>
 
-
         <!-- Date Selection -->
-        <DatePicker
-          v-model="formData.date"
+        <FormControl
+          :type="'date'"
+          :ref_for="true"
+          size="sm"
+          variant="subtle"
+          :disabled="false"
           label="Date"
+          v-model="formData.date"
           :default-value="formData.date"
-          :formatter="(date) => formatDate(date, DATE_FORMATS.UAE)"
         />
+
 
         <!-- Type Selection -->
         <div class="space-y-2">
@@ -92,7 +81,7 @@
 
         <!-- Amount Input Section -->
         <div class="space-y-4">
-            <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between">
             <label class="block text-sm font-medium text-gray-700">Amount</label>
             <div class="flex items-center gap-2">
               <span class="text-sm text-gray-500">Amount</span>
@@ -114,16 +103,19 @@
               </div>
               <input
                 type="number"
-                v-model.number="formData.amount"
+                v-model.number="inputAmount"
                 class="block w-full rounded-md border-gray-300 pl-12 pr-4 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
                 placeholder="0.00"
                 :max="availableAmount"
                 step="0.01"
-                @input="validateAmount"
+                @input="handleAmountInput"
               />
             </div>
             <p v-if="amountError" class="mt-1 text-sm text-red-600">
               {{ amountError }}
+            </p>
+            <p v-if="inputAmount && formData.is_vat_inclusive" class="mt-1 text-sm text-gray-600">
+              Amount before VAT: {{ formatCurrency(formData.amount) }}
             </p>
           </div>
 
@@ -147,19 +139,68 @@
               {{ percentageError }}
             </p>
             <p v-if="formData.amount" class="mt-1 text-sm text-gray-600">
-              Calculated Amount: {{ formatCurrency(formData.amount) }}
+              Calculated Amount: {{ formatCurrency(formData.amount * 1.05) }}
             </p>
+          </div>
+
+          <!-- VAT Inclusive Checkbox -->
+          <div class="flex items-center gap-2">
+            <Checkbox
+              v-model="formData.is_vat_inclusive"
+              :disabled="usePercentage"
+              :checked="usePercentage"
+              size="sm"
+              label="VAT Inclusive Amount"
+            />
+            <span v-if="usePercentage" class="text-xs text-gray-500">(Always VAT inclusive when using percentage)</span>
+          </div>
+        </div>
+
+        <!-- Retention Settings -->
+        <div class="space-y-4 pt-4 border-t">
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-gray-700">Retention Settings</label>
+            <Switch
+              v-model="formData.retention_enabled"
+              class="relative inline-flex h-6 items-center rounded-full"
+            >
+              <span class="sr-only">Enable Retention</span>
+            </Switch>
+          </div>
+
+          <div v-if="formData.retention_enabled" class="relative">
+            <input
+              type="number"
+              v-model.number="formData.retention_percentage"
+              class="block w-full rounded-md border-gray-300 pr-8 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+              placeholder="10"
+              min="0"
+              max="100"
+              step="0.01"
+            />
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <span class="text-gray-500 sm:text-sm">%</span>
+            </div>
           </div>
         </div>
       </div>
     </template>
   </Dialog>
+
+  <!-- Review Dialog -->
+  <ReviewInvoiceDialog
+    v-if="showReviewDialog"
+    v-model="showReviewDialog"
+    :invoice-data="formData"
+    @submit="handleFinalSubmit"
+  />
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Dialog, DatePicker, Switch, Badge } from 'frappe-ui'
-import { formatDate, formatCurrency, getServerDate, DATE_FORMATS } from '@/utils/format'
+import { Dialog, Switch, Checkbox, FormControl } from 'frappe-ui'
+import { formatCurrency, getServerDate } from '@/utils/format'
+import ReviewInvoiceDialog from './ReviewInvoiceDialog.vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -197,10 +238,16 @@ const usePercentage = ref(false)
 const completionPercentage = ref(null)
 const amountError = ref('')
 const percentageError = ref('')
+const showReviewDialog = ref(false)
+const inputAmount = ref(null)
+
 const formData = ref({
   date: getServerDate(),
   type: '',
   amount: null,
+  is_vat_inclusive: false,
+  retention_enabled: false,
+  retention_percentage: 10,
   party: getClientParty()?.name
 })
 
@@ -215,10 +262,10 @@ const dialogOptions = computed(() => ({
   size: 'md',
   actions: [
     {
-      label: 'Create',
+      label: 'Review',
       variant: 'solid',
       loading: false,
-      onClick: handleSubmit,
+      onClick: handleReview,
       disabled: !isFormValid.value
     }
   ]
@@ -245,17 +292,28 @@ const isFormValid = computed(() => {
 })
 
 // Methods
-function validateAmount() {
+function handleAmountInput() {
   amountError.value = ''
   
-  if (formData.value.amount < 0) {
+  if (inputAmount.value < 0) {
     amountError.value = 'Amount cannot be negative'
+    formData.value.amount = null
     return false
   }
 
+  // Convert input to VAT exclusive amount if needed
+  if (formData.value.is_vat_inclusive && inputAmount.value) {
+    formData.value.amount = inputAmount.value / 1.05
+  } else {
+    formData.value.amount = inputAmount.value
+  }
+
+  // Validate against available amount (always compare VAT exclusive amounts)
   if (formData.value.amount > availableAmount.value) {
     amountError.value = `Amount cannot exceed ${formatCurrency(availableAmount.value)}`
     formData.value.amount = availableAmount.value
+    inputAmount.value = formData.value.is_vat_inclusive ? 
+      formData.value.amount * 1.05 : formData.value.amount
     return false
   }
 
@@ -278,7 +336,9 @@ function handlePercentageChange() {
 
   // Calculate amount based on percentage
   if (completionPercentage.value) {
-    formData.value.amount = (props.projectResource.doc.contract_value * completionPercentage.value) / 100
+    // Contract value is VAT inclusive, so we need to extract VAT first
+    const contractValueExclVAT = props.projectResource.doc.contract_value / 1.05
+    formData.value.amount = (contractValueExclVAT * completionPercentage.value) / 100
   } else {
     formData.value.amount = null
   }
@@ -289,31 +349,54 @@ function resetForm() {
     date: getServerDate(),
     type: '',
     amount: null,
+    is_vat_inclusive: false,
+    retention_enabled: false,
+    retention_percentage: 10,
     party: getClientParty()?.name
   }
   completionPercentage.value = null
   usePercentage.value = false
   amountError.value = ''
   percentageError.value = ''
+  inputAmount.value = null
 }
 
-function handleSubmit() {
+function handleReview() {
   if (!isFormValid.value) return
+  show.value = false
+  showReviewDialog.value = true
+}
 
-  const submitData = {
-    ...formData.value,
-    naming_series: formData.value.type === 'Proforma' ? 'RC-PRO-.YY.' : 'RC-INV-.YY.'
-  }
-
-  emit('submit', submitData)
+function handleFinalSubmit(finalData) {
+  emit('submit', finalData)
   resetForm()
+  showReviewDialog.value = false
 }
 
 // Watch for changes
-watch(usePercentage, () => {
+watch(usePercentage, (newValue) => {
   formData.value.amount = null
   completionPercentage.value = null
+  inputAmount.value = null
   amountError.value = ''
   percentageError.value = ''
+  
+  // If switching to percentage, ensure VAT inclusive is enabled
+  if (newValue) {
+    formData.value.is_vat_inclusive = true
+  }
+})
+
+// Watch for VAT inclusive changes
+watch(() => formData.value.is_vat_inclusive, (newValue) => {
+  if (inputAmount.value) {
+    if (newValue) {
+      // User switched to VAT inclusive
+      formData.value.amount = inputAmount.value / 1.05
+    } else {
+      // User switched to VAT exclusive
+      formData.value.amount = inputAmount.value
+    }
+  }
 })
 </script>

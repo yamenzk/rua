@@ -7,7 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "type",
-  "resolves",
   "column_break_gkpc",
   "version",
   "section_break_xdoa",
@@ -19,8 +18,7 @@
    "fieldname": "version",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Version",
-   "read_only": 1
+   "label": "Version"
   },
   {
    "fieldname": "column_break_gkpc",
@@ -31,7 +29,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Type",
-   "options": "\nFix\nFeature\nRemove\nRefactor\nUI\nUX"
+   "options": "\nFix\nFeature\nRemove\nRefactor\nUI\nUX\nMessage"
   },
   {
    "fieldname": "title",
@@ -48,18 +46,12 @@
    "fieldtype": "Text Editor",
    "ignore_xss_filter": 1,
    "label": "Details"
-  },
-  {
-   "fieldname": "resolves",
-   "fieldtype": "Link",
-   "label": "Resolves",
-   "options": "RUA Remote Issue"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-01 07:40:09.131062",
+ "modified": "2025-02-02 04:27:07.426361",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA App Update",

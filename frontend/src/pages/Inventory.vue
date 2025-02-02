@@ -1,63 +1,61 @@
 <template>
   <div class="space-y-6">
-    <!-- Header with Search and Filters -->
-    <div class="flex items-center gap-4 flex-wrap">
-      <!-- View Toggle -->
-      <div class="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
-        <button
-          class="p-1.5 rounded transition-colors"
-          :class="viewMode === 'collapsed' ? 'bg-white shadow text-gray-800' : 'text-gray-600 hover:text-gray-800'"
-          @click="viewMode = 'collapsed'"
-        >
-          <FeatherIcon name="list" class="w-4 h-4" />
-        </button>
-        <button
-          class="p-1.5 rounded transition-colors"
-          :class="viewMode === 'expanded' ? 'bg-white shadow text-gray-800' : 'text-gray-600 hover:text-gray-800'"
-          @click="viewMode = 'expanded'"
-        >
-          <FeatherIcon name="grid" class="w-4 h-4" />
-        </button>
-      </div>
+    <!-- Sub Navigation Bar -->
+    <div class="sticky top-0 z-10 bg-white border-b">
+      <div class="px-4 py-3">
+        <div class="flex flex-col space-y-4">
+          <!-- Title and View Toggle -->
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Items</h2>
+            <div class="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
+              <button
+                class="p-1.5 rounded transition-colors"
+                :class="viewMode === 'collapsed' ? 'bg-white shadow text-gray-800' : 'text-gray-600 hover:text-gray-800'"
+                @click="viewMode = 'collapsed'"
+              >
+                <FeatherIcon name="list" class="w-4 h-4" />
+              </button>
+              <button
+                class="p-1.5 rounded transition-colors"
+                :class="viewMode === 'expanded' ? 'bg-white shadow text-gray-800' : 'text-gray-600 hover:text-gray-800'"
+                @click="viewMode = 'expanded'"
+              >
+                <FeatherIcon name="grid" class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-      <!-- Search -->
-      <FormControl
-        type="search"
-        size="sm"
-        variant="subtle"
-        placeholder="Search items..."
-        v-model="filters.search"
-        class="w-64"
-      />
+          <!-- Search and Filters Row -->
+          <div class="flex items-center gap-4 flex-wrap">
+            <FormControl
+              type="search"
+              size="sm"
+              variant="subtle"
+              placeholder="Search items..."
+              v-model="filters.search"
+              class="flex-1"
+            />
 
-      <!-- Brand Filter -->
-      <FormControl
-        type="select"
-        :options="brandOptions"
-        size="sm"
-        variant="subtle"
-        placeholder="Filter by Brand"
-        v-model="filters.brand"
-        class="w-48"
-      />
-
-      <!-- Add New Item Button -->
-      <div class="ml-auto">
-        <Button variant="solid" @click="showNewItemDialog = true">
-          <template #prefix>
-            <FeatherIcon name="plus" class="w-4 h-4" />
-          </template>
-          Add Item
-        </Button>
+            <FormControl
+              type="select"
+              :options="brandOptions"
+              size="sm"
+              variant="subtle"
+              placeholder="Filter by Brand"
+              v-model="filters.brand"
+              class="w-48"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Items Grid -->
-    <div v-if="inventoryResource.loading" class="flex justify-center py-12">
+    <div v-if="inventoryResource.loading" class="flex justify-center py-12 px-6">
       <LoadingIndicator />
     </div>
     
-    <div v-else-if="!filteredItems.length" class="text-center py-12">
+    <div v-else-if="!filteredItems.length" class="text-center py-12 px-6">
       <FeatherIcon name="package" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
       <p class="text-base font-medium text-gray-900">No items found</p>
       <p class="text-sm text-gray-600">
@@ -66,7 +64,7 @@
     </div>
 
     <div v-else :class="[
-      'grid gap-4',
+      'grid gap-4 px-6',
       viewMode === 'collapsed' 
         ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8'   
         : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8'
@@ -115,12 +113,6 @@
             >
               <FeatherIcon name="edit-2" class="w-4 h-4" />
             </button>
-            <!-- <button
-              class="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-              @click.stop="confirmDelete(item)"
-            >
-              <FeatherIcon name="trash-2" class="w-4 h-4" />
-            </button> -->
           </div>
         </div>
 
@@ -517,7 +509,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, inject, h } from 'vue'
 import {
   Button,
   FormControl,
@@ -544,6 +536,7 @@ const creating = ref(false)
 const updating = ref(false)
 const deleting = ref(false)
 const updateQty = ref(0)
+const setHeaderAction = inject('setHeaderAction')
 
 const newItem = ref({
   item: '',
@@ -555,6 +548,12 @@ const newItem = ref({
 })
 
 // Computed
+setHeaderAction(h(Button, {
+    variant: 'solid',
+    onClick: () => showNewItemDialog.value = true,
+  }, () => 'Add Item'))
+
+
 const brandOptions = computed(() => {
   if (!inventoryResource.data) return []
   

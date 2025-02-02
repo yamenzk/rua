@@ -12,57 +12,54 @@
       
       <!-- Right side of header with conditional rendering -->
       <div class="flex items-center gap-4">
-  <!-- What's New Button -->
-  <button 
-  @click="showWhatsNew = true"
-  class="whats-new-btn relative flex items-center gap-2 px-4 py-1.5 text-sm 
-         font-medium rounded-full overflow-hidden group hidden md:flex"
->
-  <!-- Animated border -->
-  <div class="absolute inset-0 border-2 rounded-full border-transparent
-              bg-clip-border animate-gradient-border"></div>
+        <!-- What's New Button -->
+        <button 
+          @click="showWhatsNew = true"
+          class="whats-new-btn relative flex items-center gap-2 px-4 py-1.5 text-sm 
+                font-medium rounded-full overflow-hidden group hidden md:flex"
+        >
+          <!-- Animated border -->
+          <div class="absolute inset-0 border-2 rounded-full border-transparent
+                    bg-clip-border animate-gradient-border"></div>
 
-  <!-- Content container -->
-  <div class="relative z-10 flex items-center gap-2">
-    <span class="text-gray-700">What's New</span>
-    <!-- Custom Sparkle Icon -->
-    <div class="relative">
-      <svg 
-        width="20" 
-        height="20" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-        class="sparkle-group"
-      >
-        <!-- Large sparkle -->
-        <path 
-          d="M16 8L19 9L16 10L15 13L14 10L11 9L14 8L15 5L16 8Z" 
-          class="sparkle large-sparkle"
-          style="--delay: 0s;"
-        />
-        <!-- Medium sparkle -->
-        <path 
-          d="M8.5 14L10.5 14.75L8.5 15.5L7.75 17.5L7 15.5L5 14.75L7 14L7.75 12L8.5 14Z"
-          class="sparkle medium-sparkle"
-          style="--delay: 0.2s;"
-        />
-        <!-- Small sparkle -->
-        <path 
-          d="M19 13.5L20 14L19 14.5L18.5 15.5L18 14.5L17 14L18 13.5L18.5 12.5L19 13.5Z"
-          class="sparkle small-sparkle"
-          style="--delay: 0.4s;"
-        />
-      </svg>
-      <!-- Notification dot -->
-      <!-- <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-pink-500 
-                   animate-pulse"></span> -->
-    </div>
-  </div>
-</button>
+          <!-- Content container -->
+          <div class="relative z-10 flex items-center gap-2">
+            <span class="text-gray-700">What's New</span>
+            <!-- Custom Sparkle Icon -->
+            <div class="relative">
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                class="sparkle-group"
+              >
+                <!-- Large sparkle -->
+                <path 
+                  d="M16 8L19 9L16 10L15 13L14 10L11 9L14 8L15 5L16 8Z" 
+                  class="sparkle large-sparkle"
+                  style="--delay: 0s;"
+                />
+                <!-- Medium sparkle -->
+                <path 
+                  d="M8.5 14L10.5 14.75L8.5 15.5L7.75 17.5L7 15.5L5 14.75L7 14L7.75 12L8.5 14Z"
+                  class="sparkle medium-sparkle"
+                  style="--delay: 0.2s;"
+                />
+                <!-- Small sparkle -->
+                <path 
+                  d="M19 13.5L20 14L19 14.5L18.5 15.5L18 14.5L17 14L18 13.5L18.5 12.5L19 13.5Z"
+                  class="sparkle small-sparkle"
+                  style="--delay: 0.4s;"
+                />
+              </svg>
+            </div>
+          </div>
+        </button>
 
-  <component v-if="headerAction" :is="headerAction" />
-</div>
+        <component v-if="headerAction" :is="headerAction" />
+      </div>
     </header>
 
     <!-- Main container with proper spacing -->
@@ -87,7 +84,7 @@
       </aside>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto bg-gray-50 p-6 md:ml-64">
+      <main class="flex-1 overflow-y-auto bg-gray-50 md:ml-64">
         <router-view v-slot="{ Component }">
           <component :is="Component" />
         </router-view>
@@ -222,8 +219,79 @@ provide('setHeaderAction', (action) => {
 
 const showWhatsNew = ref(false)
 const showIssueReport = ref(false)
+
+// Shake detection configuration
+const shakeConfig = {
+  threshold: 15,
+  timeWindow: 200,
+  minShakes: 3
+}
+
+// Shake detection state
+const shakeState = {
+  count: 0,
+  lastShake: 0
+}
+
+// Handle device motion
+function handleMotion(event) {
+  const acceleration = event.acceleration
+  if (!acceleration) return
+
+  const now = Date.now()
+  const magnitude = Math.sqrt(
+    Math.pow(acceleration.x, 2) +
+    Math.pow(acceleration.y, 2) +
+    Math.pow(acceleration.z, 2)
+  )
+
+  if (magnitude > shakeConfig.threshold) {
+    if (now - shakeState.lastShake < shakeConfig.timeWindow) {
+      shakeState.count++
+      if (shakeState.count >= shakeConfig.minShakes) {
+        showIssueReport.value = true
+        shakeState.count = 0
+      }
+    } else {
+      shakeState.count = 1
+    }
+    shakeState.lastShake = now
+  }
+}
+
+// Initialize shake detection
+function initializeShakeDetection() {
+  console.log('Initializing shake detection...')
+  
+  if ('DeviceMotionEvent' in window) {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      // iOS 13+ requires explicit user permission
+      DeviceMotionEvent.requestPermission()
+        .then(response => {
+          console.log('Motion permission response:', response)
+          if (response === 'granted') {
+            window.addEventListener('devicemotion', handleMotion)
+            console.log('Shake detection enabled for iOS')
+          }
+        })
+        .catch(error => {
+          console.error('Error requesting motion permission:', error)
+        })
+    } else {
+      // Non-iOS devices
+      window.addEventListener('devicemotion', handleMotion)
+      console.log('Shake detection enabled for non-iOS')
+    }
+  } else {
+    console.log('DeviceMotion is not supported on this device/browser')
+  }
+}
+
 onMounted(() => {
-  // Keyboard shortcuts for desktop (Alt + I, Alt + H, or Ctrl + Alt + Shift)
+  // Initialize shake detection
+  initializeShakeDetection()
+  
+  // Keyboard shortcuts for desktop
   window.addEventListener('keydown', (e) => {
     // Alt + I
     if (e.altKey && e.key.toLowerCase() === 'i') {
@@ -246,40 +314,8 @@ onMounted(() => {
       return
     }
   })
-
-  // Shake detection for mobile devices
-  if ('DeviceMotionEvent' in window) {
-    let lastUpdate = 0
-    let lastX = 0
-    let lastY = 0
-    let lastZ = 0
-    const shakeThreshold = 15
-
-    window.addEventListener('devicemotion', (e) => {
-      const current = e.accelerationIncludingGravity
-      if (!current) return
-
-      const currentTime = new Date().getTime()
-      if ((currentTime - lastUpdate) > 100) {
-        const diffTime = currentTime - lastUpdate
-        lastUpdate = currentTime
-
-        // Calculate movement speed
-        const speed = Math.abs(
-          current.x + current.y + current.z - lastX - lastY - lastZ
-        ) / diffTime * 10000
-
-        if (speed > shakeThreshold) {
-          showIssueReport.value = true
-        }
-
-        lastX = current.x
-        lastY = current.y
-        lastZ = current.z
-      }
-    })
-  }
 })
+
 const route = useRoute()
 const pageTitle = computed(() => {
   const matchedRoute = navigation.find(item => item.to === route.path)

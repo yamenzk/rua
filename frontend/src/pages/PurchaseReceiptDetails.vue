@@ -348,7 +348,7 @@
       size="sm"
       v-model="hasVerifiedQuantities"
 	  :disabled="hasChanges"
-      :label="`I confirm that I, ${session.employee_name}, have physically counted all received items and verified that the quantities entered above are accurate.`"
+      :label="`I, ${session.employee_name}, confirm that I have physically inspected and counted all received items and verified that the quantities entered above are accurate.`"
     />
   </div>
 </div>
@@ -543,6 +543,13 @@
 			</div>
 		</template>
 	</Dialog>
+	<SignDocument
+  v-if="receiptResource?.doc"
+  v-model="showSignDialog"
+  :doctype="'RUA Purchase Receipt'"
+  :docname="receiptResource.doc.name"
+  @signature-complete="handleSignatureComplete"
+/>
 </template>
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
@@ -563,6 +570,7 @@ import { formatDate, formatNumber, DATE_FORMATS } from '@/utils/format'
 import { partyResource } from '@/data/party'
 import { createPurchaseReceiptResource } from '@/data/purchaseReceipt'
 import { session } from '@/data/session'
+import SignDocument from '@/pages/SignDocument.vue'
 
 const props = defineProps({
 	projectResource: {
@@ -591,6 +599,7 @@ const isCancelling = ref(false)
 const statusError = ref('')
 const cancelError = ref('')
 const cancellationRemarks = ref('')
+const showSignDialog = ref(false)
 
 // Track original values for change detection
 const originalItems = ref([])
@@ -638,6 +647,11 @@ const actionDropdownOptions = computed(() => {
 			onClick: downloadPDF,
 		},
 		{
+    label: 'Sign Receipt',
+    icon: 'pen-tool',
+    onClick: () => (showSignDialog.value = true)
+  },
+		{
 			label: 'Print',
 			icon: 'printer',
 			onClick: printReceipt,
@@ -670,6 +684,20 @@ const updateReceiptItems = createResource({
 })
 
 // Methods
+async function handleSignatureComplete(signatureUrl) {
+  try {
+    if (!receiptResource.value?.doc?.name) return
+
+    await receiptResource.value.setValue.submit({
+      name: receiptResource.value.doc.name,
+      signature: signatureUrl
+    })
+    await receiptResource.value.reload()
+  } catch (error) {
+    console.error('Failed to update signature:', error)
+  }
+}
+
 function getStatusVariant(status) {
 	switch (status?.toLowerCase()) {
 		case 'draft':

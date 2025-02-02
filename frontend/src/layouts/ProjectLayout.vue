@@ -194,69 +194,6 @@
   </div>
 </div>
 
-<!-- Separator -->
-<div class="border-t"></div>
-				<!-- Retention Settings -->
-<div class="space-y-4">
-    <h3 class="text-lg font-medium text-gray-900">Retention Settings</h3>
-
-    <!-- Disabled State Warning -->
-    <div
-        v-if="!canEditRetention"
-        class="bg-yellow-50 border border-yellow-200 rounded-md p-4"
-    >
-        <div class="flex items-center">
-            <FeatherIcon name="alert-triangle" class="w-5 h-5 text-yellow-400" />
-            <p class="ml-3 text-sm text-yellow-700">
-                Retention settings cannot be modified as there are existing
-                invoices for this project.
-            </p>
-        </div>
-    </div>
-
-    <div class="space-y-4" :class="{ 'opacity-50': !canEditRetention }">
-        <!-- Retention Status Select -->
-        <FormControl
-            type="select"
-            label="Retention Status"
-            v-model="retentionStatus"
-            :options="retentionStatusOptions"
-            :disabled="!canEditRetention"
-            required
-        />
-
-        <!-- Retention Percentage and Invoicing -->
-        <div v-if="retentionStatus === 'Enabled'" class="space-y-4">
-            <FormControl
-                type="number"
-                label="Retention Percentage"
-                v-model="retentionPercentage"
-                :disabled="!canEditRetention"
-                min="0"
-                max="100"
-                step="0.01"
-                placeholder="Enter percentage (e.g. 5)"
-                required
-            />
-            <p class="text-sm text-gray-500">Enter a value between 0 and 100</p>
-            
-            <!-- Added Retention Invoicing Checkbox -->
-            <FormControl
-                type="checkbox"
-                size="sm"
-                variant="subtle"
-                :disabled="!canEditRetention"
-                label="Enable Retention Invoicing"
-                v-model="retentionInvoicing"
-            />
-        </div>
-    </div>
-
-    <!-- Error Message -->
-    <p v-if="settingsError" class="text-sm text-red-600">
-        {{ settingsError }}
-    </p>
-</div>
 
 				<!-- Danger Zone -->
 				<div class="border-t pt-4">
@@ -287,7 +224,7 @@
   variant="solid"
   :loading="savingSettings"
   @click="saveSettings"
-  :disabled="!retentionStatus || (!hasBasicFieldsChanged && retentionStatus === selectedProject?.retention_status && retentionPercentage === selectedProject?.retention_percentage)"
+  :disabled="!hasBasicFieldsChanged"
 >
   Save Changes
 </Button>
@@ -386,7 +323,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Avatar, FeatherIcon, Button, Dialog, FormControl, Badge } from 'frappe-ui'
 import { projectResource, createProjectResource } from '@/data/project'
-
 import ProjectMap from '../pages/ProjectMap.vue'
 import { inject } from 'vue'
 import { invoiceResource } from '@/data/invoice'
@@ -398,8 +334,6 @@ const passkeyInput = ref('')
 const nameConfirmError = ref('')
 const passkeyError = ref('')
 const validateLoading = ref(false)
-const retentionStatus = ref('')
-const retentionPercentage = ref(0)
 const savingSettings = ref(false)
 const settingsError = ref('')
 const $socket = inject('$socket')
@@ -410,19 +344,12 @@ const projectLocation = ref('')
 const contractValue = ref('')
 const projectDescription = ref('')
 const projectStatus = ref('')
-const retentionInvoicing = ref(false)
 const statusOptions = [
   { label: 'Tender', value: 'Tender' },
   { label: 'Job in Hand', value: 'Job in Hand' },
   { label: 'In Progress', value: 'In Progress' },
   { label: 'Completed', value: 'Completed' },
   { label: 'Cancelled', value: 'Cancelled' }
-]
-
-const retentionStatusOptions = [
-	{ label: 'Select status', value: '' },
-	{ label: 'Enabled', value: 'Enabled' },
-	{ label: 'Disabled', value: 'Disabled' },
 ]
 
 // State
@@ -458,10 +385,6 @@ const projectInvoices = computed(() => {
 	)
 })
 
-const canEditRetention = computed(() => {
-  return projectInvoices.value.length === 0 && selectedProjectResource.value?.doc
-})
-
 // Watch for changes in project ID and recreate document resource
 watch(
 	() => route.params.id,
@@ -476,9 +399,6 @@ watch(
   () => selectedProjectResource.value?.doc,
   (newDoc) => {
     if (newDoc) {
-      retentionStatus.value = newDoc.retention_status || ''
-      retentionPercentage.value = newDoc.retention_percentage || 0
-      retentionInvoicing.value = newDoc.retention_invoicing || false
       projectName.value = newDoc.project_name || ''
       projectLocation.value = newDoc.location || ''
       contractValue.value = newDoc.contract_value || ''
@@ -490,8 +410,8 @@ watch(
 
 async function handleBackNavigation() {
     if (selectedProject.value?.is_child && selectedProject.value?.parent1) {
-        // If it's a subproject, navigate to parent project
-        router.push(`/project/${selectedProject.value.parent1}/sub-projects`)
+        // If it's a branch, navigate to parent project
+        router.push(`/project/${selectedProject.value.parent1}/branches`)
     } else {
         // Otherwise go to projects list
         router.push('/projects')
@@ -512,10 +432,6 @@ async function initializeProjectResource(projectId) {
 async function saveSettings() {
   if (!selectedProjectResource.value) return
 
-  if (!retentionStatus.value) {
-    settingsError.value = 'Please select a retention status'
-    return
-  }
 
   settingsError.value = ''
   savingSettings.value = true
@@ -527,9 +443,6 @@ async function saveSettings() {
       contract_value: contractValue.value,
       description: projectDescription.value,
       status: projectStatus.value,
-      retention_status: retentionStatus.value,
-      retention_percentage: retentionStatus.value === 'Enabled' ? retentionPercentage.value : 0,
-      retention_invoicing: retentionStatus.value === 'Enabled' ? retentionInvoicing.value : false  // Add this line
     })
 
     showSettingsDialog.value = false
@@ -566,10 +479,6 @@ async function waitForInitialization() {
 onMounted(() => {
   // Get the current project doc from the resource
   const projectDoc = selectedProjectResource.value?.doc
-
-  retentionStatus.value = projectDoc?.retention_status || ''
-  retentionPercentage.value = projectDoc?.retention_percentage || 0
-  retentionInvoicing.value = projectDoc?.retention_invoicing || false
   projectName.value = projectDoc?.project_name || ''
   projectLocation.value = projectDoc?.location || ''
   contractValue.value = projectDoc?.contract_value || ''
@@ -623,11 +532,11 @@ const navigation = computed(() => {
 	{ name: 'Files', to: `/project/${route.params.id}/files`, icon: 'folder' }
   ]
 
-  // Add Sub Projects section only if this is NOT a child project
+  // Add Branches section only if this is NOT a child project
   if (!selectedProject.value?.is_child) {
     baseNav.splice(3, 0, {
-      name: 'Sub Projects',
-      to: `/project/${route.params.id}/sub-projects`,
+      name: 'Branches',
+      to: `/project/${route.params.id}/branches`,
       icon: 'git-branch'
     })
   }

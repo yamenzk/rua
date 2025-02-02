@@ -18,5 +18,7 @@ export function createProjectResource(name) {
 		onError(error) {
 			console.error('Error loading Project:', error)
 		},
-	})
+		realtime: true,
+		
+	}, $socket)
 }

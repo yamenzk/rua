@@ -18,5 +18,6 @@ export function createInvoiceResource(name) {
       onError(error) {
         console.error('Error loading Invoice:', error)
       },
-    })
+      realtime: true,
+    }, $socket)
   }

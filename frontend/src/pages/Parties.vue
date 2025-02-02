@@ -1,114 +1,145 @@
 <template>
 	<div class="space-y-6">
-		<!-- Search and Filters Section -->
-		<div class="flex items-center gap-2 overflow-x-auto p-2">
-			<!-- Search -->
-			<FormControl
+	  <!-- Sub Navigation Bar -->
+	  <div class="sticky top-0 z-10 bg-white border-b">
+		<div class="px-4 py-3">
+		  <div class="flex flex-col space-y-4">
+			<!-- Title and Search Row -->
+			<div class="flex items-center justify-between gap-3">
+			  <h2 class="text-lg font-semibold text-gray-900">Parties</h2>
+			</div>
+  
+			<!-- Search and Controls Row -->
+			<div class="flex items-center gap-2">
+			  <FormControl
 				type="search"
 				size="sm"
 				variant="subtle"
 				placeholder="Search parties..."
 				:modelValue="searchQuery"
 				@update:modelValue="handleSearch"
-				class="w-40 min-w-[8rem]"
-			/>
-
-			<!-- Sort Fields Dropdown -->
-			<FormControl
-				type="select"
-				:options="sortFieldOptions"
-				size="sm"
-				variant="subtle"
-				placeholder="Sort"
-				:modelValue="sortField"
-				@update:modelValue="handleSortFieldChange"
-				class="w-32 min-w-[6rem] flex-shrink-0"
-			/>
-
-			<!-- Sort Direction Button -->
-			<Button variant="subtle" size="sm" @click="toggleSortDirection" class="flex-shrink-0">
-				<FeatherIcon
+				class="flex-1"
+			  />
+  
+			  <div class="flex items-center gap-2">
+				<FormControl
+				  type="select"
+				  :options="sortFieldOptions"
+				  size="sm"
+				  variant="subtle"
+				  placeholder="Sort"
+				  :modelValue="sortField"
+				  @update:modelValue="handleSortFieldChange"
+				  class="w-32 sm:w-36"
+				/>
+  
+				<Button 
+				  variant="subtle" 
+				  size="sm" 
+				  @click="toggleSortDirection"
+				  title="Toggle Sort Direction"
+				  class="bg-gray-50 hover:bg-gray-100"
+				>
+				  <FeatherIcon
 					:name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
 					class="w-4 h-4"
-				/>
-			</Button>
-
-			<!-- Add Filter Button -->
-			<Button
-				variant="subtle"
-				size="sm"
-				@click="showFilterDialog = true"
-				class="flex-shrink-0"
-			>
-				<FeatherIcon name="filter" class="w-4 h-4" />
-			</Button>
-
-			<!-- Active Filters Display -->
-			<div v-if="activeFilters.length" class="flex gap-1 overflow-x-auto flex-shrink-0">
-				<div
-					v-for="(filter, index) in activeFilters"
-					:key="index"
-					class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
+				  />
+				</Button>
+  
+				<Button
+				  variant="subtle"
+				  size="sm"
+				  @click="showFilterDialog = true"
+				  title="Add Filter"
+				  class="bg-gray-50 hover:bg-gray-100"
 				>
-					<span>{{ getFieldLabel(filter.field) }}: {{ filter.value }}</span>
-					<button class="text-gray-500 hover:text-gray-700" @click="removeFilter(index)">
-						<FeatherIcon name="x" class="w-3 h-3" />
-					</button>
-				</div>
+				  <FeatherIcon name="filter" class="w-4 h-4" />
+				</Button>
+			  </div>
 			</div>
+  
+			<!-- Active Filters -->
+			<div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
+			  <span class="text-sm text-gray-500 hidden sm:inline">Filters:</span>
+			  <div class="flex gap-2">
+				<div
+				  v-for="(filter, index) in activeFilters"
+				  :key="index"
+				  class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
+				>
+				  <span class="truncate max-w-[150px] sm:max-w-none">
+					{{ getFieldLabel(filter.field) }}: {{ filter.value }}
+				  </span>
+				  <button 
+					class="text-gray-500 hover:text-gray-700" 
+					@click="removeFilter(index)"
+					title="Remove Filter"
+				  >
+					<FeatherIcon name="x" class="w-3 h-3" />
+				  </button>
+				</div>
+			  </div>
+			</div>
+		  </div>
 		</div>
-
-		<!-- Parties Grid -->
+	  </div>
+  
+	  <!-- Parties Grid -->
+	  <div class="px-4">
 		<div v-if="list.list.loading" class="flex justify-center">
-			<LoadingIndicator />
+		  <LoadingIndicator />
 		</div>
-
+  
 		<div v-else-if="!list.data?.length" class="text-center py-8">
-			<div class="text-gray-600">No parties found</div>
+		  <FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
+		  <div class="text-gray-600">No parties found</div>
+		  <p class="text-sm text-gray-500 mt-1">
+			{{ searchQuery ? 'Try adjusting your search or filters' : 'Add a party to get started' }}
+		  </p>
 		</div>
-
-		<div v-else class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-			<div
-				v-for="party in list.data"
-				:key="party.name"
-				class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
-				@click="showPartyDetails(party)"
-			>
-            
-				<!-- Party Card -->
-				<div class="relative h-48">
-					<img
-						v-if="party.image"
-						:src="party.image"
-						:alt="party.party"
-						class="h-full w-full object-contain rounded-t-lg"
-						@error="$event.target.style.display = 'none'"
-					/>
-                    
-					<div
-						v-else
-						class="h-full w-full flex items-center justify-center bg-gray-100 rounded-t-lg"
-					>
-						<FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400" />
-					</div>
-				</div>
-
-				<!-- Party Details -->
-				<div class="p-4 space-y-3">
-					<h3 class="font-semibold text-lg">{{ party.party }}</h3>
-					<div class="space-y-2 text-sm text-gray-600">
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="tag" class="w-4 h-4" />
-							<span>{{ party.type }}</span>
-						</div>
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="map-pin" class="w-4 h-4" />
-							<span>{{ party.emirate }}</span>
-						</div>
-					</div>
-				</div>
+  
+		<div v-else class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+		  <div
+			v-for="party in list.data"
+			:key="party.name"
+			class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+			@click="showPartyDetails(party)"
+		  >
+			<!-- Party Card -->
+			<div class="relative h-48">
+			  <img
+				v-if="party.image"
+				:src="party.image"
+				:alt="party.party"
+				class="h-full w-full object-contain rounded-t-lg"
+				@error="$event.target.style.display = 'none'"
+			  />
+			  
+			  <div
+				v-else
+				class="h-full w-full flex items-center justify-center bg-gray-100 rounded-t-lg"
+			  >
+				<FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400" />
+			  </div>
 			</div>
+  
+			<!-- Party Details -->
+			<div class="p-4 space-y-3">
+			  <h3 class="font-semibold text-lg">{{ party.party }}</h3>
+			  <div class="space-y-2 text-sm text-gray-600">
+				<div class="flex items-center gap-2">
+				  <FeatherIcon name="tag" class="w-4 h-4" />
+				  <span>{{ party.type }}</span>
+				</div>
+				<div class="flex items-center gap-2">
+				  <FeatherIcon name="map-pin" class="w-4 h-4" />
+				  <span>{{ party.emirate }}</span>
+				</div>
+			  </div>
+			</div>
+		  </div>
 		</div>
+	  </div>
 
 		<!-- New Party Dialog -->
 		<Dialog

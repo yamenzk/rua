@@ -372,6 +372,13 @@
     </div>
   </template>
 </Dialog>
+<SignDocument
+  v-if="rfqResource?.doc"
+  v-model="showSignDialog"
+  :doctype="'RUA RFQ'"
+  :docname="rfqResource.doc.name"
+  @signature-complete="handleSignatureComplete"
+/>
 </template>
 
 <script setup>
@@ -392,6 +399,7 @@ import {
 } from 'frappe-ui'
 import RFQItems from './RFQItems.vue'
 import { formatDate, DATE_FORMATS } from '@/utils/format'
+import SignDocument from '@/pages/SignDocument.vue'
 
 const props = defineProps({
   projectResource: {
@@ -416,6 +424,7 @@ const remarks = ref('')
 const showSubmitDialog = ref(false)
 const showReceiveDialog = ref(false)
 const showCancelDialog = ref(false)
+const showSignDialog = ref(false)
 
 // Computed Properties
 const partyData = computed(() => {
@@ -443,6 +452,11 @@ const actionDropdownOptions = computed(() => {
         onClick: downloadPDF
       },
       {
+        label: 'Sign RFQ',
+        icon: 'pen-tool',
+        onClick: () => (showSignDialog.value = true)
+      },
+      {
         label: 'Print',
         icon: 'printer',
         onClick: printRFQ
@@ -467,6 +481,20 @@ const uploadArgs = computed(() => ({
 }))
 
 // Methods
+async function handleSignatureComplete(signatureUrl) {
+  try {
+    if (!rfqResource.value?.doc?.name) return
+
+    await rfqResource.value.setValue.submit({
+      name: rfqResource.value.doc.name,
+      signature: signatureUrl
+    })
+    await rfqResource.value.reload()
+  } catch (error) {
+    console.error('Failed to update signature:', error)
+  }
+}
+
 function getStatusVariant(status) {
   switch (status?.toLowerCase()) {
     case 'draft':

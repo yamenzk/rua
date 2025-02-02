@@ -10,6 +10,7 @@
   "project",
   "status",
   "reject_reason",
+  "signature",
   "column_break_njho",
   "date",
   "naming_series",
@@ -111,12 +112,17 @@
    "fieldname": "quotation_details",
    "fieldtype": "Text Editor",
    "label": "Quotation Details"
+  },
+  {
+   "fieldname": "signature",
+   "fieldtype": "Attach Image",
+   "label": "Signature"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-01 01:33:34.380204",
+ "modified": "2025-02-02 01:57:34.934848",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Quotation",
@@ -186,6 +192,16 @@
    "read": 1,
    "report": 1,
    "role": "RUA Employee Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Signature User",
    "share": 1,
    "write": 1
   }

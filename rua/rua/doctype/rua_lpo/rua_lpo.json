@@ -11,6 +11,7 @@
   "remarks",
   "payment_linked",
   "supplier_reference_number",
+  "signature",
   "column_break_zswp",
   "date",
   "naming_series",
@@ -144,11 +145,16 @@
    "fieldname": "all_items_received",
    "fieldtype": "Check",
    "label": "All Items Received"
+  },
+  {
+   "fieldname": "signature",
+   "fieldtype": "Attach Image",
+   "label": "Signature"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-22 04:28:05.782514",
+ "modified": "2025-02-02 04:32:51.762049",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA LPO",
@@ -220,6 +226,16 @@
    "read": 1,
    "report": 1,
    "role": "RUA Project Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Signature User",
    "share": 1,
    "write": 1
   }

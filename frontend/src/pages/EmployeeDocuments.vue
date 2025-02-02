@@ -1,109 +1,115 @@
 <template>
-	<div class="space-y-6 p-4">
-		<div
-			v-if="isDraggingFile"
-			class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-50 pointer-events-none"
-		>
-			<div class="absolute inset-0 flex items-center justify-center">
-				<div class="bg-white rounded-lg shadow-lg p-6 text-center">
-					<FeatherIcon
-						name="upload-cloud"
-						class="w-12 h-12 text-gray-400 mx-auto mb-2"
-					/>
-					<h3 class="text-lg font-medium text-gray-900">Drop your file here</h3>
-					<p class="text-sm text-gray-500">to upload a new document</p>
+	<div class="">
+	  <!-- Combined Header and Navigation Card -->
+	  <div class="bg-white rounded-lg border">
+		<div class="sticky top-0 z-10 bg-white">
+		  <div class="px-6 py-3">
+			<div class="flex flex-col space-y-4">
+			  <!-- Title and Actions -->
+			  <div class="flex items-center justify-between">
+				<div>
+				  <h2 class="text-lg font-medium text-gray-900">Documents</h2>
+				  <p class="text-sm text-gray-500">Upload and manage your documents</p>
 				</div>
-			</div>
-		</div>
-		<!-- Header with tabs -->
-		<div class="border-b">
-			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-xl font-semibold text-gray-900">Documents</h2>
 				<div class="flex gap-2">
-					<Button
-						v-if="selectedDocuments.length > 0"
-						variant="solid"
-						@click="showMergeDialog = true"
-					>
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="file-text" class="w-4 h-4" />
-							<span>Merge Selected ({{ selectedDocuments.length }})</span>
-						</div>
-					</Button>
-					<Button variant="solid" @click="showUploadDialog = true">
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="upload" class="w-4 h-4" />
-							<span>Upload</span>
-						</div>
-					</Button>
+				  <Button
+					v-if="selectedDocuments.length > 0"
+					variant="subtle"
+					@click="showMergeDialog = true"
+					class="bg-primary-50 text-primary-700 hover:bg-primary-100"
+				  >
+					<div class="flex items-center gap-2">
+					  <FeatherIcon name="file-text" class="w-4 h-4" />
+					  <span class="hidden sm:inline">Merge Selected</span>
+					  <span class="inline-flex items-center justify-center w-5 h-5 text-xs bg-primary-100 text-primary-800 rounded-full">
+						{{ selectedDocuments.length }}
+					  </span>
+					</div>
+				  </Button>
+				  <Button variant="solid" @click="showUploadDialog = true">
+					<div class="flex items-center gap-2">
+					  <FeatherIcon name="upload" class="w-4 h-4" />
+					  <span class="hidden sm:inline">Upload</span>
+					</div>
+				  </Button>
 				</div>
-			</div>
-
-			<!-- Tags/Categories Navigation -->
-			<div class="flex space-x-4 overflow-x-auto pb-2">
-				<!-- All Documents Button -->
-				<button
-					@click="selectedTag = 'All'"
-					class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-					:class="[
-						selectedTag === 'All'
-							? 'border-2 border-gray-900 text-gray-900'
-							: 'text-gray-600 hover:bg-gray-100',
-					]"
+			  </div>
+  
+			  <!-- Tags Navigation -->
+			  <div class="flex items-center gap-2 overflow-x-auto">
+				<!-- All Documents Tab -->
+				<div 
+				  @click="selectedTag = 'All'"
+				  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
+				  :class="[
+					selectedTag === 'All' 
+					  ? 'bg-gray-900 text-white' 
+					  : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+				  ]"
 				>
-					📄 All
-				</button>
-
+				  <span class="text-sm whitespace-nowrap">📄 All Documents</span>
+				</div>
+  
 				<!-- Regular Tags -->
-				<button
-					v-for="tag in uniqueTags"
-					:key="tag"
-					v-show="tag !== 'Expired Documents'"
-					@click="selectedTag = tag"
-					class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-					:class="[
-						selectedTag === tag
-							? 'border-2 border-gray-900 text-gray-900'
-							: 'text-gray-600 hover:bg-gray-100',
-					]"
+				<div 
+				  v-for="tag in uniqueTags"
+				  :key="tag"
+				  v-show="tag !== 'Expired Documents'"
+				  @click="selectedTag = tag"
+				  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
+				  :class="[
+					selectedTag === tag 
+					  ? 'bg-gray-900 text-white' 
+					  : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+				  ]"
 				>
-					<span class="inline-flex items-center gap-1">
-						<span>{{ recommendedTags[tag] || '🏷️' }}</span>
-						<span>{{ tag }}</span>
-					</span>
-				</button>
-
-				<!-- Expired Documents Button -->
-				<button
-					@click="selectedTag = 'Expired Documents'"
-					class="px-4 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
-					:class="[
+				  <span class="text-sm whitespace-nowrap">
+					{{ recommendedTags[tag] || '🏷️' }}
+					{{ tag }}
+				  </span>
+				</div>
+  
+				<!-- Expired Documents Tab -->
+				<div 
+				  @click="selectedTag = 'Expired Documents'"
+				  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
+				  :class="[
+					selectedTag === 'Expired Documents'
+					  ? 'bg-red-600 text-white'
+					  : hasExpiredDocuments
+						? 'bg-red-50 hover:bg-red-100 text-red-600'
+						: 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+				  ]"
+				>
+				  <span class="text-sm whitespace-nowrap flex items-center gap-2">
+					🗑️ Expired Documents
+					<span
+					  v-if="hasExpiredDocuments"
+					  class="inline-flex items-center justify-center px-2 py-0.5 text-xs rounded-full"
+					  :class="[
 						selectedTag === 'Expired Documents'
-							? 'border-2 border-red-600 bg-red-50 text-red-600'
-							: hasExpiredDocuments
-								? 'bg-red-50 hover:bg-red-100 text-red-600'
-								: 'text-gray-600 hover:bg-gray-100',
-					]"
-				>
-					<span class="inline-flex items-center gap-1">
-						<span>🗑️</span>
-						<span>Expired Documents</span>
-						<span
-							v-if="hasExpiredDocuments"
-							class="ml-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700"
-						>
-							{{ expiredDocumentsCount }}
-						</span>
+						  ? 'bg-red-500 text-white'
+						  : 'bg-red-100 text-red-700'
+					  ]"
+					>
+					  {{ expiredDocumentsCount }}
 					</span>
-				</button>
+				  </span>
+				</div>
+			  </div>
 			</div>
+		  </div>
 		</div>
-
-		<!-- Document Grid -->
-		<div
+	  </div>
+  
+	  <!-- Document Grid Card -->
+	  <div class="">
+		<div class="p-6">
+		  <!-- Document Grid -->
+		  <div
 			v-if="filteredDocuments.length"
-			class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4"
-		>
+			class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]"
+		  >
 			<div
 				v-for="doc in filteredDocuments"
 				:key="doc.name"
@@ -288,6 +294,8 @@
 				}}
 			</p>
 		</div>
+	</div>
+</div>
 
 		<!-- Update Dialog -->
 		<Dialog
@@ -543,7 +551,7 @@
 			}"
 		>
 			<template #body-content>
-				<div class="flex flex-col items-center space-y-4 p-4">
+				<div class="flex flex-col items-center space-y-4">
 					<img
 						v-if="selectedDoc"
 						:src="getQrCodeUrl(selectedDoc.document)"

@@ -1,59 +1,64 @@
-# ProjectInvoicing.vue
 <template>
   <div v-if="!projectResource?.doc" class="flex items-center justify-center min-h-[60vh]">
     <LoadingIndicator />
   </div>
 
-  <div v-else class="space-y-8 px-6">
-    <!-- Tabs in scrollable container -->
-    <div class="relative">
-      <div class="overflow-x-auto scrollbar-hide">
-        <div class="flex space-x-2 py-2 min-w-max">
-          <TabButtons
-            :buttons="documentTabs"
-            :modelValue="currentTab"
-            @update:modelValue="handleTabChange"
-            class="w-full"
-          >
-            <template #button="{ button, active }">
-              <div class="flex items-center gap-2">
+  <div v-else class="space-y-4">
+    <!-- Sub Navigation Card -->
+    <div class="bg-white rounded-lg">
+      <div class="sticky top-0 z-10 bg-white">
+        <div class="px-6 py-3">
+          <div class="flex flex-col space-y-4">
+            <!-- Title and Description -->
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-medium text-gray-900">Project Invoicing</h2>
+                <p class="text-sm text-gray-500">Manage quotations, invoices, and purchases</p>
+              </div>
+            </div>
+
+            <!-- Document Type Navigation -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1">
+              <div 
+                v-for="tab in documentTabs" 
+                :key="tab.value"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
+                :class="[
+                  currentTab === tab.value 
+                    ? 'bg-gray-900 text-white' 
+                    : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+                ]"
+                @click="handleTabChange(tab.value)"
+              >
                 <FeatherIcon 
-                  :name="button.icon" 
-                  class="w-4 h-4"
+                  :name="tab.icon" 
+                  class="w-4 h-4 shrink-0"
+                  :class="currentTab === tab.value ? 'text-primary-500' : 'text-gray-400'"
                 />
-                <span>{{ button.label }}</span>
+                <span class="whitespace-nowrap">{{ tab.label }}</span>
                 <Badge 
-                  v-if="getTabCount(button.value)"
-                  :variant="active ? 'solid' : 'subtle'"
-                  theme="blue"
+                  v-if="getTabCount(tab.value)"
+                  :variant="currentTab === tab.value ? 'solid' : 'subtle'"
+                  :theme="currentTab === tab.value ? 'primary' : 'gray'"
                   size="sm"
                 >
-                  {{ getTabCount(button.value) }}
+                  {{ getTabCount(tab.value) }}
                 </Badge>
               </div>
-            </template>
-          </TabButtons>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Tab Content with Transition -->
-    <Transition
-      enter-active-class="transition-opacity duration-200 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-150 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div>
-        <component 
-          :is="getCurrentTabComponent"
-          :projectResource="projectResource"
-          :key="currentTab"
-        />
-      </div>
-    </Transition>
+    <!-- Content Card -->
+    <div class="bg-white rounded-lg mx-6">
+          <component 
+            :is="getCurrentTabComponent"
+            :projectResource="projectResource"
+            :key="currentTab"
+          />
+    </div>
   </div>
 </template>
 
@@ -67,6 +72,11 @@ import {
   Badge
 } from 'frappe-ui'
 import { quotationResource } from '@/data/quotation'
+import { invoiceResource } from '@/data/invoice'
+import { rfqResource } from '@/data/rfq'
+import { lpoResource } from '@/data/lpo'
+import { purchaseReceiptResource } from '@/data/purchaseReceipt'
+import { paymentResource } from '@/data/payment'
 import QuotationsTab from './QuotationsTab.vue'
 import PurchaseOrdersTab from './PurchaseOrdersTab.vue'
 import RFQsTab from './RFQsTab.vue'
@@ -194,11 +204,29 @@ function handleTabChange(newTab) {
 
 // Get count for badges
 function getTabCount(tabValue) {
-  if (tabValue === 'quotations') {
-    return quotationResource.data?.filter(q => 
-      q.project === props.projectResource.doc?.name
-    )?.length || 0
+  const projectId = props.projectResource.doc?.name;
+  
+  switch (tabValue) {
+    case 'quotations':
+      return quotationResource.data?.filter(q => q.project === projectId)?.length || 0;
+      
+    case 'invoices':
+      return invoiceResource.data?.filter(inv => inv.project === projectId)?.length || 0;
+      
+    case 'rfqs':
+      return rfqResource.data?.filter(rfq => rfq.project === projectId)?.length || 0;
+      
+    case 'purchaseOrders':
+      return lpoResource.data?.filter(po => po.project === projectId)?.length || 0;
+      
+    case 'purchaseReceipts':
+      return purchaseReceiptResource.data?.filter(pr => pr.project === projectId)?.length || 0;
+      
+    case 'payments':
+      return paymentResource.data?.filter(p => p.project === projectId)?.length || 0;
+      
+    default:
+      return 0;
   }
-  return 0
 }
 </script>

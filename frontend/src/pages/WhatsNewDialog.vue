@@ -46,12 +46,12 @@
           >
             <!-- Glass morphism card with animated border -->
             <div 
-              class="glass-card group"
-              :class="[
-                'glass-card--' + update.type.toLowerCase(),
-                { 'featured': update.type === 'Feature' }
-              ]"
-            >
+    class="glass-card group"
+    :class="[
+      'glass-card--' + update.type.toLowerCase(),
+      { 'featured': ['Feature', 'Message'].includes(update.type) }
+    ]"
+  >
               <!-- Animated background elements -->
               <div class="card-effects">
                 <div class="effect-circle"></div>
@@ -64,24 +64,24 @@
                   <div class="flex-1 space-y-3">
                     <!-- Type badge with glow effect only for features -->
                     <span 
-                      class="type-badge"
-                      :class="getTypeStyles(update.type)"
-                    >
-                      <span v-if="update.type === 'Feature'" class="badge-glow"></span>
-                      {{ update.type }}
-                    </span>
+      class="type-badge"
+      :class="getTypeStyles(update.type)"
+    >
+      <span v-if="['Feature'].includes(update.type)" class="badge-glow"></span>
+      {{ update.type }}
+    </span>
                     
                     <!-- Title with gradient text for features -->
                     <h3 
-                      class="text-lg font-medium transition-colors duration-300"
-                      :class="[
-                        update.type === 'Feature' 
-                          ? 'gradient-text' 
-                          : 'text-gray-900 group-hover:text-gray-700'
-                      ]"
-                    >
-                      {{ update.title }}
-                    </h3>
+      class="text-lg font-medium transition-colors duration-300"
+      :class="[
+        ['Feature', 'Message'].includes(update.type)
+          ? 'gradient-text' 
+          : 'text-gray-900 group-hover:text-gray-700'
+      ]"
+    >
+      {{ update.title }}
+    </h3>
                   </div>
                   
                   <!-- Animated view details button -->
@@ -225,21 +225,22 @@
   }, { immediate: true })
   
   const sortedUpdates = computed(() => {
-    const typeOrder = {
-      'Feature': 0,
-      'UI': 1,
-      'UX': 2,
-      'Fix': 3,
-      'Refactor': 4,
-      'Remove': 5
-    }
-  
-    return [...updates.value].sort((a, b) => {
-      const typeDiff = (typeOrder[a.type] ?? 999) - (typeOrder[b.type] ?? 999)
-      if (typeDiff !== 0) return typeDiff
-      return parseFloat(b.version) - parseFloat(a.version)
-    })
+  const typeOrder = {
+    'Feature': 0,
+    'Message': 1,
+    'UI': 2,
+    'UX': 3,
+    'Fix': 4,
+    'Refactor': 5,
+    'Remove': 6
+  }
+
+  return [...updates.value].sort((a, b) => {
+    const typeDiff = (typeOrder[a.type] ?? 999) - (typeOrder[b.type] ?? 999)
+    if (typeDiff !== 0) return typeDiff
+    return parseFloat(b.version) - parseFloat(a.version)
   })
+})
   
   const filteredUpdates = computed(() => {
     if (!selectedVersion.value) return sortedUpdates.value
@@ -275,28 +276,30 @@
   }
   
   function getTypeStyles(type) {
-    const styles = {
-      'Feature': 'bg-gradient-to-r from-purple-400/20 to-pink-400/20 text-purple-700',
-      'Fix': 'bg-gradient-to-r from-yellow-400/20 to-orange-400/20 text-yellow-700',
-      'UX': 'bg-gradient-to-r from-orange-400/20 to-red-400/20 text-orange-700',
-      'UI': 'bg-gradient-to-r from-green-400/20 to-emerald-400/20 text-green-700',
-      'Remove': 'bg-gradient-to-r from-red-400/20 to-rose-400/20 text-red-700',
-      'Refactor': 'bg-gradient-to-r from-blue-400/20 to-indigo-400/20 text-blue-700'
-    }
-    return styles[type] || 'bg-gradient-to-r from-gray-400/20 to-slate-400/20 text-gray-700'
+  const styles = {
+    'Feature': 'bg-gradient-to-r from-purple-400/20 to-pink-400/20 text-purple-700',
+    'Message': 'bg-gradient-to-r from-sky-400/20 to-cyan-400/20 text-sky-700',
+    'Fix': 'bg-gradient-to-r from-yellow-400/20 to-orange-400/20 text-yellow-700',
+    'UX': 'bg-gradient-to-r from-orange-400/20 to-red-400/20 text-orange-700',
+    'UI': 'bg-gradient-to-r from-green-400/20 to-emerald-400/20 text-green-700',
+    'Remove': 'bg-gradient-to-r from-red-400/20 to-rose-400/20 text-red-700',
+    'Refactor': 'bg-gradient-to-r from-blue-400/20 to-indigo-400/20 text-blue-700'
   }
-  
-  function getButtonStyles(type) {
-    const styles = {
-      'Feature': 'text-purple-600 hover:text-purple-800',
-      'Fix': 'text-yellow-600 hover:text-yellow-800',
-      'UX': 'text-orange-600 hover:text-orange-800',
-      'UI': 'text-green-600 hover:text-green-800',
-      'Remove': 'text-red-600 hover:text-red-800',
-      'Refactor': 'text-blue-600 hover:text-blue-800'
-    }
-    return styles[type] || 'text-gray-600 hover:text-gray-800'
+  return styles[type] || 'bg-gradient-to-r from-gray-400/20 to-slate-400/20 text-gray-700'
+}
+
+function getButtonStyles(type) {
+  const styles = {
+    'Feature': 'text-purple-600 hover:text-purple-800',
+    'Message': 'text-sky-600 hover:text-sky-800',
+    'Fix': 'text-yellow-600 hover:text-yellow-800',
+    'UX': 'text-orange-600 hover:text-orange-800',
+    'UI': 'text-green-600 hover:text-green-800',
+    'Remove': 'text-red-600 hover:text-red-800',
+    'Refactor': 'text-blue-600 hover:text-blue-800'
   }
+  return styles[type] || 'text-gray-600 hover:text-gray-800'
+}
   
   onMounted(() => {
     fetchUpdates()
@@ -509,4 +512,17 @@
     backdrop-filter: blur(4px);
     border: 1px solid rgba(229,231,235,0.4);
   }
+
+  .glass-card--message {
+  background: linear-gradient(135deg, rgba(14,165,233,0.1), rgba(6,182,212,0.1));
+}
+
+.glass-card--message .gradient-text {
+  background: linear-gradient(90deg, #0EA5E9, #05323b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 600;
+}
+
   </style>
