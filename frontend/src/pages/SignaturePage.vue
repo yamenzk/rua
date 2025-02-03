@@ -6,7 +6,7 @@
 				<!-- Header Section -->
 				<div class="bg-gray-900 text-white p-6 flex items-center space-x-4">
 					<img
-						src="/logo.png"
+						:src="logoUrl"
 						alt="Company Logo"
 						class="h-10 w-auto object-contain invert"
 						@error="$event.target.style.display = 'none'"
@@ -173,6 +173,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { VueSignaturePad } from '@selemondev/vue3-signature-pad'
 import { Button, FeatherIcon, LoadingIndicator } from 'frappe-ui'
+import logo from '@/assets/logo.png'
 
 const route = useRoute()
 const token = route.params.token
@@ -186,6 +187,7 @@ const success = ref(false)
 const isSubmitting = ref(false)
 const docInfo = ref(null)
 const canSubmit = ref(false)
+const logoUrl = new URL('../assets/logo.png', import.meta.url).href
 
 // Refs
 const signaturePad = ref(null)
@@ -233,7 +235,7 @@ async function addWatermark() {
 
 					ctx.restore()
 				}
-				logo.src = '/logo.png'
+				logo.src = logoUrl
 			} else {
 				// Original document watermark code
 				const text = docInfo.value.docname
