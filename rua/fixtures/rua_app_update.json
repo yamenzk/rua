@@ -318,5 +318,25 @@
   "title": "LPO validation for at least one item",
   "type": "UX",
   "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p style=\"direction: ltr;\">For employee creation and editing, the only mandatory field is now the employee name.</p><p style=\"direction: ltr;\"><br></p><p style=\"direction: ltr;\">Added new options to the positions select;</p><pre class=\"ql-code-block-container\" spellcheck=\"false\"><div class=\"ql-code-block\">export const positionOptions = [</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'CEO',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Operations Manager',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Production Supervisor',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Glass Fabricator',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Aluminum Fabricator',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'CNC Operator',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Quality Control Inspector',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Installation Team Leader',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Installer',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Driver',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Sales Manager',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Sales Representative',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Accountant',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'HR Manager',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Warehouse Supervisor',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Warehouse Worker',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Maintenance Technician',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Projects Manager',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Civil Engineer',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Architectural Engineer',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Material Specialist',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Cutting Specialist',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Forman',</div><div class=\"ql-code-block\"> &nbsp; &nbsp;'Labor',</div><div class=\"ql-code-block\"> &nbsp;]</div></pre></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 19:18:25.487113",
+  "name": "1132m7q8ve",
+  "title": "[Employee] Position Options & Mandatory Checks",
+  "type": "UX",
+  "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Fixed outstanding amount calculation. The previous logic did not check if the invoice was a proforma or tax invoice. </p><p>Now, <u>outstanding amount</u> will only include <strong>unpaid and partially</strong> paid invoices that are also of type <strong>\"Tax Invoice\"</strong> and have a status of <strong>'Final'</strong>.</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 19:20:13.608099",
+  "name": "oeu1b0om0l",
+  "title": "Outstanding Amount Calculation",
+  "type": "Fix",
+  "version": "1.1.8"
  }
 ]

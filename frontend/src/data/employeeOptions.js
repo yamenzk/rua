@@ -22,6 +22,13 @@ export const genderOptions = [
     'Warehouse Supervisor',
     'Warehouse Worker',
     'Maintenance Technician',
+    'Projects Manager',
+    'Civil Engineer',
+    'Architectural Engineer',
+    'Material Specialist',
+    'Cutting Specialist',
+    'Forman',
+    'Labor',
   ].map((position) => ({
     label: position,
     value: position,

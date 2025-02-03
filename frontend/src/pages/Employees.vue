@@ -657,16 +657,9 @@
 							<FormControl
 								type="date"
 								label="Date of Birth"
-								required
 								variant="subtle"
 								v-model="newEmployee.date_of_birth"
 							/>
-							<span
-								v-if="!newEmployee.date_of_birth && formSubmitted"
-								class="text-sm text-red-500"
-							>
-								Date of birth is required
-							</span>
 						</div>
 
 						<div class="space-y-1">
@@ -715,27 +708,14 @@
 								placeholder="Select position"
 								class="w-full"
 							/>
-							<span
-								v-if="!newEmployee.position && formSubmitted"
-								class="text-sm text-red-500"
-							>
-								Position is required
-							</span>
 						</div>
 
 						<div class="space-y-1">
 							<FormControl
 								type="number"
 								label="Salary"
-								required
 								v-model="newEmployee.salary"
 							/>
-							<span
-								v-if="!newEmployee.salary && formSubmitted"
-								class="text-sm text-red-500"
-							>
-								Salary is required
-							</span>
 						</div>
 					</div>
 				</div>
@@ -794,7 +774,6 @@
 						v-else-if="newFilter.field === 'salary'"
 						type="number"
 						label="Value"
-						required
 						v-model="newFilter.value"
 					/>
 					<FormControl
@@ -1007,7 +986,7 @@ const isReadOnly = computed(() => {
 const newEmployee = ref({
 	employee_name: '',
 	date_of_birth: null,
-	gender: '',
+	gender: 'Male',
 	nationality: '',
 	position: '',
 	salary: null,
@@ -1119,12 +1098,7 @@ function getFieldLabel(fieldValue) {
 function validateForm() {
 	formSubmitted.value = true
 	return (
-		newEmployee.value.employee_name &&
-		newEmployee.value.date_of_birth &&
-		newEmployee.value.gender &&
-		newEmployee.value.nationality &&
-		newEmployee.value.position &&
-		newEmployee.value.salary
+		newEmployee.value.employee_name
 	)
 }
 

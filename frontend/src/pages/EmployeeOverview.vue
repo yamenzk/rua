@@ -720,15 +720,17 @@ async function updateEmployee() {
 		const employeeData = {
 			name: props.employee.name,
 			employee_name: editingEmployee.value.employee_name,
-			gender: editingEmployee.value.gender,
-			date_of_birth: editingEmployee.value.date_of_birth,
-			nationality: editingEmployee.value.nationality.label, // Use the label for nationality
-			position: editingEmployee.value.position, // Position is already a string
-			salary: Number(editingEmployee.value.salary),
-			phone: editingEmployee.value.phone,
-			email: editingEmployee.value.email,
-			branch: editingEmployee.value.branch,
 		}
+
+		// Add optional fields only if they have values
+		if (editingEmployee.value.gender) employeeData.gender = editingEmployee.value.gender
+		if (editingEmployee.value.date_of_birth) employeeData.date_of_birth = editingEmployee.value.date_of_birth
+		if (editingEmployee.value.nationality?.label) employeeData.nationality = editingEmployee.value.nationality.label
+		if (editingEmployee.value.position) employeeData.position = editingEmployee.value.position
+		if (editingEmployee.value.salary) employeeData.salary = Number(editingEmployee.value.salary)
+		if (editingEmployee.value.phone) employeeData.phone = editingEmployee.value.phone
+		if (editingEmployee.value.email) employeeData.email = editingEmployee.value.email
+		if (editingEmployee.value.branch) employeeData.branch = editingEmployee.value.branch
 
 		await props.employeeResource.setValue.submit(employeeData)
 		showEditDialog.value = false

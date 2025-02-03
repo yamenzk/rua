@@ -193,6 +193,7 @@ const projectTrend = computed(() => {
 const unpaidInvoices = computed(() => {
   return invoiceResource.data?.filter(invoice => 
     invoice.status === 'Final' && 
+    invoice.type === 'Tax Invoice' &&
     (invoice.payment_status === 'Unpaid' || invoice.payment_status === 'Partially Paid')
   ) || []
 })
