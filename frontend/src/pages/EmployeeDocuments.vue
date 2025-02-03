@@ -680,7 +680,7 @@ import { documentResource } from '@/data/document'
 import { isBeforeToday, getDaysDifference } from '@/utils/format'
 import VueDraggable from 'vuedraggable'
 import { PDFDocument } from 'pdf-lib'
-import * as UPNG from '@pdf-lib/upng'
+import UPNG from '@pdf-lib/upng'
 
 const props = defineProps({
 	employee: {
@@ -1179,26 +1179,27 @@ async function saveDocumentChanges() {
 
 // PDF Merging
 async function processImage(fileBuffer, filename) {
-	if (filename.toLowerCase().endsWith('.png')) {
-		const pngData = UPNG.decode(fileBuffer)
-		return {
-			width: pngData.width,
-			height: pngData.height,
-		}
-	} else {
-		// For JPEG and other formats, create an image element to get dimensions
-		return new Promise((resolve, reject) => {
-			const img = new Image()
-			img.onload = () => {
-				resolve({
-					width: img.width,
-					height: img.height,
-				})
-			}
-			img.onerror = reject
-			img.src = URL.createObjectURL(new Blob([fileBuffer]))
-		})
-	}
+    if (filename.toLowerCase().endsWith('.png')) {
+        const pngData = UPNG.decode(new Uint8Array(fileBuffer));
+        const [width, height] = UPNG.toRGBA8(pngData)[0];
+        return {
+            width,
+            height
+        };
+    } else {
+        // For JPEG and other formats, create an image element to get dimensions
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                resolve({
+                    width: img.width,
+                    height: img.height,
+                });
+            };
+            img.onerror = reject;
+            img.src = URL.createObjectURL(new Blob([fileBuffer]));
+        });
+    }
 }
 
 async function mergeDocuments() {
