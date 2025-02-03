@@ -7,6 +7,22 @@ import { userDetails } from './roles'
 
 let initializationPromise = null
 
+export function saveCredentials(email, password) {
+  localStorage.setItem('cachedCredentials', JSON.stringify({ 
+    email, 
+    password: btoa(password) // Basic encoding, consider more secure methods
+  }))
+}
+
+export function getCachedCredentials() {
+  const cached = localStorage.getItem('cachedCredentials')
+  if (!cached) return null
+  const { email, password } = JSON.parse(cached)
+  return { email, password: atob(password) }
+}
+
+
+
 export function sessionUser() {
   const cookies = new URLSearchParams(document.cookie.split('; ').join('&'))
   let _sessionUser = cookies.get('user_id')
@@ -20,6 +36,7 @@ export const session = reactive({
   login: createResource({
     url: 'login',
     makeParams({ email, password }) {
+      saveCredentials(email, password)
       return {
         usr: email,
         pwd: password,

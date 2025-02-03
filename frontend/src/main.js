@@ -15,7 +15,7 @@ import {
 } from 'frappe-ui'
 
 const app = createApp(App)
-
+const APP_VERSION = '1.1.9' 
 // Configure Frappe UI
 setConfig('resourceFetcher', async (...args) => {
   try {
@@ -43,9 +43,16 @@ Object.entries(resources).forEach(([key, resource]) => {
 })
 
 // Initialize app based on environment
+
 const initializeApp = async () => {
   try {
-    // If user is logged in, initialize session first
+    const storedVersion = localStorage.getItem('appVersion')
+    if (storedVersion !== APP_VERSION) {
+      await session.logout.submit()
+      localStorage.setItem('appVersion', APP_VERSION)
+      return
+    }
+
     if (session.isLoggedIn) {
       await session.initialize()
     }
