@@ -261,17 +261,14 @@ function handleMotion(event) {
 
 // Initialize shake detection
 function initializeShakeDetection() {
-  console.log('Initializing shake detection...')
   
   if ('DeviceMotionEvent' in window) {
     if (typeof DeviceMotionEvent.requestPermission === 'function') {
       // iOS 13+ requires explicit user permission
       DeviceMotionEvent.requestPermission()
         .then(response => {
-          console.log('Motion permission response:', response)
           if (response === 'granted') {
             window.addEventListener('devicemotion', handleMotion)
-            console.log('Shake detection enabled for iOS')
           }
         })
         .catch(error => {
@@ -280,7 +277,6 @@ function initializeShakeDetection() {
     } else {
       // Non-iOS devices
       window.addEventListener('devicemotion', handleMotion)
-      console.log('Shake detection enabled for non-iOS')
     }
   } else {
     console.log('DeviceMotion is not supported on this device/browser')

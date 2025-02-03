@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
-import rua
 from frappe.model.document import Document
+import rua
 
 class RUAAppUpdate(Document):
     def publish_update(self):
@@ -17,6 +17,7 @@ class RUAAppUpdate(Document):
     
     def after_insert(self):
         self.publish_update()
-        
-    def before_insert(self):
-        self.version = rua.__version__
+
+@frappe.whitelist()
+def get_app_version():
+    return rua.__version__

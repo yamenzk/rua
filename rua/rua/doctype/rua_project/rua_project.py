@@ -1,6 +1,7 @@
 import frappe
 import rua
 from frappe.model.document import Document
+from frappe.utils import flt
 
 
 
@@ -26,5 +27,5 @@ class RUAProject(Document):
             self.serial_number = highest_serial + 1
 
     def before_save(self):
-        if self.contract_value and self.contract_value > 0:
-            self.completion = self.total_invoiced / self.contract_value * 100
+        if self.contract_value and flt(self.contract_value) > 0:
+            self.completion = flt(self.total_invoiced) / flt(self.contract_value) * 100

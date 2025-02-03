@@ -1,12 +1,18 @@
-// Copyright (c) 2025, Yamen Zakhour and contributors
-// For license information, please see license.txt
-
-// rua/rua/doctype/rua_app_update/rua_app_update.js
-// rua/rua/doctype/rua_app_update/rua_app_update.js
-
 frappe.ui.form.on("RUA App Update", {
     refresh(frm) {
         const detailsField = frm.fields_dict.details;
+        
+        // Add version fetching for new documents
+        if (frm.is_new()) {
+            frappe.call({
+                method: 'rua.rua.doctype.rua_app_update.rua_app_update.get_app_version',
+                callback: function(r) {
+                    if (r.message) {
+                        frm.set_value('version', r.message);
+                    }
+                }
+            });
+        }
         
         const renderImages = () => {
             let content = detailsField.get_value();
@@ -52,6 +58,5 @@ frappe.ui.form.on("RUA App Update", {
         frm.add_custom_button(__('Render Images'), () => {
             renderImages();
         });
-
     }
 });

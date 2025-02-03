@@ -92,7 +92,7 @@ fixtures = [
 # ------------
 
 # before_install = "rua.install.before_install"
-# after_install = "rua.install.after_install"
+after_install = "rua.install.after_install.execute"
 
 # Uninstallation
 # ------------
