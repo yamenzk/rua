@@ -2,6 +2,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import flt
 import rua
+from rua.install.after_install import reconcile_project_financials
 
 class RUAPayment(Document):
 
@@ -21,47 +22,8 @@ class RUAPayment(Document):
         self.publish_update()
     
     def after_save(self):
-        if not self.project:
-            return
-            
-        # Get all submitted payments for this project
-        payments = frappe.get_all(
-            "RUA Payment",
-            filters={
-                "project": self.project,
-                "status": "Submitted"
-            },
-            fields=["type", "amount"]
-        )
-        
-        # Calculate totals from payments
-        calculated_totals = {
-            "project_cost": sum(flt(p.amount) for p in payments if p.type == "Pay"),
-            "additional_expenses": sum(flt(p.amount) for p in payments if p.type == "Pay: Petty Cash"),
-            "total_received": sum(flt(p.amount) for p in payments if p.type == "Receive")
-        }
-        
-        # Get project document
-        project_doc = frappe.get_doc("RUA Project", self.project)
-        
-        # Check if any values need updating
-        needs_update = False
-        for field, calculated_value in calculated_totals.items():
-            current_value = flt(getattr(project_doc, field))
-            if flt(current_value) != flt(calculated_value):
-                setattr(project_doc, field, calculated_value)
-                needs_update = True
-                
-                # Log the correction for audit purposes
-                frappe.log_error(
-                    message=f"Project {self.project} {field} corrected from {current_value} to {calculated_value}",
-                    title="Payment Reconciliation Correction"
-                )
-        
-        # Save project if values were corrected
-        if needs_update:
-            project_doc.save(ignore_permissions=True)
-            self.publish_project_update()
+        if self.project:
+            reconcile_project_financials(self.project)
 
     def validate(self):
         # Track original status before changes

@@ -4,18 +4,14 @@ from frappe.utils import flt
 def after_install():
     """Reconcile all project financials after app installation"""
     try:
-        # Get all projects
         projects = frappe.get_all("RUA Project", pluck="name")
-        
         for project_name in projects:
             reconcile_project_financials(project_name)
-            
         frappe.db.commit()
         frappe.log_error(
             message="Project financials reconciliation completed successfully",
             title="Post Install Reconciliation"
         )
-        
     except Exception as e:
         frappe.db.rollback()
         frappe.log_error(
@@ -25,11 +21,17 @@ def after_install():
 
 def reconcile_project_financials(project_name):
     """Reconcile financials for a single project"""
-    
-    # Get project document
     project = frappe.get_doc("RUA Project", project_name)
     
-    # Calculate invoice totals
+    calculated_totals = get_calculated_totals(project_name)
+    needs_update = update_project_if_needed(project, calculated_totals)
+    
+    if needs_update:
+        project.save(ignore_permissions=True)
+
+def get_calculated_totals(project_name):
+    """Get calculated totals for a project from payments and invoices"""
+    # Get invoice totals
     invoices = frappe.get_all(
         "RUA Invoice",
         filters={
@@ -39,9 +41,8 @@ def reconcile_project_financials(project_name):
         },
         fields=["grand_total"]
     )
-    calculated_total_invoiced = sum(flt(inv.grand_total) for inv in invoices)
     
-    # Calculate payment totals
+    # Get payment totals
     payments = frappe.get_all(
         "RUA Payment",
         filters={
@@ -51,23 +52,18 @@ def reconcile_project_financials(project_name):
         fields=["type", "amount"]
     )
     
-    calculated_totals = {
+    return {
+        "total_invoiced": sum(flt(inv.grand_total) for inv in invoices),
         "project_cost": sum(flt(p.amount) for p in payments if p.type == "Pay"),
         "additional_expenses": sum(flt(p.amount) for p in payments if p.type == "Pay: Petty Cash"),
         "total_received": sum(flt(p.amount) for p in payments if p.type == "Receive")
     }
-    
-    # Check for discrepancies
+
+def update_project_if_needed(project, calculated_totals):
+    """Update project with calculated totals if different"""
     needs_update = False
     updates = []
     
-    # Check total_invoiced
-    if flt(project.total_invoiced) != flt(calculated_total_invoiced):
-        updates.append(f"total_invoiced: {project.total_invoiced} → {calculated_total_invoiced}")
-        project.total_invoiced = calculated_total_invoiced
-        needs_update = True
-    
-    # Check payment totals
     for field, calculated_value in calculated_totals.items():
         current_value = flt(getattr(project, field))
         if current_value != calculated_value:
@@ -75,13 +71,13 @@ def reconcile_project_financials(project_name):
             setattr(project, field, calculated_value)
             needs_update = True
     
-    # Save project if needed and log changes
-    if needs_update:
-        project.save(ignore_permissions=True)
+    if updates:
         frappe.log_error(
-            message=f"Project {project_name} updated:\n" + "\n".join(updates),
+            message=f"Project {project.name} updated:\n" + "\n".join(updates),
             title="Project Reconciliation"
         )
+    
+    return needs_update
 
 def execute():
     """Entry point for bench execute"""

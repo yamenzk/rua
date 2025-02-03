@@ -12,7 +12,11 @@
 						@error="$event.target.style.display = 'none'"
 					/>
 					<div>
-						<h1 class="text-2xl font-bold">Sign Document</h1>
+						<h1 class="text-2xl font-bold">{{ 
+							docInfo?.doctype === 'RUA Employee'
+								? 'Record Signature'
+								: 'Sign Document'
+							}}</h1>
 						<p class="text-sm text-gray-300 truncate max-w-full">
 							{{ docInfo?.doctype.replace('RUA ', '') }} - {{ docInfo?.docname }}
 						</p>
@@ -82,9 +86,15 @@
 							/>
 						</svg>
 						<h2 class="text-2xl font-bold text-green-700">
-							Document Signed Successfully
+							{{
+								docInfo?.doctype === 'RUA Employee'
+									? 'Employee Signature Stored'
+									: 'Document Signed Successfully'
+							}}
 						</h2>
-						<p class="text-gray-600">You can now close this window.</p>
+						<p class="text-gray-600">
+							This window will close automatically after 1 second.
+						</p>
 					</div>
 				</div>
 
@@ -111,8 +121,11 @@
 					<div class="space-y-4">
 						<div class="text-center">
 							<p class="text-sm text-gray-600">
-								Sign within the box above. Make sure your signature is clear and
-								legible.
+								{{
+									docInfo?.doctype === 'RUA Employee'
+										? 'Please provide your signature. This will be stored as your official signature.'
+										: 'Sign within the box above. Make sure your signature is clear and legible.'
+								}}
 							</p>
 						</div>
 
@@ -150,7 +163,7 @@
 
 		<!-- Subtle Footer -->
 		<footer class="text-center text-gray-500 text-xs py-4">
-			<p>© Rua Company Aluminum & Glass L.L.C O.P.C </p>
+			<p>© Rua Company Aluminum & Glass L.L.C O.P.C</p>
 		</footer>
 	</div>
 </template>
@@ -177,8 +190,8 @@ const canSubmit = ref(false)
 // Refs
 const signaturePad = ref(null)
 
-function addWatermark() {
-	if (signaturePad.value && docInfo.value?.docname) {
+async function addWatermark() {
+	if (signaturePad.value && docInfo.value) {
 		try {
 			const canvas = signaturePad.value.$el.querySelector('canvas')
 			const ctx = canvas.getContext('2d')
@@ -187,27 +200,63 @@ function addWatermark() {
 
 			ctx.save()
 
-			const text = docInfo.value.docname
-			ctx.font = '14px Inter, sans-serif'
-			ctx.fillStyle = 'rgba(100, 116, 139, 0.2)'
+			// Check if this is an employee signature (doctype is RUA Employee)
+			const isEmployeeSignature = docInfo.value.doctype === 'RUA Employee'
 
-			ctx.rotate((-45 * Math.PI) / 180)
+			if (isEmployeeSignature) {
+				// Load and draw the logo watermark
+				const logo = new Image()
+				logo.onload = () => {
+					// Calculate size for logo (adjust these values as needed)
+					const logoSize = Math.min(width, height) * 0.3
+					const aspectRatio = logo.width / logo.height
+					const logoWidth = logoSize * aspectRatio
+					const logoHeight = logoSize
 
-			const spacing = 120
-			const lineSpacing = 80
-			const numLines = Math.ceil((width + height) / lineSpacing) + 4
+					ctx.save()
+					ctx.globalAlpha = 0.1 // Make the logo very transparent
 
-			const startX = -(width + height) * 1.2
-			const startY = -(width + height) / 1.5
+					// Create a pattern of logos
+					const spacing = logoWidth * 2
+					const numRows = Math.ceil(height / spacing) + 3
+					const numCols = Math.ceil(width / spacing) + 3
 
-			for (let line = 0; line < numLines; line++) {
-				const yPos = startY + line * lineSpacing
-				const lineLength = (width + height) * 1.5
-				const numMarks = Math.ceil(lineLength / spacing) + 4
+					ctx.rotate((-45 * Math.PI) / 180) // Rotate the context
 
-				for (let mark = 0; mark < numMarks; mark++) {
-					const xPos = startX + mark * spacing
-					ctx.fillText(text, xPos, yPos)
+					for (let row = -1; row < numRows; row++) {
+						for (let col = -1; col < numCols; col++) {
+							const x = col * spacing - width
+							const y = row * spacing - height / 2
+							ctx.drawImage(logo, x, y, logoWidth, logoHeight)
+						}
+					}
+
+					ctx.restore()
+				}
+				logo.src = '/logo.png'
+			} else {
+				// Original document watermark code
+				const text = docInfo.value.docname
+				ctx.font = '14px Inter, sans-serif'
+				ctx.fillStyle = 'rgba(100, 116, 139, 0.2)'
+				ctx.rotate((-45 * Math.PI) / 180)
+
+				const spacing = 120
+				const lineSpacing = 80
+				const numLines = Math.ceil((width + height) / lineSpacing) + 4
+
+				const startX = -(width + height) * 1.2
+				const startY = -(width + height) / 1.5
+
+				for (let line = 0; line < numLines; line++) {
+					const yPos = startY + line * lineSpacing
+					const lineLength = (width + height) * 1.5
+					const numMarks = Math.ceil(lineLength / spacing) + 4
+
+					for (let mark = 0; mark < numMarks; mark++) {
+						const xPos = startX + mark * spacing
+						ctx.fillText(text, xPos, yPos)
+					}
 				}
 			}
 
@@ -267,6 +316,7 @@ async function handleSubmit() {
 				docname: docInfo.value.docname,
 				signature: signatureData,
 				token: token,
+				is_employee: docInfo.value.doctype === 'RUA Employee',
 			}),
 		})
 
@@ -277,10 +327,10 @@ async function handleSubmit() {
 
 		success.value = true
 
-		// Auto-close after 2 seconds
+		// Auto-close after 1 second
 		setTimeout(() => {
 			window.close()
-		}, 2000)
+		}, 1000)
 	} catch (err) {
 		console.error('Submission error:', err)
 		error.value = err?.message || 'Failed to submit signature'
@@ -354,6 +404,6 @@ onMounted(() => {
 	border-radius: 20px;
 }
 .invert {
-  filter: invert(1);
+	filter: invert(1);
 }
 </style>

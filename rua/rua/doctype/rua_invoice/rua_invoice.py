@@ -2,6 +2,7 @@ import frappe
 from frappe.model.document import Document
 import rua
 from frappe.utils import flt
+from rua.install.after_install import reconcile_project_financials
 
 
 class RUAInvoice(Document):
@@ -62,36 +63,5 @@ class RUAInvoice(Document):
         self.publish_update()
 
     def after_save(self):
-        if not self.project:
-            return
-            
-        # Get all final tax invoices for this project
-        invoices = frappe.get_all(
-            "RUA Invoice",
-            filters={
-                "project": self.project,
-                "status": "Final",
-                "type": "Tax Invoice"
-            },
-            fields=["grand_total"]
-        )
-        
-        # Calculate total from invoices
-        calculated_total = sum(flt(inv.grand_total) for inv in invoices)
-        
-        # Get project document
-        project_doc = frappe.get_doc("RUA Project", self.project)
-        
-        # Check if total_invoiced needs updating
-        current_total = flt(project_doc.total_invoiced)
-        if current_total != calculated_total:
-            # Log the correction for audit purposes
-            frappe.log_error(
-                message=f"Project {self.project} total_invoiced corrected from {current_total} to {calculated_total}",
-                title="Invoice Reconciliation Correction"
-            )
-            
-            # Update project
-            project_doc.total_invoiced = calculated_total
-            project_doc.save(ignore_permissions=True)
-            self.publish_project_update()
+        if self.project:
+            reconcile_project_financials(self.project)

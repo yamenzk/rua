@@ -1,20 +1,18 @@
 // EmployeeOverview.vue
 <template>
 	<div class="space-y-8" v-if="employee">
-		<div 
-      v-if="currentLeave" 
-      class="bg-blue-50 border-l-4 border-blue-500 p-4 flex items-center"
-    >
-      <FeatherIcon name="calendar" class="w-6 h-6 text-blue-600 mr-3" />
-      <div>
-        <p class="font-medium text-blue-800">
-          Currently on Leave
-        </p>
-        <p class="text-sm text-blue-700">
-          Expected to return on {{ formatDate(currentLeave.return_date) }}
-        </p>
-      </div>
-    </div>
+		<div
+			v-if="currentLeave"
+			class="bg-blue-50 border-l-4 border-blue-500 p-4 flex items-center"
+		>
+			<FeatherIcon name="calendar" class="w-6 h-6 text-blue-600 mr-3" />
+			<div>
+				<p class="font-medium text-blue-800">Currently on Leave</p>
+				<p class="text-sm text-blue-700">
+					Expected to return on {{ formatDate(currentLeave.return_date) }}
+				</p>
+			</div>
+		</div>
 		<!-- Hero Section -->
 		<div class="h-64 md:h-96 !mt-0">
 			<div class="w-full h-full">
@@ -39,7 +37,6 @@
 				<div v-else class="w-full h-full bg-gray-100 flex items-center justify-center">
 					<FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
 				</div>
-	
 			</div>
 		</div>
 
@@ -49,15 +46,23 @@
 
 			<div class="mb-8">
 				<div class="flex items-center justify-between mb-4">
-				<h3 class="text-sm font-medium text-gray-500 mb-4">Personal Information</h3>
-				<div class="flex gap-2">
-					<Button variant="solid" size="sm" @click="openEditDialog">
-						<div class="flex items-center">
-							<FeatherIcon name="edit" class="w-4 h-4 mr-2" />
-							<span>Edit Employee</span>
-						</div>
-					</Button>
-				</div>
+					<h3 class="text-sm font-medium text-gray-500">Personal Information</h3>
+					<div class="flex gap-2">
+						<Button variant="solid" size="sm" @click="openSignatureDialog">
+							<div class="flex items-center">
+								<FeatherIcon name="pen-tool" class="w-4 h-4 mr-2"/>
+								<span class="hidden md:inline">Register Signature</span>
+								<span class="inline md:hidden">Sign</span>
+							</div>
+						</Button>
+						<Button variant="solid" size="sm" @click="openEditDialog">
+							<div class="flex items-center">
+								<FeatherIcon name="edit" class="w-4 h-4 mr-2" />
+								<span class="hidden md:inline">Edit Employee</span>
+								<span class="inline md:hidden">Edit</span>
+							</div>
+						</Button>
+					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					<!-- Basic Details -->
@@ -251,62 +256,70 @@
 				</div>
 			</div>
 
-			 <!-- Leave Records -->
-			 <div class="mb-8">
-      <h3 class="text-sm font-medium text-gray-500 mb-4">
-        Leave Records
-      </h3>
-      <div v-if="leaveRecords.length === 0" class="text-gray-500 text-sm">
-        No leave records found
-      </div>
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-			<thead>
-    <tr>
-      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Leave Date
-      </th>
-      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Return Date
-      </th>
-      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Duration
-      </th>
-      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Status
-      </th>
-    </tr>
-  </thead>
-  <tbody class="bg-white divide-y divide-gray-200">
-    <tr v-for="leave in leaveRecords" :key="leave.name">
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {{ formatDate(leave.leave_date) }}
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {{ formatDate(leave.return_date) }}
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {{ calculateLeaveDuration(leave.leave_date, leave.return_date) }}
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap">
-        <div class="flex items-center">
-          <span
-            class="w-2.5 h-2.5 rounded-full mr-2"
-            :class="{
-              'bg-green-500': isLeaveCompleted(leave),
-              'bg-blue-500': isLeaveOngoing(leave)
-            }"
-          ></span>
-          <span class="text-sm text-gray-900">
-            {{ getLeaveStatus(leave) }}
-          </span>
-        </div>
-      </td>
-    </tr>
-  </tbody>
-        </table>
-      </div>
-	</div>
+			<!-- Leave Records -->
+			<div class="mb-8">
+				<h3 class="text-sm font-medium text-gray-500 mb-4">Leave Records</h3>
+				<div v-if="leaveRecords.length === 0" class="text-gray-500 text-sm">
+					No leave records found
+				</div>
+				<div v-else class="overflow-x-auto">
+					<table class="min-w-full divide-y divide-gray-200">
+						<thead>
+							<tr>
+								<th
+									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+								>
+									Leave Date
+								</th>
+								<th
+									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+								>
+									Return Date
+								</th>
+								<th
+									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+								>
+									Duration
+								</th>
+								<th
+									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+								>
+									Status
+								</th>
+							</tr>
+						</thead>
+						<tbody class="bg-white divide-y divide-gray-200">
+							<tr v-for="leave in leaveRecords" :key="leave.name">
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+									{{ formatDate(leave.leave_date) }}
+								</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+									{{ formatDate(leave.return_date) }}
+								</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+									{{
+										calculateLeaveDuration(leave.leave_date, leave.return_date)
+									}}
+								</td>
+								<td class="px-6 py-4 whitespace-nowrap">
+									<div class="flex items-center">
+										<span
+											class="w-2.5 h-2.5 rounded-full mr-2"
+											:class="{
+												'bg-green-500': isLeaveCompleted(leave),
+												'bg-blue-500': isLeaveOngoing(leave),
+											}"
+										></span>
+										<span class="text-sm text-gray-900">
+											{{ getLeaveStatus(leave) }}
+										</span>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -396,27 +409,27 @@
 
 	<!-- Edit Employee Dialog -->
 	<Dialog
-  v-model="showEditDialog"
-  :options="{
-    title: 'Edit Employee',
-    size: 'lg',
-    actions: [
-      {
-        label: 'Remove Employee',
-        variant: 'outline',
-        theme: 'red',
-        loading: removing,
-        onClick: initiateDelete
-      },
-      {
-        label: 'Save Changes',
-        variant: 'solid',
-        loading: employeeResource.setValue.loading,
-        onClick: updateEmployee
-      }
-    ]
-  }"
->
+		v-model="showEditDialog"
+		:options="{
+			title: 'Edit Employee',
+			size: 'lg',
+			actions: [
+				{
+					label: 'Remove Employee',
+					variant: 'outline',
+					theme: 'red',
+					loading: removing,
+					onClick: initiateDelete,
+				},
+				{
+					label: 'Save Changes',
+					variant: 'solid',
+					loading: employeeResource.setValue.loading,
+					onClick: updateEmployee,
+				},
+			],
+		}"
+	>
 		<template #body-content>
 			<div class="space-y-4">
 				<div class="flex justify-center">
@@ -506,30 +519,25 @@
 						/>
 					</div>
 					<div class="space-y-1">
-						<FormControl
-							type="text"
-							label="Phone"
-							v-model="editingEmployee.phone"
-						/>
+						<FormControl type="text" label="Phone" v-model="editingEmployee.phone" />
 					</div>
 					<div class="space-y-1">
-						<FormControl
-							type="text"
-							label="Email"
-							v-model="editingEmployee.email"
-						/>
+						<FormControl type="text" label="Email" v-model="editingEmployee.email" />
 					</div>
 					<div class="space-y-1">
 						<FormControl
 							type="select"
 							label="Branch"
-							:options="[{
-								label: 'Main',
-								value: 'Main'
-							}, {
-								label: 'Branch',
-								value: 'Branch'
-							}]"
+							:options="[
+								{
+									label: 'Main',
+									value: 'Main',
+								},
+								{
+									label: 'Branch',
+									value: 'Branch',
+								},
+							]"
 							v-model="editingEmployee.branch"
 						/>
 					</div>
@@ -540,88 +548,102 @@
 
 	<!-- Delete Confirmation Dialog -->
 	<Dialog
-  v-model="showDeleteDialog"
-  :options="{
-    title: 'Delete Employee',
-    size: 'md',
-    icon: {
-      name: 'alert-triangle',
-      appearance: 'danger'
-    }
-  }"
->
-  <template #body-content>
-    <div class="space-y-6">
-      <p class="text-sm text-gray-600">
-        This action cannot be undone. Please complete both fields to confirm deletion.
-      </p>
-      
-      <!-- Employee Name Confirmation -->
-      <div class="space-y-2">
-        <FormControl
-          type="text"
-          label="Confirm Employee Name"
-          v-model="deleteForm.confirmName"
-          :placeholder="'Type ' + employee?.employee_name"
-        />
-        <p class="text-xs text-gray-500">
-          Please type "{{ employee?.employee_name }}" to confirm
-        </p>
-      </div>
+		v-model="showDeleteDialog"
+		:options="{
+			title: 'Delete Employee',
+			size: 'md',
+			icon: {
+				name: 'alert-triangle',
+				appearance: 'danger',
+			},
+		}"
+	>
+		<template #body-content>
+			<div class="space-y-6">
+				<p class="text-sm text-gray-600">
+					This action cannot be undone. Please complete both fields to confirm deletion.
+				</p>
 
-      <!-- Passkey Input -->
-      <div class="space-y-2">
-        <FormControl
-          type="password"
-          label="Enter Passkey"
-          v-model="deleteForm.passkey"
-          placeholder="Enter your passkey"
-          :error="deleteError"
-        />
-      </div>
-    </div>
-  </template>
+				<!-- Employee Name Confirmation -->
+				<div class="space-y-2">
+					<FormControl
+						type="text"
+						label="Confirm Employee Name"
+						v-model="deleteForm.confirmName"
+						:placeholder="'Type ' + employee?.employee_name"
+					/>
+					<p class="text-xs text-gray-500">
+						Please type "{{ employee?.employee_name }}" to confirm
+					</p>
+				</div>
 
-  <template #actions>
-    <div class="flex justify-end gap-2">
-      <Button 
-        variant="subtle" 
-        @click="cancelDelete"
-      >
-        Cancel
-      </Button>
-      <Button 
-        variant="solid" 
-        theme="red" 
-        :loading="validateLoading"
-        :disabled="deleteForm.confirmName !== employee?.employee_name || !deleteForm.passkey"
-        @click="validateAndDelete"
-      >
-        Delete Employee
-      </Button>
-    </div>
-  </template>
-</Dialog>
+				<!-- Passkey Input -->
+				<div class="space-y-2">
+					<FormControl
+						type="password"
+						label="Enter Passkey"
+						v-model="deleteForm.passkey"
+						placeholder="Enter your passkey"
+						:error="deleteError"
+					/>
+				</div>
+			</div>
+		</template>
+
+		<template #actions>
+			<div class="flex justify-end gap-2">
+				<Button variant="subtle" @click="cancelDelete"> Cancel </Button>
+				<Button
+					variant="solid"
+					theme="red"
+					:loading="validateLoading"
+					:disabled="
+						deleteForm.confirmName !== employee?.employee_name || !deleteForm.passkey
+					"
+					@click="validateAndDelete"
+				>
+					Delete Employee
+				</Button>
+			</div>
+		</template>
+	</Dialog>
+	<SignDocument
+		v-if="showSignatureDialog"
+		v-model="showSignatureDialog"
+		:doctype="'RUA Employee'"
+		:docname="employee.name"
+		:is-employee="true"
+		@signature-complete="handleSignatureComplete"
+	/>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { FeatherIcon, Dialog, Button, FileUploader, FormControl, Autocomplete, dayjs } from 'frappe-ui'
+import {
+	FeatherIcon,
+	Dialog,
+	Button,
+	FileUploader,
+	FormControl,
+	Autocomplete,
+	dayjs,
+} from 'frappe-ui'
 import { attendanceResource } from '@/data/attendance'
-import { leaveResource } from '@/data/leave' 
+import { leaveResource } from '@/data/leave'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 import { genderOptions, positionOptions } from '../data/employeeOptions'
 import countries from '../data/countries.json'
 import flags from '../data/flags.json'
-import { 
-  getServerDate,
-  isBeforeToday,
-  isWithinRange,
-  formatDateDuration,
-  formatDate,
-  formatCurrency
+import {
+	getServerDate,
+	isBeforeToday,
+	isWithinRange,
+	formatDateDuration,
+	formatDate,
+	formatCurrency,
 } from '@/utils/format'
+import SignDocument from './SignDocument.vue'
 
 const props = defineProps({
 	employee: {
@@ -636,49 +658,50 @@ const props = defineProps({
 
 // Role-based access control
 const leaveRecords = computed(() => {
-  if (!leaveResource.data || !props.employee?.name) return []
+	if (!leaveResource.data || !props.employee?.name) return []
 
-  return leaveResource.data
-    .filter(leave => leave.employee === props.employee.name)
-    .sort((a, b) => dayjs(b.leave_date).diff(dayjs(a.leave_date)))
+	return leaveResource.data
+		.filter((leave) => leave.employee === props.employee.name)
+		.sort((a, b) => dayjs(b.leave_date).diff(dayjs(a.leave_date)))
 })
 
 const currentLeave = computed(() => {
-  return leaveRecords.value.find(leave => 
-    isWithinRange(getServerDate(), leave.leave_date, leave.return_date)
-  )
+	return leaveRecords.value.find((leave) =>
+		isWithinRange(getServerDate(), leave.leave_date, leave.return_date),
+	)
 })
 
 function calculateLeaveDuration(leaveDate, returnDate) {
-  return formatDateDuration(leaveDate, returnDate)
+	return formatDateDuration(leaveDate, returnDate)
 }
 
 function isLeaveCompleted(leave) {
-  return isBeforeToday(leave.return_date)
+	return isBeforeToday(leave.return_date)
 }
 
 function isLeaveOngoing(leave) {
-  return isWithinRange(getServerDate(), leave.leave_date, leave.return_date)
+	return isWithinRange(getServerDate(), leave.leave_date, leave.return_date)
 }
 
 function getLeaveStatus(leave) {
-  if (isLeaveOngoing(leave)) return 'Ongoing'
-  if (isLeaveCompleted(leave)) return 'Completed'
-  return 'Upcoming'
+	if (isLeaveOngoing(leave)) return 'Ongoing'
+	if (isLeaveCompleted(leave)) return 'Completed'
+	return 'Upcoming'
 }
 
 // Image upload state
 const showImageDialog = ref(false)
+const showSignatureDialog = ref(false)
 const newImage = ref(null)
 const isUploading = ref(false)
 const uploadedResult = ref(null)
 const showEditDialog = ref(false)
 const editingEmployee = ref({})
 const showDeleteDialog = ref(false)
-const removing = ref(false)	
+const removing = ref(false)
 const deleteForm = ref({
-  confirmName: '',
-  passkey: ''
+	confirmName: '',
+	passkey: '',
 })
 const deleteError = ref('')
 const validateLoading = ref(false)
@@ -704,7 +727,7 @@ async function updateEmployee() {
 			salary: Number(editingEmployee.value.salary),
 			phone: editingEmployee.value.phone,
 			email: editingEmployee.value.email,
-			branch: editingEmployee.value.branch
+			branch: editingEmployee.value.branch,
 		}
 
 		await props.employeeResource.setValue.submit(employeeData)
@@ -730,73 +753,82 @@ function openEditDialog() {
 	showEditDialog.value = true
 }
 
-
+function openSignatureDialog() {
+	showSignatureDialog.value = true
+}
 
 function validateEditForm() {
 	formSubmitted.value = true
-	return (
-		editingEmployee.value.employee_name
-	)
+	return editingEmployee.value.employee_name
+}
+
+// Add this function in the script setup section
+function handleSignatureComplete(signatureUrl) {
+  console.log('Success')
 }
 
 function cancelDelete() {
-  showDeleteDialog.value = false
-  deleteForm.value = {
-    confirmName: '',
-    passkey: ''
-  }
-  deleteError.value = ''
+	showDeleteDialog.value = false
+	deleteForm.value = {
+		confirmName: '',
+		passkey: '',
+	}
+	deleteError.value = ''
 }
 
 async function validateAndDelete() {
-  if (deleteForm.value.confirmName !== props.employee?.employee_name || !deleteForm.value.passkey) return
-  
-  validateLoading.value = true
-  deleteError.value = ''
-  
-  try {
-    // First validate the passkey
-    const response = await fetch(
-      `/api/method/rua.api.delete_rua_document?docname=${props.employee.name}&passkey=${deleteForm.value.passkey}`
-    )
-    const result = await response.json()
-    
-    if (!response.ok) {
-      if (result._server_messages) {
-        try {
-          const serverMessages = JSON.parse(result._server_messages)
-          const firstMessage = JSON.parse(serverMessages[0])
-          throw new Error(firstMessage.message)
-        } catch {
-          if (result.exception) {
-            const exceptionMessage = result.exception.split(':').pop().trim()
-            throw new Error(exceptionMessage)
-          }
-          throw new Error('Invalid passkey')
-        }
-      }
-      throw new Error('Invalid passkey')
-    }
-    
-    // If validation successful, proceed with deletion
-    await props.employeeResource.delete.submit()
-    router.push('/employees')
-  } catch (error) {
-    deleteError.value = error.message
-    deleteForm.value.passkey = '' // Clear the passkey input on error
-  } finally {
-    validateLoading.value = false
-  }
+	if (
+		deleteForm.value.confirmName !== props.employee?.employee_name ||
+		!deleteForm.value.passkey
+	)
+		return
+
+	validateLoading.value = true
+	deleteError.value = ''
+
+	try {
+		// First validate the passkey
+		const response = await fetch(
+			`/api/method/rua.api.delete_rua_document?docname=${props.employee.name}&passkey=${deleteForm.value.passkey}`,
+		)
+		const result = await response.json()
+
+		if (!response.ok) {
+			if (result._server_messages) {
+				try {
+					const serverMessages = JSON.parse(result._server_messages)
+					const firstMessage = JSON.parse(serverMessages[0])
+					throw new Error(firstMessage.message)
+				} catch {
+					if (result.exception) {
+						const exceptionMessage = result.exception.split(':').pop().trim()
+						throw new Error(exceptionMessage)
+					}
+					throw new Error('Invalid passkey')
+				}
+			}
+			throw new Error('Invalid passkey')
+		}
+
+		// If validation successful, proceed with deletion
+		await props.employeeResource.delete.submit()
+		router.push('/employees')
+	} catch (error) {
+		deleteError.value = error.message
+		deleteForm.value.passkey = '' // Clear the passkey input on error
+	} finally {
+		validateLoading.value = false
+	}
 }
 
 function initiateDelete() {
-  showEditDialog.value = false
-  deleteForm.value = {
-    confirmName: '',
-    passkey: ''
-  }
-  deleteError.value = ''
-  showDeleteDialog.value = true
+	showEditDialog.value = false
+	deleteForm.value = {
+		confirmName: '',
+		passkey: '',
+	}
+	deleteError.value = ''
+	showDeleteDialog.value = true
 }
 
 function handleImageClick() {
@@ -843,15 +875,15 @@ function handleDrop(event) {
 
 // Computed properties for date handling
 const currentMonth = computed(() => {
-  return dayjs().format('MMMM')
+	return dayjs().format('MMMM')
 })
 
 const currentMonthStart = computed(() => {
-  return dayjs().startOf('month').format('YYYY-MM-DD')
+	return dayjs().startOf('month').format('YYYY-MM-DD')
 })
 
 const currentMonthEnd = computed(() => {
-  return dayjs().endOf('month').format('YYYY-MM-DD')
+	return dayjs().endOf('month').format('YYYY-MM-DD')
 })
 
 // Process attendance data
@@ -894,17 +926,13 @@ const totalOvertime = computed(() => {
 })
 
 const monthlyAttendanceRecords = computed(() => {
-  return processedAttendance.value
-    .filter((record) => {
-      return (
-        isWithinRange(
-          record.date, 
-          currentMonthStart.value, 
-          currentMonthEnd.value
-        ) &&
-        (record.status !== 'present' || record.overtime > 0)
-      )
-    })
-    .sort((a, b) => dayjs(b.date).diff(dayjs(a.date)))
+	return processedAttendance.value
+		.filter((record) => {
+			return (
+				isWithinRange(record.date, currentMonthStart.value, currentMonthEnd.value) &&
+				(record.status !== 'present' || record.overtime > 0)
+			)
+		})
+		.sort((a, b) => dayjs(b.date).diff(dayjs(a.date)))
 })
 </script>

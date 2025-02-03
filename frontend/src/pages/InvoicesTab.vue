@@ -412,6 +412,8 @@ async function handleInvoiceSubmit(formData) {
       date: formData.date,
       type: formData.type,
       amount: formData.amount,
+      vat_after_retention: formData.vat_after_retention,
+      amount_after_retention: formData.amount_after_retention,
       grand_total: formData.grand_total,
       is_vat_inclusive: formData.is_vat_inclusive,
       project: props.projectResource.doc.name,

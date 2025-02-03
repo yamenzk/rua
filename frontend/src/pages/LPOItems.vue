@@ -364,6 +364,18 @@
       </div>
     </template>
   </Dialog>
+  <Dialog
+  :options="{
+    title: 'No Items',
+    message: 'Please add atleast one item to proceed.',
+    size: 'md',
+    icon: {
+      name: 'alert-triangle',
+      appearance: 'warning',
+    },
+  }"
+  v-model="noItems"
+/>
 </template>
 
 <script setup>
@@ -401,6 +413,7 @@ const showPasteDialog = ref(false)
 const pasteContent = ref('')
 const isExporting = ref(false)
 const itemStockInfo = ref({})
+const noItems = ref(false)
 
 // Computed
 const isDraft = computed(() => props.status === 'Draft')
@@ -467,7 +480,8 @@ const updateLPOItems = createResource({
 	url: 'rua.api.update_lpo_items',
 	validate(values) {
 		if (!values.items?.length) {
-			return 'No items to save'
+      noItems.value = true
+      return 'No items to save'
 		}
 		return null
 	},

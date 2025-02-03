@@ -369,6 +369,20 @@
 								<label class="text-sm text-gray-600">Recommended Tags</label>
 								<div class="flex flex-wrap gap-2">
 									<button
+  v-if="showEmployeeSignatureTag"
+  @click="addTag('Employee Signature')"
+  class="signature-tag inline-flex items-center gap-1 px-3 py-1 rounded-full 
+         text-sm relative overflow-hidden group"
+  :class="{ 'opacity-50 cursor-not-allowed': hasTag('Employee Signature') }"
+  :disabled="hasTag('Employee Signature')"
+>
+  <!-- Content -->
+  <div class="relative z-10 flex items-center gap-1 text-slate-700 font-medium">
+    <span>✍️</span>
+    <span>Employee Signature</span>
+  </div>
+</button>
+									<button
 										v-for="(emoji, tag) in recommendedTags"
 										:key="tag"
 										@click="addTagToEditingDoc(tag)"
@@ -496,7 +510,6 @@
 						/>
 
 						<!-- Enhanced Tags Input -->
-						<!-- Enhanced Tags Input -->
 						<div class="md:col-span-2 space-y-2">
 							<FormControl
 								type="text"
@@ -510,6 +523,20 @@
 								<label class="text-sm text-gray-600">Recommended Tags</label>
 								<div class="flex flex-wrap gap-2">
 									<button
+  v-if="showEmployeeSignatureTag"
+  @click="addTag('Employee Signature')"
+  class="signature-tag inline-flex items-center gap-1 px-3 py-1 rounded-full 
+         text-sm relative overflow-hidden group"
+  :class="{ 'opacity-50 cursor-not-allowed': hasTag('Employee Signature') }"
+  :disabled="hasTag('Employee Signature')"
+>
+  <!-- Content -->
+  <div class="relative z-10 flex items-center gap-1 text-slate-700 font-medium">
+    <span>✍️</span>
+    <span>Employee Signature</span>
+  </div>
+</button>
+									<button
 										v-for="(emoji, tag) in recommendedTags"
 										:key="tag"
 										@click="addTag(tag)"
@@ -520,6 +547,7 @@
 										<span>{{ emoji }}</span>
 										<span>{{ tag }}</span>
 									</button>
+
 								</div>
 							</div>
 						</div>
@@ -705,6 +733,10 @@ const recommendedTags = {
 	Education: '🎓',
 	Contract: '📝',
 }
+const specialTags = {
+  'Employee Signature': '✍️'
+}
+const showEmployeeSignatureTag = ref(false)
 
 // Tag Management Functions
 function addTag(newTag) {
@@ -1041,7 +1073,9 @@ async function copyDocNumber(doc) {
 
 // Document Upload
 async function handleUploadSuccess(result) {
-	newDocument.value.document = result.file_url
+  newDocument.value.document = result.file_url
+  // Update the showEmployeeSignatureTag based on the file type
+  showEmployeeSignatureTag.value = isImageFile(result.file_url)
 }
 
 async function submitDocument() {
@@ -1302,8 +1336,51 @@ watch(
 	},
 	{ immediate: true },
 )
+watch(showUploadDialog, (newValue) => {
+  if (!newValue) {
+    showEmployeeSignatureTag.value = false
+  }
+})
+
 
 onMounted(() => {
 	setupDragDropHandlers()
 })
 </script>
+<style scoped>
+/* Add this to the existing <style> section */
+.signature-tag {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.signature-tag::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    115deg,
+    #34D399,
+    #3B82F6,
+    #34D399,
+    #60A5FA,
+    #3B82F6
+  );
+  background-size: 300% 300%;
+  animation: borderAnimation 3s linear infinite;
+  border-radius: 9999px;
+  z-index: 0;
+}
+
+.signature-tag::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 9999px;
+  z-index: 1;
+}
+
+/* The borderAnimation keyframes is already defined in your CSS */
+</style>

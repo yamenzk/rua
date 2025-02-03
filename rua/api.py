@@ -440,12 +440,15 @@ def generate_signature_token(doctype, docname):
         }
 
 @frappe.whitelist(allow_guest=True)
-def submit_signature(doctype, docname, signature=None, token=None, passcode=None):
+def submit_signature(doctype, docname, signature=None, token=None, passcode=None, is_employee=False):
     """Submit signature for a document"""
     try:
         if not signature and not passcode:
             frappe.throw(_("Either signature or passcode is required"))
             
+        user_email = None
+        signature_url = None
+
         if token:
             # Verify token
             cache_key = f"signature_token:{token}"
@@ -469,14 +472,22 @@ def submit_signature(doctype, docname, signature=None, token=None, passcode=None
             frappe.cache().set_value(cache_key, json.dumps(cached_data))
         
         if passcode:
-            # Verify passcode logic here
-            pass
+            # Find RUA Document with matching document number
+            matching_docs = frappe.get_all(
+                "RUA Document",
+                filters={"document_number": passcode},
+                fields=["document"],
+                limit=1
+            )
             
-        # Save signature
-        doc = frappe.get_doc(doctype, docname)
-        
+            if not matching_docs:
+                frappe.throw(_("Invalid passcode"))
+                
+            # Get the document URL from the first matching document
+            signature_url = matching_docs[0].document
+           
         if signature:
-            # Remove the data URL prefix to get just the base64 data
+            # Handle signature upload logic
             if ',' in signature:
                 signature = signature.split(',')[1]
             
@@ -494,27 +505,64 @@ def submit_signature(doctype, docname, signature=None, token=None, passcode=None
             })
             file_doc.save_file(content=file_content, decode=False)
             
-            # Update document with signature file URL
-            doc = frappe.get_doc(doctype, docname)
-            doc.signature = file_doc.file_url
-            doc.save(ignore_permissions=True)
-            frappe.publish_realtime(
-                "rua:signature",
-                {
-                    "doctype": doctype,
-                    "docname": docname,
-                    "signature": file_doc.file_url,
-                },
-                after_commit=True,
-            )
+            signature_url = file_doc.file_url
         
-        # Clean up the temporary user after successful submission
+
+        # Update document with signature file URL
+        if signature_url and not is_employee:
+            try:
+                frappe.db.begin()
+                # Use direct SQL update to bypass doc saves
+                frappe.db.sql("""
+                    UPDATE `tab{0}` 
+                    SET signature = %s 
+                    WHERE name = %s
+                """.format(doctype), (signature_url, docname))
+                
+                # Publish realtime event
+                frappe.publish_realtime(
+                    "rua:signature",
+                    {
+                        "doctype": doctype,
+                        "docname": docname,
+                        "signature": signature_url,
+                    },
+                    after_commit=True
+                )
+                
+                frappe.db.commit()
+
+            except Exception as e:
+                frappe.db.rollback()
+                frappe.log_error(f"Error in signature update: {str(e)}", "Signature Update Error")
+                raise
+        
+        if signature_url and is_employee:
+            frappe.get_doc(dict(
+                doctype= 'RUA Document',
+                source_doctype= doctype,
+                for_docname= docname,
+                document= signature_url,
+                document_name= filename,
+                tags= 'Employee Signature'
+            )).insert(ignore_permissions=True)
+
+            frappe.publish_realtime(
+                    "rua:signature",
+                    {
+                        "doctype": doctype,
+                        "docname": docname,
+                        "signature": signature_url,
+                    },
+                    after_commit=True
+                )
+            
+        
+        # Clean up temporary user if it exists
         if user_email and user_email.startswith("signature_"):
             try:
-                # Delete the user
                 frappe.delete_doc("User", user_email, force=1, ignore_permissions=True)
                 frappe.db.commit()
-                
             except Exception as e:
                 frappe.log_error(
                     f"Error cleaning up signature user {user_email}: {str(e)}",
@@ -523,7 +571,7 @@ def submit_signature(doctype, docname, signature=None, token=None, passcode=None
             
         return {
             "success": True,
-            "signature_url": doc.signature if signature else None
+            "signature_url": signature_url
         }
     except Exception as e:
         frappe.log_error("Failed to submit signature", e)
@@ -531,8 +579,7 @@ def submit_signature(doctype, docname, signature=None, token=None, passcode=None
             "success": False,
             "message": str(e)
         }
-
-
+        
 @frappe.whitelist(allow_guest=True)
 def get_signature_page(token):
     """Get signature page data for mobile signing"""

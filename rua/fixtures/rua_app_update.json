@@ -248,5 +248,75 @@
   "title": "Project summary total values",
   "type": "Refactor",
   "version": "1.1.7"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><pre class=\"ql-code-block-container\" spellcheck=\"false\"><div class=\"ql-code-block\">def reconcile_project_financials(project_name):</div><div class=\"ql-code-block\"> &nbsp; &nbsp;project = frappe.get_doc(\"RUA Project\", project_name)</div><div class=\"ql-code-block\"> &nbsp; &nbsp;invoices = frappe.get_all(</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;\"RUA Invoice\",</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;filters={</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;\"project\": project_name,</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;\"status\": \"Final\",</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;\"type\": \"Tax Invoice\"</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;},</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;fields=[\"grand_total\"]</div><div class=\"ql-code-block\"> &nbsp; &nbsp;)</div><div class=\"ql-code-block\"> &nbsp; &nbsp;calculated_total_invoiced = sum(frappe.utils.flt(inv.grand_total) for inv in invoices)</div><div class=\"ql-code-block\"> &nbsp; &nbsp;payments = frappe.get_all(</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;\"RUA Payment\",</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;filters={</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;\"project\": project_name,</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;\"status\": \"Submitted\"</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;},</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;fields=[\"type\", \"amount\"]</div><div class=\"ql-code-block\"> &nbsp; &nbsp;)</div><div class=\"ql-code-block\"> &nbsp; &nbsp;</div><div class=\"ql-code-block\"> &nbsp; &nbsp;calculated_totals = {</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;\"project_cost\": sum(frappe.utils.flt(p.amount) for p in payments if p.type == \"Pay\"),</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;\"additional_expenses\": sum(frappe.utils.flt(p.amount) for p in payments if p.type == \"Pay: Petty Cash\"),</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;\"total_received\": sum(frappe.utils.flt(p.amount) for p in payments if p.type == \"Receive\")</div><div class=\"ql-code-block\"> &nbsp; &nbsp;}</div><div class=\"ql-code-block\"> &nbsp; &nbsp;needs_update = False</div><div class=\"ql-code-block\"> &nbsp; &nbsp;updates = []</div><div class=\"ql-code-block\"> &nbsp; &nbsp;if frappe.utils.flt(project.total_invoiced) != frappe.utils.flt(calculated_total_invoiced):</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;updates.append(f\"total_invoiced: {project.total_invoiced} → {calculated_total_invoiced}\")</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;project.total_invoiced = calculated_total_invoiced</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;needs_update = True</div><div class=\"ql-code-block\"> &nbsp; &nbsp;current_project_cost = frappe.utils.flt(project.project_cost)</div><div class=\"ql-code-block\"> &nbsp; &nbsp;current_additional_expenses = frappe.utils.flt(project.additional_expenses)</div><div class=\"ql-code-block\"> &nbsp; &nbsp;current_total_received = frappe.utils.flt(project.total_received)</div><div class=\"ql-code-block\"> &nbsp; &nbsp;if current_project_cost != calculated_totals[\"project_cost\"]:</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;updates.append(f\"project_cost: {current_project_cost} → {calculated_totals['project_cost']}\")</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;project.project_cost = calculated_totals[\"project_cost\"]</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;needs_update = True</div><div class=\"ql-code-block\"> &nbsp; &nbsp;if current_additional_expenses != calculated_totals[\"additional_expenses\"]:</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;updates.append(f\"additional_expenses: {current_additional_expenses} → {calculated_totals['additional_expenses']}\")</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;project.additional_expenses = calculated_totals[\"additional_expenses\"]</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;needs_update = True</div><div class=\"ql-code-block\"> &nbsp; &nbsp;if current_total_received != calculated_totals[\"total_received\"]:</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;updates.append(f\"total_received: {current_total_received} → {calculated_totals['total_received']}\")</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;project.total_received = calculated_totals[\"total_received\"]</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;needs_update = True</div><div class=\"ql-code-block\"> &nbsp; &nbsp;if needs_update:</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;project.save(ignore_permissions=True)</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;frappe.log_error(</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;message=f\"Project {project_name} updated:\\n\" + \"\\n\".join(updates),</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;title=\"Project Reconciliation\"</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;)</div><div class=\"ql-code-block\"> &nbsp; &nbsp; &nbsp; &nbsp;</div><div class=\"ql-code-block\">projects = frappe.get_all(\"RUA Project\", pluck=\"name\")</div><div class=\"ql-code-block\">for project_name in projects:</div><div class=\"ql-code-block\"> &nbsp; &nbsp;reconcile_project_financials(project_name)</div><div class=\"ql-code-block\"><br></div></pre></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 15:56:35.897264",
+  "name": "8fusf3jogl",
+  "title": "[Ignore] Reconciliation script for system console",
+  "type": "Message",
+  "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Fixed UPNG import dependency for `EmployeeDocuments`</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 15:57:11.422722",
+  "name": "8gcagt7k62",
+  "title": "UPNG depency",
+  "type": "Fix",
+  "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Invoice submit now properly sends <strong>vat_after_retention</strong> and <strong>amount_after_retention</strong></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 16:10:35.590571",
+  "name": "8gk4nnr4oj",
+  "title": "Invoice VAT & Retention not being inserted",
+  "type": "Fix",
+  "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Generating tokens now fallbacks to route to get doctype and docname if props failed to get passed.</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 16:21:52.008667",
+  "name": "vtsv2mb6r5",
+  "title": "[Document Signing] Fallback to missing props",
+  "type": "Fix",
+  "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p><div class=\"ql-editor read-mode\"><p>You can now register an employee signature from the Employee's tab</p><p><img src=\"https://i.postimg.cc/3Jkq63M4/Screenshot-2025-02-03-181721.png\" style=\"max-width: 100%;\"></p><p><br></p><p>After registering a signature, you can find it in the \"Documents\" section</p><p><img src=\"https://i.postimg.cc/hGsMvYWR/Screenshot-2025-02-03-182002.png\" style=\"max-width: 100%;\"></p><p><br></p><p>You can now edit the document to give it a <strong>Document Number</strong> this number will be used as a passcode to sign documents with that signature. </p><p><img src=\"https://i.postimg.cc/y8BbNcg9/Screenshot-2025-02-03-182135.png\" style=\"max-width: 100%;\"></p><p><br></p><p>Now you can use the document number to instantly sign any document</p><p><img src=\"https://i.postimg.cc/26PHNZN1/Screenshot-2025-02-03-182223.png\" style=\"max-width: 100%;\"> </p><p><br></p><p><span style=\"color: rgb(0, 138, 0);\">Users can have unlimited signatures with different passcodes.</span></p><p><strong style=\"color: rgb(0, 102, 204);\"><u>Instead of using the signature pad, you can also upload a signature (or a stamp) </u></strong></p><p>To do that;</p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>From any employee, open the documents section</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Click on upload</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Attach an <strong>image</strong> file (png/jpeg/jpg)</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>A unique tag labeled \"Employee Signature\" will show, click on it.</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Assign a document number to use it as a passcode</li></ol><p><br></p><p><img src=\"https://i.postimg.cc/QdbbbcYB/Screenshot-2025-02-03-182512.png\" style=\"max-width: 100%;\"></p><p><br></p></div></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 18:27:37.208382",
+  "name": "kjirfcfha5",
+  "title": "Employee Signatures & Signing Passcodes",
+  "type": "Feature",
+  "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Now all project totals are reconciled <strong>after_save</strong> from the after_install script </p><pre class=\"ql-code-block-container\" spellcheck=\"false\"><div class=\"ql-code-block\">rua.install.after_install.execute</div></pre></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 18:29:52.594847",
+  "name": "ufp8k5bp74",
+  "title": "Project Totals Reconciliation",
+  "type": "Refactor",
+  "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>For data safety, an LPO must have at least one item to proceed in saving. </p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-03 18:40:19.695521",
+  "name": "ug2tn44e2h",
+  "title": "LPO validation for at least one item",
+  "type": "UX",
+  "version": "1.1.8"
  }
 ]
