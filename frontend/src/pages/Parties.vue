@@ -1,84 +1,83 @@
 <template>
 	<div class="space-y-6">
-	  <!-- Sub Navigation Bar -->
-	  <div class="sticky top-0 z-10 bg-white border-b">
-		<div class="px-4 py-3">
-		  <div class="flex flex-col space-y-4">
-			<!-- Title and Search Row -->
-			<div class="flex items-center justify-between gap-3">
-			  <h2 class="text-lg font-semibold text-gray-900">Parties</h2>
+	  <!-- Floating Filters Toolbar -->
+	  <div class="fixed bottom-4 right-4 z-10 mb-4 flex items-center justify-between gap-2 p-4 bg-gray-200/60 backdrop-blur-sm w-fit rounded-lg">
+		<div class="flex items-center gap-2">
+		  <!-- Type Filter -->
+		  <div class="relative">
+			<select 
+			  v-model="selectedType"
+			  class="
+				appearance-none bg-white border border-gray-300 
+				rounded-lg py-2 px-3 pr-8 leading-tight 
+				focus:outline-none focus:border-gray-500 focus:ring-gray-900
+				text-sm
+			  "
+			>
+			  <option value="">All Types</option>
+			  <option 
+				v-for="type in typeOptions" 
+				:key="type.value" 
+				:value="type.value"
+			  >
+				{{ type.label }}
+			  </option>
+			</select>
+			<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+			  <FeatherIcon name="chevron-down" class="h-4 w-4" />
 			</div>
+		  </div>
   
-			<!-- Search and Controls Row -->
-			<div class="flex items-center gap-2">
-			  <FormControl
-				type="search"
-				size="sm"
-				variant="subtle"
-				placeholder="Search parties..."
-				:modelValue="searchQuery"
-				@update:modelValue="handleSearch"
-				class="flex-1"
-			  />
+		  <!-- Sort Direction Toggle -->
+		  <button 
+			@click="toggleSortDirection"
+			class="
+			  rounded-lg p-2 hover:bg-gray-100 
+			  transition-colors duration-200
+			  flex items-center justify-center
+			  border border-gray-300
+			"
+			title="Toggle Sort Direction"
+		  >
+			<FeatherIcon 
+			  :name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'" 
+			  class="h-5 w-5 text-gray-600" 
+			/>
+		  </button>
   
-			  <div class="flex items-center gap-2">
-				<FormControl
-				  type="select"
-				  :options="sortFieldOptions"
-				  size="sm"
-				  variant="subtle"
-				  placeholder="Sort"
-				  :modelValue="sortField"
-				  @update:modelValue="handleSortFieldChange"
-				  class="w-32 sm:w-36"
-				/>
+		  <!-- Add Filter Button -->
+		  <button 
+			@click="showFilterDialog = true"
+			class="
+			  rounded-lg p-2 hover:bg-gray-100 
+			  transition-colors duration-200
+			  flex items-center justify-center
+			  border border-gray-300
+			"
+			title="Add Filters"
+		  >
+			<FeatherIcon name="filter" class="h-5 w-5 text-gray-600" />
+		  </button>
+		</div>
   
-				<Button 
-				  variant="subtle" 
-				  size="sm" 
-				  @click="toggleSortDirection"
-				  title="Toggle Sort Direction"
-				  class="bg-gray-50 hover:bg-gray-100"
-				>
-				  <FeatherIcon
-					:name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
-					class="w-4 h-4"
-				  />
-				</Button>
-  
-				<Button
-				  variant="subtle"
-				  size="sm"
-				  @click="showFilterDialog = true"
-				  title="Add Filter"
-				  class="bg-gray-50 hover:bg-gray-100"
-				>
-				  <FeatherIcon name="filter" class="w-4 h-4" />
-				</Button>
-			  </div>
-			</div>
-  
-			<!-- Active Filters -->
-			<div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
-			  <span class="text-sm text-gray-500 hidden sm:inline">Filters:</span>
-			  <div class="flex gap-2">
-				<div
-				  v-for="(filter, index) in activeFilters"
-				  :key="index"
-				  class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
-				>
-				  <span class="truncate max-w-[150px] sm:max-w-none">
-					{{ getFieldLabel(filter.field) }}: {{ filter.value }}
-				  </span>
-				  <button 
-					class="text-gray-500 hover:text-gray-700" 
-					@click="removeFilter(index)"
-					title="Remove Filter"
-				  >
-					<FeatherIcon name="x" class="w-3 h-3" />
-				  </button>
-				</div>
-			  </div>
+		<!-- Active Filters -->
+		<div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
+		  <div class="flex gap-2">
+			<div
+			  v-for="(filter, index) in activeFilters"
+			  :key="index"
+			  class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
+			>
+			  <span class="truncate max-w-[150px] sm:max-w-none">
+				{{ getFieldLabel(filter.field) }}: {{ filter.value }}
+			  </span>
+			  <button 
+				class="text-gray-500 hover:text-gray-700" 
+				@click="removeFilter(index)"
+				title="Remove Filter"
+			  >
+				<FeatherIcon name="x" class="w-3 h-3" />
+			  </button>
 			</div>
 		  </div>
 		</div>
@@ -94,52 +93,89 @@
 		  <FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
 		  <div class="text-gray-600">No parties found</div>
 		  <p class="text-sm text-gray-500 mt-1">
-			{{ searchQuery ? 'Try adjusting your search or filters' : 'Add a party to get started' }}
+			Add a party to get started
 		  </p>
 		</div>
   
-		<div v-else class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+		<div v-else class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
 		  <div
-			v-for="party in list.data"
+			v-for="party in filteredParties"
 			:key="party.name"
-			class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+			class="
+			  bg-white rounded-2xl transition-all duration-300 
+			  transform hover:-translate-y-2 
+			  overflow-hidden group
+			  border border-gray-100 cursor-pointer
+			"
 			@click="showPartyDetails(party)"
 		  >
-			<!-- Party Card -->
-			<div class="relative h-48">
+			<!-- Party Header -->
+			<div class="relative h-48 overflow-hidden">
 			  <img
 				v-if="party.image"
 				:src="party.image"
 				:alt="party.party"
-				class="h-full w-full object-contain rounded-t-lg"
+				class="
+				  w-full h-full object-cover 
+				  transition-transform duration-300 
+				  group-hover:scale-105
+				"
 				@error="$event.target.style.display = 'none'"
 			  />
-			  
 			  <div
 				v-else
-				class="h-full w-full flex items-center justify-center bg-gray-100 rounded-t-lg"
+				class="
+				  h-full w-full flex items-center justify-center 
+				  bg-gray-100 transition-colors duration-300
+				  group-hover:bg-gray-200
+				"
 			  >
 				<FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400" />
 			  </div>
 			</div>
   
 			<!-- Party Details -->
-			<div class="p-4 space-y-3">
-			  <h3 class="font-semibold text-lg">{{ party.party }}</h3>
-			  <div class="space-y-2 text-sm text-gray-600">
-				<div class="flex items-center gap-2">
-				  <FeatherIcon name="tag" class="w-4 h-4" />
-				  <span>{{ party.type }}</span>
+			<div class="p-5 space-y-3">
+			  <div class="flex justify-between items-start">
+				<div>
+				  <h3 class="font-bold text-lg text-gray-900 group-hover:text-gray-700 transition-colors line-clamp-1">
+					{{ party.party }}
+				  </h3>
+				  <p class="text-sm text-gray-500 mt-1">{{ party.type }}</p>
 				</div>
-				<div class="flex items-center gap-2">
-				  <FeatherIcon name="map-pin" class="w-4 h-4" />
-				  <span>{{ party.emirate }}</span>
+				<!-- <span 
+				  class="
+					px-2 py-1 rounded-full text-xs font-medium
+					bg-gray-100 text-gray-700
+				  "
+				>
+				  {{ party.emirate }}
+				</span> -->
+			  </div>
+  
+			  <div class="flex items-center justify-between mt-4">
+				<div class="flex items-center space-x-2">
+				  <FeatherIcon name="phone" class="h-4 w-4 text-gray-400" />
+				  <span class="text-sm text-gray-600">
+					{{ party.phone || 'N/A' }}
+				  </span>
+				</div>
+				<div 
+				  class="
+					w-10 h-10 rounded-full 
+					bg-primary-100 text-primary-600
+					flex items-center justify-center
+					transition-colors group-hover:bg-primary-200
+				  "
+				>
+				  <FeatherIcon name="chevron-right" class="h-5 w-5 hover:translate-x-1 transition-transform duration-300" />
 				</div>
 			  </div>
 			</div>
 		  </div>
 		</div>
 	  </div>
+  
 
 		<!-- New Party Dialog -->
 		<Dialog
@@ -602,7 +638,7 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, h } from 'vue'
+import { ref, computed, inject, h, onMounted } from 'vue'
 import { Button, FormControl, Dialog, FeatherIcon, LoadingIndicator, debounce, FileUploader } from 'frappe-ui'
 import { partyResource } from '../data/party'
 
@@ -619,13 +655,8 @@ setHeaderAction(
 )
 
 const sortField = ref('creation')
-const sortDirection = ref('desc')
-const activeFilters = ref([])
-const showFilterDialog = ref(false)
-const showNewPartyDialog = ref(false)
 const showPartyDialog = ref(false)
 const formSubmitted = ref(false)
-const searchQuery = ref('')
 const selectedParty = ref(null)
 const removing = ref(false)
 const showEditDialog = ref(false)
@@ -635,6 +666,95 @@ const showImageDialog = ref(false)
 const newImage = ref(null)
 const uploadedResult = ref(null)
 const isUploading = ref(false)
+const searchQuery = ref('')
+const selectedType = ref('')
+const sortDirection = ref('desc')
+const activeFilters = ref([])
+const showFilterDialog = ref(false)
+const showNewPartyDialog = ref(false)
+
+const filteredParties = computed(() => {
+  let parties = list.data || []
+
+  // Type Filter
+  if (selectedType.value) {
+    parties = parties.filter(party => party.type === selectedType.value)
+  }
+
+  // Search Filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    parties = parties.filter(party => 
+      party.party.toLowerCase().includes(query) ||
+      party.type.toLowerCase().includes(query) ||
+      party.emirate.toLowerCase().includes(query)
+    )
+  }
+
+  // Sorting
+  return parties.sort((a, b) => {
+    const modifier = sortDirection.value === 'asc' ? 1 : -1
+    return a.party.localeCompare(b.party) * modifier
+  })
+})
+
+onMounted(() => {
+  setHeaderAction(() => h('div', { 
+    class: 'flex items-center justify-between gap-4 flex-1 px-2' 
+  }, [
+    // Search Field
+    h('div', { 
+      class: 'relative flex-1 max-w-2xl'
+    }, [
+      h('div', {
+        class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'
+      }, [
+        h(FeatherIcon, {
+          name: 'search',
+          class: 'h-4 w-4 text-gray-400'
+        })
+      ]),
+      h('input', {
+        type: 'text',
+        placeholder: 'Search parties...',
+        value: searchQuery.value,
+        onInput: (e) => searchQuery.value = e.target.value,
+        class: `
+          block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4 
+          text-gray-900 ring-1 ring-inset ring-gray-200 
+          placeholder:text-gray-400 
+          focus:ring-2 focus:ring-inset focus:ring-gray-900
+          transition-all duration-200
+          bg-white/50 hover:bg-white
+          sm:text-sm sm:leading-6
+        `
+      })
+    ]),
+
+    // New Party Button
+    h('button', {
+      class: `
+        inline-flex items-center gap-2 
+        rounded-xl px-4 py-2.5
+        text-sm font-semibold text-white
+        bg-gray-900 hover:bg-gray-800
+        transition duration-200 ease-in-out
+        shadow-sm hover:shadow
+        focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
+      `,
+      onClick: () => showNewPartyDialog.value = true
+    }, [
+      h(FeatherIcon, {
+        name: 'plus',
+        class: 'h-4 w-4'
+      }),
+      h('span', {
+        class: 'hidden sm:inline'
+      }, 'New Party')
+    ])
+  ]))
+})
+
 
 const newParty = ref({
 	party: '',
@@ -652,13 +772,14 @@ const newFilter = ref({
 })
 
 const typeOptions = [
-	{ label: 'Supplier: Glass', value: 'Supplier: Glass' },
-	{ label: 'Supplier: Aluminum', value: 'Supplier: Aluminum' },
-	{ label: 'Supplier: Cladding', value: 'Supplier: Cladding' },
-	{ label: 'Supplier', value: 'Supplier' },
-	{ label: 'Consultant', value: 'Consultant' },
-	{ label: 'Client', value: 'Client' },
+  { label: 'Supplier: Glass', value: 'Supplier: Glass' },
+  { label: 'Supplier: Aluminum', value: 'Supplier: Aluminum' },
+  { label: 'Supplier: Cladding', value: 'Supplier: Cladding' },
+  { label: 'Supplier', value: 'Supplier' },
+  { label: 'Consultant', value: 'Consultant' },
+  { label: 'Client', value: 'Client' },
 ]
+
 
 const emirateOptions = [
 	{ label: 'Abu Dhabi', value: 'Abu Dhabi' },
@@ -710,10 +831,9 @@ function handleSortFieldChange(value) {
 }
 
 function toggleSortDirection() {
-	sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-	list.orderBy = `${sortField.value} ${sortDirection.value}`
-	list.reload()
+  sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
 }
+
 
 function addFilter() {
 	activeFilters.value.push({
@@ -742,8 +862,14 @@ function updateListFilters() {
 }
 
 function getFieldLabel(fieldValue) {
-	return filterFieldOptions.find((option) => option.value === fieldValue)?.label || fieldValue
+  const fieldOptions = [
+    { label: 'Party Name', value: 'party' },
+    { label: 'Type', value: 'type' },
+    { label: 'Emirate', value: 'emirate' }
+  ]
+  return fieldOptions.find((option) => option.value === fieldValue)?.label || fieldValue
 }
+
 
 async function handleUploadSuccess(result) {
   uploadedResult.value = result

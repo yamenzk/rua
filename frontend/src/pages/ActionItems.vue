@@ -1,91 +1,57 @@
-# PendingTasks.vue
 <template>
-  <div class="bg-white rounded-lg border">
-    <!-- Header -->
-    <div class="p-6 border-b">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="p-2 bg-red-50 rounded-lg">
-            <FeatherIcon name="alert-circle" class="w-5 h-5 text-red-500" />
-          </div>
-          <div>
-            <h2 class="text-lg font-medium text-gray-900">Action Required</h2>
-            <p class="text-sm text-gray-500 mt-1">
-              {{ pendingTodos.length ? `${pendingTodos.length} tasks need your attention` : 'No pending tasks' }}
-            </p>
-          </div>
-        </div>
-        <Badge 
-          v-if="pendingTodos.length" 
-          variant="solid" 
-          theme="gray"
-          size="lg"
-        >
-          {{ pendingTodos.length }}
-        </Badge>
-      </div>
-    </div>
-
+  <div class="rounded-lg bg-white">
     <!-- Task List -->
-    <div v-if="pendingTodos.length">
-      <div class="divide-y max-h-[480px] overflow-y-auto">
-        <div 
-          v-for="todo in sortedTodos" 
-          :key="todo.name"
-          class="hover:bg-gray-50 transition-colors cursor-pointer"
-          @click="showTaskDetails(todo)"
-        >
-          <div class="p-4">
-            <!-- Task Header -->
-            <div class="flex items-start gap-3 mb-3">
+    <div v-if="pendingTodos.length" class="min-h-[75px] max-h-[400px] divide-y divide-gray-100 overflow-y-auto">
+      <div 
+        v-for="todo in sortedTodos" 
+        :key="todo.name"
+        class="group cursor-pointer p-4 rounded-lg transition-colors hover:bg-gray-50"
+        @click="showTaskDetails(todo)"
+      >
+        <div class="flex gap-3">
+          <!-- Priority Indicator -->
+          <div class="relative mt-1">
+            <div 
+              class="h-2 w-2 rounded-full"
+              :class="{
+                'bg-red-500': todo.priority === 'High',
+                'bg-orange-400': todo.priority === 'Medium',
+                'bg-green-400': todo.priority === 'Low',
+              }"
+            />
+          </div>
+
+          <!-- Content -->
+          <div class="min-w-0 flex-1">
+            <div class="flex items-start justify-between">
+              <p class="text-sm font-medium text-gray-900">{{ todo.details }}</p>
               <div 
-                class="p-2 rounded-lg shrink-0 mt-0.5"
-                :class="getPriorityClass(todo.priority)"
+                v-if="todo.due_date"
+                class="ml-2 shrink-0 text-xs"
+                :class="isOverdue(todo.due_date) ? 'text-red-500' : 'text-gray-500'"
               >
-                <FeatherIcon 
-                  :name="getIconByDoctype(todo.related_doctype)" 
-                  class="w-4 h-4"
-                  :class="getPriorityIconClass(todo.priority)"
-                />
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="text-sm text-gray-900 font-medium break-words">
-                  {{ todo.details }}
-                </div>
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                  <Badge
-                    size="sm"
-                    :variant="getPriorityTheme(todo.priority) === 'gray' ? 'solid' : 'subtle'"
-                    :theme="getPriorityTheme(todo.priority)"
-                  >
-                    {{ todo.priority }}
-                  </Badge>
-                  <span v-if="todo.due_date" 
-                    class="text-xs"
-                    :class="isOverdue(todo.due_date) ? 'text-red-500' : 'text-gray-500'"
-                  >
-                    {{ getDueStatus(todo.due_date) }}
-                  </span>
-                </div>
+                {{ getDueStatus(todo.due_date) }}
               </div>
             </div>
 
-            <!-- Task Context -->
-            <div class="flex items-center gap-4 ml-11">
-              <!-- Project Info -->
-              <div v-if="getProjectName(todo.project)" class="flex items-center gap-2">
-                <FeatherIcon name="briefcase" class="w-3 h-3 text-gray-400" />
-                <span class="text-xs text-gray-500">
-                  {{ getProjectName(todo.project) }}
-                </span>
+            <!-- Context -->
+            <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+              <!-- Priority -->
+              <div class="flex items-center gap-1.5">
+                <FeatherIcon name="flag" class="h-3 w-3" />
+                {{ todo.priority }}
               </div>
 
-              <!-- Document Info -->
-              <div v-if="todo.related_doctype" class="flex items-center gap-2">
-                <FeatherIcon :name="getIconByDoctype(todo.related_doctype)" class="w-3 h-3 text-gray-400" />
-                <span class="text-xs text-gray-500">
-                  {{ todo.related_doctype.replace('RUA ', '') }}{{ todo.related_docname ? `: ${todo.related_docname}` : '' }}
-                </span>
+              <!-- Project -->
+              <div v-if="getProjectName(todo.project)" class="flex items-center gap-1.5">
+                <FeatherIcon name="briefcase" class="h-3 w-3" />
+                {{ getProjectName(todo.project) }}
+              </div>
+
+              <!-- Document -->
+              <div v-if="todo.related_doctype" class="flex items-center gap-1.5">
+                <FeatherIcon :name="getIconByDoctype(todo.related_doctype)" class="h-3 w-3" />
+                {{ todo.related_doctype.replace('RUA ', '') }}{{ todo.related_docname ? `: ${todo.related_docname}` : '' }}
               </div>
             </div>
           </div>
@@ -94,14 +60,12 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="py-12">
-      <div class="flex flex-col items-center justify-center">
-        <div class="p-3 bg-green-50 rounded-full mb-4">
-          <FeatherIcon name="check" class="w-6 h-6 text-green-500" />
-        </div>
-        <h3 class="text-sm font-medium text-gray-900">All Caught Up!</h3>
-        <p class="text-sm text-gray-500 mt-1">No pending tasks at the moment.</p>
+    <div v-else class="flex flex-col items-center py-12 text-center">
+      <div class="mb-3 rounded-full bg-green-50 p-3">
+        <FeatherIcon name="check" class="h-5 w-5 text-green-500" />
       </div>
+      <p class="text-sm font-medium text-gray-900">All Caught Up!</p>
+      <p class="mt-1 text-sm text-gray-500">You've completed all your tasks.</p>
     </div>
 
     <!-- Task Details Dialog -->

@@ -1,106 +1,110 @@
 <template>
 	<div class="">
 	  <!-- Combined Header and Navigation Card -->
-	  <div class="bg-white rounded-lg border">
-		<div class="sticky top-0 z-10 bg-white">
-		  <div class="px-6 py-3">
-			<div class="flex flex-col space-y-4">
-			  <!-- Title and Actions -->
-			  <div class="flex items-center justify-between">
-				<div>
-				  <h2 class="text-lg font-medium text-gray-900">Documents</h2>
-				  <p class="text-sm text-gray-500">Upload and manage your documents</p>
-				</div>
-				<div class="flex gap-2">
-				  <Button
-					v-if="selectedDocuments.length > 0"
-					variant="subtle"
-					@click="showMergeDialog = true"
-					class="bg-primary-50 text-primary-700 hover:bg-primary-100"
-				  >
-					<div class="flex items-center gap-2">
-					  <FeatherIcon name="file-text" class="w-4 h-4" />
-					  <span class="hidden sm:inline">Merge Selected</span>
-					  <span class="inline-flex items-center justify-center w-5 h-5 text-xs bg-primary-100 text-primary-800 rounded-full">
-						{{ selectedDocuments.length }}
-					  </span>
+	  <div class="bg-white">
+			<div class="sticky top-0 z-10 bg-white rounded-lg">
+				<div class="p-6 space-y-6">
+					<!-- Title and Actions -->
+					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+						<div>
+							<h2 class="text-2xl font-bold text-gray-900">Documents</h2>
+							<p class="mt-1.5 text-sm text-gray-600">Upload and manage your employee documents</p>
+						</div>
+						<div class="flex gap-3">
+							<Button
+								v-if="selectedDocuments.length > 0"
+								variant="subtle"
+								@click="showMergeDialog = true"
+								class="bg-primary-50 text-primary-700 hover:bg-primary-100 min-w-[120px]"
+							>
+								<div class="flex items-center gap-2">
+									<FeatherIcon name="file-text" class="w-4 h-4" />
+									<span class="hidden sm:inline">Merge Selected</span>
+									<span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium bg-primary-100 text-primary-800 rounded-full">
+										{{ selectedDocuments.length }}
+									</span>
+								</div>
+							</Button>
+							<Button variant="solid" @click="showUploadDialog = true" class="min-w-[120px]">
+								<div class="flex items-center gap-2">
+									<FeatherIcon name="upload" class="w-4 h-4" />
+									<span class="hidden sm:inline">Upload Document</span>
+								</div>
+							</Button>
+						</div>
 					</div>
-				  </Button>
-				  <Button variant="solid" @click="showUploadDialog = true">
-					<div class="flex items-center gap-2">
-					  <FeatherIcon name="upload" class="w-4 h-4" />
-					  <span class="hidden sm:inline">Upload</span>
+
+					<!-- Tags Navigation -->
+					<div class="flex items-center gap-2 overflow-x-auto pb-2 -mx-2 px-2">
+						<!-- All Documents Tab -->
+						<div 
+							@click="selectedTag = 'All'"
+							class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-all duration-200"
+							:class="[
+								selectedTag === 'All' 
+									? 'bg-gray-900 text-white shadow-sm' 
+									: 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+							]"
+						>
+							<span class="text-sm font-medium whitespace-nowrap">📄 All Documents</span>
+							<span 
+								v-if="documentResource.data?.length"
+								class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full"
+								:class="selectedTag === 'All' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700'"
+							>
+								{{ documentResource.data.length }}
+							</span>
+						</div>
+
+						<!-- Regular Tags -->
+						<div 
+							v-for="tag in uniqueTags"
+							:key="tag"
+							v-show="tag !== 'Expired Documents'"
+							@click="selectedTag = tag"
+							class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-all duration-200"
+							:class="[
+								selectedTag === tag 
+									? 'bg-gray-900 text-white shadow-sm' 
+									: 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+							]"
+						>
+							<span class="text-sm font-medium whitespace-nowrap">
+								<span class="mr-1.5">{{ recommendedTags[tag] || '🏷️' }}</span>{{ tag }}
+							</span>
+						</div>
+
+						<!-- Expired Documents Tab -->
+						<div 
+							@click="selectedTag = 'Expired Documents'"
+							class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-all duration-200"
+							:class="[
+								selectedTag === 'Expired Documents'
+									? 'bg-red-600 text-white shadow-sm'
+									: hasExpiredDocuments
+										? 'bg-red-50 hover:bg-red-100 text-red-600'
+										: 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
+							]"
+						>
+							<span class="text-sm font-medium whitespace-nowrap flex items-center gap-2">
+								🗑️ Expired Documents
+								<span
+									v-if="hasExpiredDocuments"
+									class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full"
+									:class="[
+										selectedTag === 'Expired Documents'
+											? 'bg-red-500 text-white'
+											: 'bg-red-100 text-red-700'
+									]"
+								>
+									{{ expiredDocumentsCount }}
+								</span>
+							</span>
+						</div>
 					</div>
-				  </Button>
 				</div>
-			  </div>
-  
-			  <!-- Tags Navigation -->
-			  <div class="flex items-center gap-2 overflow-x-auto">
-				<!-- All Documents Tab -->
-				<div 
-				  @click="selectedTag = 'All'"
-				  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
-				  :class="[
-					selectedTag === 'All' 
-					  ? 'bg-gray-900 text-white' 
-					  : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
-				  ]"
-				>
-				  <span class="text-sm whitespace-nowrap">📄 All Documents</span>
-				</div>
-  
-				<!-- Regular Tags -->
-				<div 
-				  v-for="tag in uniqueTags"
-				  :key="tag"
-				  v-show="tag !== 'Expired Documents'"
-				  @click="selectedTag = tag"
-				  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
-				  :class="[
-					selectedTag === tag 
-					  ? 'bg-gray-900 text-white' 
-					  : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
-				  ]"
-				>
-				  <span class="text-sm whitespace-nowrap">
-					{{ recommendedTags[tag] || '🏷️' }}
-					{{ tag }}
-				  </span>
-				</div>
-  
-				<!-- Expired Documents Tab -->
-				<div 
-				  @click="selectedTag = 'Expired Documents'"
-				  class="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors"
-				  :class="[
-					selectedTag === 'Expired Documents'
-					  ? 'bg-red-600 text-white'
-					  : hasExpiredDocuments
-						? 'bg-red-50 hover:bg-red-100 text-red-600'
-						: 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
-				  ]"
-				>
-				  <span class="text-sm whitespace-nowrap flex items-center gap-2">
-					🗑️ Expired Documents
-					<span
-					  v-if="hasExpiredDocuments"
-					  class="inline-flex items-center justify-center px-2 py-0.5 text-xs rounded-full"
-					  :class="[
-						selectedTag === 'Expired Documents'
-						  ? 'bg-red-500 text-white'
-						  : 'bg-red-100 text-red-700'
-					  ]"
-					>
-					  {{ expiredDocumentsCount }}
-					</span>
-				  </span>
-				</div>
-			  </div>
 			</div>
-		  </div>
 		</div>
-	  </div>
   
 	  <!-- Document Grid Card -->
 	  <div class="">
@@ -113,7 +117,7 @@
 			<div
 				v-for="doc in filteredDocuments"
 				:key="doc.name"
-				class="document-card group bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow flex flex-col"
+				class="document-card group bg-white rounded-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden cursor-pointer"
 				:class="{ 'ring-2 ring-gray-900': isSelected(doc) }"
 				:data-document-id="doc.name"
 				@dblclick="handleCardInteraction(doc, $event)"
@@ -189,94 +193,95 @@
 				</div>
 
 				<!-- Document Info -->
-				<div class="p-4 space-y-2 flex flex-col justify-between flex-grow">
+				<div class="p-4 flex flex-col justify-between flex-grow">
 					<!-- Document Title and Type -->
-					<div class="flex items-center gap-2">
-						<FeatherIcon
-							:name="getFileIcon(doc.document)"
-							class="w-4 h-4 text-gray-400"
-						/>
-						<h3 class="font-medium text-gray-900">{{ doc.document_name }}</h3>
-					</div>
-
-					<!-- Enhanced Tags Display -->
-					<div class="flex flex-wrap gap-1">
-						<span
-							v-for="tag in doc.tags?.split(',')"
-							:key="tag"
-							class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs"
-						>
-							<span v-if="recommendedTags[tag.trim()]">{{
-								recommendedTags[tag.trim()]
-							}}</span>
-							<span>{{ tag.trim() }}</span>
-						</span>
-					</div>
-
-					<div class="text-sm text-gray-500 space-y-1" v-if='doc.document_number'>
-						<div class="flex items-center justify-between flex-grow">
-							<div
-								class="flex items-center gap-2 cursor-pointer hover:text-gray-700"
-								@click="copyDocNumber(doc)"
-							>
-								<FeatherIcon name="hash" class="w-4 h-4" />
-								<span>{{ doc.document_number || '' }}</span>
-							</div>
-							<span v-if="doc.showCopied" class="text-xs text-green-600"
-								>Copied!</span
-							>
+					<div class="space-y-2 flex flex-col justify-between flex-grow">
+						<div class="flex items-center gap-2">
+							<FeatherIcon
+								:name="getFileIcon(doc.document)"
+								class="w-4 h-4 text-gray-400"
+							/>
+							<h3 class="font-medium text-gray-900 line-clamp-1">{{ doc.document_name }}</h3>
 						</div>
-						
+
+						<!-- Enhanced Tags Display -->
+						<div class="flex flex-wrap gap-1">
+							<span
+								v-for="tag in doc.tags?.split(',')"
+								:key="tag"
+								class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs"
+							>
+								<span v-if="recommendedTags[tag.trim()]">{{
+									recommendedTags[tag.trim()]
+								}}</span>
+								<span>{{ tag.trim() }}</span>
+							</span>
+						</div>
+
+						<div class="text-sm text-gray-500 space-y-1" v-if='doc.document_number'>
+							<div class="flex items-center justify-between flex-grow">
+								<div
+									class="flex items-center gap-2 cursor-pointer hover:text-gray-700"
+									@click="copyDocNumber(doc)"
+								>
+									<FeatherIcon name="hash" class="w-4 h-4" />
+									<span>{{ doc.document_number || '' }}</span>
+								</div>
+								<span v-if="doc.showCopied" class="text-xs text-green-600"
+									>Copied!</span
+								>
+							</div>
+							
+						</div>
+
 					</div>
 
 					<!-- Action Buttons -->
-					<div class="flex justify-center gap-2 pt-2 border-t">
-						<button
-							@click.stop="openDocument(doc.document)"
-							class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-							title="View"
-						>
-							<FeatherIcon name="eye" class="w-4 h-4" />
-						</button>
-						<button
-							@click.stop="downloadDocument(doc.document)"
-							class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-							title="Download"
-						>
-							<FeatherIcon name="download" class="w-4 h-4" />
-						</button>
-						<button
-							@click.stop="showQrCode(doc)"
-							class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-							title="QR Code"
-						>
-							<FeatherIcon name="maximize" class="w-4 h-4" />
-						</button>
-						<button
-							@click.stop="shareDocument(doc)"
-							class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-							title="Share"
-							v-if="canShare"
-						>
-							<FeatherIcon name="share-2" class="w-4 h-4" />
-						</button>
-						<button
-							@click.stop="deleteDocument(doc)"
-							class="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-							title="Delete"
-						>
-							<FeatherIcon name="trash-2" class="w-4 h-4" />
-						</button>
-						<div>
-							<label class="cursor-pointer">
-								<input
-									type="checkbox"
-									:checked="isSelected(doc)"
-									@change="toggleSelection(doc)"
-									class="w-4 h-4 rounded border-gray-400 text-gray-900 focus:ring-gray-900"
-								/>
-							</label>
-						</div>
+					<div class="flex items-center justify-between pt-2" :class="{ 'mt-[24px]': !doc.document_number }">
+								<div class="flex items-center -space-x-1">
+									<button
+										v-for="action in ['view', 'download', 'share', 'qr', 'delete']"
+										:key="action"
+										class="relative p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+										:class="{ 'z-[3]': action === 'view', 'z-[2]': action === 'download', 'z-[1]': action === 'share' }"
+										@click.stop="
+											action === 'view'
+												? openDocument(doc.document)
+												: action === 'download'
+												? downloadDocument(doc.document)
+												: action === 'share'
+												? shareDocument(doc)
+												: action === 'qr'
+												? generateQRCode(doc)
+												: deleteDocument(doc)
+										"
+									>
+										<FeatherIcon
+											:name="
+												action === 'view'
+													? 'eye'
+													: action === 'download'
+													? 'download'
+													: action === 'share'
+													? 'share-2'
+													: action === 'qr'
+													? 'maximize'
+													: 'trash-2'
+											"
+											class="w-4 h-4"
+										/>
+									</button>
+								</div>
+								<button
+									@click.stop="toggleSelection(doc)"
+									class="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+								>
+									<FeatherIcon
+										:name="isSelected(doc) ? 'check-circle' : 'circle'"
+										class="w-4 h-4"
+										:class="{ 'text-primary-500': isSelected(doc) }"
+									/>
+								</button>
 					</div>
 				</div>
 			</div>

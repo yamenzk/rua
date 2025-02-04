@@ -1,130 +1,145 @@
 <template>
-  <div class="space-y-6">
-    <!-- Sub Navigation Bar -->
-    <div class="sticky top-0 z-10 bg-white border-b">
-      <div class="px-4 py-3">
-        <div class="flex flex-col space-y-4">
-          <!-- Title and Primary Actions -->
-          <div class="flex items-center justify-between gap-3">
-            <h2 class="text-lg font-semibold text-gray-900">Employees</h2>
-            
-            <!-- Primary Actions -->
-            <div class="flex items-center gap-2">
-              <!-- Attendance Actions Group -->
-              <Button
-                variant="subtle"
-                size="sm"
-                :label="attendanceButtonLabel"
-                @click="showAttendanceDialog"
-                class="bg-blue-50 text-blue-700 hover:bg-blue-100 gap-0"
-                :title="attendanceButtonLabel"
-              >
-                <template #prefix>
-                  <FeatherIcon name="calendar" class="w-4 h-4" />
-                </template>
-                <span class="hidden sm:inline ml-2">{{ attendanceButtonLabel }}</span>
-              </Button>
+	<div class="space-y-6">
+	  <!-- Floating Top Right Actions -->
+	  <div class="fixed top-18 right-4 z-10 flex items-center gap-2 bg-white/60 backdrop-blur-md rounded-xl shadow-sm border border-gray-200 p-1">
+  <button 
+    @click="showAttendanceDialog"
+    class="
+      inline-flex items-center gap-2 
+      rounded-lg px-3 py-2
+      text-sm font-medium 
+      text-gray-700 hover:bg-gray-100
+      transition duration-200 ease-in-out
+      group
+    "
+  >
+    <FeatherIcon 
+      name="calendar" 
+      class="h-4 w-4 text-gray-900 group-hover:text-gray-700 transition-colors" 
+    />
+    <span class="hidden sm:inline">{{ attendanceButtonLabel }}</span>
+  </button>
 
-              <Button
-                variant="subtle"
-                size="sm"
-                @click="showMonthlyAttendanceDialog = true"
-                class="bg-blue-50 text-blue-700 hover:bg-blue-100 gap-0"
-                title="Attendance List"
-              >
-                <template #prefix>
-                  <FeatherIcon name="list" class="w-4 h-4"/>
-                </template>
-                <span class="hidden sm:inline ml-2">Attendance List</span>
-              </Button>
+  <div class="h-5 w-px bg-gray-300 mx-1"></div>
 
-              <!-- Document Status Button -->
-              <Button
-                variant="solid"
-                size="sm"
-                @click="showExpiringDocumentsDialog = true"
-                class="bg-primary-600 text-white hover:bg-primary-700 gap-0"
-                title="Document Status"
-              >
-                <template #prefix>
-                  <FeatherIcon name="file-text" class="w-4 h-4" />
-                </template>
-                <span class="hidden sm:inline ml-2">Document Status</span>
-              </Button>
-            </div>
-          </div>
+  <button 
+    @click="showMonthlyAttendanceDialog = true"
+    class="
+      inline-flex items-center gap-2 
+      rounded-lg px-3 py-2
+      text-sm font-medium 
+      text-gray-700 hover:bg-gray-100
+      transition duration-200 ease-in-out
+      group
+    "
+  >
+    <FeatherIcon 
+      name="list" 
+      class="h-4 w-4 text-gray-900 group-hover:text-gray-700 transition-colors" 
+    />
+    <span class="hidden sm:inline">Attendance List</span>
+  </button>
 
-          <!-- Search and Filters Row -->
-          <div class="flex items-center gap-3">
-            <FormControl
-              type="search"
-              :ref_for="true"
-              size="sm"
-              variant="subtle"
-              placeholder="Search employees..."
-              :modelValue="searchQuery"
-              @update:modelValue="handleSearch"
-              class="flex-1"
-            />
+  <div class="h-5 w-px bg-gray-300 mx-1"></div>
 
-            <div class="flex items-center gap-2">
-              <FormControl
-                type="select"
-                :options="sortFieldOptions"
-                size="sm"
-                variant="subtle"
-                placeholder="Sort"
-                :modelValue="sortField"
-                @update:modelValue="handleSortFieldChange"
-                class="w-36"
-              />
-
-              <Button 
-                variant="subtle" 
-                size="sm" 
-                @click="toggleSortDirection"
-                title="Toggle Sort Direction"
-              >
-                <FeatherIcon
-                  :name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
-                  class="w-4 h-4"
-                />
-              </Button>
-
-              <Button
-                variant="subtle"
-                size="sm"
-                @click="showFilterDialog = true"
-                title="Add Filter"
-              >
-                <FeatherIcon name="filter" class="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          <!-- Active Filters -->
-          <div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
-            <span class="text-sm text-gray-500">Filters:</span>
-            <div class="flex gap-2">
-              <div
-                v-for="(filter, index) in activeFilters"
-                :key="index"
-                class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
-              >
-                <span>{{ getFieldLabel(filter.field) }}: {{ filter.value }}</span>
-                <button 
-                  class="text-gray-500 hover:text-gray-700" 
-                  @click="removeFilter(index)"
-                  title="Remove Filter"
-                >
-                  <FeatherIcon name="x" class="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <button 
+    @click="showExpiringDocumentsDialog = true"
+    class="
+      inline-flex items-center gap-2 
+      rounded-lg px-3 py-2
+      text-sm font-medium 
+      text-gray-700 hover:bg-gray-100
+      transition duration-200 ease-in-out
+      group
+    "
+  >
+    <FeatherIcon 
+      name="file-text" 
+      class="h-4 w-4 text-gray-900 group-hover:text-gray-700 transition-colors" 
+    />
+    <span class="hidden sm:inline">Document Status</span>
+  </button>
+</div>
+  
+	  <!-- Floating Filters Toolbar -->
+	  <div class="fixed bottom-4 right-4 z-10 mb-4 flex items-center justify-between gap-2 p-4 bg-gray-200/60 backdrop-blur-sm w-fit rounded-lg hidden md:flex">
+		<div class="flex items-center gap-2">
+		  <!-- Type Filter -->
+		  <div class="relative">
+			<FormControl
+						type="select"
+						:options="positionOptions"
+						size="sm"
+						variant="outline"
+						placeholder="Position"
+						v-model="selectedPosition"
+					/>
+			<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+			  <FeatherIcon name="chevron-down" class="h-4 w-4" />
+			</div>
+		  </div>
+  
+		  <!-- Sort Direction Toggle -->
+		  <FormControl
+						type="select"
+						:options="sortFieldOptions"
+						size="sm"
+						variant="outline"
+						placeholder="Sort"
+						:modelValue="sortField"
+						@update:modelValue="handleSortFieldChange"
+					/>
+		  <button 
+			@click="toggleSortDirection"
+			class="
+			  rounded-lg p-2 hover:bg-gray-100 
+			  transition-colors duration-200
+			  flex items-center justify-center
+			  border border-gray-300
+			"
+			title="Toggle Sort Direction"
+		  >
+			<FeatherIcon 
+			  :name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'" 
+			  class="h-5 w-5 text-gray-600" 
+			/>
+		  </button>
+  
+		  <!-- Add Filter Button -->
+		  <button 
+			@click="showFilterDialog = true"
+			class="
+			  rounded-lg p-2 hover:bg-gray-100 
+			  transition-colors duration-200
+			  flex items-center justify-center
+			  border border-gray-300
+			"
+			title="Add Filters"
+		  >
+			<FeatherIcon name="filter" class="h-5 w-5 text-gray-600" />
+		  </button>
+		</div>
+  
+		<!-- Active Filters -->
+		<div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
+		  <div class="flex gap-2">
+			<div
+			  v-for="(filter, index) in activeFilters"
+			  :key="index"
+			  class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
+			>
+			  <span>{{ getFieldLabel(filter.field) }}: {{ filter.value }}</span>
+			  <button 
+				class="text-gray-500 hover:text-gray-700" 
+				@click="removeFilter(index)"
+				title="Remove Filter"
+			  >
+				<FeatherIcon name="x" class="w-3 h-3" />
+			  </button>
+			</div>
+		  </div>
+		</div>
+	  </div>
 
 		<!-- Monthly Attendance Dialog -->
 		<Dialog
@@ -560,62 +575,82 @@
 
 		<!-- Employees Grid -->
 		<div v-if="list.list.loading" class="flex justify-center">
-			<LoadingIndicator />
-		</div>
+      <LoadingIndicator />
+    </div>
 
-		<div v-else-if="!list.data?.length" class="text-center py-8 px-6">
-			<div class="text-gray-600">No employees found</div>
-		</div>
+    <div v-else-if="!list.data?.length" class="text-center py-8 px-6">
+      <div class="text-gray-600">No employees found</div>
+    </div>
 
-		<div v-else class="grid gap-6 px-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-			<div
-				v-for="employee in list.data"
-				:key="employee.name"
-				class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
-				@click="router.push(`/employee/${employee.name}/overview`)"
-			>
-				<!-- Employee Card -->
-				<div class="relative h-48">
-					<img
-						v-if="employee.image"
-						:src="employee.image"
-						:alt="employee.employee_name"
-						class="h-full w-full object-cover rounded-t-lg"
-						@error="$event.target.style.display = 'none'"
-					/>
-					<div
-						v-else
-						class="h-full w-full flex items-center justify-center bg-gray-100 rounded-t-lg"
-					>
-						<FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
-					</div>
-				</div>
+    <div v-else class="grid gap-6 px-6 grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
+  <div
+    v-for="employee in filteredEmployeeGrid"
+    :key="employee.name"
+	class="
+			  bg-white rounded-2xl transition-all duration-300 
+			  transform hover:-translate-y-2 
+			  overflow-hidden group
+			  border border-gray-100 cursor-pointer
+			"
+        @click="router.push(`/employee/${employee.name}/overview`)"
+      >
+        <!-- Employee Card Header -->
+        <div class="relative h-48 overflow-hidden">
+          <img
+            v-if="employee.image"
+            :src="employee.image"
+            :alt="employee.employee_name"
+            class="
+              w-full h-full object-cover 
+              transition-transform duration-300 
+              group-hover:scale-105
+            "
+            @error="$event.target.style.display = 'none'"
+          />
+          <div
+            v-else
+            class="
+              h-full w-full flex items-center justify-center 
+              bg-gray-100 transition-colors duration-300
+              group-hover:bg-gray-200
+            "
+          >
+            <FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
+          </div>
+        </div>
 
-				<!-- Employee Details -->
-				<div class="p-4 space-y-3">
-					<h3 class="font-semibold text-lg">{{ employee.employee_name }}</h3>
-					<div class="space-y-2 text-sm text-gray-600">
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="hash" class="w-4 h-4" />
-							<span>{{ employee.name }}</span>
-						</div>
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="briefcase" class="w-4 h-4" />
-							<span>{{ employee.position }}</span>
-						</div>
-						<!-- <div class="flex items-center gap-2">
-							<FeatherIcon name="flag" class="w-4 h-4" />
-							<span>{{ employee.nationality }}</span>
-						</div>
-						<div class="flex items-center gap-2">
-							<FeatherIcon name="dollar-sign" class="w-4 h-4" />
-							<span>{{ formatCurrency(employee.salary) }}</span>
-						</div> -->
-					</div>
-				</div>
-			</div>
-		</div>
+        <!-- Employee Details -->
+        <div class="p-5 space-y-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-bold text-lg text-gray-900 group-hover:text-gray-700 transition-colors line-clamp-1">
+                {{ employee.employee_name }}
+              </h3>
+              <p class="text-sm text-gray-500 mt-1">{{ employee.position }}</p>
+            </div>
+            <div 
+              class="
+                w-10 h-10 rounded-full 
+                bg-primary-100 text-primary-600
+                flex items-center justify-center
+                transition-colors group-hover:bg-primary-200
+              "
+            >
+              <FeatherIcon name="chevron-right" class="h-5 w-5 hover:translate-x-1 transition-transform duration-300" />
+            </div>
+          </div>
 
+          <div class="flex items-center justify-between mt-4">
+            <div class="flex items-center space-x-2">
+              <FeatherIcon name="hash" class="h-4 w-4 text-gray-400" />
+              <span class="text-sm text-gray-600">
+                {{ employee.name }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 		<!-- New Employee Dialog -->
 		<Dialog
 			v-model="showNewEmployeeDialog"
@@ -790,7 +825,7 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, h } from 'vue'
+import { ref, computed, inject, h, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
 	Button,
@@ -823,17 +858,62 @@ import {
 const router = useRouter()
 
 const setHeaderAction = inject('setHeaderAction')
-setHeaderAction(
-	h(
-		Button,
-		{
-			variant: 'solid',
-			onClick: () => (showNewEmployeeDialog.value = true),
-		},
-		() => 'Add Employee',
-	),
-)
+onMounted(() => {
+  setHeaderAction(() => h('div', { 
+    class: 'flex items-center justify-between gap-4 flex-1 px-2' 
+  }, [
+    // Search Field
+    h('div', { 
+      class: 'relative flex-1 max-w-2xl'
+    }, [
+      h('div', {
+        class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'
+      }, [
+        h(FeatherIcon, {
+          name: 'search',
+          class: 'h-4 w-4 text-gray-400'
+        })
+      ]),
+      h('input', {
+        type: 'text',
+        placeholder: 'Search employees...',
+        value: searchQuery.value,
+        onInput: (e) => searchQuery.value = e.target.value,
+        class: `
+          block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4 
+          text-gray-900 ring-1 ring-inset ring-gray-200 
+          placeholder:text-gray-400 
+          focus:ring-2 focus:ring-inset focus:ring-gray-900
+          transition-all duration-200
+          bg-white/50 hover:bg-white
+          sm:text-sm sm:leading-6
+        `
+      })
+    ]),
 
+    // New Employee Button
+    h('button', {
+      class: `
+        inline-flex items-center gap-2 
+        rounded-xl px-4 py-2.5
+        text-sm font-semibold text-white
+        bg-gray-900 hover:bg-gray-800
+        transition duration-200 ease-in-out
+        shadow-sm hover:shadow
+        focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
+      `,
+      onClick: () => showNewEmployeeDialog.value = true
+    }, [
+      h(FeatherIcon, {
+        name: 'plus',
+        class: 'h-4 w-4'
+      }),
+      h('span', {
+        class: 'hidden sm:inline'
+      }, 'Add Employee')
+    ])
+  ]))
+})
 const sortField = ref('creation')
 const sortDirection = ref('desc')
 const activeFilters = ref([])
@@ -848,6 +928,8 @@ const showExpiringDocumentsDialog = ref(false)
 const expiringDocumentsSearch = ref('')
 const activeDocumentTab = ref('expiring')
 const noAttendanceDialog = ref(false)
+const selectedPosition = ref('')
+
 
 const showMonthlyAttendanceDialog = ref(false)
 const monthlyAttendanceSearch = ref('')
@@ -858,6 +940,28 @@ const attendanceButtonLabel = computed(() => {
   const currentDate = getServerDate()
   const todayRecord = findAttendanceRecord(currentDate)
   return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
+})
+
+const filteredEmployeeGrid = computed(() => {
+  let employees = list.data || []
+
+  // Position Filter
+  if (selectedPosition.value) {
+    employees = employees.filter(employee => employee.position === selectedPosition.value)
+  }
+
+  // Search Filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    employees = employees.filter(employee => 
+      employee.employee_name.toLowerCase().includes(query) ||
+      employee.name.toLowerCase().includes(query) ||
+      employee.position.toLowerCase().includes(query)
+    )
+  }
+
+  // Optional: Add sorting if needed
+  return employees
 })
 
 const isCurrentMonth = computed(() => {

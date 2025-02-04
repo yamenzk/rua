@@ -19,6 +19,7 @@
     "feather-icons": "^4.29.2",
     "frappe-ui": "^0.1.98",
     "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3",
     "nanoid": "^5.0.9",
     "ol": "^10.0.0",
     "ol-contextmenu": "^5.4.0",

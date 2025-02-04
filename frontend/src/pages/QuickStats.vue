@@ -1,138 +1,112 @@
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="grid gap-4 md:grid-cols-2">
     <!-- Active Projects -->
-    <div class="bg-white rounded-lg border p-4 flex flex-col justify-between">
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-gray-500 text-sm">Active Projects</p>
-          <h3 class="text-2xl font-bold text-gray-900 mt-1">
-            {{ activeProjects.length }}
-          </h3>
+    <div class="rounded-lg bg-white p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="space-y-1">
+          <p class="text-sm text-gray-500">Active Projects</p>
+          <div class="flex items-baseline gap-2">
+            <h3 class="text-2xl font-medium text-gray-900">{{ activeProjects.length }}</h3>
+            <div 
+              class="flex items-center gap-1 text-xs"
+              :class="projectTrend.trend >= 0 ? 'text-green-600' : 'text-red-600'"
+            >
+              <FeatherIcon 
+                :name="projectTrend.trend >= 0 ? 'trending-up' : 'trending-down'" 
+                class="h-3 w-3"
+              />
+              {{ Math.abs(projectTrend.trend) }}%
+            </div>
+          </div>
         </div>
-        <div class="p-2 rounded-lg bg-blue-50">
-          <FeatherIcon name="briefcase" class="w-5 h-5 text-blue-500" />
+        <div class="rounded-md bg-gray-50 p-2 text-gray-400">
+          <FeatherIcon name="briefcase" class="h-5 w-5" />
         </div>
-      </div>
-      <div class="mt-4 flex items-center text-sm">
-        <FeatherIcon 
-          :name="projectTrend.trend >= 0 ? 'trending-up' : 'trending-down'" 
-          class="w-4 h-4 mr-1"
-          :class="projectTrend.trend >= 0 ? 'text-green-500' : 'text-red-500'"
-        />
-        <span 
-          :class="projectTrend.trend >= 0 ? 'text-green-500' : 'text-red-500'"
-        >
-          {{ Math.abs(projectTrend.trend) }}%
-        </span>
-        <span class="text-gray-500 ml-1">vs last month</span>
       </div>
     </div>
 
     <!-- Outstanding Amount -->
     <div 
-      class="bg-white rounded-lg border p-4 flex flex-col justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-      @click="showOutstandingInvoicesDialog = true"
-      v-if="outstandingAmount > 0"
+      class="rounded-lg bg-white p-5 shadow-sm"
+      :class="{ 'cursor-pointer hover:bg-gray-50': outstandingAmount > 0 }"
+      @click="outstandingAmount > 0 && (showOutstandingInvoicesDialog = true)"
     >
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-gray-500 text-sm">Outstanding Amount</p>
-          <h3 class="text-2xl font-bold text-gray-900 mt-1">
-            {{ formatCurrency(outstandingAmount) }}
-          </h3>
+      <div class="flex items-center justify-between">
+        <div class="space-y-1">
+          <p class="text-sm text-gray-500">Outstanding Amount</p>
+          <div class="space-y-1">
+            <h3 class="text-2xl font-medium text-gray-900">{{ formatCurrency(outstandingAmount) }}</h3>
+            <p class="text-xs text-gray-500">
+              {{ unpaidInvoices.length 
+                ? `${unpaidInvoices.length} unpaid invoices`
+                : 'No unpaid invoices'
+              }}
+            </p>
+          </div>
         </div>
-        <div class="p-2 rounded-lg bg-yellow-50">
-          <FeatherIcon name="dollar-sign" class="w-5 h-5 text-yellow-500" />
+        <div class="rounded-md bg-gray-50 p-2 text-gray-400">
+          <FeatherIcon name="dollar-sign" class="h-5 w-5" />
         </div>
-      </div>
-      <div class="mt-2 text-sm text-gray-500">
-        From {{ unpaidInvoices.length }} unpaid invoices
-      </div>
-    </div>
-    
-    <div 
-      v-else 
-      class="bg-white rounded-lg border p-4 flex flex-col justify-between"
-    >
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-gray-500 text-sm">Outstanding Amount</p>
-          <h3 class="text-2xl font-bold text-gray-900 mt-1">
-            {{ formatCurrency(outstandingAmount) }}
-          </h3>
-        </div>
-        <div class="p-2 rounded-lg bg-yellow-50">
-          <FeatherIcon name="dollar-sign" class="w-5 h-5 text-yellow-500" />
-        </div>
-      </div>
-      <div class="mt-2 text-sm text-gray-500">
-        No unpaid invoices
       </div>
     </div>
 
     <!-- This Month's Revenue -->
-    <div class="bg-white rounded-lg border p-4 flex flex-col justify-between">
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-gray-500 text-sm">This Month's Revenue</p>
-          <h3 class="text-2xl font-bold text-gray-900 mt-1">
-            {{ formatCurrency(monthlyRevenue.current) }}
-          </h3>
+    <div class="rounded-lg bg-white p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="space-y-1">
+          <p class="text-sm text-gray-500">This Month's Revenue</p>
+          <div class="flex items-baseline gap-2">
+            <h3 class="text-2xl font-medium text-gray-900">{{ formatCurrency(monthlyRevenue.current) }}</h3>
+            <div 
+              class="flex items-center gap-1 text-xs"
+              :class="monthlyRevenue.trend >= 0 ? 'text-green-600' : 'text-red-600'"
+            >
+              <FeatherIcon 
+                :name="monthlyRevenue.trend >= 0 ? 'trending-up' : 'trending-down'" 
+                class="h-3 w-3"
+              />
+              {{ Math.abs(monthlyRevenue.trend) }}%
+            </div>
+          </div>
         </div>
-        <div class="p-2 rounded-lg bg-green-50">
-          <FeatherIcon name="trending-up" class="w-5 h-5 text-green-500" />
+        <div class="rounded-md bg-gray-50 p-2 text-gray-400">
+          <FeatherIcon name="trending-up" class="h-5 w-5" />
         </div>
-      </div>
-      <div class="mt-4 flex items-center text-sm">
-        <FeatherIcon 
-          :name="monthlyRevenue.trend >= 0 ? 'trending-up' : 'trending-down'" 
-          class="w-4 h-4 mr-1"
-          :class="monthlyRevenue.trend >= 0 ? 'text-green-500' : 'text-red-500'"
-        />
-        <span 
-          :class="monthlyRevenue.trend >= 0 ? 'text-green-500' : 'text-red-500'"
-        >
-          {{ Math.abs(monthlyRevenue.trend) }}%
-        </span>
-        <span class="text-gray-500 ml-1">vs last month</span>
       </div>
     </div>
 
     <!-- Pending Tasks -->
-    <div class="bg-white rounded-lg border p-4">
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-gray-500 text-sm">Pending Tasks</p>
-          <h3 class="text-2xl font-bold text-gray-900 mt-1">
-            {{ totalPendingTasks }}
-          </h3>
+    <div class="rounded-lg bg-white p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="space-y-1">
+          <p class="text-sm text-gray-500">Pending Tasks</p>
+          <div class="space-y-2">
+            <h3 class="text-2xl font-medium text-gray-900">{{ totalPendingTasks }}</h3>
+            <div class="flex flex-wrap gap-2 text-xs">
+              <span 
+                v-if="pendingTasksBreakdown.high"
+                class="text-red-600"
+              >
+                {{ pendingTasksBreakdown.high }} High
+              </span>
+              <span 
+                v-if="pendingTasksBreakdown.medium"
+                class="text-amber-600"
+              >
+                {{ pendingTasksBreakdown.medium }} Medium
+              </span>
+              <span 
+                v-if="pendingTasksBreakdown.low"
+                class="text-green-600"
+              >
+                {{ pendingTasksBreakdown.low }} Low
+              </span>
+            </div>
+          </div>
         </div>
-        <div class="p-2 rounded-lg bg-red-50">
-          <FeatherIcon name="check-square" class="w-5 h-5 text-red-500" />
+        <div class="rounded-md bg-gray-50 p-2 text-gray-400">
+          <FeatherIcon name="check-square" class="h-5 w-5" />
         </div>
-      </div>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <Badge 
-          v-if="pendingTasksBreakdown.high"
-          variant="subtle" 
-          theme="red"
-        >
-          {{ pendingTasksBreakdown.high }} High Priority
-        </Badge>
-        <Badge 
-          v-if="pendingTasksBreakdown.medium"
-          variant="subtle" 
-          theme="orange"
-        >
-          {{ pendingTasksBreakdown.medium }} Medium
-        </Badge>
-        <Badge 
-          v-if="pendingTasksBreakdown.low"
-          variant="subtle" 
-          theme="green"
-        >
-          {{ pendingTasksBreakdown.low }} Low
-        </Badge>
       </div>
     </div>
   </div>

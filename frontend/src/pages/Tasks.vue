@@ -1,118 +1,124 @@
 <template>
-  <div class="space-y-4">
-    <!-- Sub Navigation Card -->
-    <div class="bg-white rounded-lg">
-      <div class="sticky top-0 z-10 bg-white">
-        <div class="px-6 py-3">
-          <div class="flex flex-col space-y-4">
-            <!-- Title and Description -->
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-lg font-medium text-gray-900">Tasks</h2>
-              </div>
-            </div>
-
-            <!-- Filters Row -->
-            <div class="flex flex-wrap items-center gap-2">
-              <FormControl
-                type="search"
-                size="sm"
-                variant="subtle"
-                placeholder="Search tasks.."
-                v-model="filters.search"
-                class="flex-1 min-w-[200px]"
-              />
-
-              <div class="flex items-center gap-2 overflow-x-auto">
-                <!-- Project Filter -->
-                <FormControl
-                  v-if="projectOptions.length"
-                  type="select"
-                  :options="projectOptions"
-                  size="sm"
-                  variant="subtle"
-                  placeholder="Project"
-                  v-model="filters.project"
-                  class="w-36 sm:w-40"
-                />
-
-                <!-- Assignee Filter -->
-                <FormControl
-                  type="select"
-                  :options="userOptions"
-                  size="sm"
-                  variant="subtle"
-                  placeholder="Assignee"
-                  v-model="filters.assignedTo"
-                  class="w-36 sm:w-40"
-                />
-
-                <!-- Priority Filter -->
-                <FormControl
-                  type="select"
-                  :options="priorityOptions"
-                  size="sm"
-                  variant="subtle"
-                  placeholder="Priority"
-                  v-model="filters.priority"
-                  class="w-32"
-                />
-              </div>
-            </div>
-          </div>
+  <div class="min-h-[calc(100vh-4rem)]">
+    <!-- Scrollable Table Container -->
+    <div class="relative overflow-x-auto">
+      <div class="min-w-[1200px]">
+        <!-- Loading Overlay -->
+        <div 
+          v-if="isLoading" 
+          class="absolute inset-0 flex items-center justify-center bg-white/75 z-10"
+        >
+          <LoadingIndicator />
         </div>
-      </div>
-    </div>
 
-    <!-- Table Card -->
-    <div class="bg-white rounded-lg border mx-6">
-      <!-- Tasks Table -->
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <LoadingIndicator />
-      </div>
-
-      <div v-else class="overflow-x-auto min-h-[60vh]">
         <!-- Table Header -->
-        <div class="border-b min-w-[800px]">
-          <div class="flex items-center px-6 py-2">
-            <div class="flex-1 grid grid-cols-12 gap-4">
-              <div class="col-span-4 flex items-center gap-2 text-sm font-medium text-gray-700">
-                <FeatherIcon name="check-square" class="w-4 h-4" />
+        <div class="sticky top-0 z-10 bg-white border-b border-gray-200">
+          <div class="flex">
+            <!-- Details -->
+            <div class="w-[30%] px-6 py-3">
+              <button 
+                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                @click="toggleSortColumn('details')"
+              >
+                <FeatherIcon name="check-square" class="h-4 w-4" />
                 Details
-              </div>
-              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                <FeatherIcon name="user" class="w-4 h-4" />
-                Assignee
-              </div>
-              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                <FeatherIcon name="file" class="w-4 h-4" />
-                Related To
-              </div>
-              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                <FeatherIcon name="calendar" class="w-4 h-4" />
-                Due Date
-              </div>
-              <div class="col-span-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                <FeatherIcon name="flag" class="w-4 h-4" />
-                Priority
-              </div>
+                <FeatherIcon 
+                  :name="getSortIcon('details')" 
+                  class="h-3 w-3"
+                  :class="{'invisible': sortColumn !== 'details'}"
+                />
+              </button>
             </div>
+
+            <!-- Assignee -->
+            <div class="w-[12%] px-4 py-3">
+              <button 
+                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                @click="openAssigneeFilter"
+              >
+                <FeatherIcon name="user" class="h-4 w-4" />
+                Assignee
+                <div 
+                  v-if="filters.assignedTo" 
+                  class="h-1.5 w-1.5 rounded-full bg-gray-900"
+                />
+              </button>
+            </div>
+
+            <!-- Project -->
+            <div class="w-[12%] px-4 py-3">
+              <button 
+                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                @click="openProjectFilter"
+              >
+                <FeatherIcon name="briefcase" class="h-4 w-4" />
+                Project
+                <div 
+                  v-if="filters.project" 
+                  class="h-1.5 w-1.5 rounded-full bg-gray-900"
+                />
+              </button>
+            </div>
+
+            <!-- Related To -->
+            <div class="w-[15%] px-4 py-3">
+              <button 
+                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                <FeatherIcon name="file" class="h-4 w-4" />
+                Related To
+              </button>
+            </div>
+
+            <!-- Due Date -->
+            <div class="w-[15%] px-4 py-3">
+              <button 
+                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                @click="toggleSortColumn('due_date')"
+              >
+                <FeatherIcon name="calendar" class="h-4 w-4" />
+                Due Date
+                <FeatherIcon 
+                  :name="getSortIcon('due_date')" 
+                  class="h-3 w-3"
+                  :class="{'invisible': sortColumn !== 'due_date'}"
+                />
+              </button>
+            </div>
+
+            <!-- Priority -->
+            <div class="w-[12%] px-4 py-3">
+              <button 
+                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                @click="openPriorityFilter"
+              >
+                <FeatherIcon name="flag" class="h-4 w-4" />
+                Priority
+                <div 
+                  v-if="filters.priority" 
+                  class="h-1.5 w-1.5 rounded-full bg-gray-900"
+                />
+              </button>
+            </div>
+
+            <!-- Actions -->
+            <div class="w-[4%] px-4 py-3" />
           </div>
         </div>
 
         <!-- Table Body -->
-        <div class="divide-y">
+        <div class="divide-y divide-gray-200">
           <template v-for="status in ['Open', 'Delayed', 'Completed', 'Cancelled']" :key="status">
             <template v-if="getTasksByStatus(status)?.length">
               <!-- Status Group Header -->
               <div
-                class="group bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer px-6 py-2 min-w-[800px]"
+                class="group cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
                 @click="toggleStatusCollapse(status)"
               >
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 px-6 py-2">
                   <FeatherIcon
                     :name="statusCollapsed[status] ? 'chevron-right' : 'chevron-down'"
-                    class="w-4 h-4 text-gray-500"
+                    class="h-4 w-4 text-gray-500"
                   />
                   <Badge
                     :variant="getStatusTheme(status) === 'gray' ? 'solid' : 'subtle'"
@@ -128,58 +134,65 @@
 
               <!-- Tasks in this status -->
               <template v-if="!statusCollapsed[status]">
-              <div
-                v-for="task in getTasksByStatus(status)"
-                :key="task.name"
-                class="hover:bg-gray-50 transition-colors cursor-pointer min-w-[800px]"
-                @click="showTaskDetails(task)"
-              >
-                <div class="flex items-center px-6 py-3">
-                  <div class="flex-1 grid grid-cols-12 gap-4">
+                <div
+                  v-for="task in getTasksByStatus(status)"
+                  :key="task.name"
+                  class="group hover:bg-gray-50/80 transition-colors cursor-pointer"
+                  @click="showTaskDetails(task)"
+                >
+                  <div class="flex">
                     <!-- Details -->
-                    <div class="col-span-4">
+                    <div class="w-[30%] px-6 py-3">
                       <div class="flex items-start gap-2">
-                        <div class="p-1.5 rounded-lg shrink-0" :class="getPriorityClass(task.priority)">
+                        <div class="shrink-0 rounded-lg p-1.5" :class="getPriorityClass(task.priority)">
                           <FeatherIcon 
                             :name="getIconByDoctype(task.related_doctype)" 
-                            class="w-4 h-4"
+                            class="h-4 w-4"
                             :class="getPriorityIconClass(task.priority)"
                           />
                         </div>
                         <div class="min-w-0 flex-1">
-                          <div class="text-sm text-gray-900 break-words">{{ task.details }}</div>
+                          <div class="break-words text-sm text-gray-900">{{ task.details }}</div>
                           <div class="text-xs text-gray-500">Created {{ formatDate(task.creation) }}</div>
                         </div>
                       </div>
                     </div>
 
                     <!-- Assignee -->
-                    <div class="col-span-2">
+                    <div class="w-[12%] px-4 py-3">
                       <div class="flex items-center gap-2">
                         <Avatar
                           :image="getUserAvatar(task.assigned_to)"
                           :label="getAssigneeName(task.assigned_to)?.substring(0, 2)"
                           size="sm"
                         />
-                        <div class="flex flex-col">
-                          <span class="text-sm text-gray-900 truncate">
+                        <div class="min-w-0 flex-1">
+                          <span class="truncate text-sm text-gray-900 block">
                             {{ getAssigneeName(task.assigned_to) }}
                           </span>
                         </div>
                       </div>
                     </div>
 
+                    <!-- Project -->
+                    <div class="w-[12%] px-4 py-3">
+                      <div v-if="task.project" class="min-w-0">
+                        <div class="truncate text-sm text-gray-900">{{ getProjectName(task.project) }}</div>
+                      </div>
+                      <div v-else class="text-sm text-gray-500">—</div>
+                    </div>
+
                     <!-- Related To -->
-                    <div class="col-span-2">
-                      <div v-if="task.related_doctype && task.related_docname" class="text-sm">
-                        <div class="text-gray-900">{{ task.related_doctype.replace('RUA ', '') }}</div>
-                        <div class="text-xs text-gray-500 truncate">{{ task.related_docname }}</div>
+                    <div class="w-[15%] px-4 py-3">
+                      <div v-if="task.related_doctype && task.related_docname" class="min-w-0">
+                        <div class="text-sm text-gray-900">{{ task.related_doctype.replace('RUA ', '') }}</div>
+                        <div class="truncate text-xs text-gray-500">{{ task.related_docname }}</div>
                       </div>
                       <div v-else class="text-sm text-gray-500">—</div>
                     </div>
 
                     <!-- Due Date -->
-                    <div class="col-span-2">
+                    <div class="w-[15%] px-4 py-3">
                       <div v-if="task.due_date" class="text-sm">
                         <div class="text-gray-900">{{ formatDate(task.due_date) }}</div>
                         <div 
@@ -193,7 +206,7 @@
                     </div>
 
                     <!-- Priority -->
-                    <div class="col-span-2">
+                    <div class="w-[12%] px-4 py-3">
                       <Badge
                         :variant="getPriorityTheme(task.priority) === 'gray' ? 'solid' : 'subtle'"
                         :theme="getPriorityTheme(task.priority)"
@@ -201,19 +214,28 @@
                         {{ task.priority }}
                       </Badge>
                     </div>
+
+                    <!-- Actions -->
+                    <div class="w-[4%] px-4 py-3">
+                      <button 
+                        class="opacity-0 group-hover:opacity-100 rounded p-1 hover:bg-gray-100 transition-opacity"
+                        @click.stop="openTaskMenu(task)"
+                      >
+                        <FeatherIcon name="more-vertical" class="h-4 w-4 text-gray-500" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </template>
             </template>
           </template>
-        </template>
 
-        <!-- Empty State -->
-        <div
+          <!-- Empty State -->
+          <div
             v-if="!filteredTasks.length"
-            class="flex flex-col items-center justify-center py-12 min-w-[800px]"
+            class="flex flex-col items-center justify-center py-12"
           >
-            <FeatherIcon name="check-square" class="w-12 h-12 text-gray-400 mb-4" />
+            <FeatherIcon name="check-square" class="mb-4 h-12 w-12 text-gray-400" />
             <p class="text-base font-medium text-gray-900">No tasks found</p>
             <p class="text-sm text-gray-600">
               {{ filters.search ? 'Try adjusting your search or filters' : 'Get started by creating a new task' }}
@@ -232,24 +254,124 @@
       </div>
     </div>
 
+    <!-- Filter Dialogs -->
+    <Dialog
+      v-model="showAssigneeFilter"
+      :options="{
+        title: 'Filter by Assignee',
+        size: 'sm'
+      }"
+    >
+      <template #body-content>
+        <div class="space-y-4 p-4">
+          <FormControl
+            type="select"
+            :options="userOptions"
+            v-model="filters.assignedTo"
+            placeholder="Select Assignee"
+          />
+          <div class="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              @click="clearAssigneeFilter"
+            >
+              Clear
+            </Button>
+            <Button
+              variant="solid"
+              @click="showAssigneeFilter = false"
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model="showProjectFilter"
+      :options="{
+        title: 'Filter by Project',
+        size: 'sm'
+      }"
+    >
+      <template #body-content>
+        <div class="space-y-4 p-4">
+          <FormControl
+            type="select"
+            :options="projectOptions"
+            v-model="filters.project"
+            placeholder="Select Project"
+          />
+          <div class="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              @click="clearProjectFilter"
+            >
+              Clear
+            </Button>
+            <Button
+              variant="solid"
+              @click="showProjectFilter = false"
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model="showPriorityFilter"
+      :options="{
+        title: 'Filter by Priority',
+        size: 'sm'
+      }"
+    >
+      <template #body-content>
+        <div class="space-y-4 p-4">
+          <FormControl
+            type="select"
+            :options="priorityOptions"
+            v-model="filters.priority"
+            placeholder="Select Priority"
+          />
+          <div class="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              @click="clearPriorityFilter"
+            >
+              Clear
+            </Button>
+            <Button
+              variant="solid"
+              @click="showPriorityFilter = false"
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      </template>
+    </Dialog>
+
     <!-- Task Details Dialog -->
     <TaskDetailsDialog
-  v-model="showTaskDetailsDialog"
-  :task="selectedTask"
-  @task-updated="todoResource.reload()"
-/>
+      v-model="showTaskDetailsDialog"
+      :task="selectedTask"
+      @task-updated="todoResource.reload()"
+    />
 
     <!-- New Task Modal -->
     <NewTaskModal
-  v-model="showNewTaskModal"
-  :project-options="projectOptions"
-  @created="todoResource.reload()"
-/>
+      v-model="showNewTaskModal"
+      :project-options="projectOptions"
+      @created="todoResource.reload()"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, inject, h } from 'vue'
+import { ref, computed, inject, h, onMounted } from 'vue'
 import { 
   FeatherIcon, 
   Avatar, 
@@ -257,26 +379,80 @@ import {
   Button, 
   FormControl,
   LoadingIndicator,
+  Dialog,
   dayjs
 } from 'frappe-ui'
 import { todoResource } from '@/data/todo'
 import { projectResource } from '@/data/project'
 import { employeeResource } from '@/data/employee'
-import { quotationResource } from "@/data/quotation"
-import { rfqResource } from "@/data/rfq"
-import { lpoResource } from "@/data/lpo"
-import { invoiceResource } from "@/data/invoice"
-import { paymentResource } from "@/data/payment"
-import { purchaseReceiptResource } from "@/data/purchaseReceipt"
 import TaskDetailsDialog from './TaskDetailsDialog.vue'
 import NewTaskModal from './NewTaskModal.vue'
 import { getServerDate, getDueStatus, isBeforeToday, formatDate } from '@/utils/format'
 
+// Inject header actions
+const setHeaderAction = inject('setHeaderAction')
+
+// Setup header search and button
+onMounted(() => {
+  setHeaderAction(() => h('div', { 
+    class: 'flex items-center justify-between gap-4 flex-1 px-2' 
+  }, [
+    // Search Field
+    h('div', { 
+      class: 'relative flex-1 max-w-2xl'
+    }, [
+      h('div', {
+        class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'
+      }, [
+        h(FeatherIcon, {
+          name: 'search',
+          class: 'h-4 w-4 text-gray-400'
+        })
+      ]),
+      h('input', {
+        type: 'text',
+        placeholder: 'Search tasks...',
+        value: filters.value.search,
+        onInput: (e) => filters.value.search = e.target.value,
+        class: `
+          block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4 
+          text-gray-900 ring-1 ring-inset ring-gray-200 
+          placeholder:text-gray-400 
+          focus:ring-2 focus:ring-inset focus:ring-gray-900
+          transition-all duration-200
+          bg-white/50 hover:bg-white
+          sm:text-sm sm:leading-6
+        `
+      })
+    ]),
+
+    // New Task Button
+    h('button', {
+  class: `
+    inline-flex items-center gap-2 
+    rounded-xl px-4 py-2.5
+    text-sm font-semibold text-white
+    bg-gray-900 hover:bg-gray-800
+    transition duration-200 ease-in-out
+    shadow-sm hover:shadow
+    focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
+  `,
+  onClick: () => showNewTaskModal.value = true
+}, [
+  h(FeatherIcon, {
+    name: 'plus',
+    class: 'h-4 w-4'
+  }),
+  h('span', {
+    class: 'hidden sm:inline' // Only show text on screens sm (small) and larger
+  }, 'New Task')
+])
+  ]))
+})
+
 // State
 const isLoading = ref(false)
 const showNewTaskModal = ref(false)
-const creating = ref(false)
-const setHeaderAction = inject('setHeaderAction')
 const showTaskDetailsDialog = ref(false)
 const selectedTask = ref(null)
 const statusCollapsed = ref({
@@ -286,13 +462,8 @@ const statusCollapsed = ref({
   Cancelled: true
 })
 
-  setHeaderAction(h(Button, {
-    variant: 'solid',
-    onClick: () => showNewTaskModal.value = true,
-  }, () => 'New Task'))
-
-
-  const filters = ref({
+// Filter states
+const filters = ref({
   search: '',
   status: '',
   priority: '',
@@ -300,40 +471,16 @@ const statusCollapsed = ref({
   project: ''
 })
 
-// In the data section
-const newTask = ref({
-  details: '',
-  assigned_to: '',
-  project: '',
-  priority: '',
-  due_date: '',
-  status: 'Open',
-  related_doctype: '',
-  related_docname: ''
-})
+// Filter dialogs state
+const showAssigneeFilter = ref(false)
+const showProjectFilter = ref(false)
+const showPriorityFilter = ref(false)
 
-// Document type options
-const doctypeOptions = [
-  { label: '', value: '' },
-  { label: 'Purchase Receipt', value: 'RUA Purchase Receipt' },
-  { label: 'Payment', value: 'RUA Payment' },
-  { label: 'Invoice', value: 'RUA Invoice' },
-  { label: 'LPO', value: 'RUA LPO' },
-  { label: 'RFQ', value: 'RUA RFQ' },
-  { label: 'Quotation', value: 'RUA Quotation' },
-  { label: 'Project', value: 'RUA Project' },
-  { label: 'Employee', value: 'RUA Employee' }
-]
+// Sorting state
+const sortColumn = ref('')
+const sortDirection = ref('asc')
 
-// Options for dropdowns
-const statusOptions = [
-  { label: '', value: '' },
-  { label: 'Open', value: 'Open' },
-  { label: 'Completed', value: 'Completed' },
-  { label: 'Cancelled', value: 'Cancelled' },
-  { label: 'Delayed', value: 'Delayed' }
-]
-
+// Options for filters
 const priorityOptions = [
   { label: '', value: '' },
   { label: 'High', value: 'High' },
@@ -343,7 +490,7 @@ const priorityOptions = [
 
 const userOptions = computed(() => {
   return employeeResource.data
-    ?.filter(employee => employee.user) // Only employees with user accounts
+    ?.filter(employee => employee.user)
     .map(employee => ({
       label: employee.employee_name,
       value: employee.user,
@@ -360,13 +507,11 @@ const projectOptions = computed(() => {
   })) || []
 })
 
-
-
-
 // Computed
 const filteredTasks = computed(() => {
   let tasks = todoResource.data || []
 
+  // Apply filters
   if (filters.value.search) {
     const searchTerm = filters.value.search.toLowerCase()
     tasks = tasks.filter(task => 
@@ -387,82 +532,78 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(task => task.project === filters.value.project)
   }
 
-  return tasks.sort((a, b) => dayjs(b.creation).diff(dayjs(a.creation)))
-})
+  // Apply sorting
+  if (sortColumn.value) {
+    tasks = [...tasks].sort((a, b) => {
+      let aVal = a[sortColumn.value]
+      let bVal = b[sortColumn.value]
 
+      // Handle special cases
+      if (sortColumn.value === 'due_date') {
+        aVal = aVal ? new Date(aVal) : new Date(0)
+        bVal = bVal ? new Date(bVal) : new Date(0)
+      }
 
-const isNewTaskValid = computed(() => {
-  return newTask.value.details &&
-         newTask.value.assigned_to &&
-         newTask.value.priority &&
-         newTask.value.project
-})
-
-const documentOptions = computed(() => {
-  if (!newTask.value.related_doctype) return []
-  
-  switch (newTask.value.related_doctype) {
-    case 'RUA Purchase Receipt':
-      return purchaseReceiptResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party || 'No Supplier'}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Payment':
-      return paymentResource.data?.map(doc => ({
-        label: `${doc.name} - ${formatCurrency(doc.amount)}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Invoice':
-      return invoiceResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party} (${formatCurrency(doc.amount)})`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA LPO':
-      return lpoResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA RFQ':
-      return rfqResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party || 'Multiple Suppliers'}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Quotation':
-      return quotationResource.data?.map(doc => ({
-        label: `${doc.name} - ${doc.party}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Project':
-      return projectResource.data?.filter(proj => !proj.is_child).map(doc => ({
-        label: `${doc.project_name} ${doc.serial_number ? `#${doc.serial_number}` : ''}`,
-        value: doc.name
-      })) || []
-      
-    case 'RUA Employee':
-      return employeeResource.data?.map(doc => ({
-        label: doc.employee_name,
-        value: doc.name
-      })) || []
-      
-    default:
-      return []
+      if (sortDirection.value === 'asc') {
+        return aVal > bVal ? 1 : -1
+      } else {
+        return aVal < bVal ? 1 : -1
+      }
+    })
+  } else {
+    // Default sort by creation date
+    tasks = tasks.sort((a, b) => dayjs(b.creation).diff(dayjs(a.creation)))
   }
-})
 
+  return tasks
+})
 
 // Helper functions
-
-function formatCurrency(value) {
-  if (!value) return 'AED 0'
-  return `AED ${Math.floor(value).toLocaleString()}`
+function toggleSortColumn(column) {
+  if (sortColumn.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortColumn.value = column
+    sortDirection.value = 'asc'
+  }
 }
 
+function getSortIcon(column) {
+  if (sortColumn.value !== column) return 'chevron-down'
+  return sortDirection.value === 'asc' ? 'chevron-up' : 'chevron-down'
+}
+
+function clearAssigneeFilter() {
+  filters.value.assignedTo = ''
+  showAssigneeFilter.value = false
+}
+
+function clearProjectFilter() {
+  filters.value.project = ''
+  showProjectFilter.value = false
+}
+
+function clearPriorityFilter() {
+  filters.value.priority = ''
+  showPriorityFilter.value = false
+}
+
+function openAssigneeFilter() {
+  showAssigneeFilter.value = true
+}
+
+function openProjectFilter() {
+  showProjectFilter.value = true
+}
+
+function openPriorityFilter() {
+  showPriorityFilter.value = true
+}
+
+function getProjectName(projectId) {
+  const project = projectResource.data?.find(p => p.name === projectId)
+  return project?.project_name || projectId
+}
 
 function getPriorityClass(priority) {
   switch (priority) {
@@ -541,25 +682,15 @@ function getIconByDoctype(doctype) {
   }
 }
 
-
-function isOverdue(dueDate) {
-  if (!dueDate) return false
-  return isBeforeToday(dueDate)
-}
-
-
-
 function getAssigneeName(userId) {
   const employee = employeeResource.data?.find(employee => employee.user === userId)
   return employee?.employee_name || userId
 }
 
 function getUserAvatar(userId) {
-  // Check employees
   const employee = employeeResource.data?.find(employee => employee.user === userId)
   return employee?.image
 }
-
 
 function getTasksByStatus(status) {
   return filteredTasks.value?.filter(task => task.status === status) || []
@@ -570,55 +701,40 @@ function toggleStatusCollapse(status) {
 }
 
 function showTaskDetails(task) {
-  console.log('Server Date', getServerDate())
   selectedTask.value = task
   showTaskDetailsDialog.value = true
 }
 
-
-function closeNewTaskModal() {
-  showNewTaskModal.value = false
-  newTask.value = {
-    details: '',
-    assigned_to: '',
-    project: '',
-    priority: '',
-    due_date: '',
-    status: 'Open'
-  }
+function openTaskMenu(task) {
+  // Implement task menu logic here
 }
-
-async function createTask() {
-  if (!isNewTaskValid.value) return
-  
-  creating.value = true
-  try {
-    await todoResource.insert.submit({
-      details: newTask.value.details,
-      assigned_to: newTask.value.assigned_to,
-      project: newTask.value.project,
-      priority: newTask.value.priority,
-      due_date: newTask.value.due_date,
-      status: 'Open'
-    })
-    
-    closeNewTaskModal()
-  } catch (error) {
-    console.error('Failed to create task:', error)
-  } finally {
-    creating.value = false
-  }
-}
-
-watch(() => newTask.value.related_doctype, () => {
-  newTask.value.related_docname = ''
-})
-
 </script>
 
-
-
 <style scoped>
+/* Custom scrollbar styling */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #e9e9e9 transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: #e9e9e9;
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background-color: #e9e9e9;
+}
+
+/* Transitions */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;

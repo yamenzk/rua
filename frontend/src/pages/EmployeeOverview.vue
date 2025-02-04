@@ -1,323 +1,225 @@
-// EmployeeOverview.vue
 <template>
-	<div class="space-y-8" v-if="employee">
-		<div
-			v-if="currentLeave"
-			class="bg-blue-50 border-l-4 border-blue-500 p-4 flex items-center"
-		>
-			<FeatherIcon name="calendar" class="w-6 h-6 text-blue-600 mr-3" />
-			<div>
-				<p class="font-medium text-blue-800">Currently on Leave</p>
-				<p class="text-sm text-blue-700">
-					Expected to return on {{ formatDate(currentLeave.return_date) }}
-				</p>
-			</div>
-		</div>
-		<!-- Hero Section -->
-		<div class="h-64 md:h-96 !mt-0">
-			<div class="w-full h-full">
-				<div
-					v-if="employee?.image"
-					:style="{
-						backgroundPosition: 'top center',
-						backgroundSize: 'cover',
-						width: '100%',
-						height: '100%',
-						overflow: 'hidden',
-					}"
-					class="w-full h-full bg-gray-300"
-				>
-					<img
-						:src="employee.image"
-						:alt="employee?.employee_name"
-						class="w-full h-full object-contain"
-						@error="$event.target.style.display = 'none'"
-					/>
-				</div>
-				<div v-else class="w-full h-full bg-gray-100 flex items-center justify-center">
-					<FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
-				</div>
-			</div>
-		</div>
-
-		<!-- Employee Details -->
-		<div class="px-6">
-			<!-- Personal Information -->
-
-			<div class="mb-8">
-				<div class="flex items-center justify-between mb-4">
-					<h3 class="text-sm font-medium text-gray-500">Personal Information</h3>
-					<div class="flex gap-2">
-						<Button variant="solid" size="sm" @click="openSignatureDialog">
-							<div class="flex items-center">
-								<FeatherIcon name="pen-tool" class="w-4 h-4 mr-2"/>
-								<span class="hidden md:inline">Register Signature</span>
-								<span class="inline md:hidden">Sign</span>
-							</div>
-						</Button>
-						<Button variant="solid" size="sm" @click="openEditDialog">
-							<div class="flex items-center">
-								<FeatherIcon name="edit" class="w-4 h-4 mr-2" />
-								<span class="hidden md:inline">Edit Employee</span>
-								<span class="inline md:hidden">Edit</span>
-							</div>
-						</Button>
+	<div class="min-h-full bg-gray-50 pb-8" v-if="employee">
+		<!-- Profile Header -->
+		<div class="">
+			<div v-if="currentLeave" class="border-b border-primary-100 bg-primary-50/50 backdrop-blur-sm">
+				<div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+					<div class="flex items-center gap-3 py-2">
+						<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
+							<FeatherIcon name="calendar" class="h-4 w-4 text-primary-600" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<p class="text-sm text-primary-700">
+								Currently on {{ currentLeave.leave_type }} Leave · Expected to return on {{ formatDate(currentLeave.return_date) }}
+							</p>
+						</div>
 					</div>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			</div>
+			<div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+				<div class="py-6">
+					<div class="flex items-center gap-6">
+						<!-- Avatar -->
+						<div class="relative">
+							<div class="h-24 w-24 overflow-hidden rounded-lg bg-gray-100 ring-4 ring-white">
+								<img
+									v-if="employee?.image"
+									:src="employee.image"
+									:alt="employee?.employee_name"
+									class="h-full w-full object-cover"
+									@error="$event.target.style.display = 'none'"
+								/>
+								<div v-else class="flex h-full items-center justify-center">
+									<FeatherIcon name="user" class="h-12 w-12 text-gray-400" />
+								</div>
+							</div>
+						</div>
+
+						<!-- Employee Info -->
+						<div class="flex min-w-0 flex-1 items-center justify-between">
+							<div>
+								<h1 class="truncate text-2xl font-bold text-gray-900">
+									{{ employee?.employee_name }}
+								</h1>
+								<div class="mt-2 flex items-center gap-3">
+									<span class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-0.5 text-sm font-medium text-primary-700">
+										{{ employee?.position }}
+									</span>
+									<span v-if="employee?.branch" class="inline-flex items-center text-sm text-gray-500">
+										<FeatherIcon name="map-pin" class="mr-1.5 h-4 w-4" />
+										{{ employee?.branch }}
+									</span>
+								</div>
+							</div>
+							<div class="flex gap-3">
+								<Button variant="subtle" size="sm" @click="openSignatureDialog">
+										<FeatherIcon name="pen-tool" class="h-4 w-4"/>
+								</Button>
+								<Button variant="solid" size="sm" @click="openEditDialog">
+										<FeatherIcon name="edit" class="h-4 w-4" />
+								</Button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="mx-auto max-w-5xl space-y-8 px-4">
+			<!-- Employee Details Section -->
+			<div class="bg-white p-6 rounded-lg">
+				<div class="mb-6 flex items-center justify-between">
+					<h2 class="text-lg font-medium text-gray-900">Personal Information</h2>
+				</div>
+
+				<div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
 					<!-- Basic Details -->
-					<div class="space-y-4">
+					<div class="space-y-6">
 						<div>
-							<label class="block text-sm font-medium text-gray-500"
-								>Full Name</label
-							>
-							<div class="mt-1 text-lg text-gray-900">
-								{{ employee?.employee_name }}
-							</div>
+							<h3 class="text-sm font-medium text-gray-500">Full Name</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.employee_name }}</p>
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-500">Gender</label>
-							<div class="mt-1 text-lg text-gray-900">{{ employee?.gender }}</div>
+							<h3 class="text-sm font-medium text-gray-500">Gender</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.gender }}</p>
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-500"
-								>Date of Birth</label
-							>
-							<div class="mt-1 text-lg text-gray-900">
-								{{ formatDate(employee?.date_of_birth) }}
-							</div>
+							<h3 class="text-sm font-medium text-gray-500">Date of Birth</h3>
+							<p class="mt-2 text-base text-gray-900">{{ formatDate(employee?.date_of_birth) }}</p>
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-500"
-								>Nationality</label
-							>
-							<div class="mt-1 text-lg text-gray-900">
-								{{ employee?.nationality }}
-							</div>
+							<h3 class="text-sm font-medium text-gray-500">Nationality</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.nationality }}</p>
 						</div>
 						<div v-if="employee?.phone">
-							<label class="block text-sm font-medium text-gray-500"
-								>Phone Number</label
-							>
-							<div class="mt-1 text-lg text-gray-900">
-								{{ employee?.phone }}
-							</div>
+							<h3 class="text-sm font-medium text-gray-500">Phone Number</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.phone }}</p>
 						</div>
 					</div>
 
 					<!-- Employment Details -->
-					<div class="space-y-4">
+					<div class="space-y-6">
 						<div>
-							<label class="block text-sm font-medium text-gray-500">Position</label>
-							<div class="mt-1 text-lg text-gray-900">{{ employee?.position }}</div>
+							<h3 class="text-sm font-medium text-gray-500">Position</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.position }}</p>
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-500">Salary</label>
-							<div class="mt-1 text-lg text-gray-900">
-								{{ formatCurrency(employee?.salary) }}
-							</div>
+							<h3 class="text-sm font-medium text-gray-500">Salary</h3>
+							<p class="mt-2 text-base text-gray-900">{{ formatCurrency(employee?.salary) }}</p>
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-500"
-								>Employee ID</label
-							>
-							<div class="mt-1 text-lg text-gray-900">{{ employee?.name }}</div>
+							<h3 class="text-sm font-medium text-gray-500">Employee ID</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.name }}</p>
 						</div>
 						<div v-if="employee?.user">
-							<label class="block text-sm font-medium text-gray-500"
-								>Associated System User</label
-							>
-							<div class="mt-1 text-lg text-gray-900">{{ employee?.user }}</div>
+							<h3 class="text-sm font-medium text-gray-500">Associated System User</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.user }}</p>
 						</div>
 						<div v-if="employee?.email">
-							<label class="block text-sm font-medium text-gray-500"
-								>Email Address</label
-							>
-							<div class="mt-1 text-lg text-gray-900">{{ employee?.email }}</div>
+							<h3 class="text-sm font-medium text-gray-500">Email Address</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.email }}</p>
 						</div>
 					</div>
 
-					<div class="space-y-4">
+					<!-- Additional Details -->
+					<div class="space-y-6">
 						<div v-if="employee?.branch">
-							<label class="block text-sm font-medium text-gray-500">Branch</label>
-							<div class="mt-1 text-lg text-gray-900">{{ employee?.branch }}</div>
+							<h3 class="text-sm font-medium text-gray-500">Branch</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.branch }}</p>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			<!-- Stats Overview -->
-			<div class="mb-8">
-				<h3 class="text-sm font-medium text-gray-500 mb-4">Overview</h3>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+			<div class="bg-white rounded-lg">
+				<div class="grid divide-y sm:divide-y-0 sm:divide-x sm:grid-cols-3 divide-gray-100">
 					<!-- Attendance Rate -->
-					<div class="bg-white rounded-lg shadow p-6">
-						<div class="flex items-center">
-							<div class="p-3 rounded-full bg-green-100">
-								<FeatherIcon name="check-circle" class="w-6 h-6 text-green-600" />
-							</div>
-							<div class="ml-4">
-								<div class="text-sm font-medium text-gray-500">
-									Attendance Rate
+					<div class="p-6">
+						<div class="flex flex-col">
+							<div class="flex items-center gap-3 mb-1">
+								<div class="rounded-full bg-green-50 p-1.5">
+									<FeatherIcon name="check-circle" class="h-4 w-4 text-green-600" />
 								</div>
-								<div class="text-2xl font-bold text-gray-900">
-									{{ attendanceRate }}%
+								<p class="text-sm font-medium text-gray-500">Attendance Rate</p>
+							</div>
+							<div class="flex items-center gap-2">
+								<p class="text-2xl font-semibold text-gray-900">{{ attendanceRate }}%</p>
+								<div class="h-1.5 flex-1 rounded-full bg-gray-100 max-w-[100px]">
+									<div 
+										class="h-1.5 rounded-full bg-green-500"
+										:style="{ width: `${attendanceRate}%` }"
+									></div>
 								</div>
 							</div>
 						</div>
 					</div>
 
 					<!-- Current Month Overtime -->
-					<div class="bg-white rounded-lg shadow p-6">
-						<div class="flex items-center">
-							<div class="p-3 rounded-full bg-blue-100">
-								<FeatherIcon name="clock" class="w-6 h-6 text-blue-600" />
-							</div>
-							<div class="ml-4">
-								<div class="text-sm font-medium text-gray-500">
-									{{ currentMonth }} Overtime
+					<div class="p-6">
+						<div class="flex flex-col">
+							<div class="flex items-center gap-3 mb-1">
+								<div class="rounded-full bg-primary-50 p-1.5">
+									<FeatherIcon name="clock" class="h-4 w-4 text-primary-600" />
 								</div>
-								<div class="text-2xl font-bold text-gray-900">
-									{{ Number(currentMonthOvertime).toString() }}h
-								</div>
+								<p class="text-sm font-medium text-gray-500">{{ currentMonth }} Overtime</p>
 							</div>
+							<p class="text-2xl font-semibold text-gray-900">{{ totalOvertime }}h</p>
 						</div>
 					</div>
 
-					<!-- Total Overtime Hours -->
-					<div class="bg-white rounded-lg shadow p-6">
-						<div class="flex items-center">
-							<div class="p-3 rounded-full bg-purple-100">
-								<FeatherIcon name="clock" class="w-6 h-6 text-purple-600" />
-							</div>
-							<div class="ml-4">
-								<div class="text-sm font-medium text-gray-500">Total Overtime</div>
-								<div class="text-2xl font-bold text-gray-900">
-									{{ Number(totalOvertime).toString() }}h
+					<!-- Total Overtime -->
+					<div class="p-6">
+						<div class="flex flex-col">
+							<div class="flex items-center gap-3 mb-1">
+								<div class="rounded-full bg-purple-50 p-1.5">
+									<FeatherIcon name="clock" class="h-4 w-4 text-purple-600" />
 								</div>
+								<p class="text-sm font-medium text-gray-500">Total Overtime</p>
 							</div>
+							<p class="text-2xl font-semibold text-gray-900">{{ totalOvertime }}h</p>
 						</div>
 					</div>
-				</div>
-			</div>
-
-			<!-- Monthly Attendance Records -->
-			<div class="mb-8">
-				<h3 class="text-sm font-medium text-gray-500 mb-4">
-					{{ currentMonth }} Attendance Record
-				</h3>
-				<div class="overflow-x-auto">
-					<table class="min-w-full divide-y divide-gray-200">
-						<thead>
-							<tr>
-								<th
-									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Date
-								</th>
-								<th
-									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Status
-								</th>
-								<th
-									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Overtime Hours
-								</th>
-							</tr>
-						</thead>
-						<tbody class="bg-white divide-y divide-gray-200">
-							<tr v-for="record in monthlyAttendanceRecords" :key="record.date">
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-									{{ formatDate(record.date) }}
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="flex items-center">
-										<span
-											class="w-2.5 h-2.5 rounded-full mr-2"
-											:class="{
-												'bg-yellow-400': record.status === 'late',
-												'bg-red-500': record.status === 'absent',
-												'bg-green-500': record.status === 'present',
-											}"
-										></span>
-										<span class="text-sm text-gray-900 capitalize">{{
-											record.status
-										}}</span>
-									</div>
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-									{{ record.overtime > 0 ? `${record.overtime}h` : '-' }}
-								</td>
-							</tr>
-						</tbody>
-					</table>
 				</div>
 			</div>
 
 			<!-- Leave Records -->
-			<div class="mb-8">
-				<h3 class="text-sm font-medium text-gray-500 mb-4">Leave Records</h3>
-				<div v-if="leaveRecords.length === 0" class="text-gray-500 text-sm">
+			<div class="rounded-lg bg-white p-6 shadow-sm">
+				<h3 class="mb-6 text-lg font-medium text-gray-900">Leave Records</h3>
+				<div v-if="leaveRecords.length === 0" class="text-sm text-gray-500">
 					No leave records found
 				</div>
-				<div v-else class="overflow-x-auto">
-					<table class="min-w-full divide-y divide-gray-200">
-						<thead>
-							<tr>
-								<th
-									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Leave Date
-								</th>
-								<th
-									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Return Date
-								</th>
-								<th
-									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Duration
-								</th>
-								<th
-									class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Status
-								</th>
-							</tr>
-						</thead>
-						<tbody class="bg-white divide-y divide-gray-200">
-							<tr v-for="leave in leaveRecords" :key="leave.name">
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-									{{ formatDate(leave.leave_date) }}
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-									{{ formatDate(leave.return_date) }}
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-									{{
-										calculateLeaveDuration(leave.leave_date, leave.return_date)
-									}}
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="flex items-center">
-										<span
-											class="w-2.5 h-2.5 rounded-full mr-2"
-											:class="{
-												'bg-green-500': isLeaveCompleted(leave),
-												'bg-blue-500': isLeaveOngoing(leave),
-											}"
-										></span>
-										<span class="text-sm text-gray-900">
-											{{ getLeaveStatus(leave) }}
-										</span>
-									</div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+				<div v-else class="space-y-4">
+					<div
+						v-for="leave in leaveRecords"
+						:key="leave.name"
+						class="flex items-center justify-between rounded-lg border p-4"
+					>
+						<div class="flex items-center gap-4">
+							<div class="rounded-full bg-gray-100 p-2">
+								<FeatherIcon name="calendar" class="h-5 w-5 text-gray-600" />
+							</div>
+							<div>
+								<p class="font-medium text-gray-900">{{ leave.leave_type }}</p>
+								<p class="mt-1 text-sm text-gray-500">
+									{{ formatDate(leave.leave_date) }} - {{ formatDate(leave.return_date) }}
+									({{ calculateLeaveDuration(leave.leave_date, leave.return_date) }})
+								</p>
+							</div>
+						</div>
+						<div class="flex items-center">
+							<span
+								class="mr-2 h-2.5 w-2.5 rounded-full"
+								:class="{
+									'bg-green-500': isLeaveCompleted(leave),
+									'bg-blue-500': isLeaveOngoing(leave),
+								}"
+							></span>
+							<span class="text-sm text-gray-900">
+								{{ getLeaveStatus(leave) }}
+							</span>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -924,7 +826,8 @@ const currentMonthOvertime = computed(() => {
 })
 
 const totalOvertime = computed(() => {
-	return processedAttendance.value.reduce((sum, record) => sum + (record.overtime || 0), 0)
+    return processedAttendance.value.reduce((sum, record) => 
+        sum + (+record.overtime || 0), 0)
 })
 
 const monthlyAttendanceRecords = computed(() => {

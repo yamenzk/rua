@@ -1,495 +1,583 @@
 <template>
-  <div class="space-y-6">
-    <!-- Sub Navigation Bar -->
-    <div class="sticky top-0 z-10 bg-white border-b">
-      <div class="px-4 py-3">
-        <div class="flex flex-col space-y-4">
-          <!-- Title and Search Row -->
-          <div class="flex items-center justify-between gap-3">
-            <h2 class="text-lg font-semibold text-gray-900">Projects</h2>
-          </div>
+	<div class="space-y-6">
+		<!-- Floating Filters Toolbar -->
+		<div
+			class="fixed bottom-4 right-4 z-10 mb-4 flex items-center justify-between gap-2 p-4 bg-gray-200/60 backdrop-blur-sm w-fit rounded-lg hidden md:flex"
+		>
+			<div class="flex items-center gap-2">
+				<!-- Status Filter -->
+				<div class="relative">
+					<FormControl
+						v-model="statusFilter"
+						type="select"
+						:options="statusOptions"
+						size="sm"
+						variant="outline"
+					/>
 
-          <!-- Search and Controls Row -->
-          <div class="flex items-center gap-2">
-            <FormControl
-              type="search"
-              :ref_for="true"
-              size="sm"
-              variant="subtle"
-              placeholder="Search projects..."
-              :modelValue="searchQuery"
-              @update:modelValue="handleSearch"
-              class="flex-1 rua-project-search"
-            />
+					<div
+						class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
+					>
+						<FeatherIcon name="chevron-down" class="h-4 w-4" />
+					</div>
+				</div>
 
-            <div class="flex items-center gap-2">
-              <FormControl
-                type="select"
-                :options="sortFieldOptions"
-                size="sm"
-                variant="subtle"
-                placeholder="Sort"
-                :modelValue="sortField"
-                @update:modelValue="handleSortFieldChange"
-                class="w-32 sm:w-36"
-              />
+				<!-- Sort Direction Toggle -->
+				<div class="relative">
+					<FormControl
+						type="select"
+						:options="sortFieldOptions"
+						size="sm"
+						variant="outline"
+						placeholder="Sort"
+						:modelValue="sortField"
+						@update:modelValue="handleSortFieldChange"
+					/>
+					<div
+						class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
+					>
+						<FeatherIcon name="chevron-down" class="h-4 w-4" />
+					</div>
+				</div>
+				<button
+					@click="toggleSortDirection"
+					class="rounded-lg p-2 hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center border border-gray-300"
+					title="Toggle Sort Direction"
+				>
+					<FeatherIcon
+						:name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
+						class="h-5 w-5 text-gray-600"
+					/>
+				</button>
 
-              <Button 
-                variant="subtle" 
-                size="sm" 
-                @click="toggleSortDirection"
-                title="Toggle Sort Direction"
-                class="bg-gray-50 hover:bg-gray-100"
-              >
-                <FeatherIcon
-                  :name="sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'"
-                  class="w-4 h-4"
-                />
-              </Button>
+				<!-- Add Filter Button -->
+				<button
+					@click="showFilterDialog = true"
+					class="rounded-lg p-2 hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center border border-gray-300"
+					title="Add Filters"
+				>
+					<FeatherIcon name="filter" class="h-5 w-5 text-gray-600" />
+				</button>
+			</div>
 
-              <Button
-                variant="subtle"
-                size="sm"
-                @click="showFilterDialog = true"
-                title="Add Filter"
-                class="bg-gray-50 hover:bg-gray-100"
-              >
-                <FeatherIcon name="filter" class="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+			<!-- Active Filters -->
+			<div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
+				<div class="flex gap-2">
+					<div
+						v-for="(filter, index) in activeFilters"
+						:key="index"
+						class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
+					>
+						<span>{{ getFieldLabel(filter.field) }}: {{ filter.value }}</span>
+						<button
+							class="text-gray-500 hover:text-gray-700"
+							@click="removeFilter(index)"
+							title="Remove Filter"
+						>
+							<FeatherIcon name="x" class="w-3 h-3" />
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 
-          <!-- Active Filters -->
-          <div v-if="activeFilters.length" class="flex items-center gap-2 overflow-x-auto">
-            <span class="text-sm text-gray-500 hidden sm:inline">Filters:</span>
-            <div class="flex gap-2">
-              <div
-                v-for="(filter, index) in activeFilters"
-                :key="index"
-                class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs whitespace-nowrap"
-              >
-                <span class="truncate max-w-[150px] sm:max-w-none">
-                  {{ getFieldLabel(filter.field) }}: {{ filter.value }}
-                </span>
-                <button 
-                  class="text-gray-500 hover:text-gray-700" 
-                  @click="removeFilter(index)"
-                  title="Remove Filter"
-                >
-                  <FeatherIcon name="x" class="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+		<!-- Project Cards Grid -->
+		<div class="px-4">
+			<div v-if="list.list.loading" class="flex justify-center">
+				<LoadingIndicator />
+			</div>
 
-    <!-- Project Cards Grid -->
-    <div class="px-4">
-      <div v-if="list.list.loading" class="flex justify-center">
-        <LoadingIndicator />
-      </div>
+			<div v-else-if="!list.data?.length" class="text-center py-8">
+				<FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
+				<div class="text-gray-600">No projects found</div>
+				<p class="text-sm text-gray-500 mt-1">
+					{{
+						searchQuery
+							? 'Try adjusting your search or filters'
+							: 'Create a new project to get started'
+					}}
+				</p>
+			</div>
 
-      <div v-else-if="!list.data?.length" class="text-center py-8">
-        <FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-        <div class="text-gray-600">No projects found</div>
-        <p class="text-sm text-gray-500 mt-1">
-          {{ searchQuery ? 'Try adjusting your search or filters' : 'Create a new project to get started' }}
-        </p>
-      </div>
+			<div v-else class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
+				<div
+					v-for="project in filteredProjects"
+					:key="project.name"
+					class="bg-white rounded-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group cursor-pointer"
+					@click="router.push(`/project/${project.name}/overview`)"
+				>
+					<!-- Project Header -->
+					<div class="relative h-48 overflow-hidden">
+						<img
+							v-if="project.image"
+							:src="project.image"
+							:alt="project.project_name"
+							class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+							@error="$event.target.style.display = 'none'"
+						/>
+						<div
+							v-else
+							class="h-full w-full flex items-center justify-center bg-gray-100 transition-colors duration-300 group-hover:bg-gray-200"
+						>
+							<FeatherIcon name="briefcase" class="w-12 h-12 text-gray-400" />
+						</div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-        <div
-          v-for="project in filteredProjects"
-          :key="project.name"
-          class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden cursor-pointer"
-          @click="router.push(`/project/${project.name}/overview`)"
-        >
-          <!-- Image Section with Overlay Content -->
-          <div class="relative h-48">
-            <img
-              v-if="project.image"
-              :src="project.image"
-              :alt="project.project_name"
-              class="h-full w-full object-cover"
-              @error="$event.target.style.display='none'"
-            />
-            <div v-else class="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
-              <FeatherIcon name="image" class="w-12 h-12" />
-            </div>
+						<!-- Status Badge -->
+						<div class="absolute top-3 right-3 z-10">
+							<div
+								class="px-2 py-1 rounded-full text-xs font-medium"
+								:class="getStatusClass(project.status)"
+							>
+								{{ project.status }}
+							</div>
+						</div>
+					</div>
 
-            <!-- Dark Gradient -->
-            <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 pointer-events-none"></div>
+					<!-- Project Details -->
+					<div class="p-5 space-y-3">
+						<div class="flex justify-between items-start">
+							<div>
+								<h3
+									class="font-bold text-lg text-gray-900 group-hover:text-gray-700 transition-colors line-clamp-1"
+								>
+									{{ project.project_name }}
+								</h3>
+								<p class="text-sm text-gray-500 mt-1 line-clamp-2">
+									{{ project.description || 'No description available' }}
+								</p>
+							</div>
+						</div>
 
-            <!-- Status Badge -->
-            <div class="absolute top-3 right-3 z-10">
-              <Badge
-                :variant="'subtle'"
-                :ref_for="true"
-                :theme="getStatusTheme(project.status)"
-                size="sm"
-                :label="project.status"
-              >
-                {{ project.status }}
-              </Badge>
-            </div>
+						<!-- Project Stats -->
+						<div class="space-y-2 mt-4">
+							<!-- Progress Bar -->
+							<div>
+								<div class="flex justify-between items-center text-xs mb-1">
+									<span class="text-gray-600">Completion</span>
+									<span class="font-medium"
+										>{{ Math.round(project.completion || 0) }}%</span
+									>
+								</div>
+								<div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+									<div
+										class="h-full bg-gray-900 rounded-full transition-all duration-300"
+										:style="{
+											width: `${Math.round(project.completion || 0)}%`,
+										}"
+									></div>
+								</div>
+							</div>
 
-            <!-- Project Info -->
-            <div class="absolute top-0 left-0 right-0 bottom-0 p-4 flex flex-col justify-between">
-              <h3 class="font-semibold text-lg text-white line-clamp-1 relative z-10">
-                {{ project.project_name }}
-              </h3>
-              <p class="text-sm text-gray-200 line-clamp-2 relative z-10">
-                {{ project.description || 'No description available' }}
-              </p>
-            </div>
-          </div>
+							<!-- Location and Value -->
+							<div
+								class="flex items-center justify-between text-xs text-gray-600 mt-2"
+							>
+								<div class="flex items-center gap-2 truncate w-1/2">
+									<FeatherIcon name="map-pin" class="w-4 h-4 text-gray-400" />
+									<span class="truncate">{{ project.location || 'Nil' }}</span>
+								</div>
+								<div class="flex items-center">
+									<span>{{ formatCurrency(project.contract_value) }}</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
-          <!-- Details Section -->
-          <div class="p-4 space-y-3">
-            <!-- Progress Bar -->
-            <div class="space-y-1">
-              <div class="flex justify-between items-center text-xs">
-                <span class="text-gray-600">Completion</span>
-                <span class="font-medium">{{ Math.round(project.completion || 0)}}%</span>
-              </div>
-              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-blue-500 rounded-full transition-all duration-300"
-                  :style="{ width: (Math.round(project.completion || 0)) + '%' }"
-                ></div>
-              </div>
-            </div>
+		<!-- Filter Dialog -->
+		<Dialog
+			v-model="showFilterDialog"
+			:options="{
+				title: 'Add Filter',
+				icon: {
+					name: 'filter',
+					appearance: 'primary',
+				},
+				size: 'sm',
+				actions: [
+					{
+						label: 'Apply',
+						variant: 'solid',
+						onClick: () => {
+							addFilter()
+							showFilterDialog = false
+						},
+					},
+				],
+			}"
+		>
+			<template #body-content>
+				<div class="space-y-4">
+					<FormControl
+						type="select"
+						:options="filterFieldOptions"
+						label="Field"
+						required
+						v-model="newFilter.field"
+					/>
 
-            <!-- Location and Value -->
-            <div class="flex items-center justify-between text-xs text-gray-600 gap-2">
-              <div class="flex items-center min-w-0">
-                <FeatherIcon name="map-pin" class="w-3.5 h-3.5 mr-1 flex-shrink-0" />
-                <span class="truncate">{{ project.location || 'Location not specified' }}</span>
-              </div>
-              <div class="flex items-center flex-shrink-0">
-                <FeatherIcon name="dollar-sign" class="w-3.5 h-3.5 mr-1" />
-                {{ formatCurrency(project.contract_value) }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+					<FormControl
+						type="select"
+						:options="operatorOptions"
+						label="Operator"
+						required
+						v-model="newFilter.operator"
+					/>
 
-    <!-- Filter Dialog -->
-    <Dialog
-      v-model="showFilterDialog"
-      :options="{
-        title: 'Add Filter',
-        icon: {
-          name: 'filter',
-          appearance: 'primary'
-        },
-        size: 'sm',
-        actions: [
-          {
-            label: 'Apply',
-            variant: 'solid',
-            onClick: () => {
-              addFilter()
-              showFilterDialog = false
-            }
-          }
-        ]
-      }"
-    >
-      <template #body-content>
-        <div class="space-y-4">
-          <FormControl
-            type="select"
-            :options="filterFieldOptions"
-            label="Field"
-            required
-            v-model="newFilter.field"
-          />
-          
-          <FormControl
-            type="select"
-            :options="operatorOptions"
-            label="Operator"
-            required
-            v-model="newFilter.operator"
-          />
-          
-          <FormControl
-            v-if="newFilter.field === 'status'"
-            type="select"
-            :options="statusOptions"
-            label="Value"
-            required
-            v-model="newFilter.value"
-          />
-          <FormControl
-            v-else-if="newFilter.field === 'completion'"
-            type="number"
-            label="Value"
-            required
-            v-model="newFilter.value"
-          />
-          <FormControl
-            v-else
-            type="text"
-            label="Value"
-            required
-            v-model="newFilter.value"
-          />
-        </div>
-      </template>
-    </Dialog>
+					<FormControl
+						v-if="newFilter.field === 'status'"
+						type="select"
+						:options="statusOptions"
+						label="Value"
+						required
+						v-model="newFilter.value"
+					/>
+					<FormControl
+						v-else-if="newFilter.field === 'completion'"
+						type="number"
+						label="Value"
+						required
+						v-model="newFilter.value"
+					/>
+					<FormControl
+						v-else
+						type="text"
+						label="Value"
+						required
+						v-model="newFilter.value"
+					/>
+				</div>
+			</template>
+		</Dialog>
 
-    <!-- New Project Dialog -->
-    <Dialog v-model="showNewProject" :options="dialogOptions">
-      <template #body-content>
-        <div class="space-y-4">
-          <Input
-            v-model="newProject.project_name"
-            label="Project Name"
-            required
-          />
-          <Input
-            v-model="newProject.location"
-            label="Location"
-            required
-          />
-        </div>
-      </template>
-    </Dialog>
-  </div>
+		<!-- New Project Dialog -->
+		<Dialog v-model="showNewProject" :options="dialogOptions">
+			<template #body-content>
+				<div class="space-y-4">
+					<Input v-model="newProject.project_name" label="Project Name" required />
+					<Input v-model="newProject.location" label="Location" required />
+				</div>
+			</template>
+		</Dialog>
+	</div>
 </template>
 
 <script setup>
-import { ref, inject, h, onMounted, computed} from 'vue'
-import { Button, Input, Dialog, Badge, FeatherIcon, LoadingIndicator, FormControl, debounce } from 'frappe-ui'
+import { ref, inject, h, onMounted, computed } from 'vue'
+import { Input, Dialog, FeatherIcon, LoadingIndicator, FormControl } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { projectResource } from '@/data/project'
+import { formatCurrency } from '@/utils/format'
 
 const router = useRouter()
 const setHeaderAction = inject('setHeaderAction')
 
+onMounted(() => {
+	setHeaderAction(() =>
+		h(
+			'div',
+			{
+				class: 'flex items-center justify-between gap-4 flex-1 px-2',
+			},
+			[
+				// Search Field
+				h(
+					'div',
+					{
+						class: 'relative flex-1 max-w-2xl',
+					},
+					[
+						h(
+							'div',
+							{
+								class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3',
+							},
+							[
+								h(FeatherIcon, {
+									name: 'search',
+									class: 'h-4 w-4 text-gray-400',
+								}),
+							],
+						),
+						h('input', {
+							type: 'text',
+							placeholder: 'Search projects...',
+							value: searchQuery.value,
+							onInput: (e) => (searchQuery.value = e.target.value),
+							class: `
+          block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4 
+          text-gray-900 ring-1 ring-inset ring-gray-200 
+          placeholder:text-gray-400 
+          focus:ring-2 focus:ring-inset focus:ring-gray-900
+          transition-all duration-200
+          bg-white/50 hover:bg-white
+          sm:text-sm sm:leading-6
+        `,
+						}),
+					],
+				),
 
-  setHeaderAction(h(Button, {
-    variant: 'solid',
-    onClick: () => showNewProject.value = true,
-  }, () => 'New Project'))
+				// New Project Button
+				h(
+					'button',
+					{
+						class: `
+        inline-flex items-center gap-2 
+        rounded-xl px-4 py-2.5
+        text-sm font-semibold text-white
+        bg-gray-900 hover:bg-gray-800
+        transition duration-200 ease-in-out
+        shadow-sm hover:shadow
+        focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
+      `,
+						onClick: () => (showNewProject.value = true),
+					},
+					[
+						h(FeatherIcon, {
+							name: 'plus',
+							class: 'h-4 w-4',
+						}),
+						h(
+							'span',
+							{
+								class: 'hidden sm:inline',
+							},
+							'New Project',
+						),
+					],
+				),
+			],
+		),
+	)
+})
 
 // State
 const searchQuery = ref('')
 const sortField = ref('project_name')
 const sortDirection = ref('asc')
-const activeFilters = ref([
-  {
-    field: 'status',
-    operator: '=',
-    value: 'In Progress'
-  }
-])
+const statusFilter = ref('In Progress')
+const activeFilters = ref([])
 const showFilterDialog = ref(false)
 const showNewProject = ref(false)
 const newFilter = ref({
-  field: '',
-  operator: '=',
-  value: ''
+	field: '',
+	operator: '=',
+	value: '',
 })
 const newProject = ref({
-  project_name: '',
-  description: '',
+	project_name: '',
+	description: '',
 })
 
 const dialogOptions = {
-  title: 'New Project',
-  size: 'sm',
-  actions: [
-    {
-      label: 'Create',
-      variant: 'solid',
-      onClick: createProject
-    }
-  ]
+	title: 'New Project',
+	size: 'sm',
+	actions: [
+		{
+			label: 'Create',
+			variant: 'solid',
+			onClick: createProject,
+		},
+	],
 }
 
 // Field Options
 const fieldOptions = [
-  { label: 'Creation Date', value: 'creation', sortOnly: true },
-  { label: 'Project Name', value: 'project_name' },
-  { label: 'Status', value: 'status' },
-  { label: 'Location', value: 'location' },
-  { label: 'Completion', value: 'completion' },
-  { label: 'Contract Value', value: 'contract_value' }
+	{ label: 'Creation Date', value: 'creation', sortOnly: true },
+	{ label: 'Project Name', value: 'project_name' },
+	{ label: 'Status', value: 'status' },
+	{ label: 'Location', value: 'location' },
+	{ label: 'Completion', value: 'completion' },
+	{ label: 'Contract Value', value: 'contract_value' },
 ]
 
 // Derived options for filters and sorting
-const filterFieldOptions = fieldOptions.filter(field => !field.sortOnly)
+const filterFieldOptions = fieldOptions.filter((field) => !field.sortOnly)
 const sortFieldOptions = fieldOptions
 
 const operatorOptions = [
-  { label: 'Equals', value: '=' },
-  { label: 'Not Equals', value: '!=' },
-  { label: 'Greater Than', value: '>' },
-  { label: 'Less Than', value: '<' },
-  { label: 'Greater or Equal', value: '>=' },
-  { label: 'Less or Equal', value: '<=' },
-  { label: 'Like', value: 'like' }
+	{ label: 'Equals', value: '=' },
+	{ label: 'Not Equals', value: '!=' },
+	{ label: 'Greater Than', value: '>' },
+	{ label: 'Less Than', value: '<' },
+	{ label: 'Greater or Equal', value: '>=' },
+	{ label: 'Less or Equal', value: '<=' },
+	{ label: 'Like', value: 'like' },
 ]
 
 const statusOptions = [
-  { label: 'Not Started', value: 'Not Started' },
-  { label: 'In Progress', value: 'In Progress' },
-  { label: 'Completed', value: 'Completed' },
-  { label: 'On Hold', value: 'On Hold' },
-  { label: 'Cancelled', value: 'Cancelled' }
+  { label: 'All', value: '' },
+	{ label: 'Tender', value: 'Tender' },
+	{ label: 'In Progress', value: 'In Progress' },
+	{ label: 'Completed', value: 'Completed' },
+	{ label: 'Job in Hand', value: 'Job in Hand' },
+	{ label: 'Cancelled', value: 'Cancelled' },
 ]
 
 const list = projectResource
 
 function updateListFilters() {
-  const baseFilters = [['is_child', '!=', 1]]  // Always include this filter
-  
-  // Only apply server-side filtering for specific cases
-  const userFilters = activeFilters.value
-    .filter(filter => 
-      // Only apply server-side filtering for project_name (search)
-      filter.field === 'project_name' && filter.operator === 'like'
-    )
-    .map(filter => {
-      let value = filter.value
-      value = `%${value}%`
-      return [filter.field, filter.operator, value]
-    })
+	const baseFilters = [['is_child', '!=', 1]] // Always exclude child projects
 
-  // Combine base filters with user filters
-  list.filters = [...baseFilters, ...userFilters]
-  list.reload()
+	// Convert activeFilters to server-side filters
+	const userFilters = activeFilters.value.map((filter) => {
+		let value = filter.value
+
+		// Handle different fields and operators
+		switch (filter.field) {
+			case 'completion':
+				// Map comparison operators for numeric fields
+				const comparisonMap = {
+					'=': '==',
+					'!=': '!=',
+					'>': '>',
+					'<': '<',
+					'>=': '>=',
+					'<=': '<=',
+				}
+				return [filter.field, comparisonMap[filter.operator], Number(value)]
+
+			case 'contract_value':
+				return [filter.field, filter.operator, Number(value)]
+
+			case 'project_name':
+				// For text fields using 'like', add wildcard
+				return [filter.field, filter.operator, `%${value}%`]
+
+			default:
+				return [filter.field, filter.operator, value]
+		}
+	})
+
+	// Combine base filters with user filters
+	list.filters = [...baseFilters, ...userFilters]
+	list.reload()
 }
 
 const filteredProjects = computed(() => {
-  return list.data?.filter(project => {
-    // Apply all filters except project_name (which is already handled server-side)
-    return activeFilters.value
-      .filter(filter => filter.field !== 'project_name')
-      .every(filter => {
-        const projectValue = project[filter.field]
-        
-        switch(filter.operator) {
-          case '=':
-            return projectValue == filter.value
-          case '!=':
-            return projectValue != filter.value
-          case '>':
-            return projectValue > filter.value
-          case '<':
-            return projectValue < filter.value
-          case '>=':
-            return projectValue >= filter.value
-          case '<=':
-            return projectValue <= filter.value
-          case 'like':
-            return projectValue.toString().toLowerCase().includes(filter.value.toLowerCase())
-          default:
-            return true
-        }
-      })
-  }) || []
+	let projects = list.data || []
+
+	// Status Filter
+	if (statusFilter.value) {
+		projects = projects.filter((project) => project.status === statusFilter.value)
+	}
+
+	// Apply all active filters
+	return projects.filter((project) =>
+		activeFilters.value.every((filter) => {
+			const projectValue = project[filter.field]
+
+			switch (filter.operator) {
+				case '=':
+					return projectValue == filter.value
+				case '!=':
+					return projectValue != filter.value
+				case '>':
+					return projectValue > filter.value
+				case '<':
+					return projectValue < filter.value
+				case '>=':
+					return projectValue >= filter.value
+				case '<=':
+					return projectValue <= filter.value
+				case 'like':
+					return projectValue
+						.toString()
+						.toLowerCase()
+						.includes(filter.value.toLowerCase())
+				default:
+					return true
+			}
+		}),
+	)
 })
 
-
-// Handlers
-const handleSearch = debounce((value) => {
-  searchQuery.value = value
-  if (value) {
-    activeFilters.value = activeFilters.value.filter(f => f.field !== 'project_name')
-    activeFilters.value.push({
-      field: 'project_name',
-      operator: 'like',
-      value: value
-    })
-  } else {
-    activeFilters.value = activeFilters.value.filter(f => f.field !== 'project_name')
-  }
-  updateListFilters()
-}, 300)
+function getStatusClass(status) {
+	const themes = {
+		Tender: 'bg-gray-100 text-gray-700',
+		'In Progress': 'bg-blue-100 text-blue-700',
+		Completed: 'bg-green-100 text-green-700',
+		'Job in Hand': 'bg-orange-100 text-orange-700',
+		Cancelled: 'bg-red-100 text-red-700',
+	}
+	return themes[status] || 'bg-gray-100 text-gray-700'
+}
 
 function handleSortFieldChange(value) {
-  sortField.value = value
-  list.orderBy = `${value} ${sortDirection.value}`
-  list.reload()
+	sortField.value = value
+	list.orderBy = `${value} ${sortDirection.value}`
+	list.reload()
 }
 
 function toggleSortDirection() {
-  sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  list.orderBy = `${sortField.value} ${sortDirection.value}`
-  list.reload()
+	sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+	list.orderBy = `${sortField.value} ${sortDirection.value}`
+	list.reload()
 }
 
 function addFilter() {
-  activeFilters.value.push({
-    field: newFilter.value.field,
-    operator: newFilter.value.operator,
-    value: newFilter.value.value
-  })
-  updateListFilters()
-  newFilter.value = { field: '', operator: '=', value: '' }
+	activeFilters.value.push({
+		field: newFilter.value.field,
+		operator: newFilter.value.operator,
+		value: newFilter.value.value,
+	})
+	updateListFilters()
+	newFilter.value = { field: '', operator: '=', value: '' }
 }
 
 function removeFilter(index) {
-  activeFilters.value.splice(index, 1)
-  updateListFilters()
+	activeFilters.value.splice(index, 1)
+	updateListFilters()
 }
 
-
 function getFieldLabel(fieldValue) {
-  return filterFieldOptions.find(option => option.value === fieldValue)?.label || fieldValue
+	return filterFieldOptions.find((option) => option.value === fieldValue)?.label || fieldValue
 }
 
 import { generateProjectDescription } from '../utils/projectDescriptionGenerator'
 async function createProject() {
-  try {
-    const description = await generateProjectDescription(
-      newProject.value.project_name,
-      newProject.value.location
-    )
-    await list.insert.submit({
-      project_name: newProject.value.project_name,
-      location: newProject.value.location,
-      description: description
-    })
-    
-    showNewProject.value = false
-    newProject.value = {
-      project_name: '',
-      location: '',
-    }
-  } catch (error) {
-    console.error('Error creating project:', error)
-    throw error
-  }
-}
+	try {
+		const description = await generateProjectDescription(
+			newProject.value.project_name,
+			newProject.value.location,
+		)
+		await list.insert.submit({
+			project_name: newProject.value.project_name,
+			location: newProject.value.location,
+			description: description,
+		})
 
-function getStatusTheme(status) {
-  const themes = {
-    'Not Started': 'gray',
-    'In Progress': 'blue',
-    'Completed': 'green',
-    'On Hold': 'orange',
-    'Cancelled': 'red'
-  }
-  return themes[status] || 'gray'
-}
-
-function formatCurrency(value) {
-  if (!value) return '0'
-  return `${Number(value).toLocaleString()}` // Changed from Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 }) to Number(value).toLocaleString()
+		showNewProject.value = false
+		newProject.value = {
+			project_name: '',
+			location: '',
+		}
+	} catch (error) {
+		console.error('Error creating project:', error)
+		throw error
+	}
 }
 
 onMounted(async () => {
-  // Initialize with only excluding child projects
-  list.filters = [['is_child', '!=', 1]]
-  await list.reload()
+	// Initialize with only excluding child projects
+	list.filters = [['is_child', '!=', 1]]
+	await list.reload()
 })
 </script>
+<style scoped>
+.line-clamp-1 {
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.line-clamp-2 {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+</style>

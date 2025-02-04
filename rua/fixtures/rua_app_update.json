@@ -293,11 +293,11 @@
   "details": "<div class=\"ql-editor read-mode\"><p><div class=\"ql-editor read-mode\"><p>You can now register an employee signature from the Employee's tab</p><p><img src=\"https://i.postimg.cc/3Jkq63M4/Screenshot-2025-02-03-181721.png\" style=\"max-width: 100%;\"></p><p><br></p><p>After registering a signature, you can find it in the \"Documents\" section</p><p><img src=\"https://i.postimg.cc/hGsMvYWR/Screenshot-2025-02-03-182002.png\" style=\"max-width: 100%;\"></p><p><br></p><p>You can now edit the document to give it a <strong>Document Number</strong> this number will be used as a passcode to sign documents with that signature. </p><p><img src=\"https://i.postimg.cc/y8BbNcg9/Screenshot-2025-02-03-182135.png\" style=\"max-width: 100%;\"></p><p><br></p><p>Now you can use the document number to instantly sign any document</p><p><img src=\"https://i.postimg.cc/26PHNZN1/Screenshot-2025-02-03-182223.png\" style=\"max-width: 100%;\"> </p><p><br></p><p><span style=\"color: rgb(0, 138, 0);\">Users can have unlimited signatures with different passcodes.</span></p><p><strong style=\"color: rgb(0, 102, 204);\"><u>Instead of using the signature pad, you can also upload a signature (or a stamp) </u></strong></p><p>To do that;</p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>From any employee, open the documents section</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Click on upload</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Attach an <strong>image</strong> file (png/jpeg/jpg)</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>A unique tag labeled \"Employee Signature\" will show, click on it.</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Assign a document number to use it as a passcode</li></ol><p><br></p><p><img src=\"https://i.postimg.cc/QdbbbcYB/Screenshot-2025-02-03-182512.png\" style=\"max-width: 100%;\"></p><p><br></p></div></p></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
-  "modified": "2025-02-03 18:27:37.208382",
+  "modified": "2025-02-04 07:15:59.908903",
   "name": "kjirfcfha5",
   "title": "Employee Signatures & Signing Passcodes",
   "type": "Feature",
-  "version": "1.1.8"
+  "version": "2.0.0"
  },
  {
   "details": "<div class=\"ql-editor read-mode\"><p>Now all project totals are reconciled <strong>after_save</strong> from the after_install script </p><pre class=\"ql-code-block-container\" spellcheck=\"false\"><div class=\"ql-code-block\">rua.install.after_install.execute</div></pre></div>",
@@ -338,5 +338,45 @@
   "title": "Outstanding Amount Calculation",
   "type": "Fix",
   "version": "1.1.8"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Simple and clean with improved spacing, readability, margins, paddings for both desktop and mobile devices. With a new sidebar that separates the main layout from project/employee layouts. </p><p><br></p><p><strong style=\"color: rgb(0, 138, 0);\">Todo: Projects UI Revamping</strong></p><p><br></p><p><img src=\"https://i.postimg.cc/gcH120cX/Screenshot-2025-02-04-071347.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-04 07:20:47.022937",
+  "name": "6i61ekj0jp",
+  "title": "Beautiful. New UI.",
+  "type": "Feature",
+  "version": "2.0.0"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p><div class=\"ql-editor read-mode\"><p>Refactored all login related logic and UI. </p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Version caching</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Session expiry on version difference</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Cached credentials for simpler, faster login.</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Clean UI matching V.2.0.0</li></ul><p><br></p><p><img src=\"https://i.postimg.cc/RZ6PKCmT/Screenshot-2025-02-04-071635.png\" style=\"max-width: 100%;\"></p></div></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-04 07:18:33.964914",
+  "name": "76p82gbda7",
+  "title": "Smarter Logins",
+  "type": "Feature",
+  "version": "2.0.0"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Redesigned What's New Dialog and update details dialog to match the new UI of V.2.0.0.</p><p><img src=\"https://i.postimg.cc/L5Wt8fJF/Screenshot-2025-02-04-072116.png\"></p><p><br></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-04 07:22:42.594240",
+  "name": "bmhesgq6d3",
+  "title": "Redesigned What's New Dialog",
+  "type": "UI",
+  "version": "2.0.0"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Most common filter now can be quickly assigned through a select element. Filters and sorting for all documents are now at the bottom right corner of the screen as of v.2.0.0 UI. They are not visible on mobile devices.</p><p><img src=\"https://i.postimg.cc/SxfmQ8V6/Screenshot-2025-02-04-073135.png\"></p><p><br></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-04 07:34:07.257084",
+  "name": "anicqv2k07",
+  "title": "Quick Filters",
+  "type": "UX",
+  "version": "2.0.0"
  }
 ]

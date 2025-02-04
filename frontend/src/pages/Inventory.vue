@@ -1,56 +1,59 @@
 <template>
   <div class="space-y-6">
-    <!-- Sub Navigation Bar -->
-    <div class="sticky top-0 z-10 bg-white border-b">
-      <div class="px-4 py-3">
-        <div class="flex flex-col space-y-4">
-          <!-- Title and View Toggle -->
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">Items</h2>
-            <div class="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
-              <button
-                class="p-1.5 rounded transition-colors"
-                :class="viewMode === 'collapsed' ? 'bg-white shadow text-gray-800' : 'text-gray-600 hover:text-gray-800'"
-                @click="viewMode = 'collapsed'"
-              >
-                <FeatherIcon name="list" class="w-4 h-4" />
-              </button>
-              <button
-                class="p-1.5 rounded transition-colors"
-                :class="viewMode === 'expanded' ? 'bg-white shadow text-gray-800' : 'text-gray-600 hover:text-gray-800'"
-                @click="viewMode = 'expanded'"
-              >
-                <FeatherIcon name="grid" class="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+    <!-- Floating Top Right Actions (Optional) -->
+    <div class="fixed top-16 right-4 z-10 flex items-center gap-2">
+      <!-- Add any specific inventory actions if needed -->
+    </div>
 
-          <!-- Search and Filters Row -->
-          <div class="flex items-center gap-4 flex-wrap">
-            <FormControl
-              type="search"
-              size="sm"
-              variant="subtle"
-              placeholder="Search items..."
-              v-model="filters.search"
-              class="flex-1"
-            />
-
-            <FormControl
-              type="select"
-              :options="brandOptions"
-              size="sm"
-              variant="subtle"
-              placeholder="Filter by Brand"
-              v-model="filters.brand"
-              class="w-48"
-            />
+    <!-- Floating Filters Toolbar -->
+    <div class="fixed bottom-4 right-4 z-10 mb-4 flex items-center justify-between gap-2 p-4 bg-gray-200/60 backdrop-blur-sm w-fit rounded-lg">
+      <div class="flex items-center gap-2">
+        <!-- Brand Filter -->
+        <div class="relative">
+          <select 
+            v-model="filters.brand"
+            class="
+              appearance-none bg-white border border-gray-300 
+              rounded-lg py-2 px-3 pr-8 leading-tight 
+              focus:outline-none focus:border-gray-500 focus:ring-gray-900
+              text-sm
+            "
+          >
+            <option value="">All Brands</option>
+            <option 
+              v-for="brand in brandOptions" 
+              :key="brand.value" 
+              :value="brand.value"
+            >
+              {{ brand.label }}
+            </option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <FeatherIcon name="chevron-down" class="h-4 w-4" />
           </div>
+        </div>
+
+        <!-- View Mode Toggle -->
+        <div class="flex items-center gap-1 bg-white border border-gray-300 rounded-lg p-1">
+          <button 
+            @click="viewMode = 'compact'"
+            class="p-1.5 rounded transition-colors"
+            :class="viewMode === 'compact' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'"
+          >
+            <FeatherIcon name="list" class="w-4 h-4" />
+          </button>
+          <button 
+            @click="viewMode = 'detailed'"
+            class="p-1.5 rounded transition-colors"
+            :class="viewMode === 'detailed' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'"
+          >
+            <FeatherIcon name="grid" class="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Items Grid -->
+    <!-- Inventory Grid -->
     <div v-if="inventoryResource.loading" class="flex justify-center py-12 px-6">
       <LoadingIndicator />
     </div>
@@ -63,180 +66,106 @@
       </p>
     </div>
 
-    <div v-else :class="[
-      'grid gap-4 px-6',
-      viewMode === 'collapsed' 
-        ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8'   
-        : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8'
-    ]">
-      <!-- Item Card -->
+    <div v-else class="grid gap-6 px-6 grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
       <div
         v-for="item in filteredItems"
         :key="item.name"
-        class="group bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+        class="
+			  bg-white rounded-2xl transition-all duration-300 
+			  transform hover:-translate-y-2 
+			  overflow-hidden group
+			  border border-gray-100 cursor-pointer
+			"
+        @click="openItemDetails(item)"
       >
-        <!-- Collapsed View -->
-        <div v-if="viewMode === 'collapsed'" class="flex items-center p-4 gap-4">
-          <!-- Status Icon -->
-          <div 
-            class="p-2 rounded-lg shrink-0"
-            :class="getQtyStatusClass(item.qty)"
-          >
-            <FeatherIcon 
-              name="box" 
-              class="w-5 h-5"
-              :class="item.qty > 0 ? 'text-green-600' : 'text-red-600'"
-            />
-          </div>
+        <!-- Compact View -->
+        <template v-if="viewMode === 'compact'">
+          <div class="flex items-center p-4 gap-4">
+            <div 
+              class="p-2 rounded-lg shrink-0"
+              :class="item.qty > 0 ? 'bg-green-50' : 'bg-red-50'"
+            >
+              <FeatherIcon 
+                name="box" 
+                class="w-5 h-5"
+                :class="item.qty > 0 ? 'text-green-600' : 'text-red-600'"
+              />
+            </div>
 
-          <!-- Item Info -->
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center justify-between gap-2">
-              <div>
-                <h3 class="font-medium text-gray-900 truncate">{{ item.item }}</h3>
-                <p class="text-sm text-gray-600 truncate">{{ item.brand }}</p>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="font-semibold text-gray-900 truncate">{{ item.item }}</h3>
+                  <p class="text-sm text-gray-500 truncate">{{ item.brand }}</p>
+                </div>
+                <div 
+                  class="px-2 py-1 rounded-full text-xs font-medium"
+                  :class="item.qty > 0 
+                    ? 'bg-green-50 text-green-700' 
+                    : 'bg-red-50 text-red-700'"
+                >
+                  {{ item.qty }}
+                </div>
               </div>
-              <Badge 
-                :variant="item.qty > 0 ? 'subtle' : 'solid'" 
-                :theme="item.qty > 0 ? 'green' : 'red'"
-              >
-                {{ item.qty }}
-              </Badge>
             </div>
           </div>
+        </template>
 
-          <!-- Quick Actions -->
-          <div class="flex items-center gap-2">
-            <button
-              class="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-              @click="openItemDetails(item)"
+        <!-- Detailed View -->
+        <template v-else>
+          <div class="relative bg-gray-50 h-48 flex items-center justify-center">
+            <div 
+              class="p-4 rounded-lg"
+              :class="item.qty > 0 ? 'bg-green-50' : 'bg-red-50'"
             >
-              <FeatherIcon name="edit-2" class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <!-- Expanded View -->
-        <div v-else class="cursor-pointer" @click="openItemDetails(item)">
-          <!-- Item Header with Icon -->
-          <div class="relative h-24 bg-gray-50 border-b">
-            <div class="absolute inset-0 flex items-center justify-center">
-              <div 
-                class="p-3 rounded-lg transition-colors"
-                :class="getQtyStatusClass(item.qty)"
-              >
-                <FeatherIcon 
-                  name="box" 
-                  class="w-8 h-8 transition-colors"
-                  :class="item.qty > 0 ? 'text-green-600' : 'text-red-600'"
-                />
-              </div>
+              <FeatherIcon 
+                name="box" 
+                class="w-12 h-12"
+                :class="item.qty > 0 ? 'text-green-600' : 'text-red-600'"
+              />
             </div>
             <div class="absolute top-3 right-3">
-              <Badge 
-                :variant="item.qty > 0 ? 'subtle' : 'solid'" 
-                :theme="item.qty > 0 ? 'green' : 'red'"
+              <div 
+                class="px-2 py-1 rounded-full text-xs font-medium"
+                :class="item.qty > 0 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'"
               >
-                {{ item.qty > 0 ? 'In Stock' : 'Out of Stock' }}
-              </Badge>
+                {{ item.qty > 0 ? 'In Stock' : 'Out of Stock' }} {{ item.qty > 0 ? '('+item.qty+')' : '' }}
+              </div>
             </div>
           </div>
 
-          <!-- Item Content -->
-          <div class="p-4 space-y-4">
-            <!-- Item Title & Description -->
+          <div class="p-4 space-y-3">
             <div>
-              <h3 class="font-medium text-gray-900 group-hover:text-gray-700">{{ item.item }}</h3>
-              <p class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
+              <h3 class="font-semibold text-lg text-gray-900">{{ item.item }}</h3>
+              <p class="text-sm text-gray-500 line-clamp-2">{{ item.description }}</p>
             </div>
 
-            <!-- Item Details -->
-            <div class="space-y-3">
-              <!-- Brand -->
-              <div class="flex items-center gap-3">
-                <div class="p-1.5 rounded bg-gray-50">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
                   <FeatherIcon name="tag" class="w-4 h-4 text-gray-400" />
+                  <span class="text-sm text-gray-600">{{ item.brand }}</span>
                 </div>
-                <div>
-                  <div class="text-xs text-gray-500">Brand</div>
-                  <div class="text-sm font-medium text-gray-900">{{ item.brand }}</div>
-                </div>
-              </div>
-
-              <!-- Length -->
-              <div class="flex items-center gap-3">
-                <div class="p-1.5 rounded bg-gray-50">
+                <div class="flex items-center gap-2">
                   <FeatherIcon name="maximize" class="w-4 h-4 text-gray-400" />
-                </div>
-                <div>
-                  <div class="text-xs text-gray-500">Length</div>
-                  <div class="text-sm font-medium text-gray-900">{{ item.length }}</div>
+                  <span class="text-sm text-gray-600">{{ item.length }}</span>
                 </div>
               </div>
-
-              <!-- Finish -->
-              <div class="flex items-center gap-3">
-                <div class="p-1.5 rounded bg-gray-50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
                   <FeatherIcon name="droplet" class="w-4 h-4 text-gray-400" />
-                </div>
-                <div>
-                  <div class="text-xs text-gray-500">Finish</div>
-                  <div class="text-sm font-medium text-gray-900">{{ item.finish }}</div>
+                  <span class="text-sm text-gray-600">{{ item.finish }}</span>
                 </div>
               </div>
-
-              <!-- Quantity -->
-              <div class="flex items-center gap-3">
-                <div class="p-1.5 rounded bg-gray-50">
-                  <FeatherIcon 
-                    name="hash" 
-                    class="w-4 h-4"
-                    :class="item.qty > 0 ? 'text-green-500' : 'text-red-500'"
-                  />
-                </div>
-                <div>
-                  <div class="text-xs text-gray-500">Quantity</div>
-                  <div 
-                    class="text-sm font-medium"
-                    :class="item.qty > 0 ? 'text-green-600' : 'text-red-600'"
-                  >
-                    {{ item.qty }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="pt-4 mt-4 border-t grid grid-cols-2 gap-2">
-              <Button
-                variant="subtle"
-                class="w-full"
-                @click.stop="openItemDetails(item)"
-              >
-                <template #prefix>
-                  <FeatherIcon name="edit-2" class="w-4 h-4" />
-                </template>
-                Update
-              </Button>
-              <Button
-                variant="subtle"
-                class="w-full"
-                theme="red"
-                @click.stop="confirmDelete(item)"
-              >
-                <template #prefix>
-                  <FeatherIcon name="trash-2" class="w-4 h-4" />
-                </template>
-                Delete
-              </Button>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
-
-    <!-- New Item Dialog -->
-    <Dialog
+  </div>
+  <Dialog
       v-model="showNewItemDialog"
       :options="{
         title: 'Add New Item',
@@ -505,7 +434,6 @@
         </div>
       </template>
     </Dialog>
-  </div>
 </template>
 
 <script setup>
@@ -526,7 +454,7 @@ const filters = ref({
   brand: ''
 })
 
-const viewMode = ref('collapsed') // 'collapsed' or 'expanded'
+const viewMode = ref('compact') // 'compact' or 'detailed'
 const showNewItemDialog = ref(false)
 const showUpdateDialog = ref(false)
 const showDeleteDialog = ref(false)
@@ -548,11 +476,60 @@ const newItem = ref({
 })
 
 // Computed
-setHeaderAction(h(Button, {
-    variant: 'solid',
-    onClick: () => showNewItemDialog.value = true,
-  }, () => 'Add Item'))
+setHeaderAction(() => h('div', { 
+  class: 'flex items-center justify-between gap-4 flex-1 px-2' 
+}, [
+  // Search Field
+  h('div', { 
+    class: 'relative flex-1 max-w-2xl'
+  }, [
+    h('div', {
+      class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'
+    }, [
+      h(FeatherIcon, {
+        name: 'search',
+        class: 'h-4 w-4 text-gray-400'
+      })
+    ]),
+    h('input', {
+      type: 'text',
+      placeholder: 'Search items...',
+      value: filters.value.search,
+      onInput: (e) => filters.value.search = e.target.value,
+      class: `
+        block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4 
+        text-gray-900 ring-1 ring-inset ring-gray-200 
+        placeholder:text-gray-400 
+        focus:ring-2 focus:ring-inset focus:ring-gray-900
+        transition-all duration-200
+        bg-white/50 hover:bg-white
+        sm:text-sm sm:leading-6
+      `
+    })
+  ]),
 
+  // New Item Button
+  h('button', {
+    class: `
+      inline-flex items-center gap-2 
+      rounded-xl px-4 py-2.5
+      text-sm font-semibold text-white
+      bg-gray-900 hover:bg-gray-800
+      transition duration-200 ease-in-out
+      shadow-sm hover:shadow
+      focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
+    `,
+    onClick: () => showNewItemDialog.value = true
+  }, [
+    h(FeatherIcon, {
+      name: 'plus',
+      class: 'h-4 w-4'
+    }),
+    h('span', {
+      class: 'hidden sm:inline'
+    }, 'Add Item')
+  ])
+]))
 
 const brandOptions = computed(() => {
   if (!inventoryResource.data) return []
@@ -670,3 +647,12 @@ async function deleteItem() {
   }
 }
 </script>
+<style scoped>
+/* Add any additional scoped styles if needed */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
