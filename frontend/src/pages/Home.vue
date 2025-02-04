@@ -91,7 +91,7 @@ const updateTime = () => {
 onMounted(async () => {
   try {
     const response = await fetch(
-      'http://api.weatherapi.com/v1/current.json?key=d93ba9a60adc499ea58230427250302&q=auto:ip'
+      'https://api.weatherapi.com/v1/current.json?key=d93ba9a60adc499ea58230427250302&q=auto:ip'
     )
     if (!response.ok) throw new Error('Weather fetch failed')
     weatherData.value = await response.json()
