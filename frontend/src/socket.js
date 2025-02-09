@@ -5,7 +5,7 @@
 
 // export function initSocket() {
 //   let host = window.location.hostname
-//   let siteName = window.site_name || 'app.ruacompany.com'
+//   let siteName = window.site_name || 'ruabeta.frappe.cloud'
 //   let port = window.location.port ? `:${socketio_port}` : ''
 //   let protocol = port ? 'http' : 'https'
 //   let url = `${protocol}://${host}${port}/${siteName}`
@@ -55,9 +55,9 @@ export function initSocket() {
   if (socket) return socket // Return existing socket if already initialized
   
   let host = window.location.hostname
-  let siteName = window.site_name || 'app.ruacompany.com'
-  let port = window.location.port ? `:${socketio_port}` : ':9000'
-  let protocol = port ? 'https' : 'https'
+  let siteName = window.site_name || 'ruabeta.frappe.cloud'
+  let port = window.location.port ? `:${socketio_port}` : ''
+  let protocol = port ? 'http' : 'https'
   let url = `${protocol}://${host}${port}/${siteName}`
   
   socket = io(url, {
@@ -71,43 +71,9 @@ export function initSocket() {
   })
 
   socket.on('connect_error', (error) => {
-    console.error('Socket connection error from socket.js:', {
-      // Basic error details
-      errorMessage: error.message,
-      errorName: error.name,
-      errorStack: error.stack,
-  
-      // Connection details
-      connectionURL: url,
-      hostname: window.location.hostname,
-      siteName: window.site_name || 'app.ruacompany.com',
-      port: window.location.port,
-      protocol: window.location.protocol,
-  
-      // Browser and network information
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-      
-      // Network information if available
-      connection: navigator.connection ? {
-        type: navigator.connection.type,
-        effectiveType: navigator.connection.effectiveType,
-        downlink: navigator.connection.downlink,
-        rtt: navigator.connection.rtt
-      } : null,
-  
-      // Timestamp for debugging
-      timestamp: new Date().toISOString(),
-  
-      // Additional context
-      additionalContext: {
-        withCredentials: true,
-        reconnectionAttempts: 5,
-      }
-    })
+    console.error('Socket connection error from socket.js:', error)
   })
-  
+
   socket.on("rua:signature", (data) => {
     console.log('Received signature event:')
   })
