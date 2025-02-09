@@ -1,258 +1,249 @@
 <template>
-  <div class="min-h-[calc(100vh-4rem)]">
-    <!-- Scrollable Table Container -->
-    <div class="relative overflow-x-auto">
-      <div class="min-w-[1200px]">
-        <!-- Loading Overlay -->
-        <div 
-          v-if="isLoading" 
-          class="absolute inset-0 flex items-center justify-center bg-white/75 z-10"
-        >
-          <LoadingIndicator />
-        </div>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Loading State -->
+    <div 
+      v-if="isLoading" 
+      class="flex items-center justify-center min-h-[400px]"
+    >
+      <LoadingIndicator />
+    </div>
 
-        <!-- Table Header -->
-        <div class="sticky top-0 z-10 bg-white border-b border-gray-200">
-          <div class="flex">
-            <!-- Details -->
-            <div class="w-[30%] px-6 py-3">
-              <button 
-                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-                @click="toggleSortColumn('details')"
-              >
-                <FeatherIcon name="check-square" class="h-4 w-4" />
-                Details
-                <FeatherIcon 
-                  :name="getSortIcon('details')" 
-                  class="h-3 w-3"
-                  :class="{'invisible': sortColumn !== 'details'}"
-                />
-              </button>
-            </div>
-
-            <!-- Assignee -->
-            <div class="w-[12%] px-4 py-3">
-              <button 
-                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-                @click="openAssigneeFilter"
-              >
-                <FeatherIcon name="user" class="h-4 w-4" />
-                Assignee
-                <div 
-                  v-if="filters.assignedTo" 
-                  class="h-1.5 w-1.5 rounded-full bg-gray-900"
-                />
-              </button>
-            </div>
-
-            <!-- Project -->
-            <div class="w-[12%] px-4 py-3">
-              <button 
-                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-                @click="openProjectFilter"
-              >
-                <FeatherIcon name="briefcase" class="h-4 w-4" />
-                Project
-                <div 
-                  v-if="filters.project" 
-                  class="h-1.5 w-1.5 rounded-full bg-gray-900"
-                />
-              </button>
-            </div>
-
-            <!-- Related To -->
-            <div class="w-[15%] px-4 py-3">
-              <button 
-                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                <FeatherIcon name="file" class="h-4 w-4" />
-                Related To
-              </button>
-            </div>
-
-            <!-- Due Date -->
-            <div class="w-[15%] px-4 py-3">
-              <button 
-                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-                @click="toggleSortColumn('due_date')"
-              >
-                <FeatherIcon name="calendar" class="h-4 w-4" />
-                Due Date
-                <FeatherIcon 
-                  :name="getSortIcon('due_date')" 
-                  class="h-3 w-3"
-                  :class="{'invisible': sortColumn !== 'due_date'}"
-                />
-              </button>
-            </div>
-
-            <!-- Priority -->
-            <div class="w-[12%] px-4 py-3">
-              <button 
-                class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-                @click="openPriorityFilter"
-              >
-                <FeatherIcon name="flag" class="h-4 w-4" />
-                Priority
-                <div 
-                  v-if="filters.priority" 
-                  class="h-1.5 w-1.5 rounded-full bg-gray-900"
-                />
-              </button>
-            </div>
-
-            <!-- Actions -->
-            <div class="w-[4%] px-4 py-3" />
-          </div>
-        </div>
-
-        <!-- Table Body -->
-        <div class="divide-y divide-gray-200">
-          <template v-for="status in ['Open', 'Delayed', 'Completed', 'Cancelled']" :key="status">
-            <template v-if="getTasksByStatus(status)?.length">
-              <!-- Status Group Header -->
-              <div
-                class="group cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
-                @click="toggleStatusCollapse(status)"
-              >
-                <div class="flex items-center gap-2 px-6 py-2">
-                  <FeatherIcon
-                    :name="statusCollapsed[status] ? 'chevron-right' : 'chevron-down'"
-                    class="h-4 w-4 text-gray-500"
-                  />
-                  <Badge
-                    :variant="getStatusTheme(status) === 'gray' ? 'solid' : 'subtle'"
-                    :theme="getStatusTheme(status)"
-                  >
-                    {{ status }}
-                  </Badge>
-                  <span class="text-sm text-gray-600">
-                    ({{ getTasksByStatus(status)?.length || 0 }})
-                  </span>
-                </div>
-              </div>
-
-              <!-- Tasks in this status -->
-              <template v-if="!statusCollapsed[status]">
-                <div
-                  v-for="task in getTasksByStatus(status)"
-                  :key="task.name"
-                  class="group hover:bg-gray-50/80 transition-colors cursor-pointer"
-                  @click="showTaskDetails(task)"
-                >
-                  <div class="flex">
-                    <!-- Details -->
-                    <div class="w-[30%] px-6 py-3">
-                      <div class="flex items-start gap-2">
-                        <div class="shrink-0 rounded-lg p-1.5" :class="getPriorityClass(task.priority)">
-                          <FeatherIcon 
-                            :name="getIconByDoctype(task.related_doctype)" 
-                            class="h-4 w-4"
-                            :class="getPriorityIconClass(task.priority)"
-                          />
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <div class="break-words text-sm text-gray-900">{{ task.details }}</div>
-                          <div class="text-xs text-gray-500">Created {{ formatDate(task.creation) }}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Assignee -->
-                    <div class="w-[12%] px-4 py-3">
-                      <div class="flex items-center gap-2">
-                        <Avatar
-                          :image="getUserAvatar(task.assigned_to)"
-                          :label="getAssigneeName(task.assigned_to)?.substring(0, 2)"
-                          size="sm"
-                        />
-                        <div class="min-w-0 flex-1">
-                          <span class="truncate text-sm text-gray-900 block">
-                            {{ getAssigneeName(task.assigned_to) }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Project -->
-                    <div class="w-[12%] px-4 py-3">
-                      <div v-if="task.project" class="min-w-0">
-                        <div class="truncate text-sm text-gray-900">{{ getProjectName(task.project) }}</div>
-                      </div>
-                      <div v-else class="text-sm text-gray-500">—</div>
-                    </div>
-
-                    <!-- Related To -->
-                    <div class="w-[15%] px-4 py-3">
-                      <div v-if="task.related_doctype && task.related_docname" class="min-w-0">
-                        <div class="text-sm text-gray-900">{{ task.related_doctype.replace('RUA ', '') }}</div>
-                        <div class="truncate text-xs text-gray-500">{{ task.related_docname }}</div>
-                      </div>
-                      <div v-else class="text-sm text-gray-500">—</div>
-                    </div>
-
-                    <!-- Due Date -->
-                    <div class="w-[15%] px-4 py-3">
-                      <div v-if="task.due_date" class="text-sm">
-                        <div class="text-gray-900">{{ formatDate(task.due_date) }}</div>
-                        <div 
-                          class="text-xs"
-                          :class="isOverdue(task.due_date) ? 'text-red-500' : 'text-gray-500'"
-                        >
-                          {{ getDueStatus(task.due_date) }}
-                        </div>
-                      </div>
-                      <div v-else class="text-sm text-gray-500">—</div>
-                    </div>
-
-                    <!-- Priority -->
-                    <div class="w-[12%] px-4 py-3">
-                      <Badge
-                        :variant="getPriorityTheme(task.priority) === 'gray' ? 'solid' : 'subtle'"
-                        :theme="getPriorityTheme(task.priority)"
-                      >
-                        {{ task.priority }}
-                      </Badge>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="w-[4%] px-4 py-3">
-                      <button 
-                        class="opacity-0 group-hover:opacity-100 rounded p-1 hover:bg-gray-100 transition-opacity"
-                        @click.stop="openTaskMenu(task)"
-                      >
-                        <FeatherIcon name="more-vertical" class="h-4 w-4 text-gray-500" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </template>
-          </template>
-
-          <!-- Empty State -->
+    <!-- Board View -->
+    <div v-else-if="viewMode === 'board'" class="px-4 sm:px-6 py-4">
+      <div 
+        class="grid grid-cols-1 gap-4 md:gap-6"
+        :class="{
+          'md:grid-cols-2 lg:grid-cols-4': visibleSections.length === 4,
+          'md:grid-cols-2 lg:grid-cols-3': visibleSections.length === 3,
+          'md:grid-cols-2': visibleSections.length <= 2
+        }"
+      >
+        <template v-for="section in TASK_STATUSES" :key="section">
           <div
-            v-if="!filteredTasks.length"
-            class="flex flex-col items-center justify-center py-12"
+            v-if="!hiddenSections[section]"
+            class="flex flex-col bg-gray-50/50 rounded-xl p-4"
           >
-            <FeatherIcon name="check-square" class="mb-4 h-12 w-12 text-gray-400" />
-            <p class="text-base font-medium text-gray-900">No tasks found</p>
-            <p class="text-sm text-gray-600">
-              {{ filters.search ? 'Try adjusting your search or filters' : 'Get started by creating a new task' }}
-            </p>
-            <Button
-              v-if="!filters.search"
-              variant="solid"
-              size="sm"
-              class="mt-3"
+            <!-- Column Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                  :class="{
+                    'bg-blue-600 text-white': section === 'Open',
+                    'bg-orange-600 text-white': section === 'Delayed',
+                    'bg-green-600 text-white': section === 'Completed',
+                    'bg-red-600 text-white': section === 'Cancelled'
+                  }"
+                >
+                  {{ section }}
+                  <span class="ml-1 text-white bg-white/20 w-[20px] h-[20px] rounded-full flex items-center justify-center">
+                    {{ getTasksByStatus(section).length }}
+                  </span>
+                </span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <button 
+                  v-if="['Completed', 'Cancelled'].includes(section)"
+                  class="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+                  @click.stop="toggleSectionVisibility(section)"
+                >
+                  <FeatherIcon name="x" class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Task Button (only for Open section) -->
+            <button 
+              v-if="section === 'Open'"
+              class="mb-3 w-full p-3 rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 transition-all"
               @click="showNewTaskModal = true"
             >
-              Create Task
-            </Button>
+              <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <FeatherIcon name="plus" class="w-4 h-4" />
+                <span>Add Task</span>
+              </div>
+            </button>
+
+            <!-- Tasks -->
+            <div class="space-y-3">
+              <div 
+                v-for="task in getTasksByStatus(section)"
+                :key="task.name"
+                class="group bg-white rounded-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden cursor-pointer p-4"
+                @click="showTaskDetails(task)"
+              >
+                <!-- Task Header -->
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <div 
+                      class="shrink-0 rounded-lg p-1.5"
+                      :class="getPriorityClass(task.priority, task.status)"
+                    >
+                      <FeatherIcon 
+                        :name="getIconByDoctype(task.related_doctype)" 
+                        class="w-4 h-4"
+                        :class="getPriorityIconClass(task.priority, task.status)"
+                      />
+                    </div>
+                    <span 
+                      v-if="task.related_docname"
+                      class="text-xs font-medium text-gray-500"
+                    >
+                      {{ task.related_docname }}
+                    </span>
+                  </div>
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                    :class="{
+  'bg-red-50 text-red-700': task.priority === 'High' && task.status !== 'Completed' && task.status !== 'Cancelled',
+  'bg-orange-50 text-orange-700': task.priority === 'Medium' && task.status !== 'Completed' && task.status !== 'Cancelled',
+  'bg-green-50 text-green-700': task.priority === 'Low' && task.status !== 'Completed' && task.status !== 'Cancelled',
+  'bg-gray-50 text-gray-700': !task.priority || task.status === 'Completed' || task.status === 'Cancelled'
+}"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </div>
+
+                <!-- Task Content -->
+                <p class="text-sm text-gray-900 mb-4">{{ task.details }}</p>
+
+                <!-- Task Footer -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <Avatar
+                      :image="getUserAvatar(task.assigned_to)"
+                      :label="getAssigneeName(task.assigned_to)?.substring(0, 2)"
+                      size="sm"
+                    />
+                    <span 
+                      class="text-xs"
+                      :class="isOverdue(task.due_date) ? 'text-red-500' : 'text-gray-500'"
+                    >
+                      {{ getDueStatus(task.due_date) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
+
+    <!-- List View -->
+<div v-else class="px-4 sm:px-6 py-4">
+  <!-- Add Task Button (for list view) -->
+  <button 
+    class="w-full mb-4 p-3 rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 transition-all"
+    @click="showNewTaskModal = true"
+  >
+    <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
+      <FeatherIcon name="plus" class="w-4 h-4" />
+      <span>Add Task</span>
+    </div>
+  </button>
+
+  <div class="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
+    <div
+      v-for="task in filteredTasks.filter(task => 
+        !hiddenSections[task.status] || 
+        (task.status === 'Completed' && !hiddenSections.Completed) || 
+        (task.status === 'Cancelled' && !hiddenSections.Cancelled)
+      )"
+      :key="task.name"
+      class="p-4 hover:bg-gray-50 transition-all cursor-pointer group"
+      @click="showTaskDetails(task)"
+    >
+          <div class="flex items-start gap-4">
+            <div 
+              class="shrink-0 rounded-lg p-2"
+              :class="getPriorityClass(task.priority, task.status)"
+            >
+              <FeatherIcon 
+                :name="getIconByDoctype(task.related_doctype)" 
+                class="w-5 h-5"
+                :class="getPriorityIconClass(task.priority, task.status)"
+              />
+            </div>
+            
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ task.details }}
+                  </p>
+                  <div class="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                    <span v-if="task.related_docname">{{ task.related_docname }}</span>
+                    <span 
+                      :class="isOverdue(task.due_date) ? 'text-red-500' : ''"
+                    >
+                      {{ getDueStatus(task.due_date) }}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                    :class="{
+  'bg-red-50 text-red-700': task.priority === 'High' && task.status !== 'Completed' && task.status !== 'Cancelled',
+  'bg-orange-50 text-orange-700': task.priority === 'Medium' && task.status !== 'Completed' && task.status !== 'Cancelled',
+  'bg-green-50 text-green-700': task.priority === 'Low' && task.status !== 'Completed' && task.status !== 'Cancelled',
+  'bg-gray-50 text-gray-700': !task.priority || task.status === 'Completed' || task.status === 'Cancelled'
+}"
+                  >
+                    {{ task.priority }}
+                  </span>
+                  <span
+  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+  :class="{
+    'bg-blue-600 text-white': task.status === 'Open',
+    'bg-orange-600 text-white': task.status === 'Delayed',
+    'bg-green-600 text-white': task.status === 'Completed',
+    'bg-red-600 text-white': task.status === 'Cancelled'
+  }"
+>
+  {{ task.status }}
+</span>
+                  <Avatar
+                    :image="getUserAvatar(task.assigned_to)"
+                    :label="getAssigneeName(task.assigned_to)?.substring(0, 2)"
+                    size="sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+    <div
+      v-if="!filteredTasks.filter(task => 
+        !hiddenSections[task.status] || 
+        (task.status === 'Completed' && !hiddenSections.Completed) || 
+        (task.status === 'Cancelled' && !hiddenSections.Cancelled)
+      ).length"
+      class="flex flex-col items-center justify-center py-12"
+    >
+      <FeatherIcon name="check-square" class="mb-4 h-12 w-12 text-gray-400" />
+      <p class="text-base font-medium text-gray-900">No tasks found</p>
+      <p class="text-sm text-gray-600">
+        {{ filters.search ? 'Try adjusting your search or filters' : 'Get started by creating a new task' }}
+      </p>
+      <Button
+        v-if="!filters.search"
+        variant="solid"
+        size="sm"
+        class="mt-3"
+        @click="showNewTaskModal = true"
+      >
+        Create Task
+      </Button>
+    </div>
+  </div>
+</div>
 
     <!-- Filter Dialogs -->
     <Dialog
@@ -371,96 +362,66 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, h, onMounted } from 'vue'
+import { ref, computed, inject, h, onMounted, watch } from 'vue'
 import { 
   FeatherIcon, 
   Avatar, 
-  Badge, 
   Button, 
   FormControl,
   LoadingIndicator,
-  Dialog,
-  dayjs
+  Dialog
 } from 'frappe-ui'
 import { todoResource } from '@/data/todo'
 import { projectResource } from '@/data/project'
 import { employeeResource } from '@/data/employee'
-import TaskDetailsDialog from './TaskDetailsDialog.vue'
-import NewTaskModal from './NewTaskModal.vue'
-import { getServerDate, getDueStatus, isBeforeToday, formatDate } from '@/utils/format'
+import TaskDetailsDialog from '@/components/task/TaskDetailsDialog.vue'
+import NewTaskModal from '@/components/task/NewTaskModal.vue'
+import { getDueStatus, formatDate, isBeforeToday } from '@/utils/format'
 
 // Inject header actions
 const setHeaderAction = inject('setHeaderAction')
 
-// Setup header search and button
-onMounted(() => {
-  setHeaderAction(() => h('div', { 
-    class: 'flex items-center justify-between gap-4 flex-1 px-2' 
-  }, [
-    // Search Field
-    h('div', { 
-      class: 'relative flex-1 max-w-2xl'
-    }, [
-      h('div', {
-        class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'
-      }, [
-        h(FeatherIcon, {
-          name: 'search',
-          class: 'h-4 w-4 text-gray-400'
-        })
-      ]),
-      h('input', {
-        type: 'text',
-        placeholder: 'Search tasks...',
-        value: filters.value.search,
-        onInput: (e) => filters.value.search = e.target.value,
-        class: `
-          block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4 
-          text-gray-900 ring-1 ring-inset ring-gray-200 
-          placeholder:text-gray-400 
-          focus:ring-2 focus:ring-inset focus:ring-gray-900
-          transition-all duration-200
-          bg-white/50 hover:bg-white
-          sm:text-sm sm:leading-6
-        `
-      })
-    ]),
-
-    // New Task Button
-    h('button', {
-  class: `
-    inline-flex items-center gap-2 
-    rounded-xl px-4 py-2.5
-    text-sm font-semibold text-white
-    bg-gray-900 hover:bg-gray-800
-    transition duration-200 ease-in-out
-    shadow-sm hover:shadow
-    focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
-  `,
-  onClick: () => showNewTaskModal.value = true
-}, [
-  h(FeatherIcon, {
-    name: 'plus',
-    class: 'h-4 w-4'
-  }),
-  h('span', {
-    class: 'hidden sm:inline' // Only show text on screens sm (small) and larger
-  }, 'New Task')
-])
-  ]))
-})
-
 // State
+const viewMode = ref('board')
 const isLoading = ref(false)
 const showNewTaskModal = ref(false)
 const showTaskDetailsDialog = ref(false)
 const selectedTask = ref(null)
-const statusCollapsed = ref({
+const hiddenSections = ref({
   Open: false,
   Delayed: false,
   Completed: true,
   Cancelled: true
 })
+
+const TASK_STATUSES = ['Open', 'Delayed', 'Completed', 'Cancelled']
+
+// Watch for loading state
+watch(todoResource, (newValue) => {
+  isLoading.value = newValue.loading
+}, { immediate: true })
+
+
+const visibleSections = computed(() => 
+  TASK_STATUSES.filter(status => !hiddenSections.value[status])
+)
+
+const getTaskStatus = (task) => {
+  if (task.status) return task.status
+  if (task.completed_at) return 'Completed'
+  if (task.cancelled_at) return 'Cancelled'
+  if (isOverdue(task.due_date)) return 'Delayed'
+  return 'Open'
+}
+
+
+
+// Computed for hidden sections state
+const areHiddenSectionsCollapsed = computed(() => 
+  visibleSections.value.length <= 2 && 
+  !visibleSections.value.includes('Completed') && 
+  !visibleSections.value.includes('Cancelled')
+)
 
 // Filter states
 const filters = ref({
@@ -475,10 +436,6 @@ const filters = ref({
 const showAssigneeFilter = ref(false)
 const showProjectFilter = ref(false)
 const showPriorityFilter = ref(false)
-
-// Sorting state
-const sortColumn = ref('')
-const sortDirection = ref('asc')
 
 // Options for filters
 const priorityOptions = [
@@ -507,9 +464,15 @@ const projectOptions = computed(() => {
   })) || []
 })
 
-// Computed
+// Computed properties
 const filteredTasks = computed(() => {
   let tasks = todoResource.data || []
+
+  // Map status to each task if not already present
+  tasks = tasks.map(task => ({
+    ...task,
+    status: getTaskStatus(task)
+  }))
 
   // Apply filters
   if (filters.value.search) {
@@ -532,47 +495,11 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(task => task.project === filters.value.project)
   }
 
-  // Apply sorting
-  if (sortColumn.value) {
-    tasks = [...tasks].sort((a, b) => {
-      let aVal = a[sortColumn.value]
-      let bVal = b[sortColumn.value]
-
-      // Handle special cases
-      if (sortColumn.value === 'due_date') {
-        aVal = aVal ? new Date(aVal) : new Date(0)
-        bVal = bVal ? new Date(bVal) : new Date(0)
-      }
-
-      if (sortDirection.value === 'asc') {
-        return aVal > bVal ? 1 : -1
-      } else {
-        return aVal < bVal ? 1 : -1
-      }
-    })
-  } else {
-    // Default sort by creation date
-    tasks = tasks.sort((a, b) => dayjs(b.creation).diff(dayjs(a.creation)))
-  }
-
-  return tasks
+  return tasks.sort((a, b) => new Date(b.creation) - new Date(a.creation))
 })
 
-// Helper functions
-function toggleSortColumn(column) {
-  if (sortColumn.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortColumn.value = column
-    sortDirection.value = 'asc'
-  }
-}
 
-function getSortIcon(column) {
-  if (sortColumn.value !== column) return 'chevron-down'
-  return sortDirection.value === 'asc' ? 'chevron-up' : 'chevron-down'
-}
-
+// Methods
 function clearAssigneeFilter() {
   filters.value.assignedTo = ''
   showAssigneeFilter.value = false
@@ -605,20 +532,35 @@ function getProjectName(projectId) {
   return project?.project_name || projectId
 }
 
-function getPriorityClass(priority) {
+function isOverdue(dueDate) {
+  if (!dueDate) return false
+  return isBeforeToday(dueDate)
+}
+
+function getPriorityClass(priority, status) {
+  // If task is completed or cancelled, use a neutral gray background
+  if (status === 'Completed' || status === 'Cancelled') {
+    return 'bg-gray-50'
+  }
+
   switch (priority) {
     case 'High':
-      return 'bg-red-100'
+      return 'bg-red-50'
     case 'Medium':
-      return 'bg-orange-100'
+      return 'bg-orange-50'
     case 'Low':
-      return 'bg-green-100'
+      return 'bg-green-50'
     default:
-      return 'bg-gray-100'
+      return 'bg-gray-50'
   }
 }
 
-function getPriorityIconClass(priority) {
+function getPriorityIconClass(priority, status) {
+  // If task is completed or cancelled, use a neutral gray icon
+  if (status === 'Completed' || status === 'Cancelled') {
+    return 'text-gray-500'
+  }
+
   switch (priority) {
     case 'High':
       return 'text-red-500'
@@ -628,34 +570,6 @@ function getPriorityIconClass(priority) {
       return 'text-green-500'
     default:
       return 'text-gray-500'
-  }
-}
-
-function getPriorityTheme(priority) {
-  switch (priority) {
-    case 'High':
-      return 'red'
-    case 'Medium':
-      return 'orange'
-    case 'Low':
-      return 'green'
-    default:
-      return 'gray'
-  }
-}
-
-function getStatusTheme(status) {
-  switch (status) {
-    case 'Completed':
-      return 'green'
-    case 'Open':
-      return 'blue'
-    case 'Delayed':
-      return 'orange'
-    case 'Cancelled':
-      return 'red'
-    default:
-      return 'gray'
   }
 }
 
@@ -692,12 +606,24 @@ function getUserAvatar(userId) {
   return employee?.image
 }
 
-function getTasksByStatus(status) {
-  return filteredTasks.value?.filter(task => task.status === status) || []
-}
+const tasksByStatus = computed(() => {
+  const statusGroups = {}
+  TASK_STATUSES.forEach(status => {
+    statusGroups[status] = []
+  })
 
-function toggleStatusCollapse(status) {
-  statusCollapsed.value[status] = !statusCollapsed.value[status]
+  filteredTasks.value.forEach(task => {
+    const status = task.status || getTaskStatus(task)
+    if (statusGroups[status] && !hiddenSections.value[status]) {
+      statusGroups[status].push(task)
+    }
+  })
+
+  return statusGroups
+})
+
+function getTasksByStatus(status) {
+  return tasksByStatus.value[status] || []
 }
 
 function showTaskDetails(task) {
@@ -705,9 +631,165 @@ function showTaskDetails(task) {
   showTaskDetailsDialog.value = true
 }
 
-function openTaskMenu(task) {
-  // Implement task menu logic here
+function toggleSectionVisibility(section) {
+  hiddenSections.value = {
+    ...hiddenSections.value,
+    [section]: !hiddenSections.value[section]
+  }
 }
+
+
+function toggleHiddenSections() {
+  const shouldShow = areHiddenSectionsCollapsed.value
+  hiddenSections.value = {
+    ...hiddenSections.value,
+    Completed: !shouldShow,
+    Cancelled: !shouldShow
+  }
+}
+
+onMounted(() => {
+  setHeaderAction(() => h('div', { 
+    class: 'flex items-center gap-3' 
+  }, [
+    // View Toggle
+    h('div', {
+      class: 'bg-gray-50 rounded-lg p-1 shadow-sm hidden sm:flex'
+    }, [
+      h('button', {
+        class: `flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+          viewMode.value === 'board'
+            ? 'bg-gray-900 text-white'
+            : 'text-gray-600 hover:text-gray-900'
+        }`,
+        onClick: () => viewMode.value = 'board'
+      }, [
+        h(FeatherIcon, {
+          name: 'grid',
+          class: 'w-4 h-4'
+        }),
+        h('span', 'Board')
+      ]),
+      h('button', {
+        class: `flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+          viewMode.value === 'list'
+            ? 'bg-gray-900 text-white'
+            : 'text-gray-600 hover:text-gray-900'
+        }`,
+        onClick: () => viewMode.value = 'list'
+      }, [
+        h(FeatherIcon, {
+          name: 'list',
+          class: 'w-4 h-4'
+        }),
+        h('span', 'List')
+      ])
+    ]),
+
+    // Mobile View Toggle
+    h('button', {
+      class: 'sm:hidden p-2 rounded-lg bg-gray-50 shadow-sm text-gray-600 hover:text-gray-900',
+      onClick: () => viewMode.value = viewMode.value === 'board' ? 'list' : 'board'
+    }, [
+      h(FeatherIcon, {
+        name: viewMode.value === 'board' ? 'grid' : 'list',
+        class: 'w-4 h-4'
+      })
+    ]),
+
+    // Filters
+    h('div', { 
+      class: 'flex items-center gap-2' 
+    }, [
+      // Assignee Filter
+      h('button', {
+        class: `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm text-sm font-medium transition-all ${
+          filters.value.assignedTo 
+            ? 'text-gray-900 ring-1 ring-gray-900' 
+            : 'text-gray-600 hover:text-gray-900'
+        }`,
+        onClick: openAssigneeFilter
+      }, [
+        h(FeatherIcon, {
+          name: 'user',
+          class: 'w-4 h-4'
+        }),
+        h('span', {
+          class: 'hidden sm:inline'
+        }, 'Assignee'),
+        filters.value.assignedTo && h('div', {
+          class: 'h-1.5 w-1.5 rounded-full bg-gray-900'
+        })
+      ]),
+
+      // Project Filter
+      h('button', {
+        class: `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm text-sm font-medium transition-all ${
+          filters.value.project 
+            ? 'text-gray-900 ring-1 ring-gray-900' 
+            : 'text-gray-600 hover:text-gray-900'
+        }`,
+        onClick: openProjectFilter
+      }, [
+        h(FeatherIcon, {
+          name: 'briefcase',
+          class: 'w-4 h-4'
+        }),
+        h('span', {
+          class: 'hidden sm:inline'
+        }, 'Project'),
+        filters.value.project && h('div', {
+          class: 'h-1.5 w-1.5 rounded-full bg-gray-900'
+        })
+      ]),
+
+      // Priority Filter
+      h('button', {
+        class: `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm text-sm font-medium transition-all ${
+          filters.value.priority 
+            ? 'text-gray-900 ring-1 ring-gray-900' 
+            : 'text-gray-600 hover:text-gray-900'
+        }`,
+        onClick: openPriorityFilter
+      }, [
+        h(FeatherIcon, {
+          name: 'flag',
+          class: 'w-4 h-4'
+        }),
+        h('span', {
+          class: 'hidden sm:inline'
+        }, 'Priority'),
+        filters.value.priority && h('div', {
+          class: 'h-1.5 w-1.5 rounded-full bg-gray-900'
+        })
+      ])
+    ]),
+
+    // Add divider
+    h('div', {
+      class: 'h-5 w-px bg-gray-200 mx-2'
+    }),
+
+    // Show/Hide completed tasks toggle
+    h('button', {
+      class: `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg 
+        text-sm font-medium transition-all
+        ${areHiddenSectionsCollapsed.value 
+          ? 'bg-white shadow-sm text-gray-600 hover:text-gray-900' 
+          : 'bg-gray-900 text-white'
+        }`,
+      onClick: toggleHiddenSections
+    }, [
+      h(FeatherIcon, {
+        name: areHiddenSectionsCollapsed.value ? 'eye' : 'eye-off',
+        class: 'w-4 h-4'
+      }),
+      h('span', {
+        class: 'hidden sm:inline'
+      }, areHiddenSectionsCollapsed.value ? 'Show All' : 'Hide Completed')
+    ])
+  ]))
+})
 </script>
 
 <style scoped>

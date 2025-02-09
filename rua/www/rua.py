@@ -32,4 +32,4 @@ def get_boot():
     return bootinfo
 
 def get_default_route():
-    return "/frontend"  # Adjust this to your app's default route
+    return "/admin"  # Adjust this to your app's default route

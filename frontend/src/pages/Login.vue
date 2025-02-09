@@ -124,9 +124,9 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { session, getCachedCredentials } from '../data/session'
-import loginVideo from '../assets/login.webm'
-import loginLogo from '../assets/login_logo.png'
+import { session, getCachedCredentials } from '@/data/session'
+import loginVideo from '@/assets/login.webm'
+import loginLogo from '@/assets/login_logo.png'
 
 const email = ref('')
 const password = ref('')

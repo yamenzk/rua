@@ -45,9 +45,12 @@ class RUAQuotation(Document):
             for row in rows:
                 # Helper function to clean currency values
                 def clean_currency(value):
+                    if not value:  # Handle empty or None values
+                        return 0.0
                     if isinstance(value, str):
                         # Remove currency symbol and commas, then convert to float
-                        return float(value.replace('AED', '').replace(',', '').strip())
+                        cleaned = value.replace('AED', '').replace(',', '').strip()
+                        return float(cleaned) if cleaned else 0.0
                     return float(value)
 
                 # Helper function to clean and format unit values

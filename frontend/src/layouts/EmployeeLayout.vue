@@ -62,18 +62,18 @@
           class="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200"
           :class="[
             route.path === item.to 
-              ? 'bg-primary-50 text-primary-700' 
-              : 'text-gray-700 hover:bg-gray-50'
+              ? 'bg-gray-50 text-gray-900' 
+              : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
           ]"
         >
           <div class="relative flex items-center gap-3">
             <FeatherIcon
               :name="item.icon"
-              class="h-5 w-5"
+              class="h-5 w-5 transition-all duration-200"
               :class="[
                 route.path === item.to 
-                  ? 'text-primary-600'
-                  : 'text-gray-400 group-hover:text-gray-500'
+                  ? 'text-gray-900'
+                  : 'text-gray-400 group-hover:text-gray-900'
               ]"
             />
             <span 
@@ -86,9 +86,9 @@
 
           <!-- Active Indicator -->
           <div
-            v-if="route.path === item.to"
-            class="absolute inset-y-0 right-0 w-1 rounded-l-lg bg-primary-600"
-          ></div>
+  v-if="route.path === item.to && shouldShowIndicator"
+  class="absolute inset-y-0 right-0 w-1 rounded-l-lg bg-gray-600"
+></div>
         </router-link>
       </nav>
     </aside>
@@ -123,16 +123,19 @@
 
     <!-- Main Content Area -->
     <div 
-      class="transition-all duration-300 md:ml-64"
-      :class="{ 'md:ml-16': isCollapsed }"
-    >
-      <main class="min-h-screen pt-16 md:pt-0 pb-16 md:pb-0">
-        <router-view
-          :employee="selectedEmployee"
-          :employeeResource="selectedEmployeeResource"
-        ></router-view>
-      </main>
-    </div>
+  class="transition-all duration-300"
+  :class="{
+    'md:pl-64': !isCollapsed,
+    'md:pl-16': isCollapsed
+  }"
+>
+  <main class="min-h-screen pt-16 md:pt-0 pb-16 md:pb-0">
+    <router-view
+      :employee="selectedEmployee"
+      :employeeResource="selectedEmployeeResource"
+    />
+  </main>
+</div>
 
     <!-- Bottom navigation for mobile -->
     <nav class="fixed bottom-0 left-0 right-0 z-20 border-t bg-white md:hidden">
@@ -144,16 +147,16 @@
           class="flex flex-col items-center rounded-lg px-3 py-2 transition-all duration-200"
           :class="[
             route.path === item.to 
-              ? 'text-primary-600' 
-              : 'text-gray-500 hover:text-gray-900'
+              ? 'text-gray-900' 
+              : 'text-gray-400 hover:text-gray-900'
           ]"
         >
           <FeatherIcon 
             :name="item.icon" 
-            class="h-5 w-5"
+            class="h-5 w-5 transition-all duration-200"
             :class="[
               route.path === item.to 
-                ? 'text-primary-600'
+                ? 'text-gray-900'
                 : 'text-gray-400'
             ]"  
           />
@@ -175,6 +178,7 @@ const route = useRoute()
 const isLoading = ref(true)
 const isCollapsed = ref(false)
 const selectedEmployeeResource = ref(null)
+const shouldShowIndicator = ref(false)
 
 // Get selected employee from the list resource
 const selectedEmployee = computed(() => {

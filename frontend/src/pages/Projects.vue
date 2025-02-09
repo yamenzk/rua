@@ -457,43 +457,51 @@ function updateListFilters() {
 }
 
 const filteredProjects = computed(() => {
-	let projects = list.data || []
+  let projects = list.data || []
 
-	// Status Filter
-	if (statusFilter.value) {
-		projects = projects.filter((project) => project.status === statusFilter.value)
-	}
+  // Search Filter
+  if (searchQuery.value) {
+    projects = projects.filter(project => 
+      project.project_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      project.description?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      project.location?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  }
 
-	// Apply all active filters
-	return projects.filter((project) =>
-		activeFilters.value.every((filter) => {
-			const projectValue = project[filter.field]
+  // Status Filter
+  if (statusFilter.value) {
+    projects = projects.filter((project) => project.status === statusFilter.value)
+  }
 
-			switch (filter.operator) {
-				case '=':
-					return projectValue == filter.value
-				case '!=':
-					return projectValue != filter.value
-				case '>':
-					return projectValue > filter.value
-				case '<':
-					return projectValue < filter.value
-				case '>=':
-					return projectValue >= filter.value
-				case '<=':
-					return projectValue <= filter.value
-				case 'like':
-					return projectValue
-						.toString()
-						.toLowerCase()
-						.includes(filter.value.toLowerCase())
-				default:
-					return true
-			}
-		}),
-	)
+  // Apply all active filters
+  return projects.filter((project) =>
+    activeFilters.value.every((filter) => {
+      const projectValue = project[filter.field]
+
+      switch (filter.operator) {
+        case '=':
+          return projectValue == filter.value
+        case '!=':
+          return projectValue != filter.value
+        case '>':
+          return projectValue > filter.value
+        case '<':
+          return projectValue < filter.value
+        case '>=':
+          return projectValue >= filter.value
+        case '<=':
+          return projectValue <= filter.value
+        case 'like':
+          return projectValue
+            .toString()
+            .toLowerCase()
+            .includes(filter.value.toLowerCase())
+        default:
+          return true
+      }
+    }),
+  )
 })
-
 function getStatusClass(status) {
 	const themes = {
 		Tender: 'bg-gray-100 text-gray-700',

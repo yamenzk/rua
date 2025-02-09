@@ -33,9 +33,6 @@
     <div class="bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-medium text-gray-900">Action Items</h3>
-        <button class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-500">
-          <FeatherIcon name="more-horizontal" class="h-5 w-5" />
-        </button>
       </div>
       <ActionItems />
     </div>
@@ -46,11 +43,11 @@
 
 <script setup>
 import { ref, onMounted, h, inject, onUnmounted, Transition, computed } from 'vue'
-import { session } from '../data/session'
-import WelcomeScreen from './WelcomeScreen.vue'
-import UAEMap from './UAEMap.vue'
-import QuickStats from './QuickStats.vue'
-import ActionItems from './ActionItems.vue'
+import { session } from '@/data/session'
+import WelcomeScreen from '@/components/common/WelcomeScreen.vue'
+import UAEMap from '@/components/home/UAEMap.vue'
+import QuickStats from '@/components/home/QuickStats.vue'
+import ActionItems from '@/components/home/ActionItems.vue'
 import { formatDate, getServerDate, DATE_FORMATS } from '@/utils/format'
 import { FeatherIcon } from 'frappe-ui'
 

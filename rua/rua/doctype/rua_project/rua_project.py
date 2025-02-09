@@ -28,4 +28,4 @@ class RUAProject(Document):
 
     def before_save(self):
         if self.contract_value and flt(self.contract_value) > 0:
-            self.completion = flt(self.total_invoiced) / flt(self.contract_value) * 100
+            self.completion = flt(self.total_received) / flt(self.contract_value) * 100

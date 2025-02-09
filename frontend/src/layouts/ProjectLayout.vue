@@ -1,133 +1,248 @@
 <!-- ProjectLayout.vue -->
 <template>
-	<div v-if="isLoading" class="min-h-screen flex items-center justify-center">
-		<div class="text-gray-600">Loading project...</div>
+	<div v-if="isLoading" class="flex min-h-screen items-center justify-center">
+	  <div class="text-gray-600">Loading project...</div>
 	</div>
-
-	<div v-else class="min-h-screen flex flex-col">
-		<!-- Header -->
-		<header
-			class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b"
-		>
-			<div class="flex items-center gap-3 overflow-hidden">
-				<button
-    @click="handleBackNavigation"
-    class="flex-shrink-0 text-gray-500 hover:text-gray-700"
->
-    <FeatherIcon name="arrow-left" class="w-5 h-5" />
-</button>
-				<Avatar
-					:shape="'square'"
-					:ref_for="true"
-					:image="selectedProject?.image"
-					:label="selectedProject?.project_name?.substring(0, 2)"
-					size="md"
-					class="flex-shrink-0"
-				/>	
-				<div class="flex items-center gap-3 min-w-0">
-					<h1 class="text-xl font-bold text-gray-900 truncate">
-						{{ selectedProject?.project_name }}
-						<Badge v-if="selectedProject?.serial_number"
-  :variant="'solid'"
-  :ref_for="true"
-  theme="gray"
-  size="sm"
-  label="Badge"
->
-  #{{ selectedProject?.serial_number }}
-</Badge>
-					</h1>
-					<div
-						class="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium"
-						:class="{
-							'bg-purple-100 text-purple-800': selectedProject?.status === 'Tender',
-							'bg-blue-100 text-blue-800': selectedProject?.status === 'Job in Hand',
-							'bg-yellow-100 text-yellow-800':
-								selectedProject?.status === 'In Progress',
-							'bg-green-100 text-green-800': selectedProject?.status === 'Completed',
-							'bg-red-100 text-red-800': selectedProject?.status === 'Cancelled',
-						}"
-					>
-						{{ selectedProject?.status }}
-					</div>
-				</div>
-			</div>
-		</header>
-
-		<div class="flex flex-1 pt-16 pb-16 md:pb-0">
-			<!-- Sidebar for desktop -->
-			<aside
-				class="hidden md:block md:fixed md:w-64 bg-white border-r flex flex-col justify-between h-full pb-16"
+  
+	<div v-else class="min-h-screen bg-gray-50">
+	  <!-- Collapsible Sidebar for Desktop -->
+	  <aside 
+		class="fixed inset-y-0 left-0 z-30 hidden flex-col transition-all duration-300 md:flex border-r border-gray-200"
+		:class="[isCollapsed ? 'w-16' : 'w-64']"
+	  >
+		<!-- Header Section -->
+		<div class="flex h-16 items-center justify-between bg-white px-4 shadow-sm">
+		  <div class="flex items-center gap-3" v-show="!isCollapsed">
+			<button
+			  @click="handleBackNavigation"
+			  class="flex items-center gap-2 text-gray-500 hover:text-gray-900"
 			>
-				<div class="flex flex-col h-full justify-between">
-					<nav class="flex-1 px-4 py-4 space-y-1">
-						<router-link
-							v-for="item in navigation"
-							:key="item.name"
-							:to="item.to"
-							class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100"
-							:class="{ 'bg-gray-100': route.path === item.to }"
-						>
-							<FeatherIcon :name="item.icon" class="h-5 w-5 mr-3 text-gray-500" />
-							{{ item.name }}
-						</router-link>
-					</nav>
-
-					<!-- Sidebar Map -->
-					<div class="px-4 pb-4 mt-auto">
-						<ProjectMap
-							:coords="selectedProject?.coords"
-							:mini-map="true"
-							@update:coords="updateProjectCoords"
-						/>
-						<div class="mt-2">
-							<Button
-								variant="solid"
-								theme="gray"
-								size="lg"
-								@click="showSettingsDialog = true"
-								class="w-full"
-							>
-								<template #prefix>
-									<FeatherIcon name="settings" class="w-4 h-4" />
-								</template>
-								Project Settings
-							</Button>
-						</div>
-					</div>
-				</div>
-			</aside>
-
-			<!-- Main content with chat layout support -->
-			<main
-				class="flex-1 overflow-y-auto bg-gray-50 md:ml-64"
-				:class="{ 'chat-layout': isChatRoute }"
-			>
-				<router-view
-					v-if="selectedProjectResource"
-					:projectResource="selectedProjectResource"
-				></router-view>
-			</main>
-
-			<!-- Bottom navigation for mobile -->
-			<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t">
-				<div class="flex justify-around px-4 py-2">
-					<router-link
-						v-for="item in navigation"
-						:key="item.name"
-						:to="item.to"
-						class="flex flex-col items-center px-2 py-1 min-w-[4rem]"
-						:class="{
-							'text-gray-900': route.path === item.to,
-							'text-gray-500': route.path !== item.to,
-						}"
-					>
-						<FeatherIcon :name="item.icon" class="h-6 w-6" />
-						<span class="text-xs mt-1 whitespace-nowrap">{{ item.name }}</span>
-					</router-link>
-				</div>
-			</nav>
+			  <FeatherIcon name="arrow-left" class="h-5 w-5" />
+			  <span class="text-sm font-medium">Back</span>
+			</button>
+		  </div>
+		  <button 
+			@click="isCollapsed = !isCollapsed"
+			class="rounded-lg p-1.5 hover:bg-gray-100"
+		  >
+			<FeatherIcon
+			  :name="isCollapsed ? 'chevron-right' : 'chevron-left'"
+			  class="h-5 w-5 text-gray-500"
+			/>
+		  </button>
 		</div>
+  
+		<!-- Project Info -->
+		<div class="border-b border-gray-200 bg-white p-4" v-show="!isCollapsed">
+		  <div class="flex items-center gap-3">
+			<Avatar
+			  :shape="'square'"
+			  :ref_for="true"
+			  :image="selectedProject?.image"
+			  :label="selectedProject?.project_name?.substring(0, 2)"
+			  size="lg"
+			  class="flex-shrink-0"
+			/>
+			<div class="min-w-0 flex-1">
+			  <div class="flex items-center gap-2">
+				<h2 class="truncate text-base font-semibold text-gray-900">
+				  {{ selectedProject?.project_name }}
+				</h2>
+				<Badge
+				  v-if="selectedProject?.serial_number"
+				  :variant="'solid'"
+				  :ref_for="true"
+				  theme="gray"
+				  size="sm"
+				>
+				  #{{ selectedProject?.serial_number }}
+				</Badge>
+			  </div>
+			  <div class="mt-1 inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+				:class="{
+				  'bg-purple-100 text-purple-800': selectedProject?.status === 'Tender',
+				  'bg-blue-100 text-blue-800': selectedProject?.status === 'Job in Hand',
+				  'bg-yellow-100 text-yellow-800': selectedProject?.status === 'In Progress',
+				  'bg-green-100 text-green-800': selectedProject?.status === 'Completed',
+				  'bg-red-100 text-red-800': selectedProject?.status === 'Cancelled',
+				}"
+			  >
+				{{ selectedProject?.status }}
+			  </div>
+			</div>
+		  </div>
+		</div>
+  
+		<!-- Navigation -->
+		<nav class="flex-1 space-y-1 bg-white px-3 py-4">
+		  <router-link
+			v-for="item in navigation"
+			:key="item.name"
+			:to="item.to"
+			class="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200"
+			:class="[
+			  isRouteActive(item.to)
+				? 'bg-gray-50 text-gray-900' 
+				: 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
+			]"
+		  >
+			<div class="relative flex items-center gap-3">
+			  <FeatherIcon
+				:name="item.icon"
+				class="h-5 w-5 transition-all duration-200"
+				:class="[
+				  isRouteActive(item.to)
+					? 'text-gray-900'
+					: 'text-gray-400 group-hover:text-gray-900 hover:text-gray-900'
+				]"
+			  />
+			  <span 
+				:class="[isCollapsed ? 'opacity-0' : 'opacity-100']"
+				class="whitespace-nowrap transition-opacity duration-200"
+			  >
+				{{ item.name }}
+			  </span>
+			</div>
+  
+			<!-- Active Indicator -->
+			<div
+			  v-if="route.path === item.to && shouldShowIndicator"
+			  class="absolute inset-y-0 right-0 w-1 rounded-l-lg bg-gray-600"
+			></div>
+  
+		  </router-link>
+		</nav>
+  
+		<!-- Map Section -->
+		<div class="border-t bg-white p-4">
+  <ProjectMap
+    v-if="!isCollapsed"
+    :coords="selectedProject?.coords"
+    :mini-map="true"
+    @update:coords="updateProjectCoords"
+    class="mb-4 transition-all duration-300"
+  />
+  <Button
+    v-if="!isCollapsed"
+    variant="subtle"
+    theme="gray"
+    size="lg"
+    @click="showSettingsDialog = true"
+    class="w-full"
+  >
+    <template #prefix>
+      <FeatherIcon name="settings" class="h-4 w-4" />
+    </template>
+    Project Settings
+  </Button>
+  
+  <!-- Collapsed state -->
+  <div v-else class="flex justify-center">
+    <button 
+      @click="showSettingsDialog = true"
+      class="rounded-lg p-2 hover:bg-gray-100"
+      title="Project Settings"
+    >
+      <FeatherIcon name="settings" class="h-5 w-5 text-gray-500" />
+    </button>
+  </div>
+</div>
+	  </aside>
+  
+	  <!-- Mobile Header -->
+	  <header class="fixed left-0 right-0 top-0 z-20 flex grow h-16 items-center justify-between bg-white px-4 shadow-sm md:hidden">
+		<div class="flex items-center gap-3 overflow-hidden grow">
+		  <button
+			@click="handleBackNavigation"
+			class="flex-shrink-0 text-gray-500 hover:text-gray-700"
+		  >
+			<FeatherIcon name="arrow-left" class="h-5 w-5" />
+		  </button>
+		  <Avatar
+			:shape="'square'"
+			:ref_for="true"
+			:image="selectedProject?.image"
+			:label="selectedProject?.project_name?.substring(0, 2)"
+			size="md"
+			class="flex-shrink-0"
+		  />
+		  <div class="flex justify-between grow">
+			<div class="flex items-center gap-2">
+			  <h1 class="truncate text-base font-semibold text-gray-900">
+				{{ selectedProject?.project_name }}
+			  </h1>
+			  <Badge
+				v-if="selectedProject?.serial_number"
+				:variant="'solid'"
+				:ref_for="true"
+				theme="gray"
+				size="sm"
+			  >
+				#{{ selectedProject?.serial_number }}
+			  </Badge>
+			</div>
+			<div class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+			  :class="{
+				'bg-purple-100 text-purple-800': selectedProject?.status === 'Tender',
+				'bg-blue-100 text-blue-800': selectedProject?.status === 'Job in Hand',
+				'bg-yellow-100 text-yellow-800': selectedProject?.status === 'In Progress',
+				'bg-green-100 text-green-800': selectedProject?.status === 'Completed',
+				'bg-red-100 text-red-800': selectedProject?.status === 'Cancelled',
+			  }"
+			>
+			  {{ selectedProject?.status }}
+			</div>
+		  </div>
+		</div>
+	  </header>
+  
+	  <!-- Main Content Area -->
+	  <div 
+  class="transition-all duration-300"
+  :class="{
+    'md:pl-64': !isCollapsed,
+    'md:pl-16': isCollapsed
+  }"
+>
+  <main 
+    class="min-h-screen pb-16 pt-16 md:pb-0 md:pt-0"
+    :class="{ 'chat-layout': isChatRoute }"
+  >
+    <router-view
+      v-if="selectedProjectResource"
+      :projectResource="selectedProjectResource"
+      :isCollapsed="isCollapsed"
+    ></router-view>
+  </main>
+</div>
+  
+	  <!-- Bottom navigation for mobile -->
+	  <nav class="fixed bottom-0 left-0 right-0 z-20 border-t bg-white md:hidden">
+		<div class="flex justify-around px-2 py-1">
+		  <router-link
+			v-for="item in navigation"
+			:key="item.name"
+			:to="item.to"
+			class="flex flex-col items-center rounded-lg px-3 py-2 transition-all duration-200"
+			:class="[
+			  isRouteActive(item.to)
+				? 'text-gray-900' 
+				: 'text-gray-400 hover:text-gray-900'
+			]"
+		  >
+			<FeatherIcon 
+			  :name="item.icon" 
+			  class="h-5 w-5 transition-all duration-200"
+			  :class="[
+				isRouteActive(item.to)
+				  ? 'text-gray-900'
+				  : 'text-gray-400'
+			  ]"  
+			/>
+			<span class="mt-1 text-xs">{{ item.name }}</span>
+		  </router-link>
+		</div>
+	  </nav>
 	</div>
 
 	<!-- Settings Dialog -->
@@ -149,6 +264,7 @@
 	<FormControl
   type="text"
   label="Project Name"
+  variant="outline"
   v-model="projectName"
   required
   :disabled="true"
@@ -157,6 +273,7 @@
 	<FormControl
   type="select"
   label="Project Status"
+  variant="outline"
   v-model="projectStatus"
   :options="statusOptions"
   required
@@ -166,7 +283,7 @@
     type="number"
     :ref_for="true"
     size="sm"
-    variant="subtle"
+    variant="outline"
     :disabled="false"
     label="Contract Value"
     v-model="contractValue"
@@ -177,6 +294,7 @@
     <FormControl
       type="text"
       label="Location"
+	  variant="outline"
       v-model="projectLocation"
       :placeholder="selectedProjectResource.value?.doc?.location || 'Enter project location'"
     />
@@ -186,6 +304,7 @@
       <FormControl
         type="textarea"
         label="Description"
+		variant="outline"
         v-model="projectDescription"
         :placeholder="selectedProjectResource.value?.doc?.description || 'Enter project description'"
         :rows="4"
@@ -251,6 +370,7 @@
         </p>
         <FormControl
             type="text"
+			variant="outline"
             v-model="confirmProjectName"
             placeholder="Enter project name"
             :error="nameConfirmError"
@@ -323,7 +443,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Avatar, FeatherIcon, Button, Dialog, FormControl, Badge } from 'frappe-ui'
 import { projectResource, createProjectResource } from '@/data/project'
-import ProjectMap from '../pages/ProjectMap.vue'
+import ProjectMap from '../components/project/ProjectMap.vue'
 import { inject } from 'vue'
 import { invoiceResource } from '@/data/invoice'
 const showSettingsDialog = ref(false)
@@ -356,6 +476,22 @@ const statusOptions = [
 const isLoading = ref(true)
 const selectedProjectResource = ref(null)
 const initializationTimeout = ref(null)
+const isCollapsed = ref(false)
+const shouldShowIndicator = ref(false)
+
+const isRouteActive = (itemPath) => {
+  // Extract the section from the path (e.g., 'overview', 'chat', etc.)
+  const currentSection = route.path.split('/').pop()
+  const itemSection = itemPath.split('/').pop()
+  
+  // Special case for invoicing section
+  if (itemPath.includes('invoicing') && route.path.includes('invoicing')) {
+    return true
+  }
+  
+  // Check if the current route matches the navigation item's path
+  return currentSection === itemSection
+}
 
 // Get selected project from the list resource
 const selectedProject = computed(() => {
@@ -375,14 +511,6 @@ const hasBasicFieldsChanged = computed(() => {
 // Detect if current route is chat
 const isChatRoute = computed(() => {
 	return route.path.includes('/chat')
-})
-
-const projectInvoices = computed(() => {
-	return (
-		invoiceResource.data?.filter(
-			(invoice) => invoice.project === selectedProject.value?.name,
-		) || []
-	)
 })
 
 // Watch for changes in project ID and recreate document resource

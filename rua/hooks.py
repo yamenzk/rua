@@ -92,7 +92,7 @@ fixtures = [
 # ------------
 
 # before_install = "rua.install.before_install"
-after_install = "rua.install.after_install.execute"
+after_migrate = "rua.install.after_migrate.execute"
 
 # Uninstallation
 # ------------
@@ -252,4 +252,4 @@ scheduler_events = {
 # }
 
 
-website_route_rules = [{'from_route': '/frontend/<path:app_path>', 'to_route': 'frontend'},]
+website_route_rules = [{'from_route': '/admin/<path:app_path>', 'to_route': 'admin'},]

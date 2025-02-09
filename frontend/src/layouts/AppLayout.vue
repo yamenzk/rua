@@ -31,18 +31,18 @@
           class="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200"
           :class="[
             $route.path === item.to 
-              ? 'bg-primary-50 text-primary-700' 
-              : 'text-gray-700 hover:bg-gray-50'
+              ? 'bg-gray-50 text-gray-900' 
+              : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
           ]"
         >
           <div class="relative flex items-center gap-3">
             <FeatherIcon
               :name="item.icon"
-              class="h-5 w-5"
+              class="h-5 w-5 transition-all duration-200"
               :class="[
                 $route.path === item.to 
-                  ? 'text-primary-600'
-                  : 'text-gray-400 group-hover:text-gray-500'
+                  ? 'text-gray-900'
+                  : 'text-gray-400 group-hover:text-gray-900'
               ]"
             />
             <span 
@@ -55,9 +55,9 @@
 
           <!-- Active Indicator -->
           <div
-            v-if="$route.path === item.to"
-            class="absolute inset-y-0 right-0 w-1 rounded-l-lg bg-primary-600"
-          ></div>
+  v-if="route.path === item.to && shouldShowIndicator"
+  class="absolute inset-y-0 right-0 w-1 rounded-l-lg bg-gray-600"
+></div>
         </router-link>
       </nav>
 
@@ -153,7 +153,7 @@
               class="relative rounded-lg p-2 hover:bg-gray-50"
             >
               <FeatherIcon name="bell" class="h-5 w-5 text-gray-500" />
-              <div class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary-500"></div>
+              <div class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-gray-500"></div>
             </button>
             </Tooltip>
 
@@ -187,7 +187,7 @@
               />
               <div 
                 v-else
-                class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600"
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600"
               >
                 {{ userInitials }}
               </div>
@@ -238,20 +238,20 @@
             v-for="item in navigation"
             :key="item.name"
             :to="item.to"
-            class="flex items-center rounded-lg px-3 py-2.5 text-sm font-medium"
+            class="flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200"
             :class="[
               $route.path === item.to 
-                ? 'bg-primary-50 text-primary-700' 
-                : 'text-gray-700 hover:bg-gray-50'
+                 ? 'bg-gray-50 text-gray-900' 
+              : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
             ]"
             @click="isMobileMenuOpen = false"
           >
             <FeatherIcon
               :name="item.icon"
-              class="mr-3 h-5 w-5"
+              class="mr-3 h-5 w-5 transition-all duration-200"
               :class="[
                 $route.path === item.to 
-                  ? 'text-primary-600'
+                  ? 'text-gray-900'
                   : 'text-gray-400'
               ]"
             />
@@ -267,7 +267,7 @@
               @click="showWhatsNew = true"
             >
               <div class="sparkle-animation">
-                <svg width="24" height="24" viewBox="0 0 24 24" class="text-primary-500" xmlns="http://www.w3.org/2000/svg">
+                <svg width="24" height="24" viewBox="0 0 24 24" class="text-gray-900" xmlns="http://www.w3.org/2000/svg">
                   <path 
                     class="star"
                     d="M12 3L14.5 8.5L20 11L14.5 13.5L12 19L9.5 13.5L4 11L9.5 8.5L12 3Z"
@@ -311,7 +311,7 @@
             <button class="flex flex-col items-center gap-1 rounded-lg p-3 hover:bg-gray-50">
               <div class="relative">
                 <FeatherIcon name="bell" class="h-6 w-6 text-gray-500" />
-                <div class="absolute right-0 top-0 h-2 w-2 rounded-full bg-primary-500"></div>
+                <div class="absolute right-0 top-0 h-2 w-2 rounded-full bg-gray-500"></div>
               </div>
               <span class="text-xs text-gray-600">Notifications</span>
             </button>
@@ -335,7 +335,7 @@
               />
               <div 
                 v-else
-                class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600"
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600"
               >
                 {{ userInitials }}
               </div>
@@ -360,9 +360,12 @@
 
     <!-- Main Content Area -->
     <div 
-      class="transition-all duration-300 md:ml-64"
-      :class="{'md:ml-16': isCollapsed}"
-    >
+  class="transition-all duration-300"
+  :class="{
+    'md:pl-64': !isCollapsed,
+    'md:pl-16': isCollapsed
+  }"
+>
       <!-- Header -->
       <header class="sticky top-0 z-20 flex h-16 items-center justify-between bg-white px-4 shadow-sm">
         <!-- Left side with menu button and title -->
@@ -402,8 +405,8 @@
 import { ref, computed, provide, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { FeatherIcon, Tooltip } from 'frappe-ui'
-import WhatsNewDialog from '@/pages/WhatsNewDialog.vue'
-import IssueReportDialog from '@/pages/IssueReportDialog.vue'
+import WhatsNewDialog from '@/components/common/WhatsNewDialog.vue'
+import IssueReportDialog from '@/components/common/IssueReportDialog.vue'
 import { session } from '@/data/session'
 import { updateResource } from '@/data/update'
 
@@ -413,6 +416,7 @@ const isMobileMenuOpen = ref(false)
 const showWhatsNew = ref(false)
 const showIssueReport = ref(false)
 const headerAction = ref(null)
+const shouldShowIndicator = ref(false)
 
 // User data from session
 const userName = ref(session.employee_name)

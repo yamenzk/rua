@@ -12,7 +12,7 @@ class RUARemoteIssue(Document):
     def get_list(args):
         try:
             response = requests.get(
-                "https://ruabeta.frappe.cloud/api/v2/method/rua.api.get_issues"
+                "https://app.ruacompany.com/api/v2/method/rua.api.get_issues"
             )
             response.raise_for_status()
             
@@ -28,7 +28,7 @@ class RUARemoteIssue(Document):
         """Get total count of remote issues"""
         try:
             response = requests.get(
-                "https://ruabeta.frappe.cloud/api/v2/method/rua.api.get_issues"
+                "https://app.ruacompany.com/api/v2/method/rua.api.get_issues"
             )
             response.raise_for_status()
             
@@ -44,7 +44,7 @@ class RUARemoteIssue(Document):
         """Get statistics of remote issues"""
         try:
             response = requests.get(
-                "https://ruabeta.frappe.cloud/api/v2/method/rua.api.get_issues"
+                "https://app.ruacompany.com/api/v2/method/rua.api.get_issues"
             )
             response.raise_for_status()
             
@@ -67,7 +67,7 @@ class RUARemoteIssue(Document):
         """Load remote issue data"""
         try:
             response = requests.get(
-                "https://ruabeta.frappe.cloud/api/v2/method/rua.api.get_issues"
+                "https://app.ruacompany.com/api/v2/method/rua.api.get_issues"
             )
             response.raise_for_status()
             
@@ -103,7 +103,7 @@ class RUARemoteIssue(Document):
         if self.has_value_changed('status') and self.status == "Resolved":
             try:
                 response = requests.get(
-                    "https://ruabeta.frappe.cloud/api/v2/method/rua.api.mark_resolved",
+                    "https://app.ruacompany.com/api/v2/method/rua.api.mark_resolved",
                     params={"issue": self.name}
                 )
                 response.raise_for_status()

@@ -838,11 +838,11 @@ import {
 	Autocomplete,
 	dayjs
 } from 'frappe-ui'
-import countries from '../data/countries.json'
-import flags from '../data/flags.json'
-import { employeeResource } from '../data/employee'
-import { attendanceResource } from '../data/attendance'
-import { genderOptions, positionOptions } from '../data/employeeOptions'
+import countries from '@/data/countries.json'
+import flags from '@/data/flags.json'
+import { employeeResource } from '@/data/employee'
+import { attendanceResource } from '@/data/attendance'
+import { genderOptions, positionOptions } from '@/data/employeeOptions'
 import { documentResource } from '@/data/document'
 import { leaveResource } from '@/data/leave'
 import { 

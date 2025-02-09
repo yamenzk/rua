@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { session } from './data/session'
 import { userResource } from '@/data/user'
-import { createProjectResource } from '@/data/project'
 
 const routes = [
   {
@@ -64,22 +63,22 @@ const routes = [
       {
         path: 'overview',
         name: 'ProjectOverview',
-        component: () => import('@/pages/ProjectOverview.vue'),
+        component: () => import('@/components/project/ProjectOverview.vue'),
       },
       {
         path: 'chat',
         name: 'ProjectChat',
-        component: () => import('@/pages/ProjectChat.vue'),
+        component: () => import('@/components/project/ProjectChat.vue'),
       },
       {
         path: 'items',
         name: 'ProjectItems',
-        component: () => import('@/pages/ProjectItems.vue'),
+        component: () => import('@/components/project/ProjectItems.vue'),
       },
       {
         path: 'invoicing',
         name: 'ProjectInvoicing',
-        component: () => import('@/pages/ProjectInvoicing.vue'),
+        component: () => import('@/components/project/ProjectInvoicing.vue'),
         children: [
           {
             path: '',
@@ -89,37 +88,37 @@ const routes = [
           {
             path: 'quotations',
             name: 'ProjectInvoicingQuotations',
-            component: () => import('@/pages/ProjectInvoicing.vue'),
+            component: () => import('@/components/project/ProjectInvoicing.vue'),
             props: { defaultTab: 'quotations' }
           },
           {
             path: 'purchase-receipts',
             name: 'ProjectInvoicingPurchaseReceipts',
-            component: () => import('@/pages/ProjectInvoicing.vue'),
+            component: () => import('@/components/project/ProjectInvoicing.vue'),
             props: { defaultTab: 'purchaseReceipts' }
           },
           {
             path: 'invoices',
             name: 'ProjectInvoicingInvoices',
-            component: () => import('@/pages/ProjectInvoicing.vue'),
+            component: () => import('@/components/project/ProjectInvoicing.vue'),
             props: { defaultTab: 'invoices' }
           },
           {
             path: 'rfqs',
             name: 'ProjectInvoicingRFQs',
-            component: () => import('@/pages/ProjectInvoicing.vue'),
+            component: () => import('@/components/project/ProjectInvoicing.vue'),
             props: { defaultTab: 'rfqs' }
           },
           {
             path: 'purchase-orders',
             name: 'ProjectInvoicingPurchaseOrders',
-            component: () => import('@/pages/ProjectInvoicing.vue'),
+            component: () => import('@/components/project/ProjectInvoicing.vue'),
             props: { defaultTab: 'purchaseOrders' }
           },
           {
             path: 'payments',
             name: 'ProjectInvoicingPayments',
-            component: () => import('@/pages/ProjectInvoicing.vue'),
+            component: () => import('@/components/project/ProjectInvoicing.vue'),
             props: { defaultTab: 'payments' }
           }
         ]
@@ -128,42 +127,42 @@ const routes = [
       {
         path: 'invoicing/quotation/:quotationId',
         name: 'QuotationDetails',
-        component: () => import('@/pages/QuotationDetails.vue'),
+        component: () => import('@/components/invoicing/quotation/QuotationDetails.vue'),
       },
       {
         path: 'invoicing/lpo/:lpoId',
         name: 'LPODetails',
-        component: () => import('@/pages/LPODetails.vue'),
+        component: () => import('@/components/invoicing/lpo/LPODetails.vue'),
       },
       {
         path: 'invoicing/rfq/:rfqId',
         name: 'RFQDetails',
-        component: () => import('@/pages/RFQDetails.vue'),
+        component: () => import('@/components/invoicing/rfq/RFQDetails.vue'),
       },
       {
         path: 'invoicing/invoice/:invoiceId',
         name: 'InvoiceDetails',
-        component: () => import('@/pages/InvoiceDetails.vue'),
+        component: () => import('@/components/invoicing/invoice/InvoiceDetails.vue'),
       },
       {
         path: 'invoicing/payment/:paymentId',
         name: 'PaymentDetails',
-        component: () => import('@/pages/PaymentDetails.vue'),
+        component: () => import('@/components/invoicing/payment/PaymentDetails.vue'),
       },
       {
         path: 'invoicing/receipt/:receiptId',
         name: 'PurchaseReceiptDetails',
-        component: () => import('@/pages/PurchaseReceiptDetails.vue'),
+        component: () => import('@/components/invoicing/purchaseReceipt/PurchaseReceiptDetails.vue'),
       },
       {
         path: 'branches',
         name: 'ProjectBranches',
-        component: () => import('@/pages/ProjectBranches.vue'),
+        component: () => import('@/components/project/ProjectBranches.vue'),
       },
       {
         path: 'files',
         name: 'ProjectFiles',
-        component: () => import('@/pages/ProjectFiles.vue'),
+        component: () => import('@/components/project/ProjectFiles.vue'),
       }
     ],
   },
@@ -180,17 +179,17 @@ const routes = [
       {
         path: 'overview',
         name: 'EmployeeOverview',
-        component: () => import('@/pages/EmployeeOverview.vue'),
+        component: () => import('@/components/employee/EmployeeOverview.vue'),
       },
       {
         path: 'attendance',
         name: 'EmployeeAttendance',
-        component: () => import('@/pages/EmployeeAttendance.vue'),
+        component: () => import('@/components/employee/EmployeeAttendance.vue'),
       },
       {
         path: 'documents',
         name: 'EmployeeDocuments',
-        component: () => import('@/pages/EmployeeDocuments.vue'),
+        component: () => import('@/components/employee/EmployeeDocuments.vue'),
       }
     ],
   },
@@ -202,7 +201,7 @@ const routes = [
   {
     path: '/sign/:token',
     name: 'SignaturePage',
-    component: () => import('@/pages/SignaturePage.vue'),
+    component: () => import('@/components/common/SignaturePage.vue'),
     meta: {
       public: true // Mark as public route that doesn't require authentication
     }
@@ -211,13 +210,13 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/pages/NotFound.vue'),
+    component: () => import('@/components/common/NotFound.vue'),
     // No requiresAuth meta to ensure 404 is shown even when not logged in
   }
 ]
 
 let router = createRouter({
-  history: createWebHistory('/frontend'),
+  history: createWebHistory('/admin'),
   routes,
 })
 

@@ -5,7 +5,7 @@
 
 // export function initSocket() {
 //   let host = window.location.hostname
-//   let siteName = window.site_name || 'ruabeta.frappe.cloud'
+//   let siteName = window.site_name || 'app.ruacompany.com'
 //   let port = window.location.port ? `:${socketio_port}` : ''
 //   let protocol = port ? 'http' : 'https'
 //   let url = `${protocol}://${host}${port}/${siteName}`
@@ -55,7 +55,7 @@ export function initSocket() {
   if (socket) return socket // Return existing socket if already initialized
   
   let host = window.location.hostname
-  let siteName = window.site_name || 'ruabeta.frappe.cloud'
+  let siteName = window.site_name || 'app.ruacompany.com'
   let port = window.location.port ? `:${socketio_port}` : ''
   let protocol = port ? 'http' : 'https'
   let url = `${protocol}://${host}${port}/${siteName}`

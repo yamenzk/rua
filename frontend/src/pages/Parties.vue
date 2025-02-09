@@ -640,7 +640,7 @@
 <script setup>
 import { ref, computed, inject, h, onMounted } from 'vue'
 import { Button, FormControl, Dialog, FeatherIcon, LoadingIndicator, debounce, FileUploader } from 'frappe-ui'
-import { partyResource } from '../data/party'
+import { partyResource } from '@/data/party'
 
 const setHeaderAction = inject('setHeaderAction')
 setHeaderAction(
