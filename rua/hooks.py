@@ -252,4 +252,6 @@ scheduler_events = {
 # }
 
 
-website_route_rules = [{'from_route': '/admin/<path:app_path>', 'to_route': 'admin'},]
+website_route_rules = [{'from_route': '/admin/<path:app_path>', 'to_route': 'admin'},
+
+]

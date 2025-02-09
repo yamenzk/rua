@@ -281,7 +281,7 @@ function createPopupContent(project) {
         </div>
 
         <button
-          onclick="window.location.href='/project/${project.name}/overview'"
+          onclick="window.location.href='/admin/project/${project.name}/overview'"
           class="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800"
         >
           View Details

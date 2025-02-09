@@ -56,7 +56,7 @@ export function initSocket() {
   
   let host = window.location.hostname
   let siteName = window.site_name || 'app.ruacompany.com'
-  let port = window.location.port ? `:${socketio_port}` : ''
+  let port = window.location.port ? `:${socketio_port}` : ':9000'
   let protocol = port ? 'http' : 'https'
   let url = `${protocol}://${host}${port}/${siteName}`
   
@@ -71,9 +71,43 @@ export function initSocket() {
   })
 
   socket.on('connect_error', (error) => {
-    console.error('Socket connection error from socket.js:', error)
+    console.error('Socket connection error from socket.js:', {
+      // Basic error details
+      errorMessage: error.message,
+      errorName: error.name,
+      errorStack: error.stack,
+  
+      // Connection details
+      connectionURL: url,
+      hostname: window.location.hostname,
+      siteName: window.site_name || 'app.ruacompany.com',
+      port: window.location.port,
+      protocol: window.location.protocol,
+  
+      // Browser and network information
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      
+      // Network information if available
+      connection: navigator.connection ? {
+        type: navigator.connection.type,
+        effectiveType: navigator.connection.effectiveType,
+        downlink: navigator.connection.downlink,
+        rtt: navigator.connection.rtt
+      } : null,
+  
+      // Timestamp for debugging
+      timestamp: new Date().toISOString(),
+  
+      // Additional context
+      additionalContext: {
+        withCredentials: true,
+        reconnectionAttempts: 5,
+      }
+    })
   })
-
+  
   socket.on("rua:signature", (data) => {
     console.log('Received signature event:')
   })

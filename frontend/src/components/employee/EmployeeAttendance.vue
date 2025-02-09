@@ -778,24 +778,22 @@ function formatLeaveDuration(startDate, endDate) {
 
 // Initialize
 onMounted(async () => {
-	// Existing attendance resource loading
-	if (!attendanceResource.data?.length) {
-		try {
-			await attendanceResource.reload()
-		} catch (error) {
-			console.error('Failed to load attendance data:', error)
-		}
-	}
+  // Existing attendance resource loading
+  if (!attendanceResource.data?.length) {
+    try {
+      await attendanceResource.reload()
+    } catch (error) {
+      console.error('Failed to load attendance data:', error)
+    }
+  }
 
-	// Load leaves
-	if (!leaveResource.data?.length) {
-		try {
-			await leaveResource.get.fetch({
-				filters: [['employee', '=', props.employee.name]]
-			})
-		} catch (error) {
-			console.error('Failed to load leave data:', error)
-		}
-	}
+  // Load leaves
+  if (!leaveResource.data?.length) {
+    try {
+      await leaveResource.reload()
+    } catch (error) {
+      console.error('Failed to load leave data:', error)
+    }
+  }
 })
 </script>
