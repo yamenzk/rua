@@ -1,5 +1,85 @@
 [
  {
+  "details": "<div class=\"ql-editor read-mode\"><p>Project completion is now calculated based on project total received amount.</p><p><br></p><blockquote><span style=\"color: rgb(187, 187, 187);\">Issue: 26q1orjgfs</span></blockquote><blockquote><span style=\"font-size: 14px; color: rgb(187, 187, 187);\">Please make the completion percentage based on recieved amount not invoices</span></blockquote><p><br></p><p>Logic added to after_migrate, projects will be automatically updated after patching. </p><p><br></p><p><img src=\"https://i.postimg.cc/L5JMmnNr/Screenshot-2025-02-08-153758.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-08 15:59:29.540236",
+  "name": "3km7djv6fn",
+  "title": "Project Completion Calculation",
+  "type": "Refactor",
+  "version": "2.0.1"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Fixed missing function declaration that prevented task creation</p><p><img src=\"https://i.postimg.cc/rpmkzQH4/Screenshot-2025-02-09-161707.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-09 16:18:23.465081",
+  "name": "egskg6fdm6",
+  "title": "Task Creation",
+  "type": "Fix",
+  "version": "2.0.1"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>System will now be served on a new path, login on the new path is required. </p><p><br></p><blockquote><span style=\"background-color: rgb(250, 204, 204);\">Before</span></blockquote><blockquote><a href=\"https://ruabeta.frappe.cloud/frontend\" rel=\"noopener noreferrer\" style=\"background-color: rgb(250, 204, 204);\">https://ruabeta.frappe.cloud/frontend/</a></blockquote><p><br></p><blockquote><span style=\"background-color: rgb(204, 232, 204);\">After</span></blockquote><blockquote><a href=\"https://app.ruacompany.com/admin\" rel=\"noopener noreferrer\" style=\"background-color: rgb(204, 232, 204);\">https://app.ruacompany.com/admin/</a></blockquote></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-09 16:21:31.099333",
+  "name": "tlp9ghvabi",
+  "title": "Serving frontend on a new path",
+  "type": "Refactor",
+  "version": "2.0.1"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Code changed to handle empty values in locked data more gracefully. (Empty cells now return 0 instead of blank)</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-09 16:57:46.700134",
+  "name": "uelibvo4fo",
+  "title": "Empty value handling in quotation creation",
+  "type": "Fix",
+  "version": "2.0.1"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>You can now add multiple clients and consultants to a project.</p><p><img src=\"https://i.postimg.cc/g2mrdgXp/Screenshot-2025-02-09-165836.png\" style=\"\" width=\"494\"></p><p><span class=\"ql-cursor\">﻿</span></p><p>Quotations and invoices have also been adjusted to support multiple clients</p><p><img src=\"https://i.postimg.cc/CMr4RfC9/Screenshot-2025-02-09-170009.png\" style=\"\" width=\"487\"></p><p><br></p><p>Payments already support multiple clients, no adjustment needed.</p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-09 17:01:20.856741",
+  "name": "lelv5ui8h5",
+  "title": "Multi-client & multi-consultant support",
+  "type": "Feature",
+  "version": "2.0.1"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Revamped project UI and UX including inner pages to match the overall theme created in v.2.0.0</p><p><img src=\"https://i.postimg.cc/BQGQ11kM/Screenshot-2025-02-09-213453.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-10 00:04:17.005974",
+  "name": "hbgohgl5p1",
+  "title": "UI: Clean Projects",
+  "type": "Feature",
+  "version": "2.0.1"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Fixed <code>searchQuery</code> ref not being used to filter the projects. Searching in projects now should work properly. </p><p><img src=\"https://i.postimg.cc/TYR14D0h/Screenshot-2025-02-09-213820.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-09 21:39:20.558658",
+  "name": "p7a1jh9cvj",
+  "title": "Project Search Functionality",
+  "type": "Fix",
+  "version": "2.0.1"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Task page has been redesigned to be more cohesive with the V.2 UI Update.</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Table view was discontinued in favor of a list view and a more visual board view (default)</li></ul><p><br></p><p><img src=\"https://i.postimg.cc/t4N4nsGL/Screenshot-2025-02-09-230205.png\"></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-09 23:04:11.440014",
+  "name": "g4l6pqjapl",
+  "title": "UI: Beautiful Tasks",
+  "type": "Feature",
+  "version": "2.0.1"
+ },
+ {
   "details": "<div class=\"ql-editor read-mode\"><p>Added VAT handling improvements:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added <code>is_vat_inclusive</code> checkbox</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>When checked, amount entered includes VAT (needs to be extracted)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>When using percentage, automatically VAT inclusive since contract value includes VAT</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>All calculations now store VAT exclusive amounts internally</li></ul><p>Created a new multi-step invoice creation flow:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>First dialog for entering basic info</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>\"Review\" button opens second dialog showing calculations</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Clear breakdown of VAT and retention calculations</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Final confirmation before creating invoice</li></ul><p>Added retention settings:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Removed from project level, now set per invoice</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Toggle to enable/disable retention</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Configurable retention percentage (defaults to 10%)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Retention calculated on amount before VAT</li></ul><p>Fixed data reactivity issues:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Created local project resource in NewInvoiceDialog</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added proper loading states</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Implemented realtime updates for project data</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Added proper cleanup on component unmount</li></ul><p>Updated calculation flow:</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Extract VAT first if amount is VAT inclusive</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Apply retention to VAT exclusive amount</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Add VAT as final step</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>Store consistent VAT exclusive amounts internally</li></ul></div>",
   "docstatus": 0,
   "doctype": "RUA App Update",
@@ -378,5 +458,15 @@
   "title": "Quick Filters",
   "type": "UX",
   "version": "2.0.0"
+ },
+ {
+  "details": "<div class=\"ql-editor read-mode\"><p>Complete revamp of invoices, payments and totals into one centralized method that triggers;</p><ul><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>After updating the app (app-wide)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>On creation/update/deletion of every invoice (project-specific)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>On creation/update/deletion of every payment (project-specific)</li></ul><p><br></p><p>The flow of operations is as the following; </p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Updates project's&nbsp;</span><code style=\"font-size: 14px;\">total_invoiced</code></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sums all invoices where:</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Status is 'Final'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Type is 'Tax Invoice'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Linked to the project</span></li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Updates project's&nbsp;</span><code style=\"font-size: 14px;\">project_cost</code></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sums all payments where:</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Status is 'Submitted'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Type is 'Pay'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Linked to the project</span></li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Updates project's&nbsp;</span><code style=\"font-size: 14px;\">additional_expenses</code></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sums all payments where:</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Status is 'Submitted'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Type is 'Pay: Petty Cash'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Linked to the project</span></li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Updates project's&nbsp;</span><code style=\"font-size: 14px;\">total_received</code></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sums all payments where:</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Status is 'Submitted'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Type is 'Receive'</span></li><li data-list=\"bullet\" class=\"ql-indent-2\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Linked to the project</span></li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Updates invoice's&nbsp;</span><code style=\"font-size: 14px;\">payment_status</code></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sets to 'Paid' if total linked payments &gt;= invoice amount</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sets to 'Partially Paid' if some payments exist but less than invoice amount</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sets to 'Unpaid' if no payments linked</span></li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Updates invoice's&nbsp;</span><code style=\"font-size: 14px;\">payment_linked</code><span style=\"font-size: 14px;\">&nbsp;flag</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sets to 1 if any payments are linked</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Sets to 0 if no payments linked</span></li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Generates reconciliation summary counting:</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Total Projects</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Total Invoices</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Total Payments</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Paid Invoices</span></li><li data-list=\"bullet\" class=\"ql-indent-1\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Partially Paid Invoices</span></li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span><span style=\"font-size: 14px;\">Logs the summary in the error log for reference</span></li></ol><p><br></p><p><br></p></div>",
+  "docstatus": 0,
+  "doctype": "RUA App Update",
+  "modified": "2025-02-10 01:21:16.377484",
+  "name": "h05m0i9m0u",
+  "title": "Invoices, Payments & Totals",
+  "type": "Refactor",
+  "version": "2.0.1"
  }
 ]
