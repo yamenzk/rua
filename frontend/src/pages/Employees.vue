@@ -752,6 +752,13 @@
 								v-model="newEmployee.salary"
 							/>
 						</div>
+						<div class="space-y-1">
+                            <FormControl
+                                type="select"
+                                label="Branch"
+                                :options="branchOptions" v-model="newEmployee.branch"
+                            />
+                        </div>
 					</div>
 				</div>
 			</template>
@@ -1094,7 +1101,15 @@ const newEmployee = ref({
 	nationality: '',
 	position: '',
 	salary: null,
+	branch: '',
 })
+
+const branchOptions = ref([
+  { label: 'Main', value: 'Main' },
+  { label: 'Branch 1', value: 'Branch 1' },
+  { label: 'Branch 2', value: 'Branch 2' },
+
+]);
 
 const newFilter = ref({
 	field: '',
@@ -1385,6 +1400,7 @@ async function createEmployee() {
 			nationality: newEmployee.value.nationality.label,
 			position: newEmployee.value.position.label,
 			salary: Number(newEmployee.value.salary),
+			branch: newEmployee.value.branch,
 		}
 
 		//console.log('Submitting employee data:', employeeData)
@@ -1398,6 +1414,7 @@ async function createEmployee() {
 			nationality: '',
 			position: '',
 			salary: null,
+			branch: '',
 		}
 		formSubmitted.value = false
 

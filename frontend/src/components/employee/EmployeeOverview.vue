@@ -436,8 +436,12 @@
 									value: 'Main',
 								},
 								{
-									label: 'Branch',
-									value: 'Branch',
+									label: 'Branch 1',
+									value: 'Branch 1',
+								},
+								{
+									label: 'Branch 2',
+									value: 'Branch 2',
 								},
 							]"
 							v-model="editingEmployee.branch"

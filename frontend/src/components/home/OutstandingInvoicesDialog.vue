@@ -67,13 +67,14 @@
     set: (value) => emit('update:modelValue', value)
   })
   
+
   const unpaidInvoices = computed(() => {
     return invoiceResource.data?.filter(invoice => 
       invoice.status === 'Final' && 
+      invoice.type === 'Tax Invoice' &&
       (invoice.payment_status === 'Unpaid' || invoice.payment_status === 'Partially Paid')
     ) || []
   })
-
   
   function getProjectName(projectId) {
     return projectResource.data?.find(p => p.name === projectId)?.project_name || projectId
@@ -94,9 +95,16 @@
         return 'gray'
     }
   }
-  
+  console.log(JSON.stringify(unpaidInvoices.value, null, 2))
+  console.log(JSON.stringify(invoiceResource.data, null, 2))
   function navigateToInvoice(invoice) {
-    router.push(`/project/${invoice.project}/invoicing/invoice/${invoice.name}`)
-    show.value = false
-  }
+  // Construct the path string
+  const targetPath = `/project/${invoice.project}/invoicing/invoice/${invoice.name}`;
+
+  // Log the path before navigating
+  console.log('Navigating to:', targetPath); // Log the path string
+
+  router.push(targetPath); // Use the constructed path
+  show.value = false;
+}
   </script>

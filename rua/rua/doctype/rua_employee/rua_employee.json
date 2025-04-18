@@ -90,7 +90,7 @@
    "fieldname": "branch",
    "fieldtype": "Select",
    "label": "Branch",
-   "options": "\nMain\nBranch"
+   "options": "\nMain\nBranch 1\nBranch 2"
   }
  ],
  "hide_toolbar": 1,
