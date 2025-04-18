@@ -1,45 +1,19 @@
-# ProjectItems.vue
 <template>
-  <div class="space-y-8" v-if="projectResource">
-    <!-- Loading State - Only show when not locked -->
-    <div v-if="isLoading && !isLocked" class="fixed inset-0 bg-white bg-opacity-75 z-50 flex items-center justify-center">
-      <div class="text-center space-y-4">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-        <div class="text-gray-700">
-          <p class="font-medium">{{ loadingMessage }}</p>
-          <p class="text-sm text-gray-500">{{ loadingDetail }}</p>
-        </div>
-      </div>
-    </div>
+  <div class="space-y-8" v-if="projectResource?.doc">
 
-    <!-- Error State - Only show when not locked -->
-    <div v-if="initializationError && !isLocked" class="p-4 bg-red-100 text-red-700 rounded">
-      Failed to initialize Univer: {{ initializationError.message }}
-    </div>
-
-    <!-- Header Section -->
     <div class="px-6 py-4 bg-white border-b flex justify-between items-center">
-      <div class="flex items-center space-x-4">
-        <h1 class="text-xl font-semibold text-gray-900">Project Items</h1>
-        <span
-          v-if="isHotMode && !isLocked"
-          class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full"
-        >
-          🔥 Hot Mode
-        </span>
-        <span
-          v-if="!isHotMode && !isLocked"
-          class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
-        >
-          😌 Relaxed Mode
-        </span>
+      <div class="flex items-center space-x-4 flex-wrap gap-y-2">
+        <h1 class="text-xl font-semibold text-gray-900 flex-shrink-0">Project Items</h1>
 
-        <!-- Lock/Unlock Button -->
         <Button
+          v-if="projectResource.doc?.google_sheet_id && projectResource.doc?.extraction_named_range"
           :variant="'outline'"
           theme="gray"
           size="sm"
+          :loading="projectResource?.setLock?.loading"
           @click="handleLockClick"
+          :title="isLocked ? 'Unlock items to allow editing via Google Sheet' : 'Lock items from Google Sheet to prepare for Quotation'"
+          class="flex-shrink-0"
         >
           <template #default>
             <div class="flex items-center gap-2">
@@ -48,983 +22,438 @@
             </div>
           </template>
         </Button>
+
+        <span v-else-if="!isInitializing && !isLocked" class="text-sm text-orange-600 flex items-center gap-2 flex-shrink-0" title="Configure in Project settings or wait for automatic setup">
+          <FeatherIcon name="alert-triangle" class="w-4 h-4" />
+          Sheet configuration pending.
+        </span>
+
+        <span v-if="lockStatusMessage" class="text-sm ml-4 transition-opacity duration-300 flex-shrink-0" :class="lockStatusClass">
+          {{ lockStatusMessage }}
+        </span>
+         <span v-else-if="isInitializing" class="text-sm ml-4 text-gray-500 flex items-center gap-1 flex-shrink-0">
+           <div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
+           Initializing...
+         </span>
       </div>
 
-      <!-- Active Users Display - Only show when not locked -->
-      <div v-if="!isLocked" class="flex items-center space-x-2">
-        <template v-for="(user, index) in activeUsers" :key="user">
-          <Tooltip :text="user" placement="bottom">
-            <Avatar
-              shape="circle"
-              :label="user"
-              size="xl"
-              :class="['ring-2', getUserColor(index)]"
-            />
-          </Tooltip>
-        </template>
+      <div v-if="isLocked && lockedData && !lockedData.error" class="text-sm text-gray-600 text-right flex-shrink-0">
+        Locked by {{ lockedData.user === session.user ? 'you' : lockedData.user }}
+        on {{ formatDate(lockedData.timestamp) }}<br>
+        <span class="text-xs" title="Named Range used for locking">(Source: {{ lockedData.source_named_range }})</span>
       </div>
+       <div v-else-if="isLocked && lockedData?.error" class="text-sm text-red-600 text-right flex-shrink-0">
+           Error loading lock details.
+       </div>
     </div>
 
-    <!-- Locked State -->
     <template v-if="isLocked">
-      <div class="p-4 bg-yellow-50" style="margin: 0 !important">
-        <p class="text-yellow-800">
-          Items have been locked by
-          {{ lockedData?.user === session.user ? 'you' : lockedData?.user || 'an unknown user' }}.
-          {{ session.user === lockedData?.user 
-            ? 'Click the unlock button to modify the data.' 
-            : 'Please ask the user to unlock it if you need to make changes.' }}
-        </p>
-      </div>
-
-      <!-- Locked Items List -->
-      <div class="overflow-x-auto">
-        <div class="border-b min-w-[800px]">
-          <!-- Table Header -->
-          <div class="flex items-center px-6 py-2">
-            <div class="flex-1 grid grid-cols-9 gap-4">
-              <!-- Header columns -->
-              <div v-for="header in tableHeaders" 
-                   :key="header.key"
-                   class="flex items-center gap-2 text-sm font-medium text-gray-700"
-                   :class="{ 'justify-end': header.align === 'right' }"
-              >
-                <FeatherIcon :name="header.icon" class="w-4 h-4" v-if="header.icon" />
-                {{ header.label }}
-              </div>
-            </div>
-          </div>
+      <div class="p-4 bg-yellow-50" style="margin-top: 0 !important">
+          <p class="text-yellow-800 text-sm">
+            <template v-if="lockedData && !lockedData.error">
+              <span class="font-medium">Items Locked.</span> Quotations will use data captured on {{ formatDate(lockedData?.timestamp) }} from Named Range '{{ lockedData?.source_named_range }}'.
+              <span v-if="canUnlock">
+                Click <FeatherIcon name="unlock" class="inline w-3 h-3" /> Unlock to enable changes via Google Sheet.
+              </span>
+              <span v-else>
+                Ask '{{ lockedData?.user }}' or an authorized user to unlock if changes are needed.
+              </span>
+            </template>
+            <template v-else>
+              <span class="font-medium text-red-700">Error: Could not load locked item details.</span>
+            </template>
+          </p>
         </div>
 
-        <!-- Table Body -->
-        <div class="divide-y">
-          <template v-if="lockedRows?.length">
-            <!-- Item Rows -->
-            <div v-for="row in lockedRows" 
-                 :key="row.id"
-                 class="hover:bg-gray-50 transition-colors min-w-[800px]"
-            >
-              <div class="flex items-center px-6 py-3">
-                <div class="flex-1 grid grid-cols-9 gap-4">
-                  <div v-for="header in tableHeaders" 
-                       :key="header.key"
-                       :class="[
-                         'text-sm',
-                         header.align === 'right' ? 'text-right' : '',
-                         header.key === 'Item Name' ? 'text-gray-900' : 'text-gray-600',
-                         header.emphasis ? 'font-medium' : ''
-                       ]"
-                  >
-                    <Tooltip v-if="header.key === 'Item Name' && row.Description"
-                            :text="row.Description"
-                            placement="top"
-                    >
-                      <span>{{ row[header.key] }}</span>
-                    </Tooltip>
-                    <span v-else>{{ row[header.key] }}</span>
+      <div class="overflow-x-auto px-6">
+          <div class="border rounded-md min-w-[900px] bg-white">
+              <div class="flex items-center px-4 py-2 bg-gray-50 border-b sticky top-0 z-10">
+                <div class="flex-1 grid grid-cols-10 gap-4">
+                  <div v-for="header in tableHeaders"
+                      :key="header.key"
+                      class="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider"
+                      :class="[ header.align === 'right' ? 'justify-end' : 'justify-start' ]">
+                    <FeatherIcon :name="header.icon" class="w-3 h-3 text-gray-500 flex-shrink-0" v-if="header.icon" />
+                    <span class="truncate" :title="header.label">{{ header.label }}</span>
                   </div>
                 </div>
               </div>
+              <div class="divide-y divide-gray-100">
+              <template v-if="lockedRows?.length">
+                <div v-for="row in lockedRows"
+                    :key="row.id"
+                    class="hover:bg-gray-50/50 transition-colors duration-150">
+                  <div class="flex items-center px-4 py-2">
+                    <div class="flex-1 grid grid-cols-10 gap-4 items-center">
+                      <div v-for="header in tableHeaders"
+                          :key="header.key"
+                          :class="[
+                            'text-sm break-words',
+                            header.align === 'right' ? 'text-right' : 'text-left',
+                            header.key === 'Item Name' ? 'text-gray-900 font-medium' : 'text-gray-700',
+                          ]">
+                        <Tooltip v-if="header.key === 'Description' && row[header.key]" :text="row[header.key]" placement="top" class="w-full">
+                            <span class="line-clamp-2 cursor-help">{{ row[header.key] ?? '' }}</span>
+                        </Tooltip>
+                        <span v-else-if="typeof row[header.key] === 'number'">{{ formatNumber(row[header.key], header.key) }}</span>
+                        <span v-else>{{ row[header.key] ?? '' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <div v-else class="flex flex-col items-center justify-center py-12 text-center">
+                <FeatherIcon name="info" class="w-10 h-10 text-gray-400 mb-3" />
+                <p class="text-base font-medium text-gray-700">No Locked Items Found</p>
+                <p class="text-sm text-gray-500">The locked data appears empty or could not be loaded correctly.</p>
+                 <p v-if="lockedData?.error" class="text-sm text-red-500 mt-1">{{ lockedData.error }}</p>
+              </div>
             </div>
-          </template>
-
-          <!-- Empty State -->
-          <div v-else class="flex flex-col items-center justify-center py-12 min-w-[800px]">
-            <FeatherIcon name="box" class="w-12 h-12 text-gray-400 mb-4" />
-            <p class="text-base font-medium text-gray-900">No Items Found</p>
-            <p class="text-sm text-gray-600">There are no locked items to display.</p>
           </div>
         </div>
-      </div>
     </template>
 
-    <!-- Spreadsheet Container - Only initialize and show when not locked -->
     <template v-else>
-      <div class="relative w-full h-full" style="height: calc(100vh - 12rem); margin: 0 !important">
-        <div id="univer-container" class="absolute inset-0"></div>
+      <div class="relative w-full h-full" style="height: 95vh; margin-top: 0 !important">
+
+        <div v-if="isInitializing || sheetLoading" class="absolute inset-0 bg-white bg-opacity-80 z-10 flex items-center justify-center rounded-md border shadow-sm">
+            <div class="text-center space-y-2">
+              <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mx-auto"></div>
+              <p class="text-sm text-gray-600">{{ isInitializing ? 'Initializing sheet setup...' : 'Loading Google Sheet...' }}</p>
+            </div>
+          </div>
+
+        <div v-if="!isInitializing && sheetError" class="absolute inset-0 bg-red-50 z-10 flex flex-col items-center justify-center p-6 rounded-md border border-red-200 text-center shadow-sm">
+            <FeatherIcon name="alert-circle" class="w-10 h-10 text-red-500 mb-3 flex-shrink-0" />
+            <p class="text-red-700 font-medium">Error Loading Google Sheet</p>
+            <p class="text-sm text-red-600 mt-1 max-w-md">{{ sheetError }}</p>
+            <p class="text-xs text-gray-500 mt-3">Check Sheet ID, Named Range, Service Account permissions, and network connection. Refreshing might help.</p>
+          </div>
+
+        <div v-if="!isInitializing && !sheetLoading && !sheetError && (!projectResource.doc?.google_sheet_id || !projectResource.doc?.extraction_named_range)" class="absolute inset-6 bg-gray-50 z-10 flex flex-col items-center justify-center p-6 rounded-md border text-center shadow-sm">
+            <FeatherIcon name="settings" class="w-10 h-10 text-gray-400 mb-3 flex-shrink-0" />
+            <p class="text-gray-700 font-medium">Configuration Incomplete</p>
+            <p class="text-sm text-gray-600 mt-1 max-w-md">Automatic setup failed or configuration is missing. Please check Project settings for 'Google Sheet ID' and 'Extraction Named Range'.</p>
+          </div>
+
+        <iframe
+          v-if="!isInitializing && googleSheetUrl && !sheetError && projectResource.doc?.google_sheet_id && projectResource.doc?.extraction_named_range"
+          :src="googleSheetUrl"
+          ref="googleSheetIframe"
+          frameborder="0"
+          class="absolute inset-0 w-full h-full bg-white"
+          @load="onSheetLoadSuccess"
+          @error="onSheetLoadError"
+          allowfullscreen
+          title="Project Items Google Sheet"
+        ></iframe>
       </div>
     </template>
 
-    <!-- Dialogs -->
-    <Dialog
-      v-model="showLockDialog"
-      :options="lockDialogOptions"
-    />
+    <Dialog v-model="showLockDialog">
+        <template #body-title>
+            <h3>{{ isLocked ? 'Confirm Unlock' : 'Confirm Lock' }}</h3>
+        </template>
+        <template #body-content>
+            <p>
+                {{ isLocked
+                    ? "Unlocking will allow item details to be updated via the Google Sheet again. Are you sure?"
+                    : "Locking will capture the current item details from the Google Sheet's named range for use in Quotations. Further changes in the sheet won't reflect until unlocked. Proceed?"
+                }}
+            </p>
+        </template>
+        <template #actions>
+            <Button
+                variant="solid"
+                :theme="isLocked ? 'warning' : 'primary'"
+                :loading="props.projectResource?.setLock?.loading ?? false"
+                @click="handleLockConfirm"
+            >
+                {{ isLocked ? 'Unlock Items' : 'Lock Items' }}
+            </Button>
+            <Button
+                variant="subtle"
+                class="ml-2"
+                @click="showLockDialog = false"
+                :disabled="props.projectResource?.setLock?.loading ?? false"
+            >
+                Cancel
+            </Button>
+        </template>
+    </Dialog>
 
-    <Dialog
-      v-model="showUnauthorizedDialog"
-      :options="unauthorizedDialogOptions"
-    />
+    <Dialog v-model="showUnauthorizedDialog">
+         <template #body-title>
+             <h3>Unlock Unauthorized</h3>
+         </template>
+         <template #body-content>
+             <p>
+                 These items were locked by '{{ lockedData?.user || 'another user' }}'. Only they or an administrator (System Manager) can unlock them.
+             </p>
+         </template>
+         <template #actions>
+              <Button
+                 variant="subtle"
+                 @click="showUnauthorizedDialog = false"
+             >
+                 Close
+             </Button>
+         </template>
+     </Dialog>
 
-    <Dialog
-      v-model="showActiveUsersDialog"
-      :options="activeUsersDialogOptions"
-    />
-
-    <!-- Save Status Indicator -->
-    <div
-      v-if="(!isLocked && saveStatus) || (!isLocked && unsavedChanges > 0)"
-      class="fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg"
-      :class="saveStatusClasses"
-    >
-      <span class="text-white text-sm">{{ saveStatusMessage }}</span>
-    </div>
   </div>
+  <div v-else-if="projectResource?.loading" class="p-6 text-center text-gray-500">
+     <div class="animate-spin rounded-full h-6 w-6 border-2 border-gray-400 border-t-transparent mx-auto mb-2"></div>
+     Loading Project Data...
+   </div>
+   <div v-else-if="projectResource?.error" class="p-6 text-center text-red-500">
+     Error loading project data: {{ projectResource.error }}
+   </div>
+   <div v-else class="p-6 text-center text-gray-500">
+     Project data not available.
+   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, onBeforeUnmount } from 'vue'
-import { session } from '@/data/session'
-import { Avatar, Tooltip, Button, Dialog, debounce, FeatherIcon } from 'frappe-ui'
-import { createUniver, defaultTheme, LocaleType, merge } from '@univerjs/presets'
-import { UniverSheetsCorePreset } from '@univerjs/presets/preset-sheets-core'
-import UniverPresetSheetsCoreEnUS from '@univerjs/presets/preset-sheets-core/locales/en-US'
-import '@univerjs/presets/lib/styles/preset-sheets-core.css'
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { session } from '@/data/session'; // Adjust path if necessary
+import { Button, Dialog, FeatherIcon, Tooltip } from 'frappe-ui';
 
-// Props
+// Define Props
 const props = defineProps({
-  projectResource: {
+  projectResource: { // Expected to be the object from createDocumentResource
     type: Object,
     required: true,
-    validator: (value) => {
-      return value && typeof value === 'object' && 'doc' in value
-    }
+    validator: (value) => value && typeof value === 'object' && typeof value.doc !== 'undefined',
   },
-  isCollapsed: {
-    type: Boolean,
-    default: false
-  }
-})
+});
 
-// Constants
-const USER_RING_COLORS = [
-  'ring-blue-500', 'ring-green-500', 'ring-red-500', 'ring-yellow-500',
-  'ring-purple-500', 'ring-pink-500', 'ring-indigo-500', 'ring-teal-500',
-  'ring-orange-500', 'ring-cyan-500'
-]
-const SAVE_THRESHOLD = 10
-const COMMAND_DEBOUNCE = 1000
+// --- Component State ---
+const lockStatusMessage = ref('');
+const lockStatusClass = ref('');
+const showLockDialog = ref(false);
+const showUnauthorizedDialog = ref(false);
+const googleSheetIframe = ref(null);
+const isInitializing = ref(true); // Tracks initial setup/check phase
+const setupError = ref(null); // Specific error during ensureSetup call
+const iframeLoadError = ref(null); // Specific error for iframe loading
 
-// State
-const isLoading = ref(true)
-const loadingMessage = ref('Initializing spreadsheet...')
-const loadingDetail = ref('Loading required resources')
-const initializationError = ref(null)
-const showLockDialog = ref(false)
-const showUnauthorizedDialog = ref(false)
-const showActiveUsersDialog = ref(false)
-const isInitialized = ref(false)
-const saveStatus = ref('')
-const unsavedChanges = ref(0)
-const lastSaveTime = ref(Date.now())
-const lastChangeTime = ref(Date.now())
-const activeUsers = ref([])
-let univerAPI = null
-let saveTimeout = null
-let documentWatcher = null
-const lockedData = ref(null)
+// --- Computed Properties ---
+
+const googleSheetUrl = computed(() => props.projectResource?.getSheetUrl?.data || '');
+const sheetLoading = computed(() => isInitializing.value || (props.projectResource?.getSheetUrl?.loading ?? false));
+const sheetError = computed(() => setupError.value || props.projectResource?.getSheetUrl?.error || iframeLoadError.value || null);
+
 const isLocked = computed(() => {
-  const locked = props.projectResource.doc?.locked
-  return locked && 
-         typeof locked === 'string' && 
-         locked.trim() !== '' && 
-         locked !== '[]' && 
-         locked !== '{}'
-})
+  const locked = props.projectResource?.doc?.locked;
+  return locked && typeof locked === 'string' && locked.trim() !== '' && locked !== '[]' && locked !== '{}';
+});
 
+const lockedData = computed(() => {
+    if (!isLocked.value || !props.projectResource?.doc?.locked) return null;
+    try {
+        return JSON.parse(props.projectResource.doc.locked);
+    } catch (e) {
+        console.error("Computed: Failed to parse locked data:", e, "Data:", props.projectResource.doc.locked);
+        return { error: "Invalid lock data format" };
+    }
+});
+
+const canUnlock = computed(() => {
+    const data = lockedData.value;
+    if (!isLocked.value || !data || data.error) return false;
+    if (session.user === data.user) return true;
+    if (session.roles?.includes('System Manager')) return true;
+    return false;
+});
 
 const lockedRows = computed(() => {
-  if (!lockedData.value?.data?.rows) return []
-  
-  return lockedData.value.data.rows.map((row, index) => ({
-    id: index + 1,
-    ...row
-  }))
-})
+    const data = lockedData.value;
+    if (!isLocked.value || !data || data.error || !Array.isArray(data.data?.rows)) return [];
+    return data.data.rows.map((row, index) => ({
+        id: `locked-row-${index}-${row['Item Name']?.replace(/\s+/g, '-') || index}`,
+        ...row
+    }));
+});
 
-const lockedHeaders = computed(() => {
-  if (!lockedData.value?.data?.headers) return {}
-  return lockedData.value.data.headers
-})
-
-
-const isHotMode = computed(() => activeUsers.value.length > 1)
-
-const saveStatusClasses = computed(() => ({
-  'bg-green-500': saveStatus.value === 'saved',
-  'bg-yellow-500': saveStatus.value === 'saving',
-  'bg-red-500': saveStatus.value === 'error',
-  'bg-blue-500': !saveStatus.value && unsavedChanges.value > 0
-}))
-
-const saveStatusMessage = computed(() => {
-  if (saveStatus.value) {
-    switch (saveStatus.value) {
-      case 'saved': return 'Changes saved'
-      case 'saving': return 'Saving...'
-      case 'error': return 'Error saving'
-    }
-  }
-  return `${unsavedChanges.value} unsaved ${unsavedChanges.value === 1 ? 'change' : 'changes'}`
-})
-
-// Dialog Options
-const lockDialogOptions = computed(() => ({
-  title: isLocked.value ? 'Unlock Items' : 'Lock Items',
-  size: 'sm',
-  message: isLocked.value 
-    ? 'Are you sure you want to unlock these items? This will allow users to modify the data.'
-    : 'Are you sure you want to lock the current state of items? This will prevent any further modifications until unlocked.',
-  actions: [
-    {
-      label: 'Cancel',
-      variant: 'subtle',
-      onClick: () => showLockDialog.value = false
-    },
-    {
-      label: isLocked.value ? 'Unlock' : 'Lock',
-      variant: 'solid',
-      loading: props.projectResource.setValue.loading,
-      onClick: handleLockConfirm
-    }
-  ]
-}))
-
-const unauthorizedDialogOptions = computed(() => ({
-  title: 'Unauthorized Action',
-  message: `Only ${lockedData.value?.user} can unlock these items.`,
-  size: 'sm',
-  icon: {
-    name: 'alert-triangle',
-    appearance: 'danger'
-  },
-  actions: [
-    {
-      label: 'Close',
-      variant: 'subtle',
-      onClick: () => showUnauthorizedDialog.value = false
-    }
-  ]
-}))
-
-const activeUsersDialogOptions = computed(() => ({
-  title: 'Cannot Lock Items',
-  message: 'Cannot lock items while other users are active. Please try again when you\'re the only active user.',
-  size: 'sm',
-  icon: {
-    name: 'users',
-    appearance: 'warning'
-  },
-  actions: [
-    {
-      label: 'Close',
-      variant: 'subtle',
-      onClick: () => showActiveUsersDialog.value = false
-    }
-  ]
-}))
-
-// Table Configuration
 const tableHeaders = computed(() => [
-  { key: 'Item Name', label: 'Item', icon: 'box', align: 'left' },
-  { key: 'Qty', label: 'Qty', align: 'right' },
-  { key: 'Width', label: 'Width', align: 'right' },
-  { key: 'Height', label: 'Height', align: 'right' },
-  { key: 'Area', label: 'Area', align: 'right' },
-  { key: 'Amount', label: 'Amount', align: 'right', emphasis: true },
-  { key: 'Total', label: 'Total', align: 'right', emphasis: true },
-  { key: 'Vat Amount', label: 'VAT', align: 'right' },
-  { key: 'Grand Total', label: 'Grand Total', align: 'right', emphasis: true }
-])
+    { key: 'Item Name', label: 'Item', icon: 'box', align: 'left' },
+    { key: 'Description', label: 'Description', align: 'left'},
+    { key: 'Qty', label: 'Qty', align: 'right' },
+    { key: 'Width', label: 'Width', align: 'right' },
+    { key: 'Height', label: 'Height', align: 'right' },
+    { key: 'Area', label: 'Area', align: 'right' },
+    { key: 'Amount', label: 'Amount', align: 'right' },
+    { key: 'Total', label: 'Total', align: 'right' },
+    { key: 'Vat Amount', label: 'VAT', align: 'right' },
+    { key: 'Grand Total', label: 'Grand Total', align: 'right' }
+]);
 
-// Methods
-async function initUniver() {
-  if (isLocked.value) return
+// --- Helper Methods ---
 
+function formatDate(isoTimestamp) {
+  if (!isoTimestamp) return 'N/A';
   try {
-    isLoading.value = true
-    loadingMessage.value = 'Initializing spreadsheet...'
-    loadingDetail.value = 'Preparing spreadsheet'
-
-    const { univer, univerAPI: api } = createUniver({
-      locale: LocaleType.EN_US,
-      locales: {
-        [LocaleType.EN_US]: merge({}, UniverPresetSheetsCoreEnUS),
-      },
-      theme: defaultTheme,
-      presets: [
-        UniverSheetsCorePreset({
-          container: 'univer-container',
-        }),
-      ],
-    })
-
-    univerAPI = api
-    setupCommandHandler()
-
-    if (props.projectResource?.doc?.univer && !isInitialized.value) {
-  loadingDetail.value = 'Loading spreadsheet data'
-  initializeSheetData(props.projectResource.doc.univer)  // Add this line
-  isInitialized.value = true
-}
-    isInitialized.value = true
-    isLoading.value = false
-  } catch (error) {
-    isLoading.value = false
-  }
+    return new Date(isoTimestamp).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+  } catch (e) { return isoTimestamp; }
 }
 
-function initializeSheetData(univerData) {
-  try {
-    const parsedValue = univerData ? JSON.parse(univerData) : null
-    const hasData = parsedValue && 
-      (Array.isArray(parsedValue) ? parsedValue.length > 0 : Object.keys(parsedValue).length > 0)
-
-    if (hasData) {
-      univerAPI.createUniverSheet(parsedValue)
-    } else {
-      // Generate unique IDs for sheets
-      const mainSheetId = 'sheet1_' + Math.random().toString(36).substr(2, 9)
-      const printSheetId = 'sheet2_' + Math.random().toString(36).substr(2, 9)
-
-      // Define the workbook structure
-      const workbookData = createInitialWorkbook(mainSheetId, printSheetId)
-      univerAPI.createUniverSheet(workbookData)
+function formatNumber(value, key) {
+    if (typeof value !== 'number') return value;
+    let options = { minimumFractionDigits: 0, maximumFractionDigits: 0 };
+    if (['Amount', 'Total', 'Vat Amount', 'Grand Total'].includes(key)) {
+        options = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+    } else if (['Width', 'Height', 'Area'].includes(key)) {
+        options = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+    } else if (key === 'Qty') {
+         options = { minimumFractionDigits: 0, maximumFractionDigits: 0 };
     }
-
-    isInitialized.value = true
-  } catch (error) {
-    console.error('Failed to create sheet:', error)
-  }
+    try { return value.toLocaleString(undefined, options); }
+    catch (e) { return value; }
 }
 
-function createInitialWorkbook(mainSheetId, printSheetId) {
-  return {
-    id: 'workbook_' + Math.random().toString(36).substr(2, 9),
-    appVersion: '0.5.0',
-    locale: 'enUS',
-    name: 'Project Workbook',
-    sheetOrder: [mainSheetId, printSheetId],
-    styles: {
-      header_style: {
-        bl: 1,
-        bg: { rgb: '#f3f4f6' },
-        ht: 2,
-        vt: 2,
-      },
-    },
-    sheets: {
-      [mainSheetId]: createMainSheet(mainSheetId),
-      [printSheetId]: createPrintSheet(printSheetId),
-    },
-  }
-}
+// --- Core Methods ---
 
-function createMainSheet(id) {
-  return {
-    id,
-    name: 'Project Items',
-    rowCount: 50,
-    columnCount: 26,
-    tabColor: '',
-    hidden: 0,
-    freezeOptions: {
-      startRow: -1,
-      startColumn: -1,
-      ySplit: 0,
-      xSplit: 0,
-    },
-    rowHeader: {
-      width: 46,
-      hidden: 0,
-    },
-    columnHeader: {
-      height: 20,
-      hidden: 0,
-    },
-    showGridlines: 1,
-    defaultColumnWidth: 73,
-    defaultRowHeight: 23,
-    zoomRatio: 1,
-    cellData: {},
-    rowData: {},
-    columnData: {},
-  }
-}
-
-function createPrintSheet(id) {
-  return {
-    id,
-    name: '_print',
-    rowCount: 50,
-    columnCount: 10,
-    freeze: { xSplit: 1, ySplit: 1, startRow: 1, startColumn: 1 },
-    tabColor: '#FBC418',
-    hidden: 0,
-    rowHeader: { width: 46, hidden: 0 },
-    columnHeader: { height: 20, hidden: 0 },
-    showGridlines: 1,
-    defaultColumnWidth: 73,
-    defaultRowHeight: 23,
-    zoomRatio: 1,
-    cellData: {
-      0: {
-        0: { v: 'Item Name', t: 1, s: 'header_style' },
-        1: { v: 'Description', t: 1, s: 'header_style' },
-        2: { v: 'Qty', t: 1, s: 'header_style' },
-        3: { v: 'Width [m]', t: 1, s: 'header_style' },
-        4: { v: 'Height [m]', t: 1, s: 'header_style' },
-        5: { v: 'Area [SQM]', t: 1, s: 'header_style' },
-        6: { v: 'Amount', t: 1, s: 'header_style' },
-        7: { v: 'Total', t: 1, s: 'header_style' },
-        8: { v: 'Vat Amount', t: 1, s: 'header_style' },
-        9: { v: 'Grand Total', t: 1, s: 'header_style' },
-      },
-    },
-    rowData: {},
-    columnData: {
-      0: { w: 150, hd: 0 },
-      1: { w: 200, hd: 0 },
-      2: { w: 80, hd: 0 },
-      3: { w: 80, hd: 0 },
-      4: { w: 80, hd: 0 },
-      5: { w: 80, hd: 0 },
-      6: { w: 100, hd: 0 },
-      7: { w: 100, hd: 0 },
-      8: { w: 100, hd: 0 },
-      9: { w: 100, hd: 0 },
-    },
-  }
-}
-
-async function reinitializeWithData(data) {
-  if (univerAPI) {
-    univerAPI.dispose()
-  }
-
-  const { univer, univerAPI: api } = createUniver({
-    locale: LocaleType.EN_US,
-    locales: {
-      [LocaleType.EN_US]: merge({}, UniverPresetSheetsCoreEnUS),
-    },
-    theme: defaultTheme,
-    presets: [
-      UniverSheetsCorePreset({
-        container: 'univer-container',
-      }),
-    ],
-  })
-
-  univerAPI = api
-  univerAPI.createUniverSheet(data)
-  setupCommandHandler()
-}
-
-const debouncedHandleChange = debounce(() => {
-  lastChangeTime.value = Date.now()
-  unsavedChanges.value++
-
-  if (isHotMode.value || unsavedChanges.value >= SAVE_THRESHOLD) {
-    handleSave()
-  }
-}, COMMAND_DEBOUNCE)
-
-function setupCommandHandler() {
-  if (!univerAPI) return
-
-  const relevantCommands = new Set([
-    'formula.mutation.set-formula-calculation-notification',
-    'sheet.mutation.set-range-values',
-    'sheet.mutation.set-range-styles',
-  ])
-
-  univerAPI.onCommandExecuted((command) => {
-    if (relevantCommands.has(command.id)) {
-      debouncedHandleChange()
+async function fetchSheetUrl() {
+    if (!props.projectResource?.getSheetUrl || !props.projectResource?.doc?.google_sheet_id) {
+        return;
     }
-  })
-}
-
-async function handleSave() {
-  if (saveTimeout) {
-    clearTimeout(saveTimeout)
-  }
-
-  // Add a flag to prevent multiple simultaneous save attempts
-  if (window.isSaving) return
-
-  saveStatus.value = 'saving'
-  window.isSaving = true
-
-  saveTimeout = setTimeout(async () => {
+    iframeLoadError.value = null;
     try {
-      await forceSave()
+        await props.projectResource.getSheetUrl.submit();
+        if (props.projectResource.getSheetUrl.error) throw props.projectResource.getSheetUrl.error;
+        if (!props.projectResource.getSheetUrl.data) throw new Error("Backend returned an empty URL.");
     } catch (error) {
-      console.error('Failed to save sheet data:', error)
-      saveStatus.value = 'error'
-    } finally {
-      window.isSaving = false
+        console.error("Error fetching Google Sheet URL:", error);
     }
-  }, 300)
 }
 
-async function forceSave() {
-  try {
-    const sheetData = univerAPI.getActiveWorkbook().save()
-    await props.projectResource.setValue.submit({
-      name: props.projectResource.name,
-      univer: JSON.stringify(sheetData),
-    })
-
-    saveStatus.value = 'saved'
-    unsavedChanges.value = 0
-    lastSaveTime.value = Date.now()
-
-    setTimeout(() => {
-      saveStatus.value = ''
-    }, 2000)
-  } catch (error) {
-    throw error
-  }
-}
-
-async function handleModeTransition(newMode) {
-  if (unsavedChanges.value > 0) {
-    await forceSave()
-  }
-
-  if (newMode === 'hot') {
-    setupHotMode()
-  } else {
-    setupRelaxedMode()
-  }
-}
-
-function setupHotMode() {
-  setupDocumentChangeWatcher()
-}
-
-function setupRelaxedMode() {
-  clearDocumentChangeWatcher()
-}
-
-function setupDocumentChangeWatcher() {
-  if (documentWatcher) return
-
-  documentWatcher = watch(
-    () => props.projectResource.doc?.univer,
-    async (newValue, oldValue) => {
-      // Additional checks to prevent unnecessary updates
-      if (!isInitialized.value || 
-          !newValue || 
-          newValue === oldValue || 
-          window.isReinitializingDocument) {
-        return
-      }
-
-      try {
-        window.isReinitializingDocument = true
-
-        const parsedData = JSON.parse(newValue)
-        const currentData = univerAPI.getActiveWorkbook().save()
-
-        if (JSON.stringify(currentData) !== JSON.stringify(parsedData)) {
-          await reinitializeWithData(parsedData)
+async function initializeSheetIntegration() {
+    if (isLocked.value || !props.projectResource?.ensureSetup || !props.projectResource?.doc?.name) {
+        isInitializing.value = false;
+        return;
+    }
+    isInitializing.value = true;
+    setupError.value = null;
+    iframeLoadError.value = null;
+    try {
+        await props.projectResource.ensureSetup.submit();
+        if (props.projectResource.ensureSetup.error) throw props.projectResource.ensureSetup.error;
+        await nextTick(); // Wait for potential auto-reload of doc
+        if (props.projectResource.doc.google_sheet_id && props.projectResource.doc.extraction_named_range) {
+            await fetchSheetUrl();
+        } else {
+            throw new Error("Google Sheet configuration is incomplete after setup attempt.");
         }
-      } catch (error) {
-        console.error('Failed to update from document change:', error)
-      } finally {
-        // Reset the flag after a delay
-        setTimeout(() => {
-          window.isReinitializingDocument = false
-        }, 1000)
-      }
-    },
-    { deep: true }
-  )
+    } catch (error) {
+        console.error("Error during sheet initialization:", error);
+        setupError.value = `Failed to initialize Google Sheet: ${error?.message || "Unknown error"}`;
+    } finally {
+        isInitializing.value = false;
+    }
 }
 
-function clearDocumentChangeWatcher() {
-  if (documentWatcher) {
-    documentWatcher()
-    documentWatcher = null
-  }
+function onSheetLoadSuccess() {
+    console.log("Google Sheet iframe loaded successfully.");
+    iframeLoadError.value = null;
 }
 
-function getUserColor(index) {
-  return USER_RING_COLORS[index % USER_RING_COLORS.length]
+function onSheetLoadError(event) {
+    console.error("Google Sheet iframe load error:", event);
+    if (!sheetError.value) {
+       iframeLoadError.value = "Could not load the Google Sheet iframe content. Check network, permissions, or browser console.";
+    }
+    isInitializing.value = false;
 }
 
-function parseActiveUsers(activeUsersStr) {
-  if (!activeUsersStr) return []
-  try {
-    return typeof activeUsersStr === 'string' ? JSON.parse(activeUsersStr) : []
-  } catch (error) {
-    console.error('Failed to parse active users:', error)
-    return []
-  }
-}
-
-async function updateActiveUsers(users, operation = 'add') {
-  if (!props.projectResource.doc) return
-
-  // Add a flag to prevent rapid successive calls
-  if (window.isUpdatingActiveUsers) return
-
-  try {
-    window.isUpdatingActiveUsers = true
-
-    const currentUsers = parseActiveUsers(props.projectResource.doc.active_users)
-    let updatedUsers
-
-    if (operation === 'add') {
-      updatedUsers = [...new Set([...currentUsers, ...users])]
+function handleLockClick() {
+    lockStatusMessage.value = '';
+    if (isLocked.value) {
+        if (canUnlock.value) { showLockDialog.value = true; }
+        else { showUnauthorizedDialog.value = true; }
     } else {
-      updatedUsers = currentUsers.filter(user => !users.includes(user))
+        if (props.projectResource?.doc?.google_sheet_id && props.projectResource?.doc?.extraction_named_range) {
+            showLockDialog.value = true;
+        } else {
+             console.error("Locking failed: Google Sheet ID or Named Range not set.");
+        }
     }
-
-    // Only update if there's an actual change
-    if (JSON.stringify(currentUsers) !== JSON.stringify(updatedUsers)) {
-      await props.projectResource.setValue.submit({
-        name: props.projectResource.doc.name,
-        active_users: JSON.stringify(updatedUsers)
-      })
-    }
-  } catch (error) {
-    console.error('Failed to update active users:', error)
-  } finally {
-    // Reset the flag after a short delay
-    setTimeout(() => {
-      window.isUpdatingActiveUsers = false
-    }, 1000)
-  }
-}
-
-async function handleUserArrival() {
-  await updateActiveUsers([session.user], 'add')
-}
-
-async function handleUserDeparture() {
-  if (unsavedChanges.value > 0) {
-    await forceSave()
-  }
-  await updateActiveUsers([session.user], 'remove')
-}
-
-async function handleLockClick() {
-  if (isLocked.value) {
-    if (session.user === lockedData.value?.user) {
-      showLockDialog.value = true
-    } else {
-      showUnauthorizedDialog.value = true
-    }
-    return
-  }
-
-  if (activeUsers.value.length > 1) {
-    showActiveUsersDialog.value = true
-    return
-  }
-
-  await forceSave()
-  showLockDialog.value = true
 }
 
 async function handleLockConfirm() {
-  if (isLocked.value) {
-    await props.projectResource.setValue.submit({
-      name: props.projectResource.doc.name,
-      locked: '',
-    })
-    window.location.reload()
-  } else {
-    const printData = extractPrintSheetData(props.projectResource.doc.univer)
-    const lockData = {
-      user: session.user,
-      timestamp: new Date().toISOString(),
-      data: printData,
-    }
-
-    await props.projectResource.setValue.submit({
-      name: props.projectResource.doc.name,
-      locked: JSON.stringify(lockData),
-    })
-  }
-
-  showLockDialog.value = false
-}
-
-function extractPrintSheetData(univerData) {
-  try {
-    const data = JSON.parse(univerData)
-    const printSheet = Object.values(data.sheets).find(sheet => sheet.name === '_print')
-    if (!printSheet) return null
-
-    const headers = {}
-    const headerUnits = {}
-    const rows = []
-
-    function extractUnit(headerText) {
-      const match = headerText.match(/\[(.*?)\]/)
-      return match ? match[1] : null
-    }
-
-    function formatNumber(value, decimals = 0) {
-      if (typeof value !== 'number') return value
-
-      const formatted = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
-      }).format(value)
-
-      if (decimals > 0) {
-        const parts = formatted.split('.')
-        if (parts[1] && !parts[1].split('').some(digit => digit !== '0')) {
-          return parts[0]
-        }
-      }
-
-      return formatted
-    }
-
-    function formatValue(value, header, unit) {
-      if (value === null || value === undefined) return ''
-
-      switch (header) {
-        case 'Qty':
-          return formatNumber(value, 0)
-        case 'Width':
-        case 'Height':
-        case 'Area':
-          return unit ? `${formatNumber(value, 2)} ${unit}` : formatNumber(value, 2)
-        case 'Amount':
-        case 'Total':
-        case 'Vat Amount':
-        case 'Grand Total':
-          return `${formatNumber(value, 2)} AED`
-        default:
-          return value
-      }
-    }
-
-    // Extract headers and units
-    if (printSheet.cellData['0']) {
-      Object.entries(printSheet.cellData['0']).forEach(([col, cell]) => {
-        let headerText = ''
-        let headerUnit = null
-
-        if (cell.v) {
-          headerText = cell.v
-        } else if (cell.p?.body?.dataStream) {
-          headerText = cell.p.body.dataStream.trim()
-        }
-
-        if (headerText) {
-          if (headerText.includes('[')) {
-            const baseName = headerText.split('[')[0].trim()
-            const unit = extractUnit(headerText)
-            headers[col] = baseName
-            headerUnits[baseName] = unit
-          } else {
-            headers[col] = headerText
-          }
-        }
-      })
-    }
-
-    // Extract and format rows
-    Object.entries(printSheet.cellData).forEach(([rowIndex, rowData]) => {
-      if (rowIndex === '0') return
-
-      const row = {}
-      let hasValues = false
-
-      Object.entries(rowData).forEach(([col, cell]) => {
-        const header = headers[col]
-        if (header) {
-          const unit = headerUnits[header]
-          const formattedValue = formatValue(cell.v, header, unit)
-          row[header] = formattedValue
-          if (formattedValue !== '') {
-            hasValues = true
-          }
-        }
-      })
-
-      const hasRequiredFields = Boolean(row['Item Name'] || row['Description'])
-      if (Object.keys(row).length > 0 && hasRequiredFields && hasValues) {
-        rows.push(row)
-      }
-    })
-
-    return { headers, rows }
-  } catch (error) {
-    console.error('Error extracting print sheet data:', error)
-    return null
-  }
-}
-
-// Cleanup function
-async function cleanup() {
-  if (documentWatcher) {
-    documentWatcher()
-    documentWatcher = null
-  }
-
-  if (saveTimeout) {
-    clearTimeout(saveTimeout)
-    saveTimeout = null
-  }
-
-  if (univerAPI) {
+    const action = isLocked.value ? 'Unlocking' : 'Locking';
+    lockStatusMessage.value = `${action}...`;
+    lockStatusClass.value = 'text-blue-600';
     try {
-      univerAPI.dispose()
-      univerAPI = null
+        const result = await props.projectResource.setLock.submit({ lock: !isLocked.value });
+        if (props.projectResource.setLock.error) throw props.projectResource.setLock.error;
+        // Assuming backend modifies doc, resource watcher handles UI update
+        lockStatusMessage.value = result?.message || `${action} successful`;
+        lockStatusClass.value = 'text-green-600';
+        setTimeout(() => {
+            if (lockStatusClass.value === 'text-green-600') lockStatusMessage.value = '';
+        }, 5000);
     } catch (error) {
-      console.error('Error disposing Univer API:', error)
+        console.error(`Error during ${action}:`, error);
+        lockStatusMessage.value = `Error: ${error?.message || `${action} failed.`}`;
+        lockStatusClass.value = 'text-red-600';
+    } finally {
+        showLockDialog.value = false;
     }
-  }
 }
 
-// Keyboard Shortcuts
-function setupKeyboardShortcuts() {
-  const handleKeyPress = (event) => {
-    // Ctrl/Cmd + S
-    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-      event.preventDefault()
-      if (unsavedChanges.value > 0) {
-        handleSave()
-      }
+// --- Watchers ---
+
+// Watch doc for changes (initial load, reload after mutation)
+watch(() => props.projectResource?.doc, (newDoc, oldDoc) => {
+    if (!newDoc) {
+        isInitializing.value = true;
+        setupError.value = null;
+        iframeLoadError.value = null;
+        return;
     }
-  }
-
-  window.addEventListener('keydown', handleKeyPress)
-  return () => window.removeEventListener('keydown', handleKeyPress)
-}
-
-// Visibility Handling
-const handleVisibilityChange = async () => {
-  if (document.hidden) {
-    await handleUserDeparture()
-  } else {
-    await handleUserArrival()
-  }
-}
-
-// Watchers
-watch(
-  () => activeUsers.value.length,
-  async (newCount, oldCount) => {
-    if (newCount !== oldCount) {
-      const newMode = newCount > 1 ? 'hot' : 'relaxed'
-      await handleModeTransition(newMode)
+    if (newDoc.name && isInitializing.value) {
+         if (!isLocked.value) {
+             initializeSheetIntegration();
+         } else {
+             isInitializing.value = false;
+         }
+    } else if (newDoc.name && !isInitializing.value) {
+         // Handle becoming unlocked after initial load
+         if (oldDoc?.locked && !newDoc.locked) {
+             initializeSheetIntegration();
+         }
     }
-  }
-)
-watch(
-  () => props.projectResource.doc,
-  async (newDoc) => {
-    // Only handle arrival if not hidden and user not already in active users
-    if (newDoc && !document.hidden && newDoc.active_users && 
-        !parseActiveUsers(newDoc.active_users).includes(session.user)) {
-      await handleUserArrival()
+}, { immediate: true, deep: false });
+
+// Watch resource prop itself for navigation changes
+watch(() => props.projectResource, (newResource, oldResource) => {
+    if (newResource !== oldResource) {
+        lockStatusMessage.value = '';
+        setupError.value = null;
+        iframeLoadError.value = null;
+        showLockDialog.value = false;
+        showUnauthorizedDialog.value = false;
+        isInitializing.value = true; // Let doc watcher handle init
     }
-  }
-)
+}, { immediate: false });
 
-watch(
-  () => props.projectResource.doc?.active_users,
-  (newValue) => {
-    if (newValue !== undefined) {
-      const parsedUsers = parseActiveUsers(newValue)
-      
-      // Only update if the parsed users are different from current active users
-      if (JSON.stringify(parsedUsers) !== JSON.stringify(activeUsers.value)) {
-        activeUsers.value = parsedUsers
-      }
-    }
-  }
-)
+// --- Lifecycle Hooks ---
+onMounted(() => {
+    // Initialization logic driven by immediate doc watcher
+});
 
-watch(
-  () => props.projectResource.doc?.locked,
-  (newValue) => {
-    if (newValue) {
-      try {
-        lockedData.value = JSON.parse(newValue)
-      } catch (error) {
-        lockedData.value = null
-      }
-    } else {
-      lockedData.value = null
-    }
-  },
-  { immediate: true }
-)
-
-function setupBeforeUnloadHandler() {
-  const handleBeforeUnload = async (event) => {
-    if (unsavedChanges.value > 0) {
-      event.preventDefault()
-      event.returnValue = ''
-      
-      try {
-        // Attempt to save changes
-        await forceSave()
-      } catch (error) {
-        console.error('Failed to save changes before unload:', error)
-      }
-    }
-  }
-
-  window.addEventListener('beforeunload', handleBeforeUnload)
-  return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-}
-
-// Component Lifecycle
-onMounted(async () => {
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-  const cleanupKeyboardShortcuts = setupKeyboardShortcuts()
-  const cleanupBeforeUnload = setupBeforeUnloadHandler()
-
-  // Small delay to ensure DOM is ready
-  await new Promise(resolve => setTimeout(resolve, 100))
-
-  await initUniver()
-  await handleUserArrival()
-
-  // Also add a visibility check in case the page was loaded in a background tab
-  if (!document.hidden) {
-    await handleUserArrival()
-  }
-
-  return () => {
-    cleanupKeyboardShortcuts()
-    cleanupBeforeUnload()
-  }
-})
-
-
-onBeforeUnmount(async () => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-  try {
-    await handleUserDeparture()
-  } catch (error) {
-    console.error('Error during user departure:', error)
-  } finally {
-    await cleanup()
-  }
-})
-
-// Separate onUnmounted hook for navigation cleanup
-onUnmounted(async () => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-  try {
-    await handleUserDeparture()
-  } catch (error) {
-    console.error('Error during user departure:', error)
-  } finally {
-    cleanup()
-  }
-})
 </script>
+
+<style scoped>
+/* Styles remain the same */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+iframe {
+    border-color: #e5e7eb; /* border-gray-200 */
+}
+</style>

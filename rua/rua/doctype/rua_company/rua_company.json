@@ -7,8 +7,11 @@
  "engine": "InnoDB",
  "field_order": [
   "date",
+  "passkey",
   "column_break_dkmq",
-  "passkey"
+  "service_account",
+  "google_sheet_template_id",
+  "google_accounts"
  ],
  "fields": [
   {
@@ -24,13 +27,30 @@
    "fieldname": "passkey",
    "fieldtype": "Data",
    "label": "Passkey"
+  },
+  {
+   "fieldname": "service_account",
+   "fieldtype": "Attach",
+   "label": "Service Account"
+  },
+  {
+   "default": "1-WHXiecmxzvDTtttmrirt_mqStjqIdOePpSBXes_nVA",
+   "fieldname": "google_sheet_template_id",
+   "fieldtype": "Data",
+   "label": "Google Sheet Template ID"
+  },
+  {
+   "fieldname": "google_accounts",
+   "fieldtype": "Table",
+   "label": "Google Accounts",
+   "options": "Employee Google Accounts"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-01-19 04:48:17.558444",
+ "modified": "2025-04-18 19:46:05.122821",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Company",
@@ -47,6 +67,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

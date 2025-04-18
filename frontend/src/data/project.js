@@ -9,16 +9,24 @@ export const projectResource = createListResource({
 })
 
 export function createProjectResource(name) {
-	return createDocumentResource({
-		doctype: 'RUA Project',
-		name,
-		transform(doc) {
-			return doc
+	return createDocumentResource(
+		{
+			doctype: 'RUA Project',
+			name,
+			transform(doc) {
+				return doc
+			},
+			onError(error) {
+				console.error('Error loading Project:', error)
+			},
+			whitelistedMethods: {
+				// FrontendName: 'backend_python_method_name'
+				getSheetUrl: 'get_google_sheet_url',
+				ensureSetup: 'ensure_google_sheet_setup',
+				setLock: 'set_lock_status',
+			},
+			realtime: true,
 		},
-		onError(error) {
-			console.error('Error loading Project:', error)
-		},
-		realtime: true,
-		
-	}, $socket)
+		$socket,
+	)
 }

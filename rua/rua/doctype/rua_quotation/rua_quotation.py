@@ -4,11 +4,9 @@ from frappe.model.document import Document
 import rua
 
 
-
 class RUAQuotation(Document):
     def publish_update(self):
         rua.refetch_resource("rua:quotation")
-
 
     def on_trash(self):
         self.publish_update()
@@ -18,80 +16,70 @@ class RUAQuotation(Document):
 
     def after_save(self):
         self.publish_update()
-        
 
     def before_insert(self):
         if not self.project:
-            frappe.throw("Project is required")
-        project = frappe.get_doc('RUA Project', self.project)
+            frappe.throw(_("Project is required"))
+
+        project = frappe.get_doc("RUA Project", self.project)
+
+        if not project.locked:
+            frappe.throw(_("Project items must be locked before creating a Quotation."))
 
         try:
-            locked = json.loads(project.locked) if isinstance(
-                project.locked, str) else project.locked
-            if not locked or locked == {} or locked == []:
-                frappe.throw("Items are not locked")
+            locked_data = json.loads(project.locked)
+            rows = locked_data.get("data", {}).get("rows", [])
 
-            # Get the rows data from the locked JSON
-            rows = locked.get('data', {}).get('rows', [])
             if not rows:
-                frappe.throw("No items found in locked data")
+                frappe.throw(_("No items found in the locked project data."))
 
-            # Initialize summary values
-            total_amount = 0
-            total_vat = 0
-            total_grand = 0
+            self.items = []  # Clear existing items
+            total_amount = 0.0
+            total_vat = 0.0
+            total_grand = 0.0
 
-            # Process each row and add to items child table
-            for row in rows:
-                # Helper function to clean currency values
-                def clean_currency(value):
-                    if not value:  # Handle empty or None values
-                        return 0.0
-                    if isinstance(value, str):
-                        # Remove currency symbol and commas, then convert to float
-                        cleaned = value.replace('AED', '').replace(',', '').strip()
-                        return float(cleaned) if cleaned else 0.0
-                    return float(value)
+            # Data in 'rows' is assumed to be cleaned/validated by the locking process
+            for idx, row_data in enumerate(rows):
+                # Simple validation - check if expected keys exist from locked data
+                required_keys = [
+                    "Item Name",
+                    "Description",
+                    "Qty",
+                    "Amount",
+                    "Total",
+                    "Vat Amount",
+                    "Grand Total",
+                ]
+                if not all(k in row_data for k in required_keys):
+                    frappe.log_error(
+                        f"Locked data for project {self.project} row index {idx} is missing keys: {row_data}",
+                        "Quotation Creation",
+                    )
+                    frappe.throw(
+                        _(
+                            "Locked data is incomplete. Please unlock and re-lock the project items."
+                        )
+                    )
 
-                # Helper function to clean and format unit values
-                def clean_unit_value(value):
-                    if not value:  # Handle empty values
-                        return ""
-                    if isinstance(value, str):
-                        # Split into numeric value and unit
-                        parts = value.split()
-                        if len(parts) >= 2:
-                            num = float(parts[0].replace(',', ''))
-                            unit = parts[1]
-                            # Return formatted string with value and unit
-                            return f"{num} {unit}"
-                        return ""  # Return empty string if format is invalid
-                    return str(value) if value else ""
-
-                # Create new item row with basic required fields
                 item = {
-                    'item_name': row['Item Name'],
-                    'description': row['Description'],
-                    'qty': int(row['Qty']),
-                    'width': clean_unit_value(row.get('Width', '')),
-                    'height': clean_unit_value(row.get('Height', '')),
-                    'amount': clean_currency(row['Amount']),
-                    'total': clean_currency(row['Total']),
-                    'vat_amount': clean_currency(row['Vat Amount']),
-                    'grand_total': clean_currency(row['Grand Total'])
+                    "item_name": row_data["Item Name"],
+                    "description": row_data["Description"],
+                    "qty": row_data["Qty"],  # Already parsed int
+                    "amount": row_data["Amount"],  # Already parsed float
+                    "total": row_data["Total"],  # Already parsed float
+                    "vat_amount": row_data["Vat Amount"],  # Already parsed float
+                    "grand_total": row_data["Grand Total"],  # Already parsed float
+                    # Optional fields (use .get for safety)
+                    "width": row_data.get("Width", ""),  # Already string
+                    "height": row_data.get("Height", ""),  # Already string
+                    "area": row_data.get("Area", ""),  # Already string
                 }
+                self.append("items", item)
 
-                # Only add area if it exists in the row
-                if 'Area' in row and row['Area']:
-                    item['area'] = clean_unit_value(row['Area'])
-
-                # Add to summary totals
-                total_amount += clean_currency(row['Total'])
-                total_vat += clean_currency(row['Vat Amount'])
-                total_grand += clean_currency(row['Grand Total'])
-
-                # Append the item to the child table
-                self.append('items', item)
+                # Accumulate totals directly from the reliable locked data
+                total_amount += item["total"]
+                total_vat += item["vat_amount"]
+                total_grand += item["grand_total"]
 
             # Set document summary fields
             self.total_items = len(rows)
@@ -100,8 +88,17 @@ class RUAQuotation(Document):
             self.grand_total = total_grand
 
         except json.JSONDecodeError:
-            frappe.throw("Invalid JSON format in locked data")
-        except KeyError as e:
-            frappe.throw(f"Missing required field in locked data: {str(e)}")
+            frappe.log_error(
+                f"Invalid JSON in locked field for Project {self.project}",
+                "Quotation Creation",
+            )
+            frappe.throw(
+                _("Locked project data is corrupted. Please unlock and re-lock.")
+            )
         except Exception as e:
-            frappe.throw(f"Error processing locked items: {str(e)}")
+            frappe.log_error(
+                frappe.get_traceback(), "Quotation Creation from Locked Data Failed"
+            )
+            frappe.throw(
+                _("Error processing locked items for Quotation: {0}").format(str(e))
+            )
