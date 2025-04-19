@@ -214,15 +214,27 @@
         />
       </div>
 
-      <div v-if="quotationResource.doc.quotation_details" class="bg-white rounded-lg border shadow-sm">
-  <div class="px-6 py-4 border-b">
-    <h2 class="text-lg font-medium text-gray-900">Quotation Details</h2>
-  </div>
-  <div 
-    class="px-6 py-4 prose max-w-none" 
-    v-html="quotationResource.doc.quotation_details"
-  ></div>
-</div>
+      <template v-for="field in quotationDetailFields" :key="field.key">
+
+        <div v-if="quotationResource.doc[field.key]" class="bg-white rounded-lg border shadow-sm">
+
+          <div class="px-6 py-4 border-b">
+
+            <h2 class="text-lg font-medium text-gray-900">{{ field.label }}</h2>
+
+          </div>
+
+          <div
+
+            class="px-6 py-4 prose prose-sm max-w-none"
+
+            v-html="quotationResource.doc[field.key]"
+
+          ></div>
+
+        </div>
+
+      </template>
 
       <!-- Signed Document -->
       <div 
@@ -457,6 +469,29 @@ const isUpdatingStatus = ref(false)
 const rejectReason = ref('')
 const showFinalizeDialog = ref(false)
 const showRejectDialog = ref(false)
+const quotationDetailFields = ref([
+
+    { key: 'specifications', label: 'Specifications' },
+
+    { key: 'scope_of_work', label: 'Scope of Work' },
+
+    { key: 'exclusions', label: 'Exclusions' },
+
+    { key: 'notes', label: 'Notes' },
+
+    { key: 'qualifications', label: 'Standard Qualifications' },
+
+    { key: 'proposal_basis', label: 'Proposal Basis' },
+
+    { key: 'terms_and_conditions', label: 'Terms and Conditions' },
+
+    { key: 'duration_and_payment', label: 'Duration and Payment Terms' },
+
+    { key: 'maintenance_and_warranty', label: 'Maintenance and Warranty' },
+
+]);
+
+
 
 // Computed Properties
 const partyData = computed(() => {

@@ -10,12 +10,11 @@
   "project",
   "status",
   "reject_reason",
-  "signature",
   "column_break_njho",
   "date",
   "naming_series",
   "signed_document",
-  "quotation_details",
+  "signature",
   "section_break_tgli",
   "items",
   "section_break_ognp",
@@ -23,7 +22,19 @@
   "column_break_avcn",
   "total",
   "vat_amount",
-  "grand_total"
+  "grand_total",
+  "quotation_terms_tab",
+  "specifications",
+  "notes",
+  "scope_of_work",
+  "proposal_basis",
+  "scopes",
+  "column_break_bzhs",
+  "exclusions",
+  "qualifications",
+  "terms_and_conditions",
+  "maintenance_and_warranty",
+  "duration_and_payment"
  ],
  "fields": [
   {
@@ -109,20 +120,74 @@
    "label": "Reject Reason"
   },
   {
-   "fieldname": "quotation_details",
-   "fieldtype": "Text Editor",
-   "label": "Quotation Details"
-  },
-  {
    "fieldname": "signature",
    "fieldtype": "Attach Image",
    "label": "Signature"
+  },
+  {
+   "fieldname": "quotation_terms_tab",
+   "fieldtype": "Tab Break",
+   "label": "Quotation Terms"
+  },
+  {
+   "fieldname": "specifications",
+   "fieldtype": "Text Editor",
+   "label": "Specifications"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "scope_of_work",
+   "fieldtype": "Text Editor",
+   "label": "Scope of Work"
+  },
+  {
+   "fieldname": "proposal_basis",
+   "fieldtype": "Text Editor",
+   "label": "Proposal Basis"
+  },
+  {
+   "fieldname": "column_break_bzhs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exclusions",
+   "fieldtype": "Text Editor",
+   "label": "Exclusions"
+  },
+  {
+   "fieldname": "qualifications",
+   "fieldtype": "Text Editor",
+   "label": "Qualifications"
+  },
+  {
+   "fieldname": "terms_and_conditions",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions"
+  },
+  {
+   "fieldname": "maintenance_and_warranty",
+   "fieldtype": "Text Editor",
+   "label": "Maintenance and Warranty"
+  },
+  {
+   "fieldname": "duration_and_payment",
+   "fieldtype": "Text Editor",
+   "label": "Duration and Payment"
+  },
+  {
+   "fieldname": "scopes",
+   "fieldtype": "Text Editor",
+   "label": "Scopes"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-02 01:57:34.934848",
+ "modified": "2025-04-20 01:53:19.909693",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Quotation",
@@ -206,6 +271,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []
