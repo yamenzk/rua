@@ -502,7 +502,7 @@ const actionDropdownOptions = computed(() => [
   {
     label: 'Download PDF',
     icon: 'file-text',
-    onClick: downloadPDF
+    onClick: triggerRcPdfDownload
   },
   {
     label: 'Sign Quotation',
@@ -512,7 +512,7 @@ const actionDropdownOptions = computed(() => [
   {
     label: 'Print',
     icon: 'printer',
-    onClick: printQuotation
+    onClick: triggerRcPdfDownload
   },
   {
 			label: 'Reject Quotation',
@@ -613,46 +613,40 @@ function resetDialogs() {
   rejectReason.value = ''
 }
 
-async function downloadPDF() {
-  try {
-    const response = await fetch(`/api/method/frappe.utils.print_format.download_pdf`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        doctype: 'RUA Quotation',
-        name: quotationResource.value.doc.name,
-        format: 'Standard',
-        no_letterhead: 0,
-      }),
-    })
-
-    if (!response.ok) throw new Error('Failed to download PDF')
-
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${quotationResource.value.doc.name}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error('Error downloading PDF:', error)
-  }
-}
-
-function printQuotation() {
-  let baseUrl = window.location.origin
-
-  if (window.location.hostname === 'localhost' && window.location.port === '8080') {
-    baseUrl = `http://${window.location.hostname}:8000`
-  }
-
-  const url = `${baseUrl}/printview?doctype=RUA Quotation&name=${quotationResource.value.doc.name}&format=Standard&no_letterhead=0&_lang=en`
-  window.open(url, '_blank')
+function triggerRcPdfDownload() {
+    // --- 1. Determine Base URL (handles dev vs. production) ---
+    let baseUrl = window.location.origin;
+    if (window.location.hostname === 'localhost' && window.location.port === '8080') {
+        baseUrl = `http://${window.location.hostname}:8000`;
+    }
+    // --- 2. Get Dynamic Data ---
+    const docName = quotationResource.value.doc.name;
+    if (!docName) {
+        console.error("Error: Could not retrieve document name from quotationResource.");
+        return; 
+    }
+    const docType = 'RUA Quotation'; 
+    // --- 3. Define Static Parameters (matching your target URL) ---
+    const printFormat = 'RC-QTN';      
+    const noLetterhead = 1;             
+    const letterhead = 'No Letterhead'; 
+    const settings = '{}';              
+    const lang = 'en';                  
+    // --- 4. Construct the Target URL ---
+    const apiUrl = `${baseUrl}/api/method/frappe.utils.print_format.download_pdf`;
+    const queryParams = new URLSearchParams({
+        doctype: docType,
+        name: docName,
+        format: printFormat,
+        no_letterhead: noLetterhead,
+        letterhead: letterhead,
+        settings: settings,
+        _lang: lang
+    });
+    const finalUrl = `${apiUrl}?${queryParams.toString()}`;
+    // --- 5. Trigger the Download ---
+    console.log("Opening PDF download URL:", finalUrl); 
+    window.open(finalUrl, '_blank');
 }
 
 async function handleSignatureComplete(signatureUrl) {
