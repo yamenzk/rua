@@ -461,6 +461,7 @@ const navigation = [
   { name: 'Employees', to: '/employees', icon: 'users' },
   { name: 'Parties', to: '/parties', icon: 'truck' },
   { name: 'Tasks', to: '/tasks', icon: 'check-square' },
+   { name: 'Forms & Letters', to: '/forms-letters', icon: 'edit' },
 ]
 
 // Keyboard shortcuts and shake detection

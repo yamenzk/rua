@@ -49,16 +49,14 @@ const routes = [
 				component: () => import('@/pages/Tasks.vue'),
 			},
 			{
-				path: 'letters-forms',
-				name: 'LettersForms',
-				component: () => import('@/pages/LettersForms.vue'),
+				path: 'forms-letters',
+				name: 'FormsLetters',
+				component: () => import('@/pages/FormsLetters.vue'), 
 			},
 			{
-				// Use a nested route within AppLayout or a separate layout if needed
-				path: '/letter/:id',
+				path: 'letter/:id', 
 				name: 'LetterDetails',
-				component: () => import('@/components/letters/LetterDetails.vue'), 
-				props: true, // Pass route params as props
+				component: () => import('@/components/letter/LetterDetails.vue'), 
 			},
 		],
 	},

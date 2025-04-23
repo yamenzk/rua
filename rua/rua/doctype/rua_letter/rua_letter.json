@@ -6,8 +6,10 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "system_title",
   "date",
   "naming_series",
+  "standard",
   "column_break_zqxq",
   "type",
   "signature",
@@ -219,12 +221,23 @@
    "fieldname": "signature",
    "fieldtype": "Attach Image",
    "label": "Signature"
+  },
+  {
+   "fieldname": "system_title",
+   "fieldtype": "Data",
+   "label": "System Title"
+  },
+  {
+   "default": "0",
+   "fieldname": "standard",
+   "fieldtype": "Check",
+   "label": "Standard"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-04-23 04:16:52.324690",
+ "modified": "2025-04-23 16:54:41.505779",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Letter",
