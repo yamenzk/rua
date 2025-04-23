@@ -1,0 +1,251 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-04-23 03:16:30.830277",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "date",
+  "naming_series",
+  "column_break_zqxq",
+  "type",
+  "signature",
+  "english",
+  "arabic",
+  "two_column",
+  "is_template",
+  "section_break_uhwu",
+  "title",
+  "title_ar",
+  "column_break_anvc",
+  "subject",
+  "subject_ar",
+  "column_break_dmxf",
+  "status",
+  "deliverable",
+  "cancellation_reason",
+  "section_break_ltue",
+  "to",
+  "content",
+  "column_break_qzkt",
+  "to_ar",
+  "content_ar",
+  "section_break_weem",
+  "author",
+  "author_title",
+  "author_ar",
+  "author_title_ar",
+  "column_break_zieo",
+  "signee",
+  "signee_title",
+  "signee_ar",
+  "signee_title_ar"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
+  },
+  {
+   "fieldname": "title_ar",
+   "fieldtype": "Data",
+   "label": "Title AR"
+  },
+  {
+   "fieldname": "column_break_dmxf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nLTR\nFRM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "RC-.type.-.YY."
+  },
+  {
+   "fieldname": "column_break_anvc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Subject"
+  },
+  {
+   "fieldname": "subject_ar",
+   "fieldtype": "Data",
+   "label": "Subject AR"
+  },
+  {
+   "default": "0",
+   "fieldname": "english",
+   "fieldtype": "Check",
+   "label": "English"
+  },
+  {
+   "default": "0",
+   "fieldname": "arabic",
+   "fieldtype": "Check",
+   "label": "Arabic"
+  },
+  {
+   "fieldname": "section_break_ltue",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "to",
+   "fieldtype": "Data",
+   "label": "To"
+  },
+  {
+   "fieldname": "content",
+   "fieldtype": "Text Editor",
+   "label": "Content"
+  },
+  {
+   "fieldname": "column_break_qzkt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_ar",
+   "fieldtype": "Data",
+   "label": "To AR"
+  },
+  {
+   "fieldname": "content_ar",
+   "fieldtype": "Text Editor",
+   "label": "Content AR"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "section_break_weem",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "author",
+   "fieldtype": "Data",
+   "label": "Author"
+  },
+  {
+   "fieldname": "author_title",
+   "fieldtype": "Data",
+   "label": "Author Title"
+  },
+  {
+   "fieldname": "column_break_zieo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "author_ar",
+   "fieldtype": "Data",
+   "label": "Author AR"
+  },
+  {
+   "fieldname": "author_title_ar",
+   "fieldtype": "Data",
+   "label": "Author Title AR"
+  },
+  {
+   "fieldname": "column_break_zqxq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_uhwu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_template",
+   "fieldtype": "Check",
+   "label": "Is Template"
+  },
+  {
+   "fieldname": "signee",
+   "fieldtype": "Data",
+   "label": "Signee"
+  },
+  {
+   "fieldname": "signee_title",
+   "fieldtype": "Data",
+   "label": "Signee Title"
+  },
+  {
+   "fieldname": "signee_ar",
+   "fieldtype": "Data",
+   "label": "Signee AR"
+  },
+  {
+   "fieldname": "signee_title_ar",
+   "fieldtype": "Data",
+   "label": "Signee Title AR"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nDraft\nFinal\nCancelled"
+  },
+  {
+   "fieldname": "deliverable",
+   "fieldtype": "Attach",
+   "label": "Deliverable"
+  },
+  {
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancellation Reason"
+  },
+  {
+   "default": "0",
+   "fieldname": "two_column",
+   "fieldtype": "Check",
+   "label": "Two Column"
+  },
+  {
+   "fieldname": "signature",
+   "fieldtype": "Attach Image",
+   "label": "Signature"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-04-23 04:16:52.324690",
+ "modified_by": "Administrator",
+ "module": "Rua",
+ "name": "RUA Letter",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

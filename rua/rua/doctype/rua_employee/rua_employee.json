@@ -13,13 +13,16 @@
   "nationality",
   "position",
   "branch",
+  "joining_date",
   "column_break_ouxq",
   "naming_series",
   "image",
   "salary",
   "user",
   "phone",
-  "email"
+  "email",
+  "basic",
+  "allowance"
  ],
  "fields": [
   {
@@ -91,12 +94,27 @@
    "fieldtype": "Select",
    "label": "Branch",
    "options": "\nMain\nBranch 1\nBranch 2"
+  },
+  {
+   "fieldname": "basic",
+   "fieldtype": "Currency",
+   "label": "Basic"
+  },
+  {
+   "fieldname": "allowance",
+   "fieldtype": "Currency",
+   "label": "Allowance"
+  },
+  {
+   "fieldname": "joining_date",
+   "fieldtype": "Date",
+   "label": "Joining Date"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-21 19:09:17.790482",
+ "modified": "2025-04-22 23:16:32.396164",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
@@ -170,6 +188,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

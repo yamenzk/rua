@@ -164,7 +164,7 @@
 								variant="subtle"
 								size="sm"
 								@click="nextMonth"
-								:disabled="isCurrentMonth"
+								:disabled="isNextMonthInFuture"
 							>
 								<FeatherIcon name="chevron-right" class="w-4 h-4" />
 							</Button>
@@ -653,116 +653,160 @@
     </div>
 		<!-- New Employee Dialog -->
 		<Dialog
-			v-model="showNewEmployeeDialog"
-			:options="{
-				title: 'Add New Employee',
-				size: 'lg',
-				actions: [
-					{
-						label: 'Create',
-						variant: 'solid',
-						loading: list.insert.loading,
-						onClick: () => {
-							return createEmployee()
-						},
-					},
-				],
-			}"
-		>
-			<template #body-content>
-				<div class="space-y-4">
-					<!-- Employee Details Form -->
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div class="space-y-1">
-							<FormControl
-								type="text"
-								label="Employee Name"
-								required
-								v-model="newEmployee.employee_name"
-							/>
-							<span
-								v-if="!newEmployee.employee_name && formSubmitted"
-								class="text-sm text-red-500"
-							>
-								Employee name is required
-							</span>
-						</div>
+    v-model="showNewEmployeeDialog"
+    :options="{
+      title: 'Add New Employee',
+      size: 'lg',
+      actions: [
+        {
+          label: 'Create',
+          variant: 'solid',
+          // Assuming 'list.insert.loading' is the correct loading state for creating
+          loading: list.insert.loading,
+          // Ensure createEmployee handles validation and uses the newEmployee object
+          onClick: createEmployee,
+        },
+      ],
+    }"
+  >
+    <template #body-content>
+      <div class="space-y-6">
+        <div class="flex justify-center">
+          <div class="relative group">
+            <div class="w-24 h-24 rounded-full overflow-hidden border border-gray-200">
+              <div
+                class="w-full h-full bg-gray-100 flex items-center justify-center"
+              >
+                <FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          <input
+             ref="newImageInput"
+             type="file"
+             accept="image/*"
+             class="hidden"
+             @change="handleNewImageSelected"
+           />
+        </div>
 
-						<div class="space-y-1">
-							<FormControl
-								type="date"
-								label="Date of Birth"
-								variant="subtle"
-								v-model="newEmployee.date_of_birth"
-							/>
-						</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
-						<div class="space-y-1">
-							<FormControl
-								type="select"
-								label="Gender"
-								required
-								:options="genderOptions"
-								v-model="newEmployee.gender"
-							/>
-							<span
-								v-if="!newEmployee.gender && formSubmitted"
-								class="text-sm text-red-500"
-							>
-								Gender is required
-							</span>
-						</div>
+          <div class="space-y-1 md:col-span-2">
+            <FormControl
+              type="text"
+              label="Full Name"
+              required
+              v-model="newEmployee.employee_name"
+              placeholder="Enter employee's full name"
+            />
+            </div>
 
-						<div class="space-y-1">
-							<label class="block text-sm font-medium text-gray-700"
-								>Nationality</label
-							>
-							<Autocomplete
-								:options="countryOptions"
-								v-model="newEmployee.nationality"
-								placeholder="Select country"
-								class="w-full"
-							>
-								<template #item-prefix="{ option }">
-									<img :src="flags[option.value]" class="h-4 w-4 rounded-full" />
-								</template>
-							</Autocomplete>
-							<span
-								v-if="!newEmployee.nationality && formSubmitted"
-								class="text-sm text-red-500"
-							>
-								Nationality is required
-							</span>
-						</div>
+          <div class="space-y-1">
+            <FormControl
+              type="date"
+              label="Date of Birth"
+              variant="subtle"
+              v-model="newEmployee.date_of_birth"
+            />
+          </div>
 
-						<div class="space-y-1">
-							<label class="block text-sm font-medium text-gray-700">Position</label>
-							<Autocomplete
-								:options="positionOptions"
-								v-model="newEmployee.position"
-								placeholder="Select position"
-								class="w-full"
-							/>
-						</div>
+          <div class="space-y-1">
+            <FormControl
+              type="select"
+              label="Gender"
+              required
+              :options="genderOptions"
+              v-model="newEmployee.gender"
+              placeholder="Select gender"
+            />
+             </div>
 
-						<div class="space-y-1">
-							<FormControl
-								type="number"
-								label="Salary"
-								v-model="newEmployee.salary"
-							/>
-						</div>
-						<div class="space-y-1">
-                            <FormControl
-                                type="select"
-                                label="Branch"
-                                :options="branchOptions" v-model="newEmployee.branch"
-                            />
-                        </div>
-					</div>
-				</div>
-			</template>
-		</Dialog>
+          <div class="space-y-1">
+              <label class="block text-sm font-medium text-gray-700">Nationality</label>
+              <Autocomplete
+                  :options="countryOptions"
+                  v-model="newEmployee.nationality"
+                  placeholder="Select country"
+                  class="w-full"
+              >
+                  <template #item-prefix="{ option }">
+                      <img :src="flags[option.value]" class="h-4 w-4 rounded-full" />
+                  </template>
+              </Autocomplete>
+          </div>
+
+          <div class="space-y-1">
+            <FormControl
+                type="select"
+                label="Position"
+                :options="positionOptions"
+                v-model="newEmployee.position"
+                placeholder="Select position"
+            />
+             </div>
+
+          <div class="space-y-1">
+            <FormControl
+              type="email"
+              label="Email Address"
+              v-model="newEmployee.email"
+              placeholder="e.g., employee@example.com"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <FormControl
+              type="tel"
+              label="Phone Number"
+              v-model="newEmployee.phone"
+              placeholder="Enter phone number"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <FormControl
+              type="select"
+              label="Branch"
+              :options="branchOptions" 
+              v-model="newEmployee.branch"
+              placeholder="Select branch"
+            />
+          </div>
+
+          <div class="space-y-1 md:col-span-2">
+            <FormControl
+              type="date"
+              label="Joining Date"
+              variant="subtle"
+              v-model="newEmployee.joining_date"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <FormControl
+              type="number"
+              label="Basic Salary"
+              v-model="newEmployee.basic"
+              placeholder="Enter amount"
+              :step="0.01"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <FormControl
+              type="number"
+              label="Allowance"
+              v-model="newEmployee.allowance"
+              placeholder="Enter amount"
+              :step="0.01"
+            />
+          </div>
+
+        </div>
+      </div>
+    </template>
+  </Dialog>
 
 		<!-- Filter Dialog -->
 		<Dialog
@@ -971,10 +1015,12 @@ const filteredEmployeeGrid = computed(() => {
   return employees
 })
 
-const isCurrentMonth = computed(() => {
-  const now = dayjs()
-  return selectedMonth.value === now.month() && currentYear.value === now.year()
-})
+const isNextMonthInFuture = computed(() => {
+  const now = dayjs();
+  const selectedDate = dayjs().year(currentYear.value).month(selectedMonth.value - 1).startOf('month');
+  const nextMonthDate = selectedDate.add(1, 'month');
+  return nextMonthDate.isAfter(now.startOf('month'));
+});
 
 const monthlyAttendance = computed(() => {
   if (!list.data || !attendanceList.data || !leaveResource.data) return []
@@ -1399,7 +1445,11 @@ async function createEmployee() {
 			date_of_birth: newEmployee.value.date_of_birth,
 			nationality: newEmployee.value.nationality.label,
 			position: newEmployee.value.position.label,
-			salary: Number(newEmployee.value.salary),
+			email: newEmployee.value.email,
+			phone: newEmployee.value.phone,
+			joining_date: newEmployee.value.joining_date,
+			basic: Number(newEmployee.value.basic),
+			allowance: Number(newEmployee.value.allowance),
 			branch: newEmployee.value.branch,
 		}
 
@@ -1413,7 +1463,11 @@ async function createEmployee() {
 			gender: '',
 			nationality: '',
 			position: '',
-			salary: null,
+			email: '',
+			phone: '',
+			joining_date: null,
+			basic: null,
+			allowance: null,
 			branch: '',
 		}
 		formSubmitted.value = false

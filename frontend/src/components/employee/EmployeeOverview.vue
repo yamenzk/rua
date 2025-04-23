@@ -79,37 +79,43 @@
 							<h3 class="text-sm font-medium text-gray-500">Full Name</h3>
 							<p class="mt-2 text-base text-gray-900">{{ employee?.employee_name }}</p>
 						</div>
-						<div>
+												<div>
+							<h3 class="text-sm font-medium text-gray-500">Employee ID</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.name }}</p>
+						</div>
+						<div v-if="employee?.gender">
 							<h3 class="text-sm font-medium text-gray-500">Gender</h3>
 							<p class="mt-2 text-base text-gray-900">{{ employee?.gender }}</p>
 						</div>
-						<div>
+						<div v-if="employee?.date_of_birth">
 							<h3 class="text-sm font-medium text-gray-500">Date of Birth</h3>
 							<p class="mt-2 text-base text-gray-900">{{ formatDate(employee?.date_of_birth) }}</p>
 						</div>
-						<div>
+						<div v-if="employee?.nationality">
 							<h3 class="text-sm font-medium text-gray-500">Nationality</h3>
-							<p class="mt-2 text-base text-gray-900">{{ employee?.nationality }}</p>
+							<div class="mt-2 flex items-center space-x-2">
+								<template v-if="getCountryCode(employee.nationality)">
+									<img
+										v-if="flags && flags[getCountryCode(employee.nationality)]"
+										:src="flags[getCountryCode(employee.nationality)]"
+										:alt="`${employee.nationality} flag`"
+										class="h-4 w-4 rounded-sm" />
+								</template>
+								<p class="text-base text-gray-900">{{ employee.nationality }}</p>
+							</div>
 						</div>
-						<div v-if="employee?.phone">
-							<h3 class="text-sm font-medium text-gray-500">Phone Number</h3>
-							<p class="mt-2 text-base text-gray-900">{{ employee?.phone }}</p>
-						</div>
+						
 					</div>
 
 					<!-- Employment Details -->
 					<div class="space-y-6">
-						<div>
+						<div v-if="employee?.position">
 							<h3 class="text-sm font-medium text-gray-500">Position</h3>
 							<p class="mt-2 text-base text-gray-900">{{ employee?.position }}</p>
 						</div>
-						<div>
-							<h3 class="text-sm font-medium text-gray-500">Salary</h3>
-							<p class="mt-2 text-base text-gray-900">{{ formatCurrency(employee?.salary) }}</p>
-						</div>
-						<div>
-							<h3 class="text-sm font-medium text-gray-500">Employee ID</h3>
-							<p class="mt-2 text-base text-gray-900">{{ employee?.name }}</p>
+						<div v-if="employee?.joining_date">
+							<h3 class="text-sm font-medium text-gray-500">Joining Date</h3>
+							<p class="mt-2 text-base text-gray-900">{{ formatDate(employee?.joining_date) }}</p>
 						</div>
 						<div v-if="employee?.user">
 							<h3 class="text-sm font-medium text-gray-500">Associated System User</h3>
@@ -119,6 +125,10 @@
 							<h3 class="text-sm font-medium text-gray-500">Email Address</h3>
 							<p class="mt-2 text-base text-gray-900">{{ employee?.email }}</p>
 						</div>
+						<div v-if="employee?.phone">
+							<h3 class="text-sm font-medium text-gray-500">Phone Number</h3>
+							<p class="mt-2 text-base text-gray-900">{{ employee?.phone }}</p>
+						</div>
 					</div>
 
 					<!-- Additional Details -->
@@ -126,6 +136,18 @@
 						<div v-if="employee?.branch">
 							<h3 class="text-sm font-medium text-gray-500">Branch</h3>
 							<p class="mt-2 text-base text-gray-900">{{ employee?.branch }}</p>
+						</div>
+						<div>
+							<h3 class="text-sm font-medium text-gray-500">Basic Salary</h3>
+							<p class="mt-2 text-base text-gray-900">{{ formatCurrency(employee?.basic) }}</p>
+						</div>
+						<div>
+							<h3 class="text-sm font-medium text-gray-500">Allowances</h3>
+							<p class="mt-2 text-base text-gray-900">{{ formatCurrency(employee?.allowance) }}</p>
+						</div>
+						<div class="border-t border-gray-200 pt-6">
+							<h3 class="text-sm font-medium text-gray-500">Salary</h3>
+							<p class="mt-2 text-base text-gray-900">{{ formatCurrency(employee?.salary) }}</p>
 						</div>
 					</div>
 				</div>
@@ -311,86 +333,89 @@
 
 	<!-- Edit Employee Dialog -->
 	<Dialog
-		v-model="showEditDialog"
-		:options="{
-			title: 'Edit Employee',
-			size: 'lg',
-			actions: [
-				{
-					label: 'Remove Employee',
-					variant: 'outline',
-					theme: 'red',
-					loading: removing,
-					onClick: initiateDelete,
-				},
-				{
-					label: 'Save Changes',
-					variant: 'solid',
-					loading: employeeResource.setValue.loading,
-					onClick: updateEmployee,
-				},
-			],
-		}"
-	>
-		<template #body-content>
-			<div class="space-y-4">
-				<div class="flex justify-center">
-					<div class="relative group cursor-pointer" @click="handleImageClick">
-						<div class="w-24 h-24 rounded-full overflow-hidden">
-							<img
-								v-if="employee?.image"
-								:src="employee.image"
-								:alt="employee?.employee_name"
-								class="w-full h-full object-cover"
-								@error="$event.target.style.display = 'none'"
-							/>
-							<div
-								v-else
-								class="w-full h-full bg-gray-100 flex items-center justify-center"
-							>
-								<FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
-							</div>
-						</div>
-						<!-- Hover overlay -->
-						<div
-							class="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-						>
-							<div class="text-white flex items-center">
-								<FeatherIcon name="camera" class="w-5 h-5" />
-							</div>
-						</div>
-					</div>
-				</div>
-				<!-- Employee Edit Form -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div class="space-y-1">
-						<FormControl
-							type="text"
-							label="Employee Name"
-							required
-							v-model="editingEmployee.employee_name"
-						/>
-					</div>
+    v-model="showEditDialog"
+    :options="{
+        title: 'Edit Employee',
+        size: 'lg',
+        actions: [
+            {
+                label: 'Remove Employee',
+                variant: 'outline',
+                theme: 'red',
+                loading: removing,
+                onClick: initiateDelete,
+            },
+            {
+                label: 'Save Changes',
+                variant: 'solid',
+                loading: employeeResource.setValue.loading,
+                onClick: updateEmployee,
+            },
+        ],
+    }"
+>
+    <template #body-content>
+        <div class="space-y-6">
+            <div class="flex justify-center">
+                <div class="relative group cursor-pointer" @click="handleImageClick">
+                    <div class="w-24 h-24 rounded-full overflow-hidden border border-gray-200">
+                        <img
+                            v-if="employee?.image"
+                            :src="employee.image"
+                            :alt="employee?.employee_name"
+                            class="w-full h-full object-cover"
+                            @error="$event.target.src = ''"
+                        />
+                        <div
+                            v-else
+                            class="w-full h-full bg-gray-100 flex items-center justify-center"
+                        >
+                            <FeatherIcon name="user" class="w-12 h-12 text-gray-400" />
+                        </div>
+                    </div>
+                    <div
+                        class="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                        <div class="text-white flex flex-col items-center text-xs">
+                            <FeatherIcon name="camera" class="w-5 h-5 mb-1" />
+                            Change
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-					<div class="space-y-1">
-						<FormControl
-							type="date"
-							label="Date of Birth"
-							variant="subtle"
-							v-model="editingEmployee.date_of_birth"
-						/>
-					</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
-					<div class="space-y-1">
-						<FormControl
-							type="select"
-							label="Gender"
-							:options="genderOptions"
-							v-model="editingEmployee.gender"
-						/>
-					</div>
+                <div class="space-y-1 md:col-span-2">
+                    <FormControl
+                        type="text"
+                        label="Full Name"
+                        required
+                        v-model="editingEmployee.employee_name"
+                        placeholder="Enter employee's full name"
+                    />
+                </div>
 
-					<div class="space-y-1">
+                <div class="space-y-1">
+                    <FormControl
+                        type="date"
+                        label="Date of Birth"
+                        variant="subtle"
+                        v-model="editingEmployee.date_of_birth"
+                    />
+                </div>
+
+                <div class="space-y-1">
+                    <FormControl
+                        type="select"
+                        label="Gender"
+                        :options="genderOptions"
+                        v-model="editingEmployee.gender"
+                        placeholder="Select gender"
+                    />
+                </div>
+
+                <div class="space-y-1">
 						<label class="block text-sm font-medium text-gray-700">Nationality</label>
 						<Autocomplete
 							:options="countryOptions"
@@ -404,53 +429,83 @@
 						</Autocomplete>
 					</div>
 
-					<div class="space-y-1">
-						<FormControl
-							type="select"
-							label="Position"
-							:options="positionOptions"
-							v-model="editingEmployee.position"
-						/>
-					</div>
+					 <div class="space-y-1">
+                    <FormControl
+                        type="select"
+                        label="Position"
+                        :options="positionOptions"
+                        v-model="editingEmployee.position"
+                        placeholder="Select position"
+                    />
+                </div>
 
-					<div class="space-y-1">
-						<FormControl
-							type="number"
-							label="Salary"
-							v-model="editingEmployee.salary"
-						/>
-					</div>
-					<div class="space-y-1">
-						<FormControl type="text" label="Phone" v-model="editingEmployee.phone" />
-					</div>
-					<div class="space-y-1">
-						<FormControl type="text" label="Email" v-model="editingEmployee.email" />
-					</div>
-					<div class="space-y-1">
-						<FormControl
-							type="select"
-							label="Branch"
-							:options="[
-								{
-									label: 'Main',
-									value: 'Main',
-								},
-								{
-									label: 'Branch 1',
-									value: 'Branch 1',
-								},
-								{
-									label: 'Branch 2',
-									value: 'Branch 2',
-								},
-							]"
-							v-model="editingEmployee.branch"
-						/>
-					</div>
-				</div>
-			</div>
-		</template>
-	</Dialog>
+                 <div class="space-y-1">
+                    <FormControl
+                        type="email"
+                        label="Email Address"
+                        v-model="editingEmployee.email"
+                        placeholder="e.g., employee@example.com"
+                    />
+                </div>
+
+                <div class="space-y-1">
+                    <FormControl
+                        type="tel"
+                        label="Phone Number"
+                        v-model="editingEmployee.phone"
+                        placeholder="Enter phone number"
+                    />
+                </div>
+
+               
+
+                <div class="space-y-1">
+                    <FormControl
+                        type="select"
+                        label="Branch"
+                        :options="[
+                            { label: 'Main', value: 'Main' },
+                            { label: 'Branch 1', value: 'Branch 1' },
+                            { label: 'Branch 2', value: 'Branch 2' },
+                        ]"
+                        v-model="editingEmployee.branch"
+                        placeholder="Select branch"
+                    />
+                </div>
+
+                 <div class="space-y-1 md:col-span-2">
+                    <FormControl
+                        type="date"
+                        label="Joining Date"
+                        variant="subtle"
+                        v-model="editingEmployee.joining_date"
+                    />
+                </div>
+
+                 <div class="space-y-1">
+                    <FormControl
+                        type="number"
+                        label="Basic Salary"
+                        v-model="editingEmployee.basic"
+                        placeholder="Enter amount"
+                        :step="0.01"
+                    />
+                </div>
+
+                <div class="space-y-1">
+                    <FormControl
+                        type="number"
+                        label="Allowance"
+                        v-model="editingEmployee.allowance"
+                        placeholder="Enter amount"
+                        :step="0.01"
+                    />
+                </div>
+
+            </div>
+        </div>
+    </template>
+</Dialog>
 
 	<!-- Delete Confirmation Dialog -->
 	<Dialog
@@ -600,6 +655,12 @@ function getLeaveStatus(leave) {
 	return 'Upcoming'
 }
 
+function getCountryCode(nationalityLabel) {
+  if (!nationalityLabel || !countryOptions) return null;
+  const country = countryOptions.find(option => option.label === nationalityLabel);
+  return country ? country.value : null; // Return the value (code) if found
+}
+
 // Image upload state
 const showImageDialog = ref(false)
 const showSignatureDialog = ref(false)
@@ -636,9 +697,11 @@ async function updateEmployee() {
 		// Add optional fields only if they have values
 		if (editingEmployee.value.gender) employeeData.gender = editingEmployee.value.gender
 		if (editingEmployee.value.date_of_birth) employeeData.date_of_birth = editingEmployee.value.date_of_birth
+		if (editingEmployee.value.joining_date) employeeData.joining_date = editingEmployee.value.joining_date
 		if (editingEmployee.value.nationality?.label) employeeData.nationality = editingEmployee.value.nationality.label
 		if (editingEmployee.value.position) employeeData.position = editingEmployee.value.position
-		if (editingEmployee.value.salary) employeeData.salary = Number(editingEmployee.value.salary)
+		if (editingEmployee.value.basic) employeeData.basic = Number(editingEmployee.value.basic)
+		if (editingEmployee.value.allowance) employeeData.allowance = Number(editingEmployee.value.allowance)
 		if (editingEmployee.value.phone) employeeData.phone = editingEmployee.value.phone
 		if (editingEmployee.value.email) employeeData.email = editingEmployee.value.email
 		if (editingEmployee.value.branch) employeeData.branch = editingEmployee.value.branch
