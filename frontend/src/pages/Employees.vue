@@ -949,44 +949,81 @@ const headerDropdownOptions = computed(() => [
 
 const setHeaderAction = inject('setHeaderAction')
 onMounted(() => {
-    setHeaderAction(() => h('div', {
-        class: 'flex items-center justify-between gap-2 sm:gap-4 flex-1 px-2' // Adjusted gap
+  setHeaderAction(() => h('div', {
+    class: 'flex items-center justify-between gap-4 flex-1 px-2'
+  }, [
+    // Search Field
+    h('div', {
+      class: 'relative flex-1 max-w-2xl'
     }, [
-        // Search Field (remains the same)
-        h('div', { /* ... existing search field wrapper ... */ }, [
-            h('div', { /* ... search icon ... */ }, [ /* ... */ ]),
-            h('input', { /* ... existing search input attributes ... */ })
-        ]),
-
-        // Container for Button and Dropdown
-        h('div', { class: 'flex items-center gap-2' }, [ // Group button and dropdown
-            // New Employee Button (remains the same)
-            h('button', { /* ... existing Add Employee button attributes ... */ }, [
-                h(FeatherIcon, { /* ... plus icon ... */ }),
-                h('span', { /* ... Add Employee text ... */ })
-            ]),
-
-            // --- New Dropdown Component ---
-            h(Dropdown, { // Use the imported Dropdown component
-                options: headerDropdownOptions.value, // Bind computed options
-                placement: 'bottom-end', // Adjust placement as needed
-                // buttonClass: '', // Optional: classes for the internal button if needed
-            }, { // Default slot for the trigger button
-                default: () => h(Button, {
-                    variant: "secondary", // Or subtle, outline, etc.
-                    size: "md", // Match Add Employee button size? Or use "icon" variant if preferred
-                    iconLeft: h(FeatherIcon, { name: 'more-vertical', class: 'h-4 w-4' }),
-                    // label: 'Actions' // Optional label for the button
-                })
-            })
-        ]) // End of Button/Dropdown Group
-    ]))
-
-    // Ensure initial data is loaded (if not handled elsewhere)
-    if (!list.data?.length) list.reload();
-    if (!attendanceList.data?.length) attendanceList.reload();
-    if (!documentResource.data?.length) documentResource.reload();
-    if (!leaveResource.data?.length) leaveResource.reload();
+      h('div', {
+        class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'
+      }, [
+        h(FeatherIcon, {
+          name: 'search',
+          class: 'h-4 w-4 text-gray-400'
+        })
+      ]),
+      h('input', {
+        type: 'text',
+        placeholder: 'Search employees...',
+        value: searchQuery.value,
+        onInput: (e) => searchQuery.value = e.target.value,
+        class: `
+          block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4
+          text-gray-900 ring-1 ring-inset ring-gray-200
+          placeholder:text-gray-400
+          focus:ring-2 focus:ring-inset focus:ring-gray-900
+          transition-all duration-200
+          bg-white/50 hover:bg-white
+          sm:text-sm sm:leading-6
+        `
+      })
+    ]),
+    // Button/Dropdown Group
+    h('div', {
+      class: 'flex items-center gap-2'
+    }, [
+      // New Employee Button
+      h('button', {
+        class: `
+          inline-flex items-center gap-2
+          rounded-xl px-4 py-2.5
+          text-sm font-semibold text-white
+          bg-gray-900 hover:bg-gray-800
+          transition duration-200 ease-in-out
+          shadow-sm hover:shadow
+          focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
+        `,
+        onClick: () => showNewEmployeeDialog.value = true
+      }, [
+        h(FeatherIcon, {
+          name: 'plus',
+          class: 'h-4 w-4'
+        }),
+        h('span', {
+          class: 'hidden sm:inline'
+        }, 'Add Employee')
+      ]),
+      // Dropdown Component
+      h(Dropdown, {
+        options: headerDropdownOptions.value,
+        placement: 'bottom-end',
+      }, {
+        default: () => h(Button, {
+          variant: "secondary",
+          size: "md",
+          iconLeft: h(FeatherIcon, { name: 'more-vertical', class: 'h-4 w-4' }),
+        })
+      })
+    ])
+  ]))
+  
+  // Ensure initial data is loaded
+  if (!list.data?.length) list.reload();
+  if (!attendanceList.data?.length) attendanceList.reload();
+  if (!documentResource.data?.length) documentResource.reload();
+  if (!leaveResource.data?.length) leaveResource.reload();
 })
 
 const sortField = ref('creation')
