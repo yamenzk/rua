@@ -6,6 +6,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import time
+from datetime import datetime
 
 # Define the scope: Read/write access to sheets and drive
 SHEET_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -328,3 +329,254 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
         frappe.log_error(frappe.get_traceback(), "Google Sheets Integration")
         frappe.throw(_("Could not create Google Sheet from template: {0}").format(e))
 
+
+@frappe.whitelist()
+def generate_invoice_google_sheet(invoice_name):
+    """
+    Generates a Google Sheet for an RUA Invoice by copying a template,
+    populating specific cells with invoice, party, and project summary data,
+    sharing it, and saving the link back to the invoice.
+    """
+    if not invoice_name:
+        frappe.throw(_("Invoice Name is required."))
+
+    new_sheet_id = None  # Initialize in case of early exit in try block
+
+    try:
+        # 1. Get Documents and Template ID
+        invoice_doc = frappe.get_doc("RUA Invoice", invoice_name)
+        party_doc = frappe.get_doc("RUA Party", invoice_doc.party)
+        company_doc = frappe.get_doc("RUA Company", "RUA Company")
+        template_sheet_id = company_doc.google_sheet_invoice_template_id
+
+        if not template_sheet_id:
+            frappe.throw(
+                _("Invoice Google Sheet Template ID not set in RUA Company settings.")
+            )
+
+        # --- 2. Calculate Project Summary (Similar to Print Format Jinja) ---
+        contract_value = (
+            frappe.db.get_value("RUA Project", invoice_doc.project, "contract_value")
+            or 0
+        )
+        vat_rate = 0.05  # Assuming 5% VAT rate
+        vat_amount = contract_value * vat_rate
+        total_contract_value = contract_value + vat_amount
+
+        # Get all final invoices for the project/party
+        final_invoices = frappe.get_all(
+            "RUA Invoice",
+            filters={
+                "project": invoice_doc.project,
+                "party": invoice_doc.party,
+                "status": "Final",
+            },
+            fields=["name", "grand_total"],
+        )
+        total_invoiced = sum(inv.get("grand_total", 0) for inv in final_invoices)
+
+        # Get all submitted payments for the project/party
+        submitted_payments = frappe.get_all(
+            "RUA Payment",
+            filters={
+                "project": invoice_doc.project,
+                "party": invoice_doc.party,
+                "status": "Submitted",
+            },
+            fields=["name", "amount"],
+        )
+        total_paid = sum(pay.get("amount", 0) for pay in submitted_payments)
+        # --- End Project Summary Calculation ---
+
+        # 3. Prepare Data for Specific Cells
+        # IMPORTANT: Define the target cells in your Google Sheet Template.
+        # These are **examples** - you MUST adjust them to match your template layout.
+        # Using different sheets ('InvoiceData', 'SummaryData') is also possible.
+        data_to_populate = [
+            # Invoice Data
+            {"range": "Sheet1!B2", "value": invoice_doc.project},
+            {"range": "Sheet1!B3", "value": invoice_doc.serial_number},
+            {"range": "Sheet1!B4", "value": invoice_doc.party},
+            {"range": "Sheet1!D2", "value": invoice_doc.amount},
+            {
+                "range": "Sheet1!D3",
+                "value": invoice_doc.retention_percentage,
+            },  # Value only
+            {"range": "Sheet1!D4", "value": invoice_doc.amount_after_retention},
+            {"range": "Sheet1!D5", "value": invoice_doc.vat_after_retention},
+            {
+                "range": "Sheet1!D6",
+                "value": invoice_doc.grand_total,
+            },  # Maybe format bold?
+            # Party Data
+            {"range": "Sheet1!B5", "value": party_doc.trn},
+            {"range": "Sheet1!B6", "value": party_doc.emirate},
+            # Party Logo (using IMAGE formula - requires public URL)
+            {
+                "range": "Sheet1!A1",
+                "value": (
+                    f'=IMAGE("{frappe.utils.get_url(party_doc.image)}")'
+                    if party_doc.image
+                    else ""
+                ),
+            },
+            # Project Summary Data (Example: putting on same sheet, adjust range/sheet name)
+            {"range": "Sheet1!F2", "value": contract_value},
+            {"range": "Sheet1!F3", "value": vat_amount},
+            {"range": "Sheet1!F4", "value": total_contract_value},
+            {"range": "Sheet1!F5", "value": total_invoiced},
+            {"range": "Sheet1!F6", "value": total_paid},
+        ]
+
+        # Convert to Google Sheets batchUpdate format (list of ValueRange)
+        value_ranges_body = []
+        for item in data_to_populate:
+            # Ensure value is not None, default to empty string if needed by template
+            value_to_set = item["value"] if item["value"] is not None else ""
+            value_ranges_body.append(
+                {
+                    "range": item["range"],
+                    "values": [[value_to_set]],  # Values must be list of lists
+                }
+            )
+
+        batch_update_body = {
+            "valueInputOption": "USER_ENTERED",  # Or 'RAW' if formulas should be treated as strings
+            "data": value_ranges_body,
+        }
+
+        # 4. Copy Template and Get New Sheet ID & URL
+        drive_service = get_drive_service()
+        sheets_service = get_sheets_service()
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        new_sheet_name = f"Invoice - {invoice_name} - {timestamp}"
+        copied_file_metadata = {"name": new_sheet_name}
+
+        new_file = (
+            drive_service.files()
+            .copy(
+                fileId=template_sheet_id,
+                body=copied_file_metadata,
+                fields="id, webViewLink",  # Request ID and URL
+            )
+            .execute()
+        )
+
+        new_sheet_id = new_file.get("id")
+        new_sheet_url = new_file.get("webViewLink")  # Use webViewLink for user access
+
+        if not new_sheet_id or not new_sheet_url:
+            raise Exception(
+                "Failed to copy Google Sheet template or retrieve its ID/URL."
+            )
+
+        # 5. Populate the Copied Sheet with Data
+        update_result = (
+            sheets_service.spreadsheets()
+            .values()
+            .batchUpdate(spreadsheetId=new_sheet_id, body=batch_update_body)
+            .execute()
+        )
+
+        # 6. Share the Sheet (Reuse logic from previous function)
+        try:
+            google_accounts_table = company_doc.get("google_accounts")
+            if google_accounts_table:
+                for account_row in google_accounts_table:
+                    user_email = account_row.get("google_account")
+                    if user_email and "@" in user_email:
+                        try:
+                            permission_body = {
+                                "type": "user",
+                                "role": "writer",
+                                "emailAddress": user_email,
+                            }
+                            drive_service.permissions().create(
+                                fileId=new_sheet_id,
+                                body=permission_body,
+                                sendNotificationEmail=False,
+                            ).execute()
+                            time.sleep(0.5)
+                        except HttpError as perm_error:
+                            error_content = (
+                                perm_error.content.decode()
+                                if hasattr(perm_error.content, "decode")
+                                else str(perm_error.content)
+                            )
+                            frappe.log_error(
+                                f"Sharing Error sheet {new_sheet_id} with {user_email}: {perm_error.resp.status} - {error_content}",
+                                "Google Sheets Sharing",
+                            )
+                        except Exception as perm_e:
+                            frappe.log_error(
+                                f"Sharing Error sheet {new_sheet_id} with {user_email}: {perm_e}",
+                                "Google Sheets Sharing",
+                            )
+        except Exception as share_e:
+            frappe.log_error(
+                f"Error during sharing process for sheet {new_sheet_id}: {share_e}",
+                "Google Sheets Sharing",
+            )
+            # Don't fail the whole process, just log it.
+
+        # 7. Update Invoice Doc and Save
+        invoice_doc.associated_google_sheet = new_sheet_url
+        invoice_doc.save()  # Use standard save - user context should have permission
+        frappe.db.commit()  # Ensure save is committed before returning
+
+        # 8. Return the URL
+        return {"sheet_url": new_sheet_url}
+
+    except HttpError as e:
+        # Clean up: Delete the partially created sheet if possible
+        if new_sheet_id and "drive_service" in locals():
+            try:
+                drive_service.files().delete(fileId=new_sheet_id).execute()
+            except Exception as cleanup_e:
+                frappe.log_error(
+                    f"Failed to cleanup sheet {new_sheet_id} after error: {cleanup_e}",
+                    "Google Sheets Invoice Gen",
+                )
+
+        status_code = e.resp.status
+        error_message = str(e)
+        try:
+            error_details = json.loads(e.content).get("error", {})
+            error_message = error_details.get("message", str(e))
+        except:
+            pass  # Keep original error message if parsing fails
+        frappe.log_error(
+            f"Google API Error ({status_code}) generating sheet for Invoice {invoice_name}: {error_message}",
+            "Google Sheets Invoice Gen Error",
+        )
+        frappe.throw(
+            _("Failed to generate Google Sheet due to API error: {0}").format(
+                error_message
+            ),
+            title="Google API Error",
+        )
+
+    except frappe.DoesNotExistError as e:
+        frappe.throw(_("Could not find required document: {0}").format(e))
+
+    except Exception as e:
+        # Clean up attempt for general errors too
+        if new_sheet_id and "drive_service" in locals():
+            try:
+                drive_service.files().delete(fileId=new_sheet_id).execute()
+            except Exception as cleanup_e:
+                frappe.log_error(
+                    f"Failed to cleanup sheet {new_sheet_id} after general error: {cleanup_e}",
+                    "Google Sheets Invoice Gen",
+                )
+
+        frappe.log_error(
+            frappe.get_traceback(),
+            f"Google Sheet Invoice Generation Failed for {invoice_name}",
+        )
+        frappe.throw(
+            _(
+                "An unexpected error occurred during Google Sheet generation: {0}"
+            ).format(str(e))
+        )

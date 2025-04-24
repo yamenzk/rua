@@ -64,8 +64,7 @@
 
           <!-- Actions Dropdown -->
           <Dropdown :options="actionDropdownOptions">
-            <Button>
-              <template #icon>
+            <Button :loading="isGeneratingSheet"> <template #icon>
                 <FeatherIcon name="more-horizontal" class="h-4 w-4" />
               </template>
             </Button>
@@ -315,6 +314,42 @@
           </div>
         </div>
       </div>
+
+      <!-- Spreadsheet  -->
+       <div class="space-y-8">
+        <div
+            v-if="invoiceResource.doc.status === 'Final' && invoiceResource.doc.invoice_file"
+            class="bg-white rounded-lg border shadow-sm"
+        >
+            </div>
+
+        <div
+            v-if="invoiceResource.doc.associated_google_sheet"
+            class="bg-white rounded-lg border shadow-sm"
+        >
+            <div class="flex items-center justify-between border-b px-6 py-4">
+            <h2 class="text-lg font-medium text-gray-900">Associated Google Sheet</h2>
+            <a
+                :href="invoiceResource.doc.associated_google_sheet"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-2"
+            >
+                <FeatherIcon name="external-link" class="w-4 h-4" />
+                <span>Open in New Tab</span>
+            </a>
+            </div>
+            <div class="p-6">
+            <iframe
+                :src="invoiceResource.doc.associated_google_sheet"
+                class="w-full h-[1200px] border rounded-lg"
+                frameborder="0"
+                title="Associated Google Sheet"
+            ></iframe>
+            </div>
+        </div>
+
+    </div>
     </div>
   </div>
 
@@ -488,6 +523,7 @@ import {
   Avatar,
   Textarea,
   FileUploader,
+  createResource,
   LoadingIndicator
 } from 'frappe-ui'
 import { formatDate, formatCurrency, DATE_FORMATS } from '@/utils/format'
@@ -524,6 +560,7 @@ const uploadedResult = ref(null)
 const isUpdatingStatus = ref(false)
 const remarks = ref('')
 const showCreatePaymentDialog = ref(false)
+const isGeneratingSheet = ref(false)
 const showSubmitDialog = ref(false)
 const showFinalizeDialog = ref(false)
 const showCancelDialog = ref(false)
@@ -633,8 +670,16 @@ const actionDropdownOptions = computed(() => {
     })
   }
 
+  if (!doc.associated_google_sheet){
+    options.push({
+      label: 'Generate Google Sheet',
+      icon: 'file-text',
+      onClick: generateAssociatedSheet
+    })
+  }
   return options
 })
+
 
 const uploadArgs = computed(() => ({
   doctype: 'RUA Invoice',
@@ -672,6 +717,38 @@ function getPaymentStatusVariant(status) {
       return 'gray'
   }
 }
+
+async function generateAssociatedSheet() {
+  if (!invoiceResource.value?.doc?.name) {
+    return;
+  }
+  
+  isGeneratingSheet.value = true;
+  try {
+    console.log(invoiceResource.value.doc.name)
+    let response = createResource({
+    url: 'rua.google_sheets.generate_invoice_google_sheet',
+      params: {
+        invoice_name: invoiceResource.value.doc.name
+      },
+    })
+    response.fetch()
+
+    if (response?.message?.sheet_url) {
+      await invoiceResource.value.reload();
+    } else {
+        // Handle unexpected backend response structure
+        throw new Error("Received an invalid response from the server during sheet generation.");
+    }
+  } catch (error) {
+    console.error("Google Sheet Generation Error:", error);
+    const errorMessage = error.message || 'Failed to generate Google Sheet. Please check logs.';
+    console.log(errorMessage);
+  } finally {
+    isGeneratingSheet.value = false;
+  }
+}
+
 
 function getAvailableStatuses(currentStatus, paymentLinked) {
   // If payment is linked, prevent status changes

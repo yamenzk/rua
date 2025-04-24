@@ -135,7 +135,7 @@
 		</div>
 
 		<!-- Main Content Area -->
-		<div class="bg-white rounded-lg border border-gray-100">
+		 <div class="bg-white rounded-lg border border-gray-100">
 			<!-- Header with Title and View Toggle -->
 			<div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
 				<h2 class="text-base font-medium text-gray-900">Attendance Records</h2>
@@ -343,6 +343,7 @@
 					</div>
 				</div>
 			</div>
+			
 
 			<!-- Leave Setup Dialog -->
 			<Dialog
@@ -447,6 +448,45 @@
 				</template>
 			</Dialog>
 		</div>
+		 <div class="space-y-6 ">
+        <div class="bg-white rounded-lg border border-gray-100">
+           </div> <div class="bg-white rounded-lg border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-base font-medium text-gray-900">Payslip History</h2>
+            </div>
+            <div v-if="slipResource.list?.loading" class="p-6 text-center text-gray-500">
+                Loading payslips...
+            </div>
+            <div v-else-if="!employeePayslips.length" class="p-6 text-center">
+                 <FeatherIcon name="file-text" class="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                 <p class="text-sm font-medium text-gray-700">No Payslips Issued</p>
+                 <p class="text-xs text-gray-500">There are no payslip records for this employee yet.</p>
+            </div>
+            <div v-else class="divide-y divide-gray-100">
+                <div v-for="slip in employeePayslips" :key="slip.name" class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                {{ getMonthName(slip.for_month) }} {{ slip.year }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                ID: {{ slip.name }}
+                            </p>
+                        </div>
+                        <div class="text-left sm:text-right">
+                            <p class="text-lg font-semibold text-primary-600">
+                                {{ formatCurrency(slip.amount) }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Issued on: {{ formatDate(slip.date || slip.creation) }} </p>
+                        </div>
+                    </div>
+                     </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-100">
+            </div> </div>
+		
 	</div>
 </template>
 
@@ -466,6 +506,7 @@ import { ref, computed, onMounted } from 'vue'
 import { leaveResource } from '@/data/leave'
 import { Calendar, FeatherIcon, Badge, Dialog, FormControl, dayjs } from 'frappe-ui'
 import { attendanceResource } from '@/data/attendance'
+import { slipResource } from '@/data/slip'
 
 import { 
 	getServerDate, 
@@ -477,7 +518,8 @@ import {
 	isWithinRange,
 	addDays, 
 	DATE_FORMATS,
-	getMonthName 
+	getMonthName,
+	formatCurrency
 } from '@/utils/format'
 
 // View state
@@ -503,6 +545,25 @@ const currentOngoingLeave = computed(() => {
 		dayjs(leave.return_date).isAfter(today.subtract(1, 'day')) // Include today's end
 	)
 })
+
+const employeePayslips = computed(() => {
+    if (!slipResource.data || !props.employee?.name) {
+        return [];
+    }
+    return slipResource.data
+        .filter(slip => slip.employee === props.employee.name)
+        .sort((a, b) => {
+            // Sort by year descending, then month descending
+            if (a.year !== b.year) {
+                return b.year - a.year;
+            }
+            if (a.for_month !== b.for_month) {
+                return b.for_month - a.for_month;
+            }
+            // If same period, sort by creation date descending
+            return dayjs(b.creation).diff(dayjs(a.creation));
+        });
+});
 
 const todayFormatted = computed(() => {
 	return getServerDate() // Direct replacement using our utility
@@ -795,5 +856,16 @@ onMounted(async () => {
       console.error('Failed to load leave data:', error)
     }
   }
+  if (!slipResource.data?.length) {
+        try {
+            // We might need filters if the global resource gets too large,
+            // but for now, load all and filter in computed.
+            // Alternatively, apply filters here if needed:
+            // await slipResource.reload({ filters: { employee: props.employee.name } });
+            await slipResource.reload();
+        } catch (error) {
+            console.error('Failed to load payslip data:', error);
+        }
+    }
 })
 </script>

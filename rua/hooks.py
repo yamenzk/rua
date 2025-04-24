@@ -8,6 +8,12 @@ app_license = "mit"
 fixtures = [
     {
         "doctype": "RUA App Update",
+    },
+    {
+        "doctype": "RUA Letter",
+        "filters": [
+            ["standard", "=", 1],
+        ]
     }
 ]
 

@@ -15,7 +15,7 @@ import {
 } from 'frappe-ui'
 
 const app = createApp(App)
-const APP_VERSION = '2.0.1' 
+const APP_VERSION = '2.1.0' 
 // Configure Frappe UI
 setConfig('resourceFetcher', async (...args) => {
   try {

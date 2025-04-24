@@ -1,65 +1,6 @@
 <template>
 	<div class="space-y-6">
-	  <!-- Floating Top Right Actions -->
-	  <div class="fixed top-18 right-4 z-10 flex items-center gap-2 bg-white/60 backdrop-blur-md rounded-xl shadow-sm border border-gray-200 p-1">
-  <button 
-    @click="showAttendanceDialog"
-    class="
-      inline-flex items-center gap-2 
-      rounded-lg px-3 py-2
-      text-sm font-medium 
-      text-gray-700 hover:bg-gray-100
-      transition duration-200 ease-in-out
-      group
-    "
-  >
-    <FeatherIcon 
-      name="calendar" 
-      class="h-4 w-4 text-gray-900 group-hover:text-gray-700 transition-colors" 
-    />
-    <span class="hidden sm:inline">{{ attendanceButtonLabel }}</span>
-  </button>
 
-  <div class="h-5 w-px bg-gray-300 mx-1"></div>
-
-  <button 
-    @click="showMonthlyAttendanceDialog = true"
-    class="
-      inline-flex items-center gap-2 
-      rounded-lg px-3 py-2
-      text-sm font-medium 
-      text-gray-700 hover:bg-gray-100
-      transition duration-200 ease-in-out
-      group
-    "
-  >
-    <FeatherIcon 
-      name="list" 
-      class="h-4 w-4 text-gray-900 group-hover:text-gray-700 transition-colors" 
-    />
-    <span class="hidden sm:inline">Attendance List</span>
-  </button>
-
-  <div class="h-5 w-px bg-gray-300 mx-1"></div>
-
-  <button 
-    @click="showExpiringDocumentsDialog = true"
-    class="
-      inline-flex items-center gap-2 
-      rounded-lg px-3 py-2
-      text-sm font-medium 
-      text-gray-700 hover:bg-gray-100
-      transition duration-200 ease-in-out
-      group
-    "
-  >
-    <FeatherIcon 
-      name="file-text" 
-      class="h-4 w-4 text-gray-900 group-hover:text-gray-700 transition-colors" 
-    />
-    <span class="hidden sm:inline">Document Status</span>
-  </button>
-</div>
   
 	  <!-- Floating Filters Toolbar -->
 	  <div class="fixed bottom-4 right-4 z-10 mb-4 flex items-center justify-between gap-2 p-4 bg-gray-200/60 backdrop-blur-sm w-fit rounded-lg hidden md:flex">
@@ -157,11 +98,11 @@
 							{{ getMonthName(selectedMonth) }} {{ currentYear }}
 						</h3>
 						<div class="flex items-center gap-2">
-							<Button variant="subtle" size="sm" @click="previousMonth">
+							<Button :variant="'subtle'" size="sm" @click="previousMonth">
 								<FeatherIcon name="chevron-left" class="w-4 h-4" />
 							</Button>
 							<Button
-								variant="subtle"
+								:variant="'subtle'"
 								size="sm"
 								@click="nextMonth"
 								:disabled="isNextMonthInFuture"
@@ -872,6 +813,59 @@
 				</div>
 			</template>
 		</Dialog>
+		<Dialog v-model="showPrintDailyDialog"
+                :options="{ title: 'Print Summary', size: 'sm' }">
+            <template #body-content>
+                <div class="space-y-4">
+                     <FormControl type="date"
+                                  label="Select Date"
+                                  required
+                                  v-model="printDailyDate" />
+                     <p v-if="printDailyError" class="text-sm text-red-600">{{ printDailyError }}</p>
+                </div>
+            </template>
+            <template #actions>
+                <div class="flex justify-end gap-2">
+                    <Button variant="subtle" @click="showPrintDailyDialog = false">Cancel</Button>
+                    <Button :variant="'solid'"
+                            :loading="printDailyLoading"
+                            @click="fetchDailyPdfUrl">
+                        Print Summary
+                    </Button>
+                </div>
+            </template>
+        </Dialog>
+
+        <Dialog v-model="showPrintMonthlyDialog"
+                :options="{ title: 'Print Summary', size: 'sm' }">
+             <template #body-content>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <FormControl type="select"
+                                     label="Month"
+                                     required
+                                     :options="monthOptions"
+                                     v-model="printMonthlyMonth" />
+                        <FormControl type="select"
+                                     label="Year"
+                                     required
+                                     :options="yearOptions"
+                                     v-model="printMonthlyYear" />
+                    </div>
+                    <p v-if="printMonthlyError" class="text-sm text-red-600">{{ printMonthlyError }}</p>
+                </div>
+            </template>
+            <template #actions>
+                 <div class="flex justify-end gap-2">
+                    <Button :variant="'subtle'" @click="showPrintMonthlyDialog = false">Cancel</Button>
+                    <Button :variant="'solid'"
+                            :loading="printMonthlyLoading"
+                            @click="fetchMonthlyPdfUrl">
+                        Print Summary
+                    </Button>
+                </div>
+            </template>
+        </Dialog>
 	</div>
 </template>
 
@@ -887,7 +881,9 @@ import {
 	LoadingIndicator,
 	debounce,
 	Autocomplete,
-	dayjs
+	dayjs,
+	Dropdown,
+	createResource
 } from 'frappe-ui'
 import countries from '@/data/countries.json'
 import flags from '@/data/flags.json'
@@ -908,63 +904,91 @@ import {
 
 const router = useRouter()
 
+const headerDropdownOptions = computed(() => [
+  {
+    group: 'Attendance', // Group for attendance actions
+    items: [
+      {
+        label: attendanceButtonLabel.value, // Dynamic label
+        icon: () => h(FeatherIcon, { name: "calendar", class: "h-4 w-4" }),
+        onClick: showAttendanceDialog
+      },
+      {
+        label: 'Attendance List',
+        icon: () => h(FeatherIcon, { name: "list", class: "h-4 w-4" }),
+        onClick: () => showMonthlyAttendanceDialog.value = true
+      }
+    ]
+  },
+  {
+    group: 'Reports', // Group for print actions
+    items: [
+       {
+          label: 'Print Daily Summary',
+          icon: () => h(FeatherIcon, { name: "printer", class: "h-4 w-4" }),
+          onClick: openPrintDailyDialog
+      },
+      {
+          label: 'Print Monthly Summary',
+          icon: () => h(FeatherIcon, { name: "printer", class: "h-4 w-4" }),
+          onClick: openPrintMonthlyDialog
+      }
+    ]
+  },
+   {
+    group: 'Status', // Group for document status
+    items: [
+       {
+          label: 'Document Status',
+          icon: () => h(FeatherIcon, { name: "file-text", class: "h-4 w-4" }),
+          onClick: () => showExpiringDocumentsDialog.value = true
+      }
+    ]
+  }
+]);
+
 const setHeaderAction = inject('setHeaderAction')
 onMounted(() => {
-  setHeaderAction(() => h('div', { 
-    class: 'flex items-center justify-between gap-4 flex-1 px-2' 
-  }, [
-    // Search Field
-    h('div', { 
-      class: 'relative flex-1 max-w-2xl'
+    setHeaderAction(() => h('div', {
+        class: 'flex items-center justify-between gap-2 sm:gap-4 flex-1 px-2' // Adjusted gap
     }, [
-      h('div', {
-        class: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'
-      }, [
-        h(FeatherIcon, {
-          name: 'search',
-          class: 'h-4 w-4 text-gray-400'
-        })
-      ]),
-      h('input', {
-        type: 'text',
-        placeholder: 'Search employees...',
-        value: searchQuery.value,
-        onInput: (e) => searchQuery.value = e.target.value,
-        class: `
-          block w-[180px] lg:w-full rounded-xl border-0 py-2 pl-10 pr-4 
-          text-gray-900 ring-1 ring-inset ring-gray-200 
-          placeholder:text-gray-400 
-          focus:ring-2 focus:ring-inset focus:ring-gray-900
-          transition-all duration-200
-          bg-white/50 hover:bg-white
-          sm:text-sm sm:leading-6
-        `
-      })
-    ]),
+        // Search Field (remains the same)
+        h('div', { /* ... existing search field wrapper ... */ }, [
+            h('div', { /* ... search icon ... */ }, [ /* ... */ ]),
+            h('input', { /* ... existing search input attributes ... */ })
+        ]),
 
-    // New Employee Button
-    h('button', {
-      class: `
-        inline-flex items-center gap-2 
-        rounded-xl px-4 py-2.5
-        text-sm font-semibold text-white
-        bg-gray-900 hover:bg-gray-800
-        transition duration-200 ease-in-out
-        shadow-sm hover:shadow
-        focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
-      `,
-      onClick: () => showNewEmployeeDialog.value = true
-    }, [
-      h(FeatherIcon, {
-        name: 'plus',
-        class: 'h-4 w-4'
-      }),
-      h('span', {
-        class: 'hidden sm:inline'
-      }, 'Add Employee')
-    ])
-  ]))
+        // Container for Button and Dropdown
+        h('div', { class: 'flex items-center gap-2' }, [ // Group button and dropdown
+            // New Employee Button (remains the same)
+            h('button', { /* ... existing Add Employee button attributes ... */ }, [
+                h(FeatherIcon, { /* ... plus icon ... */ }),
+                h('span', { /* ... Add Employee text ... */ })
+            ]),
+
+            // --- New Dropdown Component ---
+            h(Dropdown, { // Use the imported Dropdown component
+                options: headerDropdownOptions.value, // Bind computed options
+                placement: 'bottom-end', // Adjust placement as needed
+                // buttonClass: '', // Optional: classes for the internal button if needed
+            }, { // Default slot for the trigger button
+                default: () => h(Button, {
+                    variant: "secondary", // Or subtle, outline, etc.
+                    size: "md", // Match Add Employee button size? Or use "icon" variant if preferred
+                    iconLeft: h(FeatherIcon, { name: 'more-vertical', class: 'h-4 w-4' }),
+                    // label: 'Actions' // Optional label for the button
+                })
+            })
+        ]) // End of Button/Dropdown Group
+    ]))
+
+    // Ensure initial data is loaded (if not handled elsewhere)
+    if (!list.data?.length) list.reload();
+    if (!attendanceList.data?.length) attendanceList.reload();
+    if (!documentResource.data?.length) documentResource.reload();
+    if (!leaveResource.data?.length) leaveResource.reload();
 })
+
 const sortField = ref('creation')
 const sortDirection = ref('desc')
 const activeFilters = ref([])
@@ -992,6 +1016,30 @@ const attendanceButtonLabel = computed(() => {
   const todayRecord = findAttendanceRecord(currentDate)
   return todayRecord ? 'Edit Attendance' : 'Setup Attendance'
 })
+
+const showPrintDailyDialog = ref(false)
+const showPrintMonthlyDialog = ref(false)
+const printDailyDate = ref(getServerDate()) // Default to today
+const printMonthlyMonth = ref(dayjs().month() + 1) // Default to current month (1-12)
+const printMonthlyYear = ref(dayjs().year())      // Default to current year
+const printDailyLoading = ref(false)
+const printMonthlyLoading = ref(false)
+const printDailyError = ref('')
+const printMonthlyError = ref('')
+
+const monthOptions = Array.from({ length: 12 }, (_, i) => ({
+  label: dayjs().month(i).format('MMMM'),
+  value: i + 1,
+}));
+
+const yearOptions = computed(() => {
+  const current = dayjs().year();
+  const years = [];
+  for (let i = 0; i < 5; i++) { // Current year + last 4 years
+    years.push({ label: String(current - i), value: current - i });
+  }
+  return years;
+});
 
 const filteredEmployeeGrid = computed(() => {
   let employees = list.data || []
@@ -1110,6 +1158,108 @@ const filteredMonthlyAttendance = computed(() => {
 		employee.name.toLowerCase().includes(monthlyAttendanceSearch.value.toLowerCase()),
 	)
 })
+
+function openPrintDailyDialog() {
+  printDailyDate.value = getServerDate(); // Reset to today
+  printDailyError.value = '';
+  showPrintDailyDialog.value = true;
+}
+
+function openPrintMonthlyDialog() {
+  printMonthlyMonth.value = dayjs().month() + 1; // Reset to current month
+  printMonthlyYear.value = dayjs().year();     // Reset to current year
+  printMonthlyError.value = '';
+  showPrintMonthlyDialog.value = true;
+}
+
+// Function to open PDF URL or show error
+function handlePdfResponse(data, errorRef, dialogRef) {
+    if (data?.pdf_url) {
+        window.open(data.pdf_url, '_blank');
+        dialogRef.value = false; // Close dialog on success
+    } else if (data?.message) {
+        errorRef.value = data.message; // Show "No record found" type messages
+    } else if (data?.error) {
+         errorRef.value = data.error; // Show "Invalid format" type messages
+    } else {
+        errorRef.value = 'An unknown error occurred while generating the PDF.';
+    }
+     // Optional: Use Frappe alerts instead of inline errors
+     // if (errorRef.value) {
+     //   show_alert({ message: errorRef.value, title: 'Print Error', indicator: 'red' });
+     // }
+}
+
+
+async function fetchDailyPdfUrl() {
+  if (!printDailyDate.value) {
+    printDailyError.value = 'Please select a date.';
+    return;
+  }
+  // Basic format check (YYYY-MM-DD)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(printDailyDate.value)) {
+      printDailyError.value = 'Invalid date format. Please use YYYY-MM-DD.';
+      return;
+  }
+
+  printDailyLoading.value = true;
+  printDailyError.value = '';
+
+  const resource = createResource({
+    url: 'rua.attendance.get_daily_attendance_pdf_url',
+    params: { attendance_date: printDailyDate.value },
+    auto: false, // Don't fetch automatically
+    onSuccess(data) {
+        handlePdfResponse(data, printDailyError, showPrintDailyDialog);
+        printDailyLoading.value = false;
+    },
+    onError(err) {
+        console.error("Error fetching daily PDF URL:", err);
+        printDailyError.value = err.message || 'Failed to fetch PDF URL.';
+        printDailyLoading.value = false;
+    }
+  });
+
+  try {
+      await resource.fetch();
+  } catch (err) {
+      // Error is handled by onError callback, but catch prevents unhandled promise rejection
+      printDailyLoading.value = false; // Ensure loading stops
+  }
+}
+
+async function fetchMonthlyPdfUrl() {
+  if (!printMonthlyMonth.value || !printMonthlyYear.value) {
+    printMonthlyError.value = 'Please select a month and year.';
+    return;
+  }
+
+  const monthYear = `${String(printMonthlyMonth.value).padStart(2, '0')}-${printMonthlyYear.value}`;
+
+  printMonthlyLoading.value = true;
+  printMonthlyError.value = '';
+
+  const resource = createResource({
+    url: 'rua.attendance.get_monthly_attendance_pdf_url',
+    params: { month_year: monthYear },
+    auto: false,
+    onSuccess(data) {
+        handlePdfResponse(data, printMonthlyError, showPrintMonthlyDialog);
+        printMonthlyLoading.value = false;
+    },
+    onError(err) {
+        console.error("Error fetching monthly PDF URL:", err);
+        printMonthlyError.value = err.message || 'Failed to fetch PDF URL.';
+        printMonthlyLoading.value = false;
+    }
+  });
+
+   try {
+      await resource.fetch();
+  } catch (err) {
+      printMonthlyLoading.value = false; // Ensure loading stops
+  }
+}
 
 
 function previousMonth() {

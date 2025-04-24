@@ -11,6 +11,7 @@
   "column_break_dkmq",
   "service_account",
   "google_sheet_template_id",
+  "google_sheet_invoice_template_id",
   "google_accounts"
  ],
  "fields": [
@@ -44,13 +45,19 @@
    "fieldtype": "Table",
    "label": "Google Accounts",
    "options": "Employee Google Accounts"
+  },
+  {
+   "default": "1-WHXiecmxzvDTtttmrirt_mqStjqIdOePpSBXes_nVA",
+   "fieldname": "google_sheet_invoice_template_id",
+   "fieldtype": "Data",
+   "label": "Google Sheet Invoice Template ID"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-18 19:46:05.122821",
+ "modified": "2025-04-24 02:55:53.207781",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Company",

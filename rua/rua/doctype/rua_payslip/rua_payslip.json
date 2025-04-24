@@ -12,6 +12,7 @@
   "for_month",
   "year",
   "column_break_qsan",
+  "date",
   "status",
   "naming_series"
  ],
@@ -57,12 +58,17 @@
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "RC-EPS-.year./.for_month./"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-04-23 02:21:01.283083",
+ "modified": "2025-04-24 02:02:18.877043",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Payslip",

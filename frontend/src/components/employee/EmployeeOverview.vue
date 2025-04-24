@@ -52,12 +52,15 @@
 								</div>
 							</div>
 							<div class="flex gap-3">
-								<Button variant="subtle" size="sm" @click="openSignatureDialog">
-										<FeatherIcon name="pen-tool" class="h-4 w-4"/>
-								</Button>
-								<Button variant="solid" size="sm" @click="openEditDialog">
-										<FeatherIcon name="edit" class="h-4 w-4" />
-								</Button>
+								<Dropdown :options="employeeActionsOptions">
+									<Button variant="secondary" size="sm"> <template #icon>
+											<FeatherIcon
+												name="more-horizontal"
+												class="h-4 w-4"
+											/>
+										</template>
+									</Button>
+								</Dropdown>
 							</div>
 						</div>
 					</div>
@@ -568,6 +571,95 @@
 			</div>
 		</template>
 	</Dialog>
+	<Dialog v-model="showPayslipDialog"
+          :options="{ title: `Issue Payslip for ${employee?.employee_name}`, size: 'lg' }">
+		<template #body-content>
+			<div class="space-y-6 p-4">
+				<div class="grid grid-cols-2 gap-4">
+					<FormControl type="select"
+                         label="For Month"
+                         required
+                         :options="monthOptions"
+                         v-model="payslipForm.month"
+                         placeholder="Select month" />
+					<FormControl type="number"
+                         label="Year"
+                         :modelValue="payslipForm.year"
+                         readOnly
+                         disabled />
+				</div>
+
+				<div v-if="payslipLoading" class="text-center py-6">
+					<p class="text-sm text-gray-500">Loading salary details...</p>
+					</div>
+
+				<div v-if="!payslipLoading && salaryDetails" class="space-y-4 pt-4 border-t">
+					<h3 class="text-base font-medium text-gray-700">Salary Calculation Details ({{ salaryDetails.month_name }} {{ salaryDetails.year }})</h3>
+
+                    <div v-if="salaryDetails.payslip_issued && salaryDetails.issued_payslip_ids && salaryDetails.issued_payslip_amount_sum !== null"
+                         class="p-3 rounded-md bg-yellow-50 border border-yellow-200">
+                        <div class="flex items-start gap-2"> <FeatherIcon name="alert-triangle" class="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                             <div class="flex-1"> <p class="text-sm font-medium text-yellow-800">
+                                    Payslip(s) already issued for a total of {{ formatCurrency(salaryDetails.issued_payslip_amount_sum) }}.
+                                </p>
+                                <p class="text-xs text-yellow-700 mt-1">
+                                    Issued IDs: {{ salaryDetails.issued_payslip_ids.join(', ') }}
+                                </p>
+                                <p v-if="suggestedAmount > 0" class="text-xs text-yellow-700 mt-1">
+                                    Calculated remaining amount is {{ formatCurrency(suggestedAmount) }}. Issuing another will create an additional record.
+                                </p>
+                                <p v-else class="text-xs text-yellow-700 mt-1">
+                                    The calculated salary has already been fully issued in the previous payslip(s).
+                                </p>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                        <div><span class="text-gray-500">Basic:</span> {{ formatCurrency(salaryDetails.basic_salary) }}</div>
+                        <div><span class="text-gray-500">Allowance:</span> {{ formatCurrency(salaryDetails.allowance) }}</div>
+                        <div><span class="text-gray-500">Overtime Pay:</span> {{ formatCurrency(salaryDetails.overtime_compensation) }}</div>
+                        <div><span class="text-gray-500">Deductions:</span> -{{ formatCurrency(salaryDetails.total_deductions) }}</div>
+                        <div class="col-span-2 md:col-span-1"><span class="text-gray-500 font-semibold">Calculated Total:</span> <strong class="text-gray-800">{{ formatCurrency(salaryDetails.final_total_compensation) }}</strong></div>
+                    </div>
+
+                    <FormControl type="currency"
+                                 label="Payslip Amount"
+                                 required
+                                 v-model="payslipForm.amount"
+                                 placeholder="Enter amount to issue"
+                                 :error="payslipForm.amount <= 0 ? 'Amount must be positive' : ''">
+                       <template #suffix>
+                            <button v-if="suggestedAmount !== null && payslipForm.amount !== suggestedAmount.toFixed(2)"
+                                    @click="payslipForm.amount = suggestedAmount > 0 ? suggestedAmount.toFixed(2) : null"
+                                    type="button"
+                                    class="text-xs text-blue-600 hover:underline px-2"
+                                    title="Use suggested amount">
+                                Suggest: {{ formatCurrency(suggestedAmount) }}
+                            </button>
+                        </template>
+                    </FormControl>
+
+				</div>
+
+                 <div v-if="!payslipLoading && !salaryDetails && payslipForm.month" class="text-center py-6">
+                    <p class="text-sm text-gray-500">Could not load salary details for the selected period.</p>
+                 </div>
+
+			</div>
+		</template>
+		<template #actions>
+			<div class="flex justify-end gap-2">
+				<Button variant="subtle" @click="showPayslipDialog = false">Cancel</Button>
+				<Button variant="solid"
+                        :loading="payslipCreating"
+                        :disabled="payslipLoading || !salaryDetails || !payslipForm.amount || payslipForm.amount <= 0"
+                        @click="createPayslip">
+                    {{ salaryDetails?.payslip_issued ? 'Issue Additional Payslip' : 'Issue Payslip' }}
+                </Button>
+			</div>
+		</template>
+	</Dialog>
 	<SignDocument
 		v-if="showSignatureDialog"
 		v-model="showSignatureDialog"
@@ -579,7 +671,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, h, reactive, watch } from 'vue'
 import {
 	FeatherIcon,
 	Dialog,
@@ -588,6 +680,8 @@ import {
 	FormControl,
 	Autocomplete,
 	dayjs,
+	Dropdown,
+	createResource
 } from 'frappe-ui'
 import { attendanceResource } from '@/data/attendance'
 import { leaveResource } from '@/data/leave'
@@ -596,6 +690,7 @@ const router = useRouter()
 import { genderOptions, positionOptions } from '@/data/employeeOptions'
 import countries from '@/data/countries.json'
 import flags from '@/data/flags.json'
+import { slipResource } from '@/data/slip'
 import {
 	getServerDate,
 	isBeforeToday,
@@ -621,6 +716,204 @@ const props = defineProps({
   }
 	
 })
+
+const showPayslipDialog = ref(false)
+const payslipForm = reactive({
+  month: null,
+  year: dayjs().year(), // Current year
+  amount: null,
+})
+const salaryDetailsResource = ref(null); // Will hold the createResource instance
+const salaryDetails = ref(null); // Holds the fetched salary data
+const suggestedAmount = ref(null);
+const payslipLoading = ref(false); // Loading state for fetching salary details
+const payslipCreating = ref(false); // Loading state for creating payslip
+
+// Month options for the dropdown
+const monthOptions = Array.from({ length: 12 }, (_, i) => {
+  const month = i + 1;
+  return { label: dayjs().month(i).format('MMMM'), value: month };
+});
+
+// Calculate default month
+function getDefaultMonth() {
+  const today = dayjs(getServerDate()); // Use server date for consistency
+  const dayOfMonth = today.date();
+  if (dayOfMonth <= 15) {
+    // If 15th or earlier, default to last month
+    return today.subtract(1, 'month').month() + 1; // dayjs months are 0-indexed
+  } else {
+    // Otherwise, default to current month
+    return today.month() + 1; // dayjs months are 0-indexed
+  }
+}
+
+// Function to open the dialog and initialize
+function openPayslipDialog() {
+  payslipForm.month = getDefaultMonth();
+  payslipForm.year = dayjs(getServerDate()).year();
+  payslipForm.amount = null;
+  salaryDetails.value = null; // Reset details
+  suggestedAmount.value = null; // Reset suggestion
+  // Initialize the resource when dialog opens or month changes
+  setupSalaryDetailsResource();
+  fetchSalaryDetails(); // Fetch for the default month/year
+  showPayslipDialog.value = true;
+}
+
+// Setup or update the salary details resource
+function setupSalaryDetailsResource() {
+  if (props.employee?.name && payslipForm.month && payslipForm.year) {
+      salaryDetailsResource.value = createResource({
+          url: 'rua.attendance.get_employee_monthly_salary',
+          params: {
+              employee_id: props.employee.name,
+              month: payslipForm.month,
+              year: payslipForm.year,
+          },
+          auto: false, // Don't fetch automatically on creation
+          onSuccess(data) {
+              salaryDetails.value = data;
+              // Calculate suggested amount
+              if (data) {
+                  // --- MODIFICATION START ---
+                  // Use issued_payslip_amount_sum for calculation
+                  if (data.payslip_issued && data.issued_payslip_amount_sum !== null) {
+                      suggestedAmount.value = Math.max(0, data.final_total_compensation - data.issued_payslip_amount_sum);
+                  } else {
+                       // No payslip issued or sum is null, suggest the full amount
+                      suggestedAmount.value = data.final_total_compensation;
+                  }
+                  // --- MODIFICATION END ---
+
+                  // Optionally pre-fill amount if not already issued (or if remaining amount > 0?)
+                  // Keep existing logic, or adjust if needed based on new requirements
+                  if (!data.payslip_issued) {
+                    payslipForm.amount = suggestedAmount.value > 0 ? suggestedAmount.value.toFixed(2) : null;
+                  } else {
+                    // If already issued, maybe suggest the remaining amount, or leave blank?
+                    // Let's leave it blank to force user input for additional slips.
+                     payslipForm.amount = null;
+                    // Or uncomment below to suggest remaining:
+                    // payslipForm.amount = suggestedAmount.value > 0 ? suggestedAmount.value.toFixed(2) : null;
+                  }
+              } else {
+                  suggestedAmount.value = null;
+                  payslipForm.amount = null;
+              }
+              payslipLoading.value = false;
+          },
+          onError(err) {
+              console.error("Error fetching salary details:", err);
+              salaryDetails.value = null; // Clear details on error
+              suggestedAmount.value = null;
+              payslipForm.amount = null;
+              payslipLoading.value = false;
+              // TODO: Show user-friendly error message
+          }
+      });
+  } else {
+      salaryDetailsResource.value = null; // Clear resource if params are missing
+      salaryDetails.value = null;
+      suggestedAmount.value = null;
+      payslipForm.amount = null;
+  }
+}
+
+
+// Function to trigger fetching salary details
+function fetchSalaryDetails() {
+  if (salaryDetailsResource.value) {
+    payslipLoading.value = true;
+    salaryDetails.value = null; // Clear previous data
+    suggestedAmount.value = null;
+    payslipForm.amount = null; // Clear amount when fetching
+    salaryDetailsResource.value.fetch();
+  }
+}
+
+// Watch for month changes to refetch details
+watch(() => payslipForm.month, (newMonth, oldMonth) => {
+  if (showPayslipDialog.value && newMonth !== oldMonth) {
+    setupSalaryDetailsResource(); // Re-setup resource with new month
+    fetchSalaryDetails();
+  }
+});
+
+// Function to create the payslip
+async function createPayslip() {
+  if (!payslipForm.amount || payslipForm.amount <= 0 || !props.employee?.name || !payslipForm.month || !payslipForm.year) {
+    // Basic validation - Add more specific validation/feedback as needed
+    console.error("Invalid payslip data");
+    return;
+  }
+
+  payslipCreating.value = true;
+  try {
+    await slipResource.insert.submit({
+      employee: props.employee.name,
+      amount: payslipForm.amount,
+      for_month: payslipForm.month,
+      year: payslipForm.year,
+      status: 'Completed',
+    });
+    // Optionally: Show success message
+    showPayslipDialog.value = false;
+    slipResource.reload(); // Reload the list if needed elsewhere
+  } catch (error) {
+    console.error("Error creating payslip:", error);
+    // Optionally: Show error message to the user
+  } finally {
+    payslipCreating.value = false;
+  }
+}
+
+function printEmployeeSummary() {
+  if (props.employee && props.employee.name) {
+    // Use encodeURIComponent for the employee name in the URL
+    const employeeNameEncoded = encodeURIComponent(props.employee.name);
+    // Use a relative URL path for better portability
+    const printUrl = `/api/method/frappe.utils.print_format.download_pdf?doctype=RUA%20Employee&name=${employeeNameEncoded}&format=Employee%20Summary&no_letterhead=1&letterhead=No%20Letterhead&settings=%7B%7D&_lang=en`;
+    window.open(printUrl, '_blank'); // Open in a new tab
+  } else {
+    console.error("Cannot print summary: Employee data is missing.");
+    // Optionally, show a notification to the user
+  }
+}
+
+// Computed property for Dropdown options
+const employeeActionsOptions = computed(() => [
+  {
+    group: 'Manage',
+    items: [
+      {
+        label: 'Edit Employee',
+        icon: () => h(FeatherIcon, { name: "edit", class: "h-4 w-4" }),
+        onClick: openEditDialog
+      },
+      {
+        label: 'Enter Signature',
+        icon: () => h(FeatherIcon, { name: "pen-tool", class: "h-4 w-4" }),
+        onClick: openSignatureDialog
+      }
+    ]
+  },
+  {
+    group: 'Actions',
+    items: [
+      { // New Item
+        label: 'Issue Payslip',
+        icon: () => h(FeatherIcon, { name: "file-text", class: "h-4 w-4" }), // Example icon
+        onClick: openPayslipDialog // Call the new function
+      },
+      {
+        label: 'Print Employee Summary',
+        icon: () => h(FeatherIcon, { name: "printer", class: "h-4 w-4" }),
+        onClick: printEmployeeSummary
+      }
+    ]
+  }
+]);
 
 // Role-based access control
 const leaveRecords = computed(() => {
