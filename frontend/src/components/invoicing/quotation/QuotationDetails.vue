@@ -627,9 +627,9 @@ function triggerRcPdfDownload() {
     }
     const docType = 'RUA Quotation'; 
     // --- 3. Define Static Parameters (matching your target URL) ---
-    const printFormat = 'RC-QTN';      
-    const noLetterhead = 1;             
-    const letterhead = 'No Letterhead'; 
+    const printFormat = 'RC_QTN_LH';      
+    const noLetterhead = 0;             
+    const letterhead = 'RC-LH'; 
     const settings = '{}';              
     const lang = 'en';                  
     // --- 4. Construct the Target URL ---

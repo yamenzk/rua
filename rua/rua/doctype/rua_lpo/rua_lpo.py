@@ -20,8 +20,8 @@ class RUALPO(Document):
 
         for item in self.items:
             # Ensure calculations use flt for safety
-            item.total_amount = flt(item.qty) * flt(item.rate)
-            item.vat_amount = flt(item.total_amount) * (flt(item.vat_rate) / 100)
+            item.total_amount = flt(item.qty) * flt(item.unit_price)
+            item.vat_amount = flt(item.total_amount) * 0.05
             item.grand_total = flt(item.total_amount) + flt(item.vat_amount)
 
             # Accumulate totals for the LPO header
@@ -38,7 +38,8 @@ class RUALPO(Document):
         project_changed = self.is_new() or self.has_value_changed("project")
         status_changed = self.has_value_changed("status")
         amount_changed = self.has_value_changed("grand_total")
-        old_status = self.get_doc_before_save().status if not self.is_new() else None
+        if self.get_doc_before_save():
+            old_status = self.get_doc_before_save().status 
         project_to_reconcile = self.project
 
         # Determine if reconciliation is needed
@@ -111,6 +112,3 @@ class RUALPO(Document):
             reconcile_single_project_financials(self.project)
 
         self.publish_update()
-
-
-

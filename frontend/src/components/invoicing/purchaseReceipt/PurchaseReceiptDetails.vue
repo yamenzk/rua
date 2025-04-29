@@ -838,9 +838,9 @@ function triggerRcPdfDownload() {
     }
     const docType = 'RUA Purchase Receipt'; 
     // --- 3. Define Static Parameters (matching your target URL) ---
-    const printFormat = 'RC-RCT';       
-    const noLetterhead = 1;             
-    const letterhead = 'No Letterhead'; 
+    const printFormat = 'RC_RCT_LH';       
+    const noLetterhead = 0;             
+    const letterhead = 'RC-LH'; 
     const settings = '{}';              
     const lang = 'en';                  
 

@@ -392,8 +392,6 @@
       
       <FileUploader
         v-model="finalLPO"
-        :accept="['application/pdf']"
-        :max-size="5000000"
         :upload-args="uploadArgs"
         @success="handleUploadSuccess"
         v-slot="{ openFileSelector, file, uploading, progress, error }"

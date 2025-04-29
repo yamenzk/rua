@@ -14,14 +14,14 @@ def after_migrate():
     )
 
     if not projects:
-        frappe.log("No projects to reconcile.")
+        frappe.log_error("No projects to reconcile.")
         return
 
     # First perform reconciliation for all projects
     try:
         reconcile_all_financials_sql()
         frappe.db.commit()
-        frappe.log(
+        frappe.log_error(
             f"Financial reconciliation completed for all projects using tolerance {PAYMENT_TOLERANCE}."
         )
     except Exception as e:
@@ -67,7 +67,7 @@ def after_migrate():
             )
 
     frappe.db.commit()
-    frappe.log("Project completion percentages updated with reconciled values.")
+    frappe.log_error("Project completion percentages updated with reconciled values.")
 
 
 def reconcile_all_financials_sql():
@@ -146,29 +146,85 @@ def reconcile_all_financials_sql():
     """
     frappe.db.sql(invoice_payment_reconciliation_sql, (PAYMENT_TOLERANCE,))
 
+    # 3. Reconcile LPO Payment Statuses (Applying tolerance) - NEW SECTION
+    lpo_payment_reconciliation_sql = """
+    UPDATE `tabRUA LPO` lpo
+    SET
+        payment_status = CASE
+            WHEN COALESCE((
+                SELECT SUM(pay.amount)
+                FROM `tabRUA Payment` pay
+                WHERE pay.related_doctype = 'RUA LPO'
+                AND pay.related_docname = lpo.name
+                AND pay.status = 'Submitted'
+            ), 0) >= (lpo.grand_total - %s) THEN 'Paid'
+            WHEN COALESCE((
+                SELECT SUM(pay.amount)
+                FROM `tabRUA Payment` pay
+                WHERE pay.related_doctype = 'RUA LPO'
+                AND pay.related_docname = lpo.name
+                AND pay.status = 'Submitted'
+            ), 0) > 0 THEN 'Partially Paid'
+            ELSE 'Unpaid'
+        END,
+        payment_linked = CASE
+            WHEN COALESCE((
+                SELECT SUM(pay.amount)
+                FROM `tabRUA Payment` pay
+                WHERE pay.related_doctype = 'RUA LPO'
+                AND pay.related_docname = lpo.name
+                AND pay.status = 'Submitted'
+            ), 0) > 0 THEN 1
+            ELSE 0
+        END,
+        modified = modified  # Prevent modified timestamp update
+    WHERE lpo.status = 'Final' -- Only reconcile LPOs that are considered final/approved
+    """
+    frappe.db.sql(lpo_payment_reconciliation_sql, (PAYMENT_TOLERANCE,))
+    frappe.log_error("LPO payment statuses reconciled.")  # Add this log line too
+
     log_reconciliation_summary()
 
 
 def log_reconciliation_summary():
     """Log summary of reconciliation results"""
     summary_queries = [
-        ("Total Projects", "SELECT COUNT(*) FROM `tabRUA Project`"),
-        ("Total Invoices", "SELECT COUNT(*) FROM `tabRUA Invoice`"),
-        ("Total Payments", "SELECT COUNT(*) FROM `tabRUA Payment`"),
-        ("Total LPOs", "SELECT COUNT(*) FROM `tabRUA LPO`"),
-        ("Final LPOs", "SELECT COUNT(*) FROM `tabRUA LPO` WHERE status = 'Final'"),
+        (
+            "Total Invoices",
+            "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE status = 'Final' AND type = 'Tax Invoice'",
+        ),  # Refined
         (
             "Paid Invoices",
-            "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Paid'",
-        ),
+            "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Paid' AND status = 'Final' AND type = 'Tax Invoice'",
+        ),  # Refined
         (
             "Partially Paid Invoices",
-            "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Partially Paid'",
-        ),
+            "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Partially Paid' AND status = 'Final' AND type = 'Tax Invoice'",
+        ),  # Refined
         (
             "Unpaid Invoices",
-            "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Unpaid'",
-        ),
+            "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Unpaid' AND status = 'Final' AND type = 'Tax Invoice'",
+        ),  # Refined
+        (
+            "Total Payments",
+            "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted'",
+        ),  # Refined
+        (
+            "Receive Payments",
+            "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted' AND type = 'Receive'",
+        ),  # Added
+        (
+            "Pay Payments (Total)",
+            "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted' AND type LIKE 'Pay%'",
+        ),  # Added
+        (
+            "Pay: Petty Cash Payments",
+            "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted' AND type = 'Pay: Petty Cash'",
+        ),  # Added
+        (
+            "Total LPOs",
+            "SELECT COUNT(*) FROM `tabRUA LPO` WHERE status = 'Final'",
+        ),  # Refined
     ]
     summary_lines = []
     for label, query in summary_queries:
@@ -331,6 +387,41 @@ def reconcile_single_project_financials(project_name):
                 update_modified=False,
             )
 
+        # 3. Reconcile LPO Payment Statuses for this Project (Applying tolerance) - NEW SECTION
+        lpo_payment_reconciliation_sql = """
+        UPDATE `tabRUA LPO` lpo
+        SET
+            payment_status = CASE
+                WHEN COALESCE((
+                    SELECT SUM(pay.amount)
+                    FROM `tabRUA Payment` pay
+                    WHERE pay.related_doctype = 'RUA LPO' AND pay.related_docname = lpo.name AND pay.status = 'Submitted'
+                ), 0) >= (lpo.grand_total - %s) THEN 'Paid' -- Param 1: Tolerance
+                WHEN COALESCE((
+                    SELECT SUM(pay.amount)
+                    FROM `tabRUA Payment` pay
+                    WHERE pay.related_doctype = 'RUA LPO' AND pay.related_docname = lpo.name AND pay.status = 'Submitted'
+                ), 0) > 0 THEN 'Partially Paid'
+                ELSE 'Unpaid'
+            END,
+            payment_linked = CASE
+                WHEN COALESCE((
+                    SELECT SUM(pay.amount)
+                    FROM `tabRUA Payment` pay
+                    WHERE pay.related_doctype = 'RUA LPO' AND pay.related_docname = lpo.name AND pay.status = 'Submitted' 
+                ), 0) > 0 THEN 1
+                ELSE 0
+            END,
+            modified = modified
+        WHERE lpo.project = %s -- Param 2: Project Name
+        AND lpo.status = 'Final'
+        """
+        frappe.db.sql(
+            lpo_payment_reconciliation_sql, (PAYMENT_TOLERANCE, project_name)
+        )
+        frappe.log_error(
+            f"LPO payment statuses reconciled for {project_name}."
+        )  # Add this log line too
         # Optional: Log reconciliation details
         log_single_project_reconciliation(project_name)
 
@@ -370,6 +461,18 @@ def log_single_project_reconciliation(project_name):
             "Final LPOs",
             "SELECT COUNT(*) FROM `tabRUA LPO` WHERE project = %s AND status = 'Final'",
         ),
+        (
+            "Paid LPOs",
+            "SELECT COUNT(*) FROM `tabRUA LPO` WHERE project = %s AND payment_status = 'Paid' AND status = 'Final'",
+        ),  # NEW
+        (
+            "Partially Paid LPOs",
+            "SELECT COUNT(*) FROM `tabRUA LPO` WHERE project = %s AND payment_status = 'Partially Paid' AND status = 'Final'",
+        ),  # NEW
+        (
+            "Unpaid LPOs",
+            "SELECT COUNT(*) FROM `tabRUA LPO` WHERE project = %s AND payment_status = 'Unpaid' AND status = 'Final'",
+        ),  # NEW
     ]
     summary_lines = []
     for label, query in summary_queries:
@@ -388,9 +491,9 @@ def log_single_project_reconciliation(project_name):
 
 def execute():
     """Entry point for bench execute"""
-    frappe.log("Starting post-install reconciliation via execute...")
+    frappe.log_error("Starting post-install reconciliation via execute...")
     after_migrate()
-    frappe.log("Finished post-install reconciliation via execute.")
+    frappe.log_error("Finished post-install reconciliation via execute.")
 
 
 # --- End of after_migrate.py ---

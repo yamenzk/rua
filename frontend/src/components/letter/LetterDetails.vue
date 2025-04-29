@@ -1097,18 +1097,37 @@ function triggerPdfDownload() {
 	const docName = letterResource.value.doc.name
 	const docType = 'RUA Letter'
 	// Determine print format based on type or other logic if needed
-	const printFormat = letterResource.value.doc.two_column ? 'RC Letter Two Column' : 'RC Letter' // Example logic
-	const noLetterhead = 1
-	const letterhead = 'No Letterhead'
-	const lang = letterResource.value.doc.arabic && !letterResource.value.doc.english ? 'ar' : 'en' // Basic language selection
+	const doc = letterResource?.value?.doc;
+
+	let printFormat = null; // Initialize printFormat, null or a default
+	if (doc) {
+	if (doc.english && doc.arabic) {
+		if (doc.two_column) {
+		printFormat = 'RC_LTR_LH_EN_AR_COL';
+		} else {
+		printFormat = 'RC_LTR_LH_EN_AR_ROW';
+		}
+	} else if (doc.english) {
+		printFormat = 'RC_LTR_LH_EN';
+	} else if (doc.arabic) {
+		printFormat = 'RC_LTR_LH_AR';
+	} else {
+		printFormat = 'RC_LTR_LH_EN'; 
+	}
+	} else {
+	console.error("letterResource.value.doc is not available.");
+	printFormat = 'RC_LTR_LH_EN'; 
+	}
+	const letterhead = 'RC-LH'
+	const lang = 'en' 
 
 	const apiUrl = `${baseUrl}/api/method/frappe.utils.print_format.download_pdf`
 	const queryParams = new URLSearchParams({
 		doctype: docType,
 		name: docName,
 		format: printFormat,
-		no_letterhead: noLetterhead,
-		// letterhead: letterhead, // Often not needed if no_letterhead=1
+		no_letterhead: 0,
+		letterhead: letterhead, // Often not needed if no_letterhead=1
 		// settings: '{}', // Usually default is fine
 		_lang: lang,
 	})

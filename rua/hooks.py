@@ -13,8 +13,14 @@ fixtures = [
         "doctype": "RUA Letter",
         "filters": [
             ["standard", "=", 1],
-        ]
-    }
+        ],
+    },
+    {
+        "doctype": "Letter Head",
+        "filters": [
+            ["name", "=", "RC-LH"],
+        ],
+    },
 ]
 
 # Apps
