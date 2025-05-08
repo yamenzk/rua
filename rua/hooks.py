@@ -5,23 +5,23 @@ app_description = "Frappe App for Rua Company"
 app_email = "yz.kh@icloud.com"
 app_license = "mit"
 
-fixtures = [
-    {
-        "doctype": "RUA App Update",
-    },
-    {
-        "doctype": "RUA Letter",
-        "filters": [
-            ["standard", "=", 1],
-        ],
-    },
-    {
-        "doctype": "Letter Head",
-        "filters": [
-            ["name", "=", "RC-LH"],
-        ],
-    },
-]
+# fixtures = [
+#     {
+#         "doctype": "RUA App Update",
+#     },
+#     {
+#         "doctype": "RUA Letter",
+#         "filters": [
+#             ["standard", "=", 1],
+#         ],
+#     },
+#     {
+#         "doctype": "Letter Head",
+#         "filters": [
+#             ["name", "=", "RC-LH"],
+#         ],
+#     },
+# ]
 
 # Apps
 # ------------------

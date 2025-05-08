@@ -873,7 +873,7 @@ function printEmployeeSummary() {
     // Use encodeURIComponent for the employee name in the URL
     const employeeNameEncoded = encodeURIComponent(props.employee.name);
     // Use a relative URL path for better portability
-    const printUrl = `/api/method/frappe.utils.print_format.download_pdf?doctype=RUA%20Employee&name=${employeeNameEncoded}&format=Employee%20Summary&no_letterhead=1&letterhead=No%20Letterhead&settings=%7B%7D&_lang=en`;
+    const printUrl = `/api/method/frappe.utils.print_format.download_pdf?doctype=RUA%20Employee&name=${employeeNameEncoded}&format=Employee%20Summary&no_letterhead=0&letterhead=RC-LH&settings=%7B%7D&_lang=en`;
     window.open(printUrl, '_blank'); // Open in a new tab
   } else {
     console.error("Cannot print summary: Employee data is missing.");

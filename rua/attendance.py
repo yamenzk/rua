@@ -487,8 +487,8 @@ def get_daily_attendance_pdf_url(attendance_date):
                 "doctype": "RUA Attendance",
                 "name": doc_name,
                 "format": "Daily Attendance Sheet",  # Specific format for daily
-                "no_letterhead": 1,
-                "letterhead": "No Letterhead",
+                "no_letterhead": 0,
+                "letterhead": "RC-LH",
                 "settings": "{}",  # Empty settings JSON
                 "_lang": "en",  # Default language
             }
@@ -560,8 +560,8 @@ def get_monthly_attendance_pdf_url(month_year):
                 "doctype": "RUA Attendance",
                 "name": doc_name,  # Use the name of the first doc found
                 "format": "Monthly Summary Sheet",  # Specific format for monthly
-                "no_letterhead": 1,
-                "letterhead": "No Letterhead",
+                "no_letterhead": 0,
+                "letterhead": "RC-LH",
                 "settings": "{}",  # Empty settings JSON
                 "_lang": "en",  # Default language
             }

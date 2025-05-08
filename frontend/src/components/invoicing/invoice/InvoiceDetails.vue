@@ -837,13 +837,11 @@ function triggerRcPdfDownload() {
         return; 
     }
     const docType = 'RUA Invoice'; 
-    // --- 3. Define Static Parameters (matching your target URL) ---
-    const printFormat = 'RC-INV';      
-    const noLetterhead = 1;             
-    const letterhead = 'No Letterhead'; 
+    const printFormat = 'RC_INV_LH';      
+    const noLetterhead = 0;             
+    const letterhead = 'RC-LH'; 
     const settings = '{}';              
     const lang = 'en';                  
-    // --- 4. Construct the Target URL ---
     const apiUrl = `${baseUrl}/api/method/frappe.utils.print_format.download_pdf`;
     const queryParams = new URLSearchParams({
         doctype: docType,
@@ -855,7 +853,6 @@ function triggerRcPdfDownload() {
         _lang: lang
     });
     const finalUrl = `${apiUrl}?${queryParams.toString()}`;
-    // --- 5. Trigger the Download ---
     console.log("Opening PDF download URL:", finalUrl); 
     window.open(finalUrl, '_blank');
 }
