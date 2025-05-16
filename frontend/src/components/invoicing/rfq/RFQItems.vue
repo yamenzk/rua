@@ -1,27 +1,24 @@
-# RFQItems.vue
 <template>
   <div class="bg-white">
-    <!-- Header with Actions -->
     <div class="flex items-center justify-between px-6 py-4 border-b">
       <div class="flex items-center justify-between">
         <span class="text-sm text-gray-500">{{ localItems?.length || 0 }} items</span>
       </div>
 
-      <!-- Actions -->
-       <div v-if="!isDraft">
-        <Button 
-        v-if="isExporting" 
-        disabled 
-        variant="subtle" 
+      <div v-if="!isDraft">
+        <Button
+        v-if="isExporting"
+        disabled
+        variant="subtle"
         size="sm"
         class="flex items-center gap-2"
       >
         <FeatherIcon name="loader" class="w-4 h-4 animate-spin" />
       </Button>
-      <Button 
-        v-else 
-        variant="subtle" 
-        size="sm" 
+      <Button
+        v-else
+        variant="subtle"
+        size="sm"
         @click="exportToExcel"
         class="flex items-center gap-2"
       >
@@ -29,7 +26,6 @@
       </Button>
        </div>
       <div v-if="isDraft" class="flex items-center gap-2">
-        <!-- Add Row Button -->
         <Button variant="subtle" size="sm" @click="addNewRow">
           <template #prefix>
             <FeatherIcon name="plus" class="w-4 h-4" />
@@ -37,7 +33,6 @@
           Add Row
         </Button>
 
-        <!-- Excel Paste Button -->
         <Button variant="subtle" size="sm" @click="startPaste" class="hidden md:flex">
           <template #prefix>
             <FeatherIcon name="clipboard" class="w-4 h-4" />
@@ -48,17 +43,14 @@
     </div>
 
     <div class="overflow-x-auto">
-      <!-- Table Header -->
       <div class="bg-gray-50 border-b min-w-[800px]">
         <div class="flex items-center px-6 py-3">
           <div class="flex-1 grid items-center gap-4" :class="gridColsClass">
-            <!-- Common Column -->
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="box" class="w-4 h-4" />
               Item
             </div>
 
-            <!-- Glass Type Columns -->
             <template v-if="type === 'Glass'">
               <div class="text-sm font-medium text-gray-700">Description</div>
               <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
@@ -79,8 +71,8 @@
               </div>
             </template>
 
-            <!-- Aluminum Type Columns -->
             <template v-if="type === 'Aluminum'">
+              <div class="text-sm font-medium text-gray-700">Description</div>
               <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-center">
                 <FeatherIcon name="hash" class="w-4 h-4" />
                 Qty
@@ -93,7 +85,6 @@
               </div>
             </template>
 
-            <!-- Material Type Columns -->
             <template v-if="type === 'Material'">
               <div class="text-sm font-medium text-gray-700">Description</div>
               <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-center">
@@ -102,7 +93,6 @@
               </div>
             </template>
 
-            <!-- Actions Column -->
             <template v-if="isDraft">
               <div class="w-10"></div>
             </template>
@@ -110,10 +100,8 @@
         </div>
       </div>
 
-      <!-- Table Body -->
       <div class="divide-y">
         <template v-if="localItems?.length">
-          <!-- Items -->
           <div
             v-for="(item, index) in localItems"
             :key="index"
@@ -121,7 +109,6 @@
           >
             <div class="flex items-center px-6 py-3">
               <div class="flex-1 grid items-center gap-4" :class="gridColsClass">
-                <!-- Common Fields -->
                 <div>
                   <input
                     v-if="isDraft"
@@ -136,7 +123,6 @@
                   </div>
                 </div>
 
-                <!-- Glass Type Fields -->
                 <template v-if="type === 'Glass'">
                   <div>
                     <input
@@ -198,8 +184,20 @@
                   </div>
                 </template>
 
-                <!-- Aluminum Type Fields -->
                 <template v-if="type === 'Aluminum'">
+                  <div>
+                    <input
+                      v-if="isDraft"
+                      type="text"
+                      v-model="item.description"
+                      class="block w-full text-sm border-gray-300 rounded-md focus:ring-gray-900 focus:border-gray-900"
+                      placeholder="Description"
+                      @input="debouncedInput"
+                    />
+                    <div v-else class="text-sm text-gray-600">
+                      {{ item.description }}
+                    </div>
+                  </div>
                   <div>
                     <input
                       v-if="isDraft"
@@ -240,7 +238,6 @@
                   </div>
                 </template>
 
-                <!-- Material Type Fields -->
                 <template v-if="type === 'Material'">
                   <div>
                     <input
@@ -270,7 +267,6 @@
                   </div>
                 </template>
 
-                <!-- Actions -->
                 <template v-if="isDraft">
                   <div class="flex justify-center">
                     <Button
@@ -288,7 +284,6 @@
           </div>
         </template>
 
-        <!-- Empty State -->
         <div v-else class="flex flex-col items-center justify-center py-12">
           <div class="flex flex-col items-center text-center max-w-sm">
             <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -302,9 +297,7 @@
         </div>
       </div>
 
-      <!-- Save Changes Bar -->
-      
-    </div>
+      </div>
     <div v-if="hasChanges && isDraft" class="flex justify-between px-6 py-4 bg-gray-50 border-t">
         <Button variant="ghost" size="sm" @click="addNewRow">
           <template #prefix>
@@ -326,26 +319,66 @@
       </div>
   </div>
 
-  <!-- Paste Dialog -->
   <Dialog v-model="showPasteDialog" :options="pasteDialogOptions">
     <template #body-content>
       <div class="space-y-4">
         <textarea
           v-model="pasteContent"
           class="w-full h-40 p-2 border rounded-md font-mono text-sm focus:border-gray-900 focus:ring-gray-900"
-          placeholder="Paste your Excel data here..."
+          placeholder="Paste your Excel data here (Ctrl+V or Cmd+V)..."
         ></textarea>
-        <div class="text-sm text-gray-600">
-          Paste your data in the format:<br />
-          <template v-if="type === 'Glass'">
-            Item Name[tab]Description[tab]Width[tab]Length[tab]Qty
-          </template>
-          <template v-if="type === 'Aluminum'">
-            Item Name[tab]Qty[tab]Measurement Unit[tab]Length
-          </template>
-          <template v-if="type === 'Material'">
-            Item Name[tab]Description[tab]Qty
-          </template>
+
+        <div class="text-sm text-gray-700 space-y-2">
+          <p class="font-medium">Please ensure your columns are in the following order for RFQ Type: "{{ type }}"</p>
+
+          <div class="bg-gray-50 p-3 rounded-md border">
+            <template v-if="type === 'Glass'">
+              <p class="font-semibold text-gray-800">Required Columns for Glass:</p>
+              <ul class="list-disc list-inside mt-1 text-gray-600 space-y-0.5">
+                <li>Column 1: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Item Name</span></li>
+                <li>Column 2: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Description</span></li>
+                <li>Column 3: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Width (cm)</span> (e.g., 100.5)</li>
+                <li>Column 4: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Length (cm)</span> (e.g., 200.0)</li>
+                <li>Column 5: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Qty</span> (e.g., 10)</li>
+              </ul>
+              <p class="font-medium mt-2">Example for Glass:</p>
+              <pre class="bg-gray-100 p-2 rounded text-xs mt-1 font-mono border overflow-x-auto">
+Item Glass A[tab]Clear Tempered 6mm[tab]120[tab]240[tab]5
+Item Glass B[tab]Frosted Laminated[tab]80.5[tab]150.5[tab]2</pre>
+            </template>
+
+            <template v-if="type === 'Aluminum'">
+              <p class="font-semibold text-gray-800">Required Columns for Aluminum:</p>
+              <ul class="list-disc list-inside mt-1 text-gray-600 space-y-0.5">
+                <li>Column 1: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Item Name</span></li>
+                <li>Column 2: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Description</span></li>
+                <li>Column 3: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Qty</span> (e.g., 50)</li>
+                <li>Column 4: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Measurement Unit</span> (e.g., m, pcs, length)</li>
+                <li>Column 5: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Length</span> (e.g., 6.0)</li>
+              </ul>
+              <p class="font-medium mt-2">Example for Aluminum:</p>
+              <pre class="bg-gray-100 p-2 rounded text-xs mt-1 font-mono border overflow-x-auto">
+Profile X1[tab]Silver Anodized[tab]10[tab]meters[tab]5.8
+Handle Y2[tab]Powder Coated Black[tab]25[tab]pcs[tab]0.15</pre>
+            </template>
+
+            <template v-if="type === 'Material'">
+              <p class="font-semibold text-gray-800">Required Columns for Material:</p>
+              <ul class="list-disc list-inside mt-1 text-gray-600 space-y-0.5">
+                <li>Column 1: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Item Name</span></li>
+                <li>Column 2: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Description</span></li>
+                <li>Column 3: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Qty</span> (e.g., 100)</li>
+              </ul>
+              <p class="font-medium mt-2">Example for Material:</p>
+              <pre class="bg-gray-100 p-2 rounded text-xs mt-1 font-mono border overflow-x-auto">
+Screws[tab]Stainless Steel 5mm[tab]200
+Silicone[tab]Weatherproof Sealant[tab]10</pre>
+            </template>
+          </div>
+
+          <p class="mt-2 text-xs text-gray-500">
+            The first row can be your headers (they will be attempted to be skipped if common keywords like 'Item', 'Description', 'Qty' are detected) or actual data. Ensure data is separated by <span class="font-mono bg-gray-200 px-1 rounded text-xs">Tab</span>.
+          </p>
         </div>
       </div>
     </template>
@@ -395,11 +428,11 @@ const gridColsClass = computed(() => {
     case 'Glass':
       return `grid-cols-${7 + baseColumns}` // item, description, width, length, area, qty, total_area, [action]
     case 'Aluminum':
-      return `grid-cols-${4 + baseColumns}` // item, qty, measurement_unit, length, [action]
+      return `grid-cols-${5 + baseColumns}` // item, description, qty, measurement_unit, length, [action]
     case 'Material':
       return `grid-cols-${3 + baseColumns}` // item, description, qty, [action]
     default:
-      return `grid-cols-${3 + baseColumns}`
+      return `grid-cols-${3 + baseColumns}` // Default fallback, should match one of the types
   }
 })
 
@@ -444,7 +477,7 @@ const debouncedInput = debounce(() => {
 
 function updateGlassCalculations(index) {
   const item = localItems.value[index]
-  
+
   // Calculate area (sqm)
   if (item.width && item.length) {
     // Convert from cm² to m²
@@ -479,6 +512,7 @@ function addNewRow() {
       break
     case 'Aluminum':
       Object.assign(newRow, {
+        description: '', // Added description
         qty: '',
         measurement_unit: '',
         length: ''
@@ -509,62 +543,94 @@ function handlePasteContent() {
   const rows = pasteContent.value
     .split('\n')
     .map((row) => row.split('\t').map((cell) => cell.trim()))
-    .filter((row) => row.some((cell) => cell.length > 0))
+    .filter((row) => row.some((cell) => cell.length > 0));
 
-  // Remove header row if it exists
+  // Attempt to remove header row if it exists
   if (
     rows.length > 0 &&
     rows[0].some(
       (cell) =>
         cell.toLowerCase().includes('item') ||
+        cell.toLowerCase().includes('name') ||
+        cell.toLowerCase().includes('description') ||
         cell.toLowerCase().includes('qty') ||
-        cell.toLowerCase().includes('description'),
+        cell.toLowerCase().includes('quantity') ||
+        cell.toLowerCase().includes('width') ||
+        cell.toLowerCase().includes('length') ||
+        cell.toLowerCase().includes('unit'), // Added more keywords
     )
   ) {
-    rows.shift()
+    // Check if the first row's cells match expected header patterns more closely
+    // This is a heuristic. For instance, if the 'qty' column contains non-numeric data.
+    let looksLikeHeader = true;
+    if (rows[0].length >=3) { // Ensure enough columns to check
+        const qtyIndex = props.type === 'Glass' ? 4 : (props.type === 'Aluminum' ? 2 : 2);
+        if (rows[0][qtyIndex] && isNaN(parseFloat(rows[0][qtyIndex]))) {
+            // If the potential Qty cell is not a number, it's likely a header
+        } else if (rows[0][qtyIndex] && !isNaN(parseFloat(rows[0][qtyIndex]))) {
+            // If it IS a number, it might be data, not a header. Unless other cells are clearly text headers.
+            if(!rows[0].slice(0, qtyIndex).some(cell => isNaN(parseFloat(cell)))) {
+                 // If all preceding cells are also numbers, less likely a header
+                 // but for RFQ, item name & desc are text.
+            }
+        }
+    }
+    // A simpler check that was previously used:
+    // if (rows[0].some(cell => cell.toLowerCase().includes('item') || ...)) rows.shift();
+    // For now, let's stick to the original keyword based shift, can be refined if needed.
+    rows.shift(); // Simplified back to original logic for clarity, extend if needed
   }
 
-  if (!rows.length) return
+  if (!rows.length) return;
 
   const newItems = rows.map((row) => {
+    let itemData = {}; // Use a temporary object
+
     switch (props.type) {
       case 'Glass':
-        const glassItem = {
+        // Expected order: Item Name, Description, Width, Length, Qty
+        itemData = {
           item: row[0] || '',
           description: row[1] || '',
           width: parseFloat(row[2]) || 0,
           length: parseFloat(row[3]) || 0,
           qty: parseFloat(row[4]) || 0,
-        }
-        // Calculate derived fields
-        glassItem.area = (glassItem.width * glassItem.length) / 10000
-        glassItem.total_area = glassItem.area * glassItem.qty
-        return glassItem
+        };
+        // Calculate derived fields for Glass
+        itemData.area = (itemData.width * itemData.length) / 10000; // cm to sqm
+        itemData.total_area = itemData.area * itemData.qty;
+        break;
 
       case 'Aluminum':
-        return {
+        // Expected order: Item Name, Description, Qty, Measurement Unit, Length
+        itemData = {
           item: row[0] || '',
-          qty: parseFloat(row[1]) || 0,
-          measurement_unit: row[2] || '',
-          length: parseFloat(row[3]) || 0
-        }
+          description: row[1] || '', // Description is row[1]
+          qty: parseFloat(row[2]) || 0,
+          measurement_unit: row[3] || '',
+          length: parseFloat(row[4]) || 0,
+        };
+        break;
 
       case 'Material':
-        return {
+        // Expected order: Item Name, Description, Qty
+        itemData = {
           item: row[0] || '',
           description: row[1] || '',
-          qty: parseFloat(row[2]) || 0
-        }
+          qty: parseFloat(row[2]) || 0,
+        };
+        break;
 
       default:
-        return {}
+        return {}; // Should not happen with validator
     }
-  })
+    return itemData;
+  });
 
-  localItems.value = newItems
-  debouncedInput()
-  showPasteDialog.value = false
-  pasteContent.value = ''
+  localItems.value = newItems;
+  debouncedInput(); // Ensure this emits the updated items
+  showPasteDialog.value = false;
+  pasteContent.value = '';
 }
 
 async function saveItems() {
@@ -609,7 +675,7 @@ async function exportToExcel() {
     }
     const XLSX = window.XLSX
     isExporting.value = true
-    
+
     // Prepare headers based on type
     let headers = []
     switch (props.type) {
@@ -617,7 +683,7 @@ async function exportToExcel() {
         headers = ['Item', 'Description', 'Width (cm)', 'Length (cm)', 'Area (sqm)', 'Quantity', 'Total Area']
         break
       case 'Aluminum':
-        headers = ['Item', 'Quantity', 'Measurement Unit', 'Length']
+        headers = ['Item', 'Description', 'Quantity', 'Measurement Unit', 'Length'] // Added 'Description'
         break
       case 'Material':
         headers = ['Item', 'Description', 'Quantity']
@@ -640,6 +706,7 @@ async function exportToExcel() {
         case 'Aluminum':
           return [
             item.item,
+            item.description, // Added item.description
             formatNumber(item.qty),
             item.measurement_unit,
             formatNumber(item.length)
@@ -657,7 +724,20 @@ async function exportToExcel() {
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
 
     // Set column widths
-    const colWidths = headers.map(() => ({ wch: 15 }))
+    const colWidths = headers.map(() => ({ wch: 15 })) // Default width, can be adjusted
+    if (props.type === 'Aluminum') { // Example: Make description column wider for Aluminum
+        const descriptionIndex = headers.indexOf('Description');
+        if (descriptionIndex !== -1) {
+            colWidths[descriptionIndex] = { wch: 25 };
+        }
+    } else if (props.type === 'Glass') {
+        const descriptionIndex = headers.indexOf('Description');
+         if (descriptionIndex !== -1) {
+            colWidths[descriptionIndex] = { wch: 25 };
+        }
+    }
+
+
     ws['!cols'] = colWidths
 
     // Create workbook

@@ -82,7 +82,7 @@
               <label class="block text-sm font-medium text-gray-700">Reference Number (Optional)</label>
               <input
                 type="text"
-                v-model="formData.reference_no"
+                v-model="formData.ref_number"
                 class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
                 placeholder="Enter reference number"
               />
@@ -212,7 +212,7 @@ const formData = ref({
   party: '',
   amount: null,
   bank: '',
-  reference_no: '',
+  ref_number: '',
   remarks: ''
 })
 
@@ -293,7 +293,7 @@ function resetForm() {
     party: '',
     amount: null,
     bank: '',
-    reference_no: '',
+    ref_number: '',
     remarks: ''
   }
   amountError.value = ''

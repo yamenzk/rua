@@ -663,6 +663,8 @@ async function handleSignatureComplete(signatureUrl) {
   }
 }
 
+
+
 onMounted(() => {
   initializequotationResource()
 })

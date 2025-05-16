@@ -68,7 +68,7 @@
       <div class="overflow-x-auto px-6">
           <div class="border rounded-md min-w-[900px] bg-white">
               <div class="flex items-center px-4 py-2 bg-gray-50 border-b sticky top-0 z-10">
-                <div class="flex-1 grid grid-cols-10 gap-4">
+                <div class="flex-1 grid grid-cols-11 gap-4">
                   <div v-for="header in tableHeaders"
                       :key="header.key"
                       class="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider"
@@ -84,7 +84,7 @@
                     :key="row.id"
                     class="hover:bg-gray-50/50 transition-colors duration-150">
                   <div class="flex items-center px-4 py-2">
-                    <div class="flex-1 grid grid-cols-10 gap-4 items-center">
+                    <div class="flex-1 grid grid-cols-11 gap-4 items-center">
                       <div v-for="header in tableHeaders"
                           :key="header.key"
                           :class="[
@@ -96,6 +96,7 @@
                             <span class="line-clamp-2 cursor-help">{{ row[header.key] ?? '' }}</span>
                         </Tooltip>
                         <span v-else-if="typeof row[header.key] === 'number'">{{ formatNumber(row[header.key], header.key) }}</span>
+                        <span v-else-if="header.key === 'UOM'">{{ row[header.key] ?? '' }}</span>
                         <span v-else>{{ row[header.key] ?? '' }}</span>
                       </div>
                     </div>
@@ -280,6 +281,7 @@ const tableHeaders = computed(() => [
     { key: 'Item Name', label: 'Item', icon: 'box', align: 'left' },
     { key: 'Description', label: 'Description', align: 'left'},
     { key: 'Qty', label: 'Qty', align: 'right' },
+    { key: 'UOM', label: 'UOM', align: 'left' },
     { key: 'Width', label: 'Width', align: 'right' },
     { key: 'Height', label: 'Height', align: 'right' },
     { key: 'Area', label: 'Area', align: 'right' },

@@ -266,7 +266,7 @@ class RUAProject(Document):
                     "Vat Amount",
                     "Grand Total",
                 ]
-                optional_base_headers = ["Width", "Height", "Area"]  # Base names
+                optional_base_headers = ["Width", "Height", "Area", "UOM"]  # Base names
 
                 # Validate required headers using BASE names
                 missing_headers = [

@@ -355,11 +355,44 @@
         <textarea
           v-model="pasteContent"
           class="w-full h-40 p-2 border rounded-md font-mono text-sm focus:border-gray-900 focus:ring-gray-900"
-          placeholder="Paste your Excel data here..."
+          placeholder="Paste your Excel data here (Ctrl+V or Cmd+V)..."
         ></textarea>
-        <div class="text-sm text-gray-600">
-          Paste your data in the format:<br />
-          Item Name   Description   {{ type === 'Glass' ? 'Area   ' : '' }}Qty   Unit Price
+
+        <div class="text-sm text-gray-700 space-y-2">
+          <p class="font-medium">Please ensure your columns are in the following order:</p>
+          
+          <div class="bg-gray-50 p-3 rounded-md border">
+            <p class="font-semibold text-gray-800">Required Columns for LPO Type: "{{ type }}"</p>
+            <ul class="list-disc list-inside mt-1 text-gray-600 space-y-0.5">
+              <li>Column 1: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Item Name</span></li>
+              <li>Column 2: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Description</span></li>
+              <template v-if="type === 'Glass'">
+                <li>Column 3: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Area</span> (e.g., 12.5)</li>
+                <li>Column 4: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Qty</span> (e.g., 10)</li>
+                <li>Column 5: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Unit Price</span> (e.g., 99.50)</li>
+              </template>
+              <template v-else>
+                <li>Column 3: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Qty</span> (e.g., 10)</li>
+                <li>Column 4: <span class="font-mono bg-gray-200 px-1 rounded text-xs">Unit Price</span> (e.g., 99.50)</li>
+              </template>
+            </ul>
+          </div>
+
+          <p class="mt-2 text-xs text-gray-500">
+            The first row can be your headers (they will be attempted to be skipped if common keywords like 'Item', 'Qty', 'Price' are detected) or actual data.
+          </p>
+
+          <p class="font-medium mt-2">Example data format:</p>
+          <pre class="bg-gray-100 p-2 rounded text-xs mt-1 font-mono border overflow-x-auto">
+<strong>Item    Description<template v-if="type === 'Glass'">	Area</template>	Qty	   Unit Price</strong>
+Item-A	Description-A<template v-if="type === 'Glass'">	10.5</template>	5	   25.99
+Item-B	Description-B<template v-if="type === 'Glass'">	22.0</template>	2	   10.00</pre>
+          <p v-if="type === 'Glass'" class="text-xs text-gray-500">
+            (The example above shows 5 columns: Item Name, Description, Area, Qty, Unit Price)
+          </p>
+          <p v-else class="text-xs text-gray-500">
+            (The example above shows 4 columns: Item Name, Description, Qty, Unit Price)
+          </p>
         </div>
       </div>
     </template>
@@ -659,46 +692,56 @@ function startPaste() {
 }
 
 function handlePasteContent() {
-	const rows = pasteContent.value
-		.split('\n')
-		.map((row) => row.split('\t').map((cell) => cell.trim()))
-		.filter((row) => row.some((cell) => cell.length > 0))
+  const rows = pasteContent.value
+    .split('\n')
+    .map((row) => row.split('\t').map((cell) => cell.trim()))
+    .filter((row) => row.some((cell) => cell.length > 0));
 
-	// Remove header row if it exists
-	if (
-		rows.length > 0 &&
-		rows[0].some(
-			(cell) =>
-				cell.toLowerCase().includes('name') ||
-				cell.toLowerCase().includes('qty') ||
-				cell.toLowerCase().includes('unit'),
-		)
-	) {
-		rows.shift()
-	}
+  // Remove header row if it exists
+  if (
+    rows.length > 0 &&
+    rows[0].some(
+      (cell) =>
+        cell.toLowerCase().includes('name') ||
+        cell.toLowerCase().includes('qty') ||
+        cell.toLowerCase().includes('unit')
+    )
+  ) {
+    rows.shift();
+  }
 
-	if (!rows.length) return
+  if (!rows.length) return;
 
-	const newItems = rows.map((row) => {
-		const item = {
-			item: row[0] || '',
-			description: row[1] || '',
-			qty: parseFloat(row[3]) || 0,
-			unit_price: parseFloat(row[4]) || 0,
-		}
+  const newItems = rows.map((row) => {
+    let itemData = {}; // Use a temporary object
 
-		if (props.type === 'Glass') {
-			item.area = parseFloat(row[2]) || 0
-		}
+    if (props.type === 'Glass') {
+      // Expected order for Glass: Item Name, Description, Area, Qty, Unit Price
+      itemData = {
+        item: row[0] || '',
+        description: row[1] || '',
+        area: parseFloat(row[2]) || 0,       // Area from Excel col C (index 2)
+        qty: parseFloat(row[3]) || 0,        // Qty from Excel col D (index 3)
+        unit_price: parseFloat(row[4]) || 0, // Unit Price from Excel col E (index 4)
+      };
+    } else {
+      // Expected order for Material/Aluminum: Item Name, Description, Qty, Unit Price
+      itemData = {
+        item: row[0] || '',
+        description: row[1] || '',
+        qty: parseFloat(row[2]) || 0,        // Qty from Excel col C (index 2)
+        unit_price: parseFloat(row[3]) || 0, // Unit Price from Excel col D (index 3)
+      };
+    }
+    return itemData;
+  });
 
-		return item
-	})
-
-	localItems.value = newItems
-	debouncedInput()
-	showPasteDialog.value = false
-	pasteContent.value = ''
+  localItems.value = newItems;
+  debouncedInput();
+  showPasteDialog.value = false;
+  pasteContent.value = '';
 }
+
 
 async function saveItems() {
 	try {

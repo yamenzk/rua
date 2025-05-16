@@ -40,7 +40,7 @@ class RUAQuotation(Document):
 
             # Data in 'rows' is assumed to be cleaned/validated by the locking process
             for idx, row_data in enumerate(rows):
-                # Simple validation - check if expected keys exist from locked data
+                # Update required_keys if UOM is mandatory from the sheet
                 required_keys = [
                     "Item Name",
                     "Description",
@@ -51,35 +51,44 @@ class RUAQuotation(Document):
                     "Grand Total",
                 ]
                 if not all(k in row_data for k in required_keys):
+                    missing = [k for k in required_keys if k not in row_data]
                     frappe.log_error(
-                        f"Locked data for project {self.project} row index {idx} is missing keys: {row_data}",
+                        f"Locked data for project {self.project} row index {idx} is missing keys: {missing}. Row data: {row_data}",
                         "Quotation Creation",
                     )
                     frappe.throw(
                         _(
-                            "Locked data is incomplete. Please unlock and re-lock the project items."
-                        )
+                            "Locked data is incomplete (missing: {0}). Please unlock and re-lock the project items."
+                        ).format(", ".join(missing))
                     )
 
                 item = {
                     "item_name": row_data["Item Name"],
                     "description": row_data["Description"],
-                    "qty": row_data["Qty"],  # Already parsed int
-                    "amount": row_data["Amount"],  # Already parsed float
-                    "total": row_data["Total"],  # Already parsed float
-                    "vat_amount": row_data["Vat Amount"],  # Already parsed float
-                    "grand_total": row_data["Grand Total"],  # Already parsed float
-                    # Optional fields (use .get for safety)
-                    "width": row_data.get("Width", ""),  # Already string
-                    "height": row_data.get("Height", ""),  # Already string
-                    "area": row_data.get("Area", ""),  # Already string
+                    "qty": row_data["Qty"],
+                    "amount": row_data["Amount"],
+                    "total": row_data["Total"],
+                    "vat_amount": row_data["Vat Amount"],
+                    "grand_total": row_data["Grand Total"],
+                    "uom": row_data.get(
+                        "UOM", ""
+                    ), 
+                    "width": row_data.get("Width", ""),
+                    "height": row_data.get("Height", ""),
+                    "area": row_data.get("Area", ""),
                 }
-                self.append("items", item)
+                self.append(
+                    "items", item
+                ) 
 
                 # Accumulate totals directly from the reliable locked data
-                total_amount += item["total"]
-                total_vat += item["vat_amount"]
-                total_grand += item["grand_total"]
+                total_amount += item["total"]  # Make sure 'total' in item is numeric
+                total_vat += item[
+                    "vat_amount"
+                ]  # Make sure 'vat_amount' in item is numeric
+                total_grand += item[
+                    "grand_total"
+                ]  # Make sure 'grand_total' in item is numeric
 
             # Set document summary fields
             self.total_items = len(rows)

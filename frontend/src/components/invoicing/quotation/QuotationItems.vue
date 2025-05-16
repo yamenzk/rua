@@ -30,9 +30,9 @@
 
     <div class="overflow-x-auto">
       <!-- Table Header -->
-      <div class="bg-gray-50 border-b min-w-[800px]">
+      <div class="bg-gray-50 border-b min-w-[850px]">
         <div class="flex items-center px-6 py-3">
-          <div class="flex-1 grid grid-cols-8 gap-4">
+          <div class="flex-1 grid grid-cols-9 gap-4">
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FeatherIcon name="box" class="w-4 h-4" />
               Item
@@ -54,6 +54,10 @@
               Qty
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
+              <FeatherIcon name="archive" class="w-4 h-4" />
+              UOM
+            </div>
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 justify-end">
               Net Amount
             </div>
             <div class="text-sm font-medium text-gray-700 justify-end text-right">
@@ -73,10 +77,10 @@
           <div 
             v-for="item in items" 
             :key="item.name"
-            class="hover:bg-gray-50 transition-colors min-w-[800px]"
+            class="hover:bg-gray-50 transition-colors min-w-[850px]"
           >
             <div class="flex items-center px-6 py-3">
-              <div class="flex-1 grid grid-cols-8 gap-4">
+              <div class="flex-1 grid grid-cols-9 gap-4">
                 <!-- Item Name with Description Tooltip -->
                 <div>
                   <Tooltip
@@ -110,6 +114,10 @@
                   {{ item.qty }}
                 </div>
 
+                <div class="text-sm text-gray-600 text-right">
+                  {{ item.uom }}
+                </div>
+
                 <!-- Net Amount -->
                 <div class="text-sm font-medium text-gray-900 text-right">
                   {{ formatCurrency(item.total) }}
@@ -129,10 +137,10 @@
           </div>
 
           <!-- Totals Row -->
-          <div class="bg-gray-50 border-t min-w-[800px]">
+          <div class="bg-gray-50 border-t min-w-[850px]">
             <div class="flex items-center px-6 py-4">
-              <div class="flex-1 grid grid-cols-8 gap-4">
-                <div class="col-span-5 text-sm font-medium text-gray-900 text-right">
+              <div class="flex-1 grid grid-cols-9 gap-4">
+                <div class="col-span-6 text-sm font-medium text-gray-900 text-right">
                   Totals:
                 </div>
                 <div class="text-sm font-medium text-gray-900 text-right">
@@ -214,6 +222,7 @@ async function exportToExcel() {
       'Area': formatNumber(item.area),
       'Rate': formatCurrency(item.amount).replace('AED ', ''),
       'Quantity': item.qty,
+      'UOM': item.uom,
       'Net Amount': formatCurrency(item.total).replace('AED ', ''),
       'VAT': formatCurrency(item.vat_amount).replace('AED ', ''),
       'Total': formatCurrency(item.grand_total).replace('AED ', '')
@@ -229,6 +238,7 @@ async function exportToExcel() {
         'Area': '',
         'Rate': '',
         'Quantity': '',
+        'UOM': '',
         'Net Amount': formatCurrency(props.totals.net).replace('AED ', ''),
         'VAT': formatCurrency(props.totals.vat).replace('AED ', ''),
         'Total': formatCurrency(props.totals.grand).replace('AED ', '')
@@ -246,6 +256,7 @@ async function exportToExcel() {
       { wch: 10 }, // Area
       { wch: 12 }, // Rate
       { wch: 10 }, // Quantity
+      { wch: 10 }, // UOM 
       { wch: 15 }, // Net Amount
       { wch: 15 }, // VAT
       { wch: 15 }, // Total

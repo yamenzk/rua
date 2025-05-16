@@ -1079,26 +1079,40 @@ const yearOptions = computed(() => {
 });
 
 const filteredEmployeeGrid = computed(() => {
-  let employees = list.data || []
+  let employees = list.data || [];
 
-  // Position Filter
+  // Position Filter (Client-side)
   if (selectedPosition.value) {
-    employees = employees.filter(employee => employee.position === selectedPosition.value)
-  }
-
-  // Search Filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
+    // Ensure employee.position is a string before comparing, if it can be other types or null
     employees = employees.filter(employee => 
-      employee.employee_name.toLowerCase().includes(query) ||
-      employee.name.toLowerCase().includes(query) ||
-      employee.position.toLowerCase().includes(query)
-    )
+      employee.position && typeof employee.position === 'string' && 
+      employee.position === selectedPosition.value
+    );
   }
 
-  // Optional: Add sorting if needed
-  return employees
-})
+  // Search Filter (Client-side)
+  const searchTerm = searchQuery.value; // Get the value once
+
+  if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim() !== '') {
+    const query = searchTerm.toLowerCase();
+    employees = employees.filter(employee => {
+      const nameMatch = employee.employee_name && 
+                        typeof employee.employee_name === 'string' && 
+                        employee.employee_name.toLowerCase().includes(query);
+      
+      const idMatch = employee.name && 
+                      typeof employee.name === 'string' && 
+                      employee.name.toLowerCase().includes(query);
+      
+      const positionMatch = employee.position && 
+                            typeof employee.position === 'string' && 
+                            employee.position.toLowerCase().includes(query);
+      
+      return nameMatch || idMatch || positionMatch;
+    });
+  }
+  return employees;
+});
 
 const isNextMonthInFuture = computed(() => {
   const now = dayjs();

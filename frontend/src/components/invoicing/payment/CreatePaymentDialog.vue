@@ -78,7 +78,7 @@
 						>
 						<input
 							type="text"
-							v-model="formData.reference_no"
+							v-model="formData.ref_number"
 							class="mt-1 block w-full rounded-md border-gray-300 focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
 							placeholder="Enter reference number"
 						/>
@@ -137,7 +137,7 @@ const formData = ref({
 	date: '',
 	amount: 0,
 	bank: '',
-	reference_no: '',
+	ref_number: '',
 	remarks: '',
   claim_date: '',
 })
@@ -193,7 +193,7 @@ function resetForm() {
 		date: getServerDate(),
 		amount: remainingAmount,
 		bank: '',
-		reference_no: '',
+		ref_number: '',
 		remarks: '',
     claim_date: getServerDate()
 	}
@@ -213,7 +213,7 @@ async function handleSubmit() {
 			date: formData.value.date,
 			amount: formData.value.amount,
 			bank: formData.value.bank,
-			reference_no: formData.value.reference_no,
+			ref_number: formData.value.ref_number,
 			remarks: formData.value.remarks,
 			related_doctype: props.sourceType,
 			related_docname: props.sourceDoc.name,
