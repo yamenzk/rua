@@ -9,7 +9,7 @@
     "copy-html-entry": "cp ../rua/public/admin/index.html ../rua/www/admin.html"
   },
   "dependencies": {
-    "@grpc/grpc-js": "1.9.14",
+    "@grpc/grpc-js": "1.9.15",
     "@pdf-lib/upng": "^1.0.1",
     "@selemondev/vue3-signature-pad": "^1.1.5",
     "@tiptap/core": "^2.0.0",
