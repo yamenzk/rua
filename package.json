@@ -4,7 +4,10 @@
   "description": "Frappe App for Rua Company",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "cd dashboard && yarn dev",
+    "build": "cd dashboard && yarn build",
+    "postinstall": "cd dashboard && yarn install"
   },
   "keywords": [],
   "author": "",

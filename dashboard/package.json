@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "frappe-react-sdk": "^1.11.0",
+    "primereact": "^10.9.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
