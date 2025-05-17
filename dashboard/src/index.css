@@ -1,7 +1,9 @@
-
+/* src/index.css or your main global CSS file */
 @layer tailwind-base, primereact, tailwind-utilities;
 
-@import 'primereact/resources/themes/lara-light-amber/theme.css' layer(primereact);
+/* PrimeReact styles in the 'primereact' layer */
+@import 'primereact/resources/primereact.min.css' layer(primereact); 
+@import 'primeicons/primeicons.css' layer(primereact); 
 
 @layer tailwind-base {
   @tailwind base;
@@ -10,4 +12,58 @@
 @layer tailwind-utilities {
   @tailwind components;
   @tailwind utilities;
+}
+
+/* For search icon button appearing/disappearing */
+.fade-fast-enter {
+  opacity: 0;
+  transform: scale(0.8);
+}
+.fade-fast-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.fade-fast-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+.fade-fast-exit-active {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
+}
+
+/* For search input field span expanding/collapsing */
+.search-input-enter {
+  width: 0;
+  opacity: 0;
+  transform: translateX(10px);
+}
+.search-input-enter-active {
+  width: 200px; /* Adjust to your preferred expanded width */
+  opacity: 1;
+  transform: translateX(0);
+  /* Synchronized transitions for smoothness */
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 300ms cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.search-input-exit {
+  width: 200px; /* Should match enter-active width */
+  opacity: 1;
+  transform: translateX(0);
+}
+.search-input-exit-active {
+  width: 0;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 200ms cubic-bezier(0.4, 0, 0.2, 1), /* Faster opacity on exit */
+              transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure the parent of the animated search elements can contain them */
+.relative {
+  position: relative;
 }
