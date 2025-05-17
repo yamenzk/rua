@@ -1,9 +1,0 @@
-import { createListResource } from "frappe-ui"
-
-export const documentResource = createListResource({
-    doctype: 'RUA Document',
-    fields: ['*'],
-	cache: ['rua:document'],
-	start: 0,
-	pageLength: 99999999
-})

@@ -12,23 +12,19 @@ from datetime import datetime
 SHEET_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 DRIVE_SCOPES = [
     "https://www.googleapis.com/auth/drive"
-]  # Needed for copy and permissions
+]  
 ALL_SCOPES = list(set(SHEET_SCOPES + DRIVE_SCOPES))
 
-# --- Cached Service ---
 _sheets_service = None
 _drive_service = None
 
 
 def get_service_account_file_path():
     """Gets the absolute path to the service account file uploaded in RUA Company doctype."""
-    # Get the file path from the doctype
-    # Assuming "RUA Company" is a Single Doctype
     company = frappe.get_doc("RUA Company", "RUA Company")
     if not company.service_account:
         frappe.throw(_("Service account file not uploaded in RUA Company settings."))
 
-    # Get the file path from the file attachment
     file_doc = frappe.get_doc("File", {"file_url": company.service_account})
     if not file_doc:
         frappe.throw(
@@ -40,7 +36,7 @@ def get_service_account_file_path():
     return file_doc.get_full_path()
 
 
-def get_credentials(scopes=ALL_SCOPES):  # Default to all needed scopes
+def get_credentials(scopes=ALL_SCOPES): 
     """Loads credentials from the service account file for the specified scopes."""
     key_file_path = get_service_account_file_path()
     if not os.path.exists(key_file_path):
@@ -88,7 +84,6 @@ def get_drive_service(use_cache=True):
     if use_cache and _drive_service is not None:
         return _drive_service
     try:
-        # Ensure Drive scopes are requested when getting credentials for Drive service
         creds = get_credentials(scopes=DRIVE_SCOPES)
         service = build("drive", "v3", credentials=creds, cache_discovery=False)
         if use_cache:
@@ -121,13 +116,12 @@ def get_sheet_data(spreadsheet_id, range_name):
         values = result.get("values", [])
         return values
     except HttpError as e:
-        # More specific error handling for common issues
         status_code = e.resp.status
         try:
             error_details = json.loads(e.content).get("error", {})
             error_message = error_details.get("message", str(e))
         except:
-            error_message = str(e)  # Fallback if content parsing fails
+            error_message = str(e) 
 
         if status_code == 400 and "Unable to parse range" in error_message:
             frappe.throw(
@@ -137,12 +131,11 @@ def get_sheet_data(spreadsheet_id, range_name):
                 title=_("Invalid Range"),
             )
         elif status_code == 403:
-            # Try getting service account email safely
             sa_email = "N/A"
             try:
                 sa_email = get_credentials().service_account_email
             except Exception:
-                pass  # Ignore error if getting credentials fails here
+                pass  
 
             frappe.throw(
                 _(
@@ -184,13 +177,13 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
     if not template_sheet_id:
         raise ValueError("Template Google Sheet ID is required.")
     if not new_sheet_name:
-        new_sheet_name = "New Project Sheet"  # Default name
+        new_sheet_name = "New Project Sheet"  
 
-    drive_service = None  # Initialize drive_service
+    drive_service = None 
     new_sheet_id = None
 
     try:
-        drive_service = get_drive_service()  # Get drive service instance
+        drive_service = get_drive_service() 
         copied_file_metadata = {"name": new_sheet_name}
 
         new_file = (
@@ -198,7 +191,7 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
             .copy(
                 fileId=template_sheet_id,
                 body=copied_file_metadata,
-                fields="id, name, webViewLink",  # Request fields we might need
+                fields="id, name, webViewLink", 
             )
             .execute()
         )
@@ -207,12 +200,11 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
         if not new_sheet_id:
             raise Exception("Failed to get ID from the newly copied sheet.")
 
-        # --- BEGIN: Share with accounts from RUA Company ---
         try:
             rua_company_doc = frappe.get_doc("RUA Company", "RUA Company")
             google_accounts_table = rua_company_doc.get(
                 "google_accounts"
-            )  # Get child table
+            ) 
 
             if not google_accounts_table:
                 frappe.log_error(
@@ -223,13 +215,13 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
                 for account_row in google_accounts_table:
                     user_email = account_row.get(
                         "google_account"
-                    )  # Get email from field 'google_account'
+                    )  
 
-                    if user_email and "@" in user_email:  # Basic validation
+                    if user_email and "@" in user_email: 
                         try:
                             permission_body = {
                                 "type": "user",
-                                "role": "writer",  # Grant editor access
+                                "role": "writer", 
                                 "emailAddress": user_email,
                             }
                             drive_service.permissions().create(
@@ -239,10 +231,9 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
                             ).execute()
                             time.sleep(
                                 0.5
-                            )  # Small delay to avoid hitting rate limits rapidly
+                            ) 
 
                         except HttpError as perm_error:
-                            # Log specific permission errors but continue with others
                             error_content = "N/A"
                             try:
                                 error_content = perm_error.content.decode()
@@ -253,7 +244,6 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
                                 "Google Sheets Sharing Error",
                             )
                         except Exception as perm_e:
-                            # Log other errors during permission setting
                             frappe.log_error(
                                 f"Failed to share sheet {new_sheet_id} with {user_email}: {perm_e}",
                                 "Google Sheets Sharing Error",
@@ -265,7 +255,6 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
                         )
 
         except Exception as share_e:
-            # Log error if fetching RUA Company or iterating fails, but don't stop sheet creation
             frappe.log_error(
                 f"Error during sharing process for sheet {new_sheet_id}: {share_e}",
                 "Google Sheets Sharing Error",
@@ -276,9 +265,8 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
                 )
             )
 
-        # --- END: Share with accounts from RUA Company ---
 
-        return new_sheet_id  # Return the ID even if some sharing failed (errors are logged)
+        return new_sheet_id  
 
     except HttpError as e:
         status_code = e.resp.status
@@ -296,7 +284,6 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
                 title=_("Template Not Found"),
             )
         elif status_code == 403:
-            # Try getting service account email safely
             sa_email = "N/A"
             try:
                 sa_email = get_credentials().service_account_email
@@ -320,12 +307,10 @@ def create_sheet_from_template(template_sheet_id, new_sheet_name):
                 title=_("API Error"),
             )
     except Exception as e:
-        # Catch other potential errors during copy or getting ID
         frappe.log_error(
             f"Failed to copy Google Sheet template {template_sheet_id}: {e}",
             "Google Sheets Integration",
         )
-        # Include traceback in log for debugging
         frappe.log_error(frappe.get_traceback(), "Google Sheets Integration")
         frappe.throw(_("Could not create Google Sheet from template: {0}").format(e))
 
@@ -340,10 +325,9 @@ def generate_invoice_google_sheet(invoice_name):
     if not invoice_name:
         frappe.throw(_("Invoice Name is required."))
 
-    new_sheet_id = None  # Initialize in case of early exit in try block
+    new_sheet_id = None  
 
     try:
-        # 1. Get Documents and Template ID
         invoice_doc = frappe.get_doc("RUA Invoice", invoice_name)
         party_doc = frappe.get_doc("RUA Party", invoice_doc.party)
         company_doc = frappe.get_doc("RUA Company", "RUA Company")
@@ -354,16 +338,14 @@ def generate_invoice_google_sheet(invoice_name):
                 _("Invoice Google Sheet Template ID not set in RUA Company settings.")
             )
 
-        # --- 2. Calculate Project Summary (Similar to Print Format Jinja) ---
         contract_value = (
             frappe.db.get_value("RUA Project", invoice_doc.project, "contract_value")
             or 0
         )
-        vat_rate = 0.05  # Assuming 5% VAT rate
+        vat_rate = 0.05 
         vat_amount = contract_value * vat_rate
         total_contract_value = contract_value + vat_amount
 
-        # Get all final invoices for the project/party
         final_invoices = frappe.get_all(
             "RUA Invoice",
             filters={
@@ -375,7 +357,6 @@ def generate_invoice_google_sheet(invoice_name):
         )
         total_invoiced = sum(inv.get("grand_total", 0) for inv in final_invoices)
 
-        # Get all submitted payments for the project/party
         submitted_payments = frappe.get_all(
             "RUA Payment",
             filters={
@@ -386,14 +367,7 @@ def generate_invoice_google_sheet(invoice_name):
             fields=["name", "amount"],
         )
         total_paid = sum(pay.get("amount", 0) for pay in submitted_payments)
-        # --- End Project Summary Calculation ---
-
-        # 3. Prepare Data for Specific Cells
-        # IMPORTANT: Define the target cells in your Google Sheet Template.
-        # These are **examples** - you MUST adjust them to match your template layout.
-        # Using different sheets ('InvoiceData', 'SummaryData') is also possible.
         data_to_populate = [
-            # Invoice Data
             {"range": "Sheet1!B2", "value": invoice_doc.project},
             {"range": "Sheet1!B3", "value": invoice_doc.serial_number},
             {"range": "Sheet1!B4", "value": invoice_doc.party},
@@ -401,17 +375,15 @@ def generate_invoice_google_sheet(invoice_name):
             {
                 "range": "Sheet1!D3",
                 "value": invoice_doc.retention_percentage,
-            },  # Value only
+            },
             {"range": "Sheet1!D4", "value": invoice_doc.amount_after_retention},
             {"range": "Sheet1!D5", "value": invoice_doc.vat_after_retention},
             {
                 "range": "Sheet1!D6",
                 "value": invoice_doc.grand_total,
-            },  # Maybe format bold?
-            # Party Data
+            },
             {"range": "Sheet1!B5", "value": party_doc.trn},
             {"range": "Sheet1!B6", "value": party_doc.emirate},
-            # Party Logo (using IMAGE formula - requires public URL)
             {
                 "range": "Sheet1!A1",
                 "value": (
@@ -420,7 +392,6 @@ def generate_invoice_google_sheet(invoice_name):
                     else ""
                 ),
             },
-            # Project Summary Data (Example: putting on same sheet, adjust range/sheet name)
             {"range": "Sheet1!F2", "value": contract_value},
             {"range": "Sheet1!F3", "value": vat_amount},
             {"range": "Sheet1!F4", "value": total_contract_value},
@@ -428,24 +399,21 @@ def generate_invoice_google_sheet(invoice_name):
             {"range": "Sheet1!F6", "value": total_paid},
         ]
 
-        # Convert to Google Sheets batchUpdate format (list of ValueRange)
         value_ranges_body = []
         for item in data_to_populate:
-            # Ensure value is not None, default to empty string if needed by template
             value_to_set = item["value"] if item["value"] is not None else ""
             value_ranges_body.append(
                 {
                     "range": item["range"],
-                    "values": [[value_to_set]],  # Values must be list of lists
+                    "values": [[value_to_set]],  
                 }
             )
 
         batch_update_body = {
-            "valueInputOption": "USER_ENTERED",  # Or 'RAW' if formulas should be treated as strings
+            "valueInputOption": "USER_ENTERED", 
             "data": value_ranges_body,
         }
 
-        # 4. Copy Template and Get New Sheet ID & URL
         drive_service = get_drive_service()
         sheets_service = get_sheets_service()
 
@@ -458,20 +426,19 @@ def generate_invoice_google_sheet(invoice_name):
             .copy(
                 fileId=template_sheet_id,
                 body=copied_file_metadata,
-                fields="id, webViewLink",  # Request ID and URL
+                fields="id, webViewLink", 
             )
             .execute()
         )
 
         new_sheet_id = new_file.get("id")
-        new_sheet_url = new_file.get("webViewLink")  # Use webViewLink for user access
+        new_sheet_url = new_file.get("webViewLink")  
 
         if not new_sheet_id or not new_sheet_url:
             raise Exception(
                 "Failed to copy Google Sheet template or retrieve its ID/URL."
             )
 
-        # 5. Populate the Copied Sheet with Data
         update_result = (
             sheets_service.spreadsheets()
             .values()
@@ -479,7 +446,6 @@ def generate_invoice_google_sheet(invoice_name):
             .execute()
         )
 
-        # 6. Share the Sheet (Reuse logic from previous function)
         try:
             google_accounts_table = company_doc.get("google_accounts")
             if google_accounts_table:
@@ -518,18 +484,14 @@ def generate_invoice_google_sheet(invoice_name):
                 f"Error during sharing process for sheet {new_sheet_id}: {share_e}",
                 "Google Sheets Sharing",
             )
-            # Don't fail the whole process, just log it.
 
-        # 7. Update Invoice Doc and Save
         invoice_doc.associated_google_sheet = new_sheet_url
-        invoice_doc.save()  # Use standard save - user context should have permission
-        frappe.db.commit()  # Ensure save is committed before returning
+        invoice_doc.save()  
+        frappe.db.commit() 
 
-        # 8. Return the URL
         return {"sheet_url": new_sheet_url}
 
     except HttpError as e:
-        # Clean up: Delete the partially created sheet if possible
         if new_sheet_id and "drive_service" in locals():
             try:
                 drive_service.files().delete(fileId=new_sheet_id).execute()
@@ -545,7 +507,7 @@ def generate_invoice_google_sheet(invoice_name):
             error_details = json.loads(e.content).get("error", {})
             error_message = error_details.get("message", str(e))
         except:
-            pass  # Keep original error message if parsing fails
+            pass 
         frappe.log_error(
             f"Google API Error ({status_code}) generating sheet for Invoice {invoice_name}: {error_message}",
             "Google Sheets Invoice Gen Error",
@@ -561,7 +523,6 @@ def generate_invoice_google_sheet(invoice_name):
         frappe.throw(_("Could not find required document: {0}").format(e))
 
     except Exception as e:
-        # Clean up attempt for general errors too
         if new_sheet_id and "drive_service" in locals():
             try:
                 drive_service.files().delete(fileId=new_sheet_id).execute()

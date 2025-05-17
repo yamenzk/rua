@@ -1,8 +1,7 @@
 import frappe
 from frappe.utils import flt
 
-# Define the tolerance margin for considering an invoice as paid.
-PAYMENT_TOLERANCE = 3.00  # Allow up to 3.00 AED difference
+PAYMENT_TOLERANCE = 3.00
 
 
 def after_migrate():
@@ -17,7 +16,6 @@ def after_migrate():
         frappe.log_error("No projects to reconcile.")
         return
 
-    # First perform reconciliation for all projects
     try:
         reconcile_all_financials_sql()
         frappe.db.commit()
@@ -30,10 +28,8 @@ def after_migrate():
             message=f"Error during comprehensive financial reconciliation: {str(e)}",
             title="Post Install Reconciliation Error",
         )
-        raise  # Re-raise the exception to halt migration if reconciliation fails
+        raise 
 
-    # Then update completion percentages with reconciled values
-    # Fetch projects again to get updated values after reconciliation
     projects = frappe.get_all(
         "RUA Project",
         fields=["name", "total_received", "contract_value"],
@@ -47,7 +43,6 @@ def after_migrate():
         if contract_value and contract_value > 0:
             try:
                 completion = (flt(total_received) / flt(contract_value)) * 100
-                # Ensure completion doesn't exceed 100 due to potential overpayment/tolerance
                 completion = min(completion, 100.0)
                 frappe.db.set_value(
                     "RUA Project",
@@ -60,7 +55,6 @@ def after_migrate():
                 frappe.log_error(
                     f"Error calculating completion for project {project_name}: {e}"
                 )
-                # Decide if this error should stop the process or just log
         else:
             frappe.log_warning(
                 f"Contract value is missing or zero for project {project_name}. Skipping completion calculation."
@@ -72,8 +66,6 @@ def after_migrate():
 
 def reconcile_all_financials_sql():
     """Reconcile project financials and payment statuses for ALL projects using direct SQL."""
-    # 1. Reconcile Project Financials
-    # MODIFIED: project_cost now ONLY includes Final LPO Costs. 'Pay' type Payments are excluded from this field.
     project_reconciliation_sql = """
     UPDATE `tabRUA Project` p
     SET
@@ -111,7 +103,6 @@ def reconcile_all_financials_sql():
     """
     frappe.db.sql(project_reconciliation_sql)
 
-    # 2. Reconcile Invoice Payment Statuses (Applying tolerance) - No changes needed here
     invoice_payment_reconciliation_sql = """
     UPDATE `tabRUA Invoice` inv
     SET
@@ -146,7 +137,6 @@ def reconcile_all_financials_sql():
     """
     frappe.db.sql(invoice_payment_reconciliation_sql, (PAYMENT_TOLERANCE,))
 
-    # 3. Reconcile LPO Payment Statuses (Applying tolerance) - NEW SECTION
     lpo_payment_reconciliation_sql = """
     UPDATE `tabRUA LPO` lpo
     SET
@@ -192,39 +182,39 @@ def log_reconciliation_summary():
         (
             "Total Invoices",
             "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE status = 'Final' AND type = 'Tax Invoice'",
-        ),  # Refined
+        ),  
         (
             "Paid Invoices",
             "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Paid' AND status = 'Final' AND type = 'Tax Invoice'",
-        ),  # Refined
+        ),  
         (
             "Partially Paid Invoices",
             "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Partially Paid' AND status = 'Final' AND type = 'Tax Invoice'",
-        ),  # Refined
+        ),  
         (
             "Unpaid Invoices",
             "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE payment_status = 'Unpaid' AND status = 'Final' AND type = 'Tax Invoice'",
-        ),  # Refined
+        ),  
         (
             "Total Payments",
             "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted'",
-        ),  # Refined
+        ),  
         (
             "Receive Payments",
             "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted' AND type = 'Receive'",
-        ),  # Added
+        ),  
         (
             "Pay Payments (Total)",
             "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted' AND type LIKE 'Pay%'",
-        ),  # Added
+        ),  
         (
             "Pay: Petty Cash Payments",
             "SELECT COUNT(*) FROM `tabRUA Payment` WHERE status = 'Submitted' AND type = 'Pay: Petty Cash'",
-        ),  # Added
+        ),  
         (
             "Total LPOs",
             "SELECT COUNT(*) FROM `tabRUA LPO` WHERE status = 'Final'",
-        ),  # Refined
+        ),  
     ]
     summary_lines = []
     for label, query in summary_queries:
@@ -290,9 +280,6 @@ def reconcile_single_project_financials(project_name):
         return False
 
     try:
-        # 1. Reconcile Project Financial Metrics
-        # MODIFIED: project_cost now ONLY includes Final LPO Costs. 'Pay' type Payments are excluded.
-        # MODIFIED: Removed parameter placeholder for 'Pay' Payments subquery. Adjusted parameter count.
         project_reconciliation_sql = """
         UPDATE `tabRUA Project` p
         SET
@@ -328,13 +315,11 @@ def reconcile_single_project_financials(project_name):
             modified = modified
         WHERE p.name = %s -- Param 5: Main WHERE clause project
         """
-        # Pass project_name for each remaining subquery filter and the final WHERE clause (5 times total)
         frappe.db.sql(
             project_reconciliation_sql,
             (project_name, project_name, project_name, project_name, project_name),
         )
 
-        # 2. Reconcile Invoice Payment Statuses for this Project (Applying tolerance) - No change needed here
         invoice_payment_reconciliation_sql = """
         UPDATE `tabRUA Invoice` inv
         SET
@@ -366,7 +351,6 @@ def reconcile_single_project_financials(project_name):
             invoice_payment_reconciliation_sql, (PAYMENT_TOLERANCE, project_name)
         )
 
-        # 3. Calculate and Update Project Completion (using reconciled values) - No change needed here
         project_data = frappe.db.get_value(
             "RUA Project",
             project_name,
@@ -387,7 +371,6 @@ def reconcile_single_project_financials(project_name):
                 update_modified=False,
             )
 
-        # 3. Reconcile LPO Payment Statuses for this Project (Applying tolerance) - NEW SECTION
         lpo_payment_reconciliation_sql = """
         UPDATE `tabRUA LPO` lpo
         SET
@@ -421,16 +404,13 @@ def reconcile_single_project_financials(project_name):
         )
         frappe.log_error(
             f"LPO payment statuses reconciled for {project_name}."
-        )  # Add this log line too
-        # Optional: Log reconciliation details
+        ) 
         log_single_project_reconciliation(project_name)
-
-        # Commit changes for the single project
         frappe.db.commit()
         return True
 
     except Exception as e:
-        frappe.db.rollback()  # Rollback on error for this project
+        frappe.db.rollback()
         frappe.log_error(
             message=f"Error reconciling project {project_name}: {str(e)}",
             title="Single Project Reconciliation Error",
@@ -440,7 +420,6 @@ def reconcile_single_project_financials(project_name):
 
 def log_single_project_reconciliation(project_name):
     """Log details about a single project's reconciliation"""
-    # (No changes needed in logging function, it just reports counts)
     summary_queries = [
         ("Total Invoices", "SELECT COUNT(*) FROM `tabRUA Invoice` WHERE project = %s"),
         (
@@ -464,15 +443,15 @@ def log_single_project_reconciliation(project_name):
         (
             "Paid LPOs",
             "SELECT COUNT(*) FROM `tabRUA LPO` WHERE project = %s AND payment_status = 'Paid' AND status = 'Final'",
-        ),  # NEW
+        ),  
         (
             "Partially Paid LPOs",
             "SELECT COUNT(*) FROM `tabRUA LPO` WHERE project = %s AND payment_status = 'Partially Paid' AND status = 'Final'",
-        ),  # NEW
+        ),  
         (
             "Unpaid LPOs",
             "SELECT COUNT(*) FROM `tabRUA LPO` WHERE project = %s AND payment_status = 'Unpaid' AND status = 'Final'",
-        ),  # NEW
+        ),  
     ]
     summary_lines = []
     for label, query in summary_queries:
@@ -496,4 +475,3 @@ def execute():
     frappe.log_error("Finished post-install reconciliation via execute.")
 
 
-# --- End of after_migrate.py ---
