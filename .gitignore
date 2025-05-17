@@ -54,7 +54,4 @@ jspm_packages/
 # Aider AI Chat
 .aider*
 
-
-public/
-rua/public/dashboard/
 rua/www/dashboard.html
