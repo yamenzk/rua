@@ -1,9 +1,9 @@
 # Rua App: Frontend Development Guidelines
 
-**Version: 2.0**
-**Last Updated:** May 17, 2025
+**Version: 2.1**
+**Last Updated:** May 18, 2025
 
-This document outlines the established preferences and guidelines for frontend development in the Rua application. It focuses on PrimeReact components, styling with Tailwind CSS, layout principles, state management strategies, and the detailed usage of the `frappe-react-sdk`.
+This document outlines the established preferences and guidelines for frontend development in the Rua application. It focuses on PrimeReact components, styling with Tailwind CSS, layout principles, state management strategies, the detailed usage of the `frappe-react-sdk`, and documentation for core reusable UI components.
 
 ## 1. Core Philosophy & Design Language
 
@@ -79,14 +79,16 @@ This document outlines the established preferences and guidelines for frontend d
     1.  Use built-in props first.
     2.  Apply Tailwind CSS utility classes via `className` for layout and minor style adjustments.
     3.  Use the `pt` (PassThrough) prop for fine-grained control over internal elements if necessary, but with caution to avoid excessive theme overrides.
-* **Input Fields (`InputText`, `Password`):**
-    * Use standard `placeholder` attributes. Avoid `FloatLabel` if it introduces alignment complexities with icons.
+* **Input Fields (`InputText`, `Password`, `InputNumber`, `Calendar`, `Dropdown`, `AutoComplete`, `Editor`, `ColorPicker`, `Checkbox`, `InputSwitch`):**
+    * Use standard `placeholder` attributes.
     * For inputs with icons: Utilize `<IconField iconPosition="left"><InputIcon className="pi pi-..." /><InputText ... /></IconField>`.
-    * `Password` component: Use `toggleMask` prop and `feedback={false}`. Style the internal input using `inputClassName="w-full rounded"` (or `rounded-lg`).
+    * `Password` component: Use `toggleMask` prop and `feedback={false}`. Style the internal input using `inputClassName="w-full rounded-lg"`.
+    * Consider `readOnly` and validation props as needed.
 * **Buttons (`Button`):**
-    * Primary action buttons should reflect the theme's primary color (amber). This is typically handled by default for standard buttons or by adding `p-button-primary`. Use `className` for specific sizing (e.g., `p-button-lg`) and rounding (`rounded-lg` or just `rounded`).
+    * Primary action buttons should reflect the theme's primary color (amber).
     * Include icons where they enhance clarity (`icon="pi pi-..."`).
     * Always provide user feedback for actions using the `loading` prop.
+* **DataTable:** See Section 6.1 for `DynamicDataTable` component guidelines.
 
 ## 4. State Management
 
@@ -94,34 +96,162 @@ This document outlines the established preferences and guidelines for frontend d
 * **Client-Side State:**
     * **Local Component State:** For state that is confined to a single component, use React's `useState` or `useReducer`.
     * **Shared/Global Client State:**
-        1.  **React Context API:** For simple global UI state that doesn't update with high frequency (e.g., theme toggles, basic user preferences not tied to backend).
-        2.  **Lightweight Store (e.g., Zustand):** If Context becomes insufficient (due to performance concerns with frequent updates or excessive prop drilling), a minimal store like Zustand can be considered. Avoid if not strictly necessary.
-    * **Avoid Redux:** Given the capabilities of SWR for server state, a complex state management library like Redux is generally not needed unless client-side state complexity becomes exceptionally high.
+        1.  **React Context API:** For simple global UI state that doesn't update with high frequency (e.g., theme toggles, basic user preferences not tied to backend, like `LayoutContext` for page titles).
+        2.  **Lightweight Store (e.g., Zustand):** If Context becomes insufficient, a minimal store like Zustand can be considered. Avoid if not strictly necessary.
+    * **Avoid Redux:** Generally not needed given SWR's capabilities.
+* **User Preferences Persistence**:
+    * UI state specific to a component instance (e.g., column order, visibility, pagination settings in `DynamicDataTable`) should be persisted using browser cookies.
+    * Utilize utility functions in `src/utils/cookies.jsx` (`setCookie`, `getCookie`, `eraseCookie`).
+    * A `uniqueTableKey` prop should be passed to components like `DynamicDataTable` to create distinct cookie names for each table instance, allowing individual preference storage.
 
 ## 5. Frappe React SDK Usage Guide (`frappe-react-sdk`)
 
 The `frappe-react-sdk` integrates SWR for robust data handling.
 
 ### 5.1. Setup (`FrappeProvider`)
+Ensure `FrappeProvider` wraps the application, configured with `url`, `siteName`, `enableSocket: true`, and `socketPort` as appropriate for realtime functionality.
 
-Ensure `FrappeProvider` wraps the application, configured with `url`, `siteName`, and `socketPort` as appropriate.
+### 5.2. Authentication (`useFrappeAuth`)
+Manages user authentication state.
+* **Login**: Due to SDK limitations, a manual `Workspace` is used. After successful manual login, call `getUserCookie()` and `await updateCurrentUser()` to sync SDK state.
+* **Logout**: Use `await logout()`.
+* `currentUser`, `isLoading`, `error` are key state variables.
 
-```javascript
-// src/main.jsx
-import { FrappeProvider } from "frappe-react-sdk";
-// ...
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <FrappeProvider url="http://localhost:8080" siteName={siteNameValue} socketPort={socketPortValue}>
-    <App />
-  </FrappeProvider>
-);
-5.2. Authentication (useFrappeAuth)Manages user authentication state and provides related functions.import { useFrappeAuth } from "frappe-react-sdk";
+### 5.3. Data Fetching (Docs, Lists, Counts - SWR-based)
+* Single Documents: `useFrappeGetDoc("Doctype", "docname", { /* SWR options */ })`
+* Document Lists: `useFrappeGetDocList("Doctype", { fields: ['*'], limit: 0, ...otherFetchArgs }, { /* SWR options */ })`. For `DynamicDataTable`, initially fetch all (`limit: 0`) for client-side operations; server-side pagination is a future enhancement.
+* Document Count: `useFrappeGetDocCount("Doctype", [["field", "=", "value"]])`
 
-const {
-  currentUser, isLoading, error, logout, updateCurrentUser, getUserCookie
-} = useFrappeAuth();
-Login (Custom Implementation):Due to an identified issue with the SDK's login function sending an empty payload, a manual fetch request is used for the login process. After a successful manual login:Call getUserCookie(): This updates the SDK's internal awareness of the browser's session cookie.Call await updateCurrentUser(): This triggers the SDK (via SWR) to re-fetch the logged-in user's status, which updates the currentUser state.// Example in App.jsx handleLogin
-// ... successful manual fetch ...
-if (getUserCookie) getUserCookie();
-if (updateCurrentUser) await updateCurrentUser();
-Logout: Use await logout();. This interacts with the backend to invalidate the session and updates the SDK's local state.currentUser: This state variable reflects the currently logged-in user (typically the username/email). It will be null or undefined if no user is logged in. The application's navigation (e.g., showing LoginPage vs. HomePage) is conditioned on this value.isLoading: Indicates if the SDK is currently fetching/validating the user's authentication state. Useful for showing loading spinners.error: Contains any error object related to authentication state fetching.5.3. Data Fetching (Docs, Lists, Counts - SWR-based)Single Documents: useFrappeGetDoc("Doctype", "docname", { /* SWR options */ })Document Lists: useFrappeGetDocList("Doctype", { fields: [], filters: [], limit: 10, orderBy: {} }, { /* SWR options */ })GetDocListArgs: Use this type for arguments like fields, filters, orFilters, limit_start, limit, orderBy, asDict.Document Count: useFrappeGetDocCount("Doctype", [["field", "=", "value"]])Prefetching: useFrappePrefetchDoc, useFrappePrefetchDocList, useFrappePrefetchDocCount can be used to load data into the SWR cache proactively (e.g., on hover).5.4. Data Mutation (Create, Update, Delete - Stateful Hooks)These hooks return an object with a mutation function (createDoc, updateDoc, deleteDoc), loading, error, isCompleted, and reset states.Create: useFrappeCreateDoc() -> await createDoc("Doctype", { ...data })Update: useFrappeUpdateDoc() -> await updateDoc("Doctype", "docname", { ...updatedData })Delete: useFrappeDeleteDoc() -> await deleteDoc("Doctype", "docname")5.5. Generic API CallsGET (SWR-based): useFrappeGetCall("method.path", { params }, { /* SWR options */ })POST/PUT/DELETE (Stateful Hooks):useFrappePostCall("method.path") -> await call({ params })useFrappePutCall("method.path") -> await call({ params })useFrappeDeleteCall("method.path") -> await call({ params })5.6. File Uploads (useFrappeFileUpload)Provides upload, progress, loading, error, isCompleted, reset.await upload(file, { is_private: 1, doctype: "...", docname: "...", fieldname: "..." })5.7. Searching (useSearch - Frappe v15+)SWR-based hook for Frappe's link search.useSearch("Doctype", "searchText", [{ /* filters */ }], limit, debounceDelay)5.8. Realtime Events (Socket.IO)Ensure FrappeProvider is configured with enableSocket, siteName, and socketPort.useFrappeEventListener("custom_event", callback)useFrappeDocumentEventListener("Doctype", "docname", onUpdateCallback)useFrappeDocTypeEventListener("Doctype", onListUpdateCallback)5.9. SWR - Key PrinciplesServer State Authority: SWR is the source of truth for server state.Automatic Revalidation: Leverages SWR's revalidation on focus, interval, and reconnect (configurable) to keep data fresh.Caching: Reduces redundant API calls by serving cached data first.mutate: The mutate function returned by SWR-based hooks (including updateCurrentUser from useFrappeAuth) is key for programmatically triggering re-fetches or performing optimistic updates.6. Code Quality and ConventionsFollow standard React best practices (functional components, hooks).Keep components small and focused on a single responsibility.
+### 5.4. Data Mutation (Create, Update, Delete - Stateful Hooks)
+* Create: `useFrappeCreateDoc()` -> `await createDoc("Doctype", { ...data })`
+* Update: `useFrappeUpdateDoc()` -> `await updateDoc("Doctype", "docname", { ...updatedData })`
+* Delete: `useFrappeDeleteDoc()` -> `await deleteDoc("Doctype", "docname")`
+
+### 5.5. Generic API Calls
+Refer to SDK documentation.
+
+### 5.6. File Uploads (`useFrappeFileUpload`)
+* Provides `upload`, `progress`, etc.
+* **Important for New Documents:** The main document must be created (e.g., using `useFrappeCreateDoc`) and its `docname` obtained *before* calling `file.uploadFile` with `doctype` and `docname` in `fileArgs`. This usually involves a two-step save process or disabling file attachment until the main document is saved once.
+
+### 5.7. Searching (`useSearch` - Frappe v15+)
+Refer to SDK documentation.
+
+### 5.8. Realtime Events (Socket.IO)
+* **Primary Method for List Views**: Use `useFrappeDocTypeEventListener(doctype, callback)` to listen for standard `list_update` events when documents of a specific `doctype` are created, updated, or deleted on the server. The callback should typically call `mutate()` from the corresponding `useFrappeGetDocList` hook to re-fetch data.
+    ```javascript
+    // Example in a component using useFrappeGetDocList
+    const { data, mutate } = useFrappeGetDocList(doctype, ...);
+    const handleDocTypeUpdate = useCallback((eventData) => {
+      if (eventData.doctype === doctype) {
+        mutate();
+      }
+    }, [doctype, mutate]);
+    useFrappeDocTypeEventListener(doctype, handleDocTypeUpdate);
+    ```
+* **Custom Events**: `useFrappeEventListener('custom_event_name', callback)` can still be used for scenarios not covered by standard DocType events.
+* Ensure `FrappeProvider` has `enableSocket: true` and correct `socketPort`.
+
+### 5.9. SWR - Key Principles
+* Server State Authority, Automatic Revalidation (on focus, reconnect, configurable interval), Caching, `mutate` function for programmatic re-fetches or optimistic updates.
+
+## 6. Core UI Components & Utilities
+
+This section details reusable components and utilities built for the Rua application.
+
+### 6.1. `DynamicDataTable.jsx`
+* **Purpose**: A highly configurable and reusable PrimeReact DataTable wrapper for displaying lists of Frappe doctypes.
+* **Location**: `dashboard/src/components/common/DynamicDataTable.jsx`
+* **Key Props**:
+    * `doctype: string` (Required): The Frappe Doctype name to display.
+    * `columnsConfig: ColumnConfig[]` (Required): Array of column definition objects. See below for `ColumnConfig` structure.
+    * `uniqueTableKey: string` (Required): A unique string key for this table instance (e.g., "rua_employee_list"). Used for persisting user preferences (column order, visibility, pagination, sorting) in cookies.
+    * `WorkspaceArgs?: object`: Initial arguments for `useFrappeGetDocList` (e.g., filters, orderBy). Defaults to `fields: ['*'], limit: 0`.
+    * `onRowClick?: (rowData) => void`: Callback when a row is clicked.
+    * `contextMenuItemsModel?: MenuItem[]`: PrimeReact ContextMenu model for row actions.
+    * `globalFilterFields?: string[]`: Array of fieldnames to include in global search (default: `['name']`).
+    * `headerActions?: JSX.Element`: Custom JSX (e.g., "Create New" button) to render in the table header.
+    * `enableColumnReordering?: boolean`: Enables/disables column drag-and-drop reordering (default: `true`).
+    * `showColumnToggle?: boolean`: Shows/hides the column visibility toggler (default: `true`).
+    * `showPaginator?: boolean`: (default: `true`)
+    * `initialRows?: number`: (default: `10`)
+    * `rowsPerPageOptions?: number[]`: (default: `[10, 25, 50, 100]`)
+    * `dataKey?: string`: Unique key for rows (default: `'name'`).
+* **Features**:
+    * Dynamic column rendering based on `columnsConfig` and `FieldManager`.
+    * Client-side sorting, pagination, global filtering, and per-column filtering. (Server-side is a future enhancement).
+    * Column visibility toggling using `MultiSelect`.
+    * Column reordering (drag and drop).
+    * User preference persistence for visible columns, column order, pagination (current page, rows per page), and sort state via cookies, scoped by `uniqueTableKey`.
+    * Optional row context menu.
+    * Realtime updates via `useFrappeDocTypeEventListener` (refreshes data on backend changes to the specified `doctype`).
+    * Customizable header actions.
+* **`ColumnConfig` Object Structure (for `columnsConfig` prop)**:
+    ```typescript
+    interface ColumnConfig {
+      fieldname: string;      // Frappe fieldname
+      header: string;         // Column header text
+      fieldtype: string;      // Frappe fieldtype (e.g., "Data", "Link", "Attach Image")
+      sortable?: boolean;     // Default: true for sortable types via FieldManager
+      filterable?: boolean;   // Default: true for filterable types via FieldManager
+      defaultVisible?: boolean; // Default: true
+      options?: any[] | string; // For Select (array of options) or Link (linked Doctype name string)
+      filterOptions?: { label: string, value: any }[]; // Pre-fetched options for Link/Select filters in the table
+      displayProps?: {      // Props passed to FieldManager for custom rendering
+        asChip?: boolean;
+        chipColors?: { [value: string]: string }; // e.g., { "Open": "info", "Closed": "success" }
+        chipRounded?: boolean;
+        asAvatar?: boolean;
+        iconOnly?: boolean; // For Attach field, to show only an icon
+        precision?: number; // For Float fields
+      };
+      bodyTemplate?: (rowData, formatters) => JSX.Element | string; // Optional custom cell body renderer
+      filterElementTemplate?: (filterProps, currentOptions) => JSX.Element; // Optional custom filter element
+      minWidth?: string;      // e.g., '150px'
+      style?: object;         // Custom style for the column
+      showFilterMatchModes?: boolean; // Override default
+      filterMatchModeOptions?: any[]; // Override default PrimeReact options
+    }
+    ```
+
+### 6.2. `FieldManager.jsx`
+* **Purpose**: Provides a centralized configuration for mapping Frappe fieldtypes to React components and defining their display logic in tables (cells and filters).
+* **Location**: `dashboard/src/utils/FieldManager.jsx`
+* **Key Exports**:
+    * `fieldTypeConfigurations: object`: A configuration map where keys are Frappe fieldtypes (e.g., "Attach", "Link", "Currency"). Each value is an object specifying:
+        * `formComponent`: The React component (usually a PrimeReact component) for rendering the field in a form.
+        * `tableBodyComponent: (rowData, fieldname, displayProps, formatters) => JSX.Element | string`: A function that returns the JSX/string for rendering the field in a DataTable cell.
+        * `tableFilterElement: (colConfig, fieldname, filterValue, filterApplyCallback, filterOptions) => JSX.Element`: A function that returns the JSX for the filter input for that column type.
+        * `sortable: boolean`: Default sortable status.
+        * `filterable: boolean`: Default filterable status.
+        * `dataType: string`: PrimeReact DataTable `dataType` (e.g., "text", "numeric", "date", "boolean").
+    * `getFieldConfig(fieldType: string, fieldname?: string): object`: A function that returns the appropriate configuration from `fieldTypeConfigurations`. It includes special handling (e.g., for a "Data" field named "nationality" it can return a specific "Nationality" configuration). Defaults to "Data" field config if a specific type is not found.
+* **Dependencies**: Uses components from PrimeReact and functions from `formatters.jsx`.
+* **Extensibility**: Designed to be easily extended with new field types or custom handling for specific fieldnames.
+
+### 6.3. `formatters.jsx`
+* **Purpose**: Contains utility functions for formatting data for display.
+* **Location**: `dashboard/src/utils/formatters.jsx`
+* **Key Functions**:
+    * `formatDisplayDateTime(dateInput)`: Formats to "DD/MM/YYYY HH:MM:SS" (en-AE).
+    * `formatServerDateTime(dateInput)`: Formats to "YYYY-MM-DD HH:MM:SS".
+    * `formatDisplayDate(dateInput)`: Formats to "DD/MM/YYYY" (en-AE).
+    * `formatServerDate(dateInput)`: Formats to "YYYY-MM-DD".
+    * `formatDisplayTime(dateInput, includeSeconds?)`: Formats to "HH:MM(:SS)" (en-AE).
+    * `formatServerTime(dateInput)`: Formats to "HH:MM:SS".
+    * `formatCurrencyAED(value)`: Formats a number to AED currency string, appending an SVG for the AED symbol (`public/aed.svg`). Returns JSX.
+    * `formatDuration(totalSeconds)`: Converts seconds to "Xh Ym Zs" string.
+    * `parseDuration(durationString)`: (Optional) Converts "Xh Ym Zs" string to seconds.
+
+### 6.4. Common Dialogs
+* **`ConfirmDialog.jsx`**:
+    * **Location**: `dashboard/src/components/common/ConfirmDialog.jsx`
+    * **Purpose**: A reusable modal dialog for confirming actions, especially destructive ones. Supports an optional input field where the user must type a specific confirmation text.
+* **Attachment Dialog (Conceptual)**:
+    * A shared dialog should be created for handling file/image uploads.
+    * This dialog would be triggered by form fields of type "Attach" or "Attach Image".
+    * It should encapsulate the PrimeReact `FileUpload` component (in custom mode) and use `frappe-react-sdk`'s `file.uploadFile` method.
+    * It must handle the case for new documents: ensure the main document is saved and `docname` is available before attempting to link the uploaded file.
+
+## 7. Code Quality and Conventions
+Follow standard React best practices (functional components, hooks). Keep components small and focused on a single responsibility.

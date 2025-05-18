@@ -14,7 +14,6 @@
   "position",
   "branch",
   "joining_date",
-  "test",
   "column_break_ouxq",
   "naming_series",
   "image",
@@ -110,17 +109,12 @@
    "fieldname": "joining_date",
    "fieldtype": "Date",
    "label": "Joining Date"
-  },
-  {
-   "fieldname": "test",
-   "fieldtype": "Datetime",
-   "label": "test"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-18 18:32:01.861627",
+ "modified": "2025-05-18 23:38:18.168045",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
