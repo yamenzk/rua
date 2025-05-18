@@ -4,6 +4,8 @@
 /* PrimeReact styles in the 'primereact' layer */
 @import 'primereact/resources/primereact.min.css' layer(primereact); 
 @import 'primeicons/primeicons.css' layer(primereact); 
+@import 'primereact/resources/themes/lara-light-amber/theme.css' layer(primereact);
+
 
 @layer tailwind-base {
   @tailwind base;

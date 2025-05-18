@@ -153,7 +153,6 @@ function App() {
     return (
       <div className="flex justify-center items-center min-h-screen bg-surface-ground">
         {" "}
-        {/* Use theme variable for loading screen bg */}
         <ProgressSpinner
           style={{ width: "50px", height: "50px" }}
           strokeWidth="8"

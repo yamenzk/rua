@@ -3,51 +3,16 @@ import React, {
   useState,
   useRef,
   useEffect,
-  useCallback,
-  useContext,
-} from "react"; // Added useContext
+} from "react"; 
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { CSSTransition } from "react-transition-group";
 import { Tooltip } from "primereact/tooltip";
 import { ContextMenu } from "primereact/contextmenu";
-import { PrimeReactContext } from "primereact/api"; // Import PrimeReactContext
 
-// ThemeToggleButton and SidebarNavigation components remain the same as previous correct version
 
-const ThemeToggleButton = ({ currentTheme, onSetTheme }) => {
-  const cycleTheme = () => {
-    if (currentTheme === "light") onSetTheme("dark");
-    else if (currentTheme === "dark") onSetTheme("system");
-    else onSetTheme("light"); // system goes to light
-  };
-
-  const getIcon = () => {
-    if (currentTheme === "light") return "pi pi-sun";
-    if (currentTheme === "dark") return "pi pi-moon";
-    return "pi pi-desktop"; // system
-  };
-
-  const getTooltip = () => {
-    const capitalized =
-      currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1);
-    return `${capitalized} Mode (Click to change)`;
-  };
-
-  return (
-    <Button
-      icon={getIcon()}
-      onClick={cycleTheme}
-      className="bg-transparent p-2 rounded-full text-text-color-secondary hover:bg-surface-hover hover:text-text-color focus:outline-none"
-      tooltip={getTooltip()}
-      tooltipOptions={{ position: "bottom" }}
-      aria-label={`Toggle theme, current: ${currentTheme}`}
-    />
-  );
-};
-
-const UserProfileSection = ({ user, onLogout, currentTheme, onSetTheme }) => {
+const UserProfileSection = ({ user, onLogout }) => {
   const cm = useRef(null);
   const menuModel = [
     {
@@ -59,7 +24,6 @@ const UserProfileSection = ({ user, onLogout, currentTheme, onSetTheme }) => {
 
   return (
     <div className="flex items-center gap-3 ml-auto">
-      <ThemeToggleButton currentTheme={currentTheme} onSetTheme={onSetTheme} />
       <div
         className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-surface-hover"
         onClick={(event) => cm.current.show(event)}
@@ -133,90 +97,6 @@ const MainLayout = ({ children, user, onLogout }) => {
   const searchInputSpanRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  const { changeTheme } = useContext(PrimeReactContext);
-  // Initialize with the theme name corresponding to the initial link in index.html
-  const [currentPrimeReactThemeName, setCurrentPrimeReactThemeName] =
-    useState("lara-light-amber");
-
-  const [themeSetting, setThemeSetting] = useState(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("theme");
-      return savedTheme || "system";
-    }
-    return "system";
-  });
-
-  const applyThemeStyleChanges = useCallback(
-    (newSetting) => {
-      if (typeof window === "undefined" || !changeTheme) return;
-
-      let applyTailwindDarkClass;
-      let newPRThemeName; // e.g., 'lara-light-amber' or 'lara-dark-amber'
-
-      if (newSetting === "light") {
-        applyTailwindDarkClass = false;
-        newPRThemeName = "lara-light-amber";
-      } else if (newSetting === "dark") {
-        applyTailwindDarkClass = true;
-        newPRThemeName = "lara-dark-amber";
-      } else {
-        // system
-        applyTailwindDarkClass = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-        newPRThemeName = applyTailwindDarkClass
-          ? "lara-dark-amber"
-          : "lara-light-amber";
-      }
-
-      document.documentElement.classList.toggle("dark", applyTailwindDarkClass);
-
-      if (currentPrimeReactThemeName !== newPRThemeName) {
-        const currentPRThemePath = `/themes/${currentPrimeReactThemeName}/theme.css`; // Path to current theme CSS
-        const newPRThemePath = `/themes/${newPRThemeName}/theme.css`; // Path to new theme CSS
-
-        changeTheme(currentPRThemePath, newPRThemePath, "theme-link", () => {
-          setCurrentPrimeReactThemeName(newPRThemeName);
-        });
-      }
-    },
-    [changeTheme, currentPrimeReactThemeName]
-  );
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("theme", themeSetting);
-    }
-    applyThemeStyleChanges(themeSetting);
-
-    let mediaQuery;
-    if (themeSetting === "system") {
-      mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const systemThemeChangeHandler = () => applyThemeStyleChanges("system"); // Re-evaluate system
-      mediaQuery.addEventListener("change", systemThemeChangeHandler);
-      return () =>
-        mediaQuery.removeEventListener("change", systemThemeChangeHandler);
-    }
-  }, [themeSetting, applyThemeStyleChanges]);
-
-  // Effect to set initial state of currentPrimeReactThemeName and apply theme on mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const initialSetting = localStorage.getItem("theme") || "system";
-    let initialEffectiveDark = false;
-    if (initialSetting === "dark") {
-      initialEffectiveDark = true;
-    } else if (initialSetting === "system") {
-      initialEffectiveDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-    }
-    setCurrentPrimeReactThemeName(
-      initialEffectiveDark ? "lara-dark-amber" : "lara-light-amber"
-    );
-    applyThemeStyleChanges(initialSetting);
-  }, []);
 
   useEffect(() => {
     if (searchActive && searchInputRef.current) {
@@ -235,13 +115,13 @@ const MainLayout = ({ children, user, onLogout }) => {
 
   return (
     <div className="h-screen bg-surface-ground text-text-color flex">
-      <div className="flex flex-1 bg-surface-0 dark:bg-surface-50 overflow-hidden">
+      <div className="flex flex-1 bg-surface-0 overflow-hidden">
         <aside className="w-20 flex flex-col z-10 shrink-0">
           <div className="p-4 flex items-center justify-center h-16 shrink-0">
             <img
               src="/logo.png"
               alt="Rua Company Logo"
-              className="h-8 dark:invert"
+              className="h-8"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -271,6 +151,7 @@ const MainLayout = ({ children, user, onLogout }) => {
                   <div ref={searchIconBtnRef}>
                     <Button
                       icon="pi pi-search"
+                      text
                       aria-label="Open search"
                       onClick={toggleSearch}
                       className="p-2 rounded-full text-text-color-secondary hover:bg-surface-hover hover:text-text-color focus:outline-none"
@@ -307,12 +188,7 @@ const MainLayout = ({ children, user, onLogout }) => {
                   </span>
                 </CSSTransition>
               </div>
-              <UserProfileSection
-                user={user}
-                onLogout={onLogout}
-                currentTheme={themeSetting}
-                onSetTheme={setThemeSetting}
-              />
+              <UserProfileSection user={user} onLogout={onLogout} />
             </div>
           </header>
 
