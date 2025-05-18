@@ -29,15 +29,11 @@ const LoginPage = ({ onLogin }) => {
     setLoading(true);
     try {
       await onLogin({ usr: username, pwd: passwordState });
-      // Successful login will lead to navigation via App.jsx's logic
     } catch (error) {
-      // Error during onLogin prop execution (e.g., network error if onLogin makes an API call)
-      // This error might already be handled globally or by onLogin itself.
-      // If onLogin throws and it's not caught there, it could be caught here.
       localToast.current?.show({
         severity: "error",
         summary: "Login Failed",
-        detail: error.message || "An unexpected error occurred.", // Display error from onLogin
+        detail: error.message || "An unexpected error occurred.",
         life: 3000,
       });
     } finally {
@@ -97,9 +93,9 @@ const LoginPage = ({ onLogin }) => {
               placeholder="Password"
               toggleMask
               feedback={false}
-              inputClassName="w-full rounded-lg" // This styles the internal input
+              inputClassName="w-full rounded-lg" 
               // className="w-full" // This styles the wrapper; might be redundant if inputClassName="w-full" is used
-              pt={{ root: { className: "w-full" } }} // Ensures the root Password element takes full width if needed
+              pt={{ root: { className: "w-full" } }} 
             />
           </div>
 
@@ -107,7 +103,7 @@ const LoginPage = ({ onLogin }) => {
             type="submit"
             label={loading ? "Signing In..." : "Sign In"}
             icon={loading ? "pi pi-spin pi-spinner" : "pi pi-sign-in"}
-            className="w-full p-button-lg rounded-lg" // Theme handles primary color. Rounded-lg from guidelines.
+            className="w-full p-button-lg rounded-lg" 
             loading={loading}
             disabled={loading || !username.trim() || !passwordState.trim()} // Disable if empty
           />

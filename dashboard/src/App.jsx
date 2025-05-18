@@ -1,63 +1,50 @@
-// src/App.jsx
-
-import React, { useRef, useEffect } from "react";
-
+import React, { useRef } from "react"; // Removed useEffect, useState for theme
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useFrappeAuth } from "frappe-react-sdk";
-
-import LoginPage from "./pages/LoginPage";
-
-import HomePage from "./pages/HomePage";
-
-import MainLayout from "./layouts/MainLayout"; // Import MainLayout
-
+import { PrimeReactProvider } from "primereact/api";
 import { Toast } from "primereact/toast";
-
 import { ProgressSpinner } from "primereact/progressspinner";
 
-import "./App.css";
+// Context
+import { LayoutProvider } from "@/contexts/LayoutContext"; // Path to your LayoutContext.jsx
+
+// Pages
+import LoginPage from "@/pages/LoginPage"; // Path to your LoginPage.jsx
+import HomePage from "@/pages/HomePage"; // Path to your HomePage.jsx
+import EmployeesPage from "@/pages/EmployeesPage"; // Path to your EmployeesPage.jsx
+// Placeholder for future pages
+// import CreateEmployeePage from "./pages/CreateEmployeePage";
+// import ViewEmployeePage from "./pages/ViewEmployeePage";
+// import EditEmployeePage from "./pages/EditEmployeePage";
+
+// Layout
+import MainLayout from "./layouts/MainLayout"; // Path to your MainLayout.jsx
+import "./App.css"; // Path to your App.css
+
 
 function App() {
   const {
     currentUser,
-
     isLoading,
-
     error: authError,
-
     logout,
-
     updateCurrentUser,
-
     getUserCookie,
   } = useFrappeAuth();
 
   const toast = useRef(null);
 
-  // useEffect(() => {
-
-  // console.log(
-
-  // "App.jsx Effect Triggered: currentUser:", currentUser,
-
-  // "isLoading:", isLoading,
-
-  // "authError:", authError ? authError.message : null
-
-  // );
-
-  // }, [currentUser, isLoading, authError]);
+  // Removed theme state and toggleTheme function
 
   const handleLogin = async (credentials) => {
     try {
-      const response = await fetch("http://localhost:8080/api/method/login", {
+      const response = await fetch("/api/method/login", {
+        // Relative URL, assuming proxy
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
-
           Accept: "application/json",
         },
-
         body: JSON.stringify(credentials),
       });
 
@@ -74,76 +61,54 @@ function App() {
 
         toast.current?.show({
           severity: "error",
-
           summary: `Login Error: ${response.status}`,
-
           detail: detailMsg,
-
           life: 7000,
         });
-
         throw new Error(detailMsg);
       }
 
       toast.current?.show({
         severity: "success",
-
         summary: "Logged In!",
-
         detail: "Welcome back, " + responseData.full_name + "!",
-
         life: 3000,
       });
 
       if (getUserCookie) getUserCookie();
-
       if (updateCurrentUser) await updateCurrentUser();
     } catch (err) {
       const isSpecificErrorHandled = toast.current
-
         ?.getAll()
-
         .some((t) => t.summary && t.summary.startsWith("Login Error:"));
 
       if (!isSpecificErrorHandled) {
         toast.current?.show({
           severity: "error",
-
           summary: "Login Process Failed",
-
           detail: err.message || "An unexpected error occurred.",
-
           life: 5000,
         });
       }
-
-      throw err;
+      throw err; // Allow LoginPage to handle its loading state
     }
   };
 
   const handleLogout = async () => {
     try {
       await logout();
-
       toast.current?.show({
         severity: "info",
-
         summary: "Logged Out",
-
         detail: "You have been successfully logged out.",
-
         life: 3000,
       });
     } catch (err) {
       console.error("Logout failed:", err);
-
       toast.current?.show({
         severity: "error",
-
         summary: "Logout Error",
-
-        detail: "Could not log out.",
-
+        detail: err.message || "Could not log out.",
         life: 3000,
       });
     }
@@ -152,7 +117,6 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-surface-ground">
-        {" "}
         <ProgressSpinner
           style={{ width: "50px", height: "50px" }}
           strokeWidth="8"
@@ -169,34 +133,61 @@ function App() {
       authError.httpStatus !== 403 &&
       authError.httpStatus !== 401
     ) {
-      toast.current?.show({
-        severity: "error",
-
-        summary: "Authentication SDK Error",
-
-        detail: authError.message || "An SDK error occurred.",
-
-        life: 5000,
-      });
+      console.error("Authentication SDK Error:", authError);
     }
   }
 
+  const primeReactOptions = { ripple: true };
+
   return (
-    <>
-      <Toast ref={toast} position="top-right" />
-
-      {currentUser ? (
-        <MainLayout user={currentUser} onLogout={handleLogout}>
-          <HomePage />
-
-          {/* Removed user prop from HomePage, MainLayout now has it for header */}
-
-          {/* You might want to pass user to HomePage if it specifically needs it in its direct content */}
-        </MainLayout>
-      ) : (
-        <LoginPage onLogin={handleLogin} />
-      )}
-    </>
+    <PrimeReactProvider value={primeReactOptions}>
+      <BrowserRouter>
+        <Toast ref={toast} position="top-right" />
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              currentUser ? (
+                <Navigate to="/" replace />
+              ) : (
+                <LoginPage onLogin={handleLogin} />
+              )
+            }
+          />
+          <Route
+            path="/*" // All other routes are protected
+            element={
+              currentUser ? (
+                <LayoutProvider>
+                  {" "}
+                  {/* Provide layout context to authenticated routes */}
+                  {/* MainLayout no longer expects theme-related props */}
+                  <MainLayout user={currentUser} onLogout={handleLogout}>
+                    <Routes>
+                      {" "}
+                      {/* Nested routes for authenticated area */}
+                      <Route index element={<HomePage />} />
+                      <Route path="home" element={<HomePage />} />
+                      <Route path="employees" element={<EmployeesPage />} />
+                      {/*
+                      // Placeholder routes for future employee management pages
+                      // <Route path="employees/create" element={<CreateEmployeePage />} />
+                      // <Route path="employees/view/:employeeId" element={<ViewEmployeePage />} />
+                      // <Route path="employees/edit/:employeeId" element={<EditEmployeePage />} />
+                      */}
+                      <Route path="*" element={<Navigate to="/" replace />} />{" "}
+                      {/* Fallback for unknown authenticated routes */}
+                    </Routes>
+                  </MainLayout>
+                </LayoutProvider>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </PrimeReactProvider>
   );
 }
 
