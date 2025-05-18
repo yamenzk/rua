@@ -8,7 +8,6 @@
  "engine": "InnoDB",
  "field_order": [
   "employee_name",
-  "date_of_birth",
   "gender",
   "nationality",
   "position",
@@ -22,7 +21,9 @@
   "phone",
   "email",
   "basic",
-  "allowance"
+  "allowance",
+  "test_tab_tab",
+  "date_of_birth"
  ],
  "fields": [
   {
@@ -109,12 +110,17 @@
    "fieldname": "joining_date",
    "fieldtype": "Date",
    "label": "Joining Date"
+  },
+  {
+   "fieldname": "test_tab_tab",
+   "fieldtype": "Tab Break",
+   "label": "Test Tab"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-18 23:38:18.168045",
+ "modified": "2025-05-19 00:55:54.261634",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

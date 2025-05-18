@@ -14,8 +14,8 @@ import HomePage from "@/pages/HomePage"; // Path to your HomePage.jsx
 import EmployeesPage from "@/pages/EmployeesPage"; // Path to your EmployeesPage.jsx
 // Placeholder for future pages
 // import CreateEmployeePage from "./pages/CreateEmployeePage";
-// import ViewEmployeePage from "./pages/ViewEmployeePage";
-// import EditEmployeePage from "./pages/EditEmployeePage";
+import ViewEmployeePage from "./pages/ViewEmployeePage";
+import EditEmployeePage from "./pages/EditEmployeePage";
 
 // Layout
 import MainLayout from "./layouts/MainLayout"; // Path to your MainLayout.jsx
@@ -169,12 +169,14 @@ function App() {
                       <Route index element={<HomePage />} />
                       <Route path="home" element={<HomePage />} />
                       <Route path="employees" element={<EmployeesPage />} />
-                      {/*
-                      // Placeholder routes for future employee management pages
-                      // <Route path="employees/create" element={<CreateEmployeePage />} />
-                      // <Route path="employees/view/:employeeId" element={<ViewEmployeePage />} />
-                      // <Route path="employees/edit/:employeeId" element={<EditEmployeePage />} />
-                      */}
+                      <Route
+                        path="employees/view/:employeeId"
+                        element={<ViewEmployeePage />}
+                      />
+                      <Route
+                        path="employees/edit/:employeeId"
+                        element={<EditEmployeePage />}
+                      />
                       <Route path="*" element={<Navigate to="/" replace />} />{" "}
                       {/* Fallback for unknown authenticated routes */}
                     </Routes>

@@ -12,7 +12,7 @@ import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { Calendar } from "primereact/calendar";
 import { ColorPicker } from "primereact/colorpicker";
 import { Editor } from "primereact/editor";
-import { Image } from "primereact/image";
+import { Image as PrimeImage } from "primereact/image";
 import { Avatar } from "primereact/avatar";
 import { Tag } from "primereact/tag";
 import { FileUpload } from "primereact/fileupload";
@@ -82,11 +82,13 @@ export const fieldTypeConfigurations = {
           />
         );
       }
+      // This is where the PrimeReact Image component is used
       return (
-        <Image
+        <PrimeImage
+		asAvatar
           src={imageUrl}
           alt={rowData.name || fieldname}
-          width="50"
+          width="20"
           preview
           onError={(e) =>
             (e.target.src =

@@ -62,25 +62,11 @@ const EmployeeTable = () => {
   }, [deleteCompleted, deleteError]);
 
   const handleRowClick = (rowData) => {
-    // navigate(`/employees/view/${rowData.name}`); // Example navigation
-    console.log("View employee:", rowData.name);
-    toast.current.show({
-      severity: "info",
-      summary: "Row Clicked",
-      detail: `Employee: ${rowData.employee_name}`,
-      life: 3000,
-    });
+    navigate(`/employees/view/${rowData.name}`);
   };
 
   const handleEditEmployee = (rowData) => {
-    // navigate(`/employees/edit/${rowData.name}`);
-    console.log("Edit employee:", rowData.name);
-    toast.current.show({
-      severity: "info",
-      summary: "Edit Action",
-      detail: `Edit: ${rowData.employee_name}`,
-      life: 3000,
-    });
+    navigate(`/employees/edit/${rowData.name}`);
   };
 
   const handleDeleteEmployee = (rowData) => {
