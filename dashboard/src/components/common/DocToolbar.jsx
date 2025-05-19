@@ -66,7 +66,7 @@ const DocToolbar = ({
           tabs.length > 0 &&
           typeof activeTabIndex === "number" &&
           onTabSelect && (
-            <div className="flex-grow flex justify-center items-center gap-1 sm:gap-2 px-2 sm:px-0 md:px-4 overflow-x-auto no-scrollbar">
+            <div className="flex-grow flex justify-center items-center gap-1 sm:gap-2 px-2 sm:px-0 md:px-4 overflow-x-auto no-scrollbar py-2">
               {tabs.map((tab, index) => (
                 <Button
                   key={tab.id || tab.slug || `toolbar-tab-${index}`}
