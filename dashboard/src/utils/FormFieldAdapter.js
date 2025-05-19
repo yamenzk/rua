@@ -135,7 +135,7 @@ const getAttachmentProps = (context) => {
 	const { fieldname, label } = context.fieldSchema;
 	return {
 		value: context.formData[fieldname] || "",
-		fieldname: fieldname, 
+		fieldname: fieldname,
 		onFileUploadTrigger: () => {
 			if (typeof context.openUploadModal === "function") {
 				context.openUploadModal(context.fieldSchema.fieldname);

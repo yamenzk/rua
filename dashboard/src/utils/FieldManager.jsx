@@ -190,7 +190,7 @@ export const fieldTypeConfigurations = {
       filterOptions
     ) => (
       <MultiSelect
-        value={filterValue}
+        value={filterValue || []}
         options={filterOptions || []} // `DynamicDataTable` should populate these
         onChange={(e) => filterApplyCallback(e.value)}
         placeholder="Any"
@@ -198,6 +198,8 @@ export const fieldTypeConfigurations = {
         maxSelectedLabels={3}
         showClear
         filter
+        optionLabel="label"
+        optionValue="value"
       />
     ),
     sortable: true,
@@ -215,12 +217,14 @@ export const fieldTypeConfigurations = {
       filterOptions
     ) => (
       <MultiSelect
-        value={filterValue}
+        value={filterValue || []}
         options={filterOptions || []}
         onChange={(e) => filterApplyCallback(e.value)}
         placeholder="Search"
         className="p-column-filter"
         filter
+        optionLabel="label"
+        optionValue="value"
       />
     ),
     sortable: true,
@@ -707,7 +711,7 @@ export const fieldTypeConfigurations = {
       filterApplyCallback
     ) => (
       <MultiSelect
-        value={filterValue}
+        value={filterValue || []}
         options={nationalities.map((n) => ({
           label: `${n.flag} ${n.name}`,
           value: n.name,

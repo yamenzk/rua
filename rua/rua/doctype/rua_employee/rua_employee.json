@@ -60,7 +60,9 @@
   {
    "fieldname": "nationality",
    "fieldtype": "Data",
+   "in_filter": 1,
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Nationality"
   },
   {
@@ -91,6 +93,7 @@
    "read_only": 1
   },
   {
+   "description": "{\n    \"tooltip\": \"Select the assigned user.\",\n    \"link_filters\": [\n        [\"name\", \"!=\", \"Administrator\"]\n    ]\n}",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -165,7 +168,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-19 16:39:48.553360",
+ "modified": "2025-05-19 17:18:51.598569",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

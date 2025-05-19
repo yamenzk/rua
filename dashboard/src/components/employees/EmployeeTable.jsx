@@ -8,13 +8,13 @@ import {
 } from "frappe-react-sdk";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
-import { ProgressSpinner } from "primereact/progressspinner"; // Added for loading state
+import { ProgressSpinner } from "primereact/progressspinner";
 import { RUA_EMPLOYEE_DOCTYPE } from "@/constants"; //
 
 import DynamicDataTable from "@/components/common/DynamicDataTable"; //
 import ConfirmDialog from "@/components/common/ConfirmDialog"; //
 import nationalities from "@/utils/nationalities.json"; //
-import { transformSchemaToColumnConfig } from "@/utils/schemaToColumns"; // Assuming you created this util
+import { transformSchemaToColumnConfig } from "@/utils/schemaToColumns"; //
 
 const EmployeeTable = () => {
   const navigate = useNavigate();
@@ -37,9 +37,8 @@ const EmployeeTable = () => {
 
   const nationalityOptions = useMemo(() => {
     return nationalities.map((n) => ({
-      //
-      label: `${n.flag} ${n.name}`, //
-      value: n.name, //
+      label: `${n.flag} ${n.name}`,
+      value: n.name,
     }));
   }, []);
 
@@ -49,18 +48,13 @@ const EmployeeTable = () => {
     isLoading: isLoadingSchema,
     error: schemaError,
   } = useFrappeGetCall(
-    "rua.apiv2.get_doctype_form_schema",
+    "rua.apiv2.get_doctype_form_schema", //
     { doctype_name: RUA_EMPLOYEE_DOCTYPE.name }, //
     `doctype_schema_${RUA_EMPLOYEE_DOCTYPE.name}` //
   );
   const formSchema = schemaApiResponse?.message;
 
-  const {
-    deleteDoc,
-    loading: deleteLoading,
-    // error: apiDeleteError, // Renamed to avoid conflict with schemaError
-    // isCompleted: deleteCompleted, // Renamed to avoid conflict
-  } = useFrappeDeleteDoc();
+  const { deleteDoc, loading: deleteLoading } = useFrappeDeleteDoc();
 
   // Using separate useEffect for delete operation feedback to avoid conflicts
   useEffect(() => {
@@ -70,10 +64,18 @@ const EmployeeTable = () => {
 
   const employeeColumnsConfig = useMemo(() => {
     if (!formSchema) return [];
-    return transformSchemaToColumnConfig(formSchema, {
-      userOptions,
-      nationalityOptions,
-    });
+
+    const customArgs = {
+      linkFieldFilterOptions: {
+        User: userOptions,
+      },
+      // Pass nationalityOptions to be used for a 'Select' field with fieldname 'nationality'
+      // This assumes transformSchemaToColumnConfig uses selectOverrides for such cases.
+      selectOverrides: {
+        nationality: nationalityOptions,
+      },
+    };
+    return transformSchemaToColumnConfig(formSchema, customArgs); //
   }, [formSchema, userOptions, nationalityOptions]);
 
   const globalFilterFields = useMemo(() => {
@@ -109,8 +111,6 @@ const EmployeeTable = () => {
           detail: "Employee deleted successfully",
           life: 3000,
         });
-        // DataTable will re-fetch via its own useFrappeGetDocList SWR hook
-        // or if DynamicDataTable's mutate function is exposed and called.
       } catch (e) {
         toast.current.show({
           severity: "error",
@@ -145,8 +145,8 @@ const EmployeeTable = () => {
           employeeToDelete && handleDeleteEmployee(employeeToDelete),
       },
     ],
-    [employeeToDelete]
-  ); // employeeToDelete is the dependency
+    [employeeToDelete, handleRowClick, handleEditEmployee, handleDeleteEmployee] // Added dependencies
+  );
 
   const headerActions = (
     <Button
@@ -171,24 +171,20 @@ const EmployeeTable = () => {
     return (
       <div className="p-card p-4 m-4 rounded-lg bg-red-100 border border-red-400 text-red-700">
         <p className="font-bold">
-          Error loading schema for {RUA_EMPLOYEE_DOCTYPE.name}:
-        </p>{" "}
-        {/* */}
+          Error loading schema for {RUA_EMPLOYEE_DOCTYPE.name}: {/* */}
+        </p>
         <p>{schemaError.message || JSON.stringify(schemaError)}</p>
       </div>
     );
   }
 
   if (!formSchema || employeeColumnsConfig.length === 0) {
-    // This condition might be hit if schema is loaded but no fields are in_list_view
-    // or if there's an issue with formSchema structure.
     return (
       <div className="p-card p-4 m-4 rounded-lg">
         <p>
           No columns configured for display. Please check the DocType schema
-          configuration for '{RUA_EMPLOYEE_DOCTYPE.name}'.
-        </p>{" "}
-        {/* */}
+          configuration for '{RUA_EMPLOYEE_DOCTYPE.name}'. {/* */}
+        </p>
       </div>
     );
   }
@@ -205,10 +201,6 @@ const EmployeeTable = () => {
         globalFilterFields={globalFilterFields}
         headerActions={headerActions}
         dataKey="name"
-        // Pass employeeToDelete to DynamicDataTable if it needs to manage selection for context menu
-        // Otherwise, DynamicDataTable's internal onContextMenu and onContextMenuSelectionChange will handle it.
-        // selectedRowForContextMenu={employeeToDelete} // If you want to control this from parent
-        // onSelectedRowForContextMenuChange={setEmployeeToDelete} // If you want to control this from parent
       />
       <ConfirmDialog
         visible={showDeleteDialog}
@@ -218,7 +210,7 @@ const EmployeeTable = () => {
         message={`Are you sure you want to delete ${
           employeeToDelete?.employee_name || "this employee"
         }? This action cannot be undone.`}
-        confirmationText={employeeToDelete?.name}
+        confirmationText={employeeToDelete?.name} // For matching confirmation input
         confirmButtonLabel="Delete"
         confirmButtonIcon="pi pi-trash"
         loading={deleteLoading}
