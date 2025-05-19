@@ -7,6 +7,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "test_section",
+  "test_column",
   "employee_name",
   "gender",
   "nationality",
@@ -16,12 +18,16 @@
   "column_break_ouxq",
   "naming_series",
   "image",
-  "salary",
   "user",
   "phone",
   "email",
-  "basic",
+  "section_break_eawg",
+  "salary_com_column",
   "allowance",
+  "column_break_uyzv",
+  "basic",
+  "column_break_hewc",
+  "salary",
   "test_tab_tab",
   "date_of_birth"
  ],
@@ -29,7 +35,9 @@
   {
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "Employee Name"
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "reqd": 1
   },
   {
    "fieldname": "date_of_birth",
@@ -70,7 +78,8 @@
   {
    "fieldname": "salary",
    "fieldtype": "Currency",
-   "label": "Salary"
+   "label": "Salary",
+   "read_only": 1
   },
   {
    "fieldname": "user",
@@ -115,12 +124,36 @@
    "fieldname": "test_tab_tab",
    "fieldtype": "Tab Break",
    "label": "Test Tab"
+  },
+  {
+   "fieldname": "section_break_eawg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_uyzv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_hewc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "test_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "test_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "salary_com_column",
+   "fieldtype": "Column Break"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-19 00:55:54.261634",
+ "modified": "2025-05-19 02:26:38.373640",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

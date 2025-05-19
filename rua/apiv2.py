@@ -77,7 +77,7 @@ def get_doctype_form_schema(doctype_name):
         # All fields (including layout fields) are added to 'layout.elements' in their defined order
         layout_element = {"fieldname": field_doc.fieldname, "type": field_doc.fieldtype}
 
-        if field_doc.fieldtype in ["Tab Break", "Section Break"]:
+        if field_doc.fieldtype in ["Tab Break", "Section Break", "Column Break"]:
             layout_element["label"] = field_doc.label
             if field_doc.fieldtype == "Section Break":
                 layout_element["collapsible"] = bool(field_doc.collapsible)

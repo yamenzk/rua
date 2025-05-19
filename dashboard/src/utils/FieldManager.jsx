@@ -15,26 +15,50 @@ import { Editor } from "primereact/editor";
 import { Image as PrimeImage } from "primereact/image";
 import { Avatar } from "primereact/avatar";
 import { Tag } from "primereact/tag";
-import { FileUpload } from "primereact/fileupload";
 import { Button } from "primereact/button";
+import { AutoComplete } from "primereact/autocomplete"; // Ensured AutoComplete is imported
 
-// Custom Formatters
-import * as formatters from "./formatters.jsx"; // Assuming formatters.js is in the same directory
+// Custom Formatters & Data
+import * as formatters from "./formatters.jsx";
 import nationalities from "./nationalities.json";
 
-// Placeholder for a custom form field component for attachments
+// Custom FormField for Attachments
 const RuaAttachmentFormField = ({
   fieldname,
-  rowData,
-  displayProps,
-  onFileUpload,
+  value, // Current file URL/path from formData or "Pending: filename.txt"
+  onFileUploadTrigger, // This will be context.openUploadModal via FormFieldAdapter
 }) => (
-  <Button
-    label={rowData?.[fieldname] ? "Change File" : "Attach File"}
-    icon="pi pi-upload"
-    className="p-button-sm p-button-outlined"
-    onClick={() => onFileUpload(fieldname, rowData)}
-  />
+  <div className="flex flex-col items-start">
+    {value && (
+      <div className="mb-2">
+        {String(value).startsWith("http") || String(value).startsWith("/") ? ( // Check if it's a URL
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-color hover:underline break-all"
+            aria-label={`View ${fieldname}`}
+          >
+            {value.substring(value.lastIndexOf("/") + 1) || value}
+          </a>
+        ) : (
+          <span className="text-text-color-secondary italic">{value}</span> // Display "Pending: filename.txt"
+        )}
+      </div>
+    )}
+    <Button
+      label={
+        value &&
+        (String(value).startsWith("http") || String(value).startsWith("/"))
+          ? "Change File"
+          : "Attach File"
+      }
+      icon="pi pi-upload"
+      className="p-button-sm p-button-outlined"
+      onClick={onFileUploadTrigger} // Call the function passed from editor
+      aria-label={value ? `Change ${fieldname}` : `Attach ${fieldname}`}
+    />
+  </div>
 );
 
 export const fieldTypeConfigurations = {
@@ -43,7 +67,8 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname, displayProps) => {
       const fileUrl = rowData[fieldname];
       if (!fileUrl) return null;
-      const filename = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+      const filename =
+        fileUrl.substring(fileUrl.lastIndexOf("/") + 1) || fileUrl;
       return (
         <a
           href={fileUrl}
@@ -52,7 +77,7 @@ export const fieldTypeConfigurations = {
           className="text-primary-color hover:underline"
         >
           {displayProps?.iconOnly ? (
-            <i className="pi pi-paperclip" />
+            <i className="pi pi-paperclip" title={filename} />
           ) : (
             filename
           )}
@@ -69,63 +94,38 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname, displayProps) => {
       const imageUrl = rowData[fieldname];
       if (!imageUrl) return null;
+      const altText = rowData.name || fieldname;
       if (displayProps?.asAvatar) {
         return (
           <Avatar
             image={imageUrl}
             shape="circle"
-            size="large"
-            onError={(e) =>
-              (e.target.src =
-                "https://www.primefaces.org/wp-content/uploads/2020/05/placeholder.png")
-            }
+            size={displayProps?.avatarSize || "large"}
+            alt={`${altText} avatar`}
+            onError={(e) => {
+              e.target.src =
+                "https://www.primefaces.org/wp-content/uploads/2020/05/placeholder.png";
+            }}
           />
         );
       }
-      // This is where the PrimeReact Image component is used
       return (
         <PrimeImage
-		asAvatar
           src={imageUrl}
-          alt={rowData.name || fieldname}
-          width="20"
+          alt={altText}
+          width={displayProps?.imageWidth || "50"}
           preview
-          onError={(e) =>
-            (e.target.src =
-              "https://www.primefaces.org/wp-content/uploads/2020/05/placeholder.png")
-          }
+          imageClassName={displayProps?.imageClassName || "object-contain"}
+          onError={(e) => {
+            e.target.src =
+              "https://www.primefaces.org/wp-content/uploads/2020/05/placeholder.png";
+          }}
         />
       );
     },
     tableFilterElement: null,
     sortable: false,
     filterable: false,
-    dataType: "text",
-  },
-  Autocomplete: {
-    formComponent: (props) => (
-      <Dropdown {...props} filter showClear options={props.options || []} />
-    ),
-    tableBodyComponent: (rowData, fieldname) => rowData[fieldname],
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback,
-      filterOptions
-    ) => (
-      <Dropdown
-        value={filterValue}
-        options={filterOptions || colProps.options || []}
-        onChange={(e) => filterApplyCallback(e.value)}
-        placeholder={`Search ${colProps.header || fieldname}`}
-        showClear
-        filter
-        className="p-column-filter"
-      />
-    ),
-    sortable: true,
-    filterable: true,
     dataType: "text",
   },
   Select: {
@@ -165,7 +165,7 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   Link: {
-    formComponent: Dropdown,
+    formComponent: AutoComplete, // Key change: Use AutoComplete for forms
     tableBodyComponent: (rowData, fieldname, displayProps) => {
       const value = rowData[fieldname];
       if (displayProps?.asChip && value) {
@@ -178,6 +178,7 @@ export const fieldTypeConfigurations = {
           />
         );
       }
+      // Consider adding navigation to linked doc if possible/needed in tables
       return value;
     },
     tableFilterElement: (
@@ -189,12 +190,13 @@ export const fieldTypeConfigurations = {
     ) => (
       <MultiSelect
         value={filterValue}
-        options={filterOptions || []}
+        options={filterOptions || []} // `DynamicDataTable` should populate these
         onChange={(e) => filterApplyCallback(e.value)}
         placeholder="Any"
         className="p-column-filter"
         maxSelectedLabels={3}
         showClear
+        filter
       />
     ),
     sortable: true,
@@ -202,7 +204,7 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   "Dynamic Link": {
-    formComponent: Dropdown,
+    formComponent: AutoComplete, // Form rendering logic needs to handle dynamic `options` for search
     tableBodyComponent: (rowData, fieldname) => rowData[fieldname],
     tableFilterElement: (
       colProps,
@@ -217,6 +219,7 @@ export const fieldTypeConfigurations = {
         onChange={(e) => filterApplyCallback(e.value)}
         placeholder="Search"
         className="p-column-filter"
+        filter
       />
     ),
     sortable: true,
@@ -250,7 +253,7 @@ export const fieldTypeConfigurations = {
           style={{
             width: "24px",
             height: "24px",
-            backgroundColor: rowData[fieldname],
+            backgroundColor: `#${rowData[fieldname]?.replace("#", "")}`,
             borderRadius: "4px",
             border: "1px solid var(--surface-border)",
           }}
@@ -278,9 +281,10 @@ export const fieldTypeConfigurations = {
       <InputNumber
         {...props}
         mode="currency"
-        currency="AED"
-        locale="en-AE"
-        minFractionDigits={2}
+        currency={props.currency || "AED"} // Allow overriding currency from schema/props
+        locale={props.locale || "en-AE"}
+        minFractionDigits={props.minFractionDigits ?? 2}
+        maxFractionDigits={props.maxFractionDigits ?? 2}
       />
     ),
     tableBodyComponent: (rowData, fieldname) =>
@@ -363,11 +367,16 @@ export const fieldTypeConfigurations = {
   },
   Float: {
     formComponent: (props) => (
-      <InputNumber {...props} mode="decimal" minFractionDigits={2} />
+      <InputNumber
+        {...props}
+        mode="decimal"
+        minFractionDigits={props.minFractionDigits ?? 2}
+        maxFractionDigits={props.maxFractionDigits ?? 2}
+      />
     ),
     tableBodyComponent: (rowData, fieldname, displayProps) =>
       rowData[fieldname]?.toLocaleString("en-AE", {
-        minimumFractionDigits: 2,
+        minimumFractionDigits: displayProps?.precision || 2,
         maximumFractionDigits: displayProps?.precision || 2,
       }),
     tableFilterElement: (
@@ -385,6 +394,8 @@ export const fieldTypeConfigurations = {
             onValueChange={(e) => filterApplyCallback([e.value, to])}
             placeholder="Min"
             className="p-column-filter w-full"
+            minFractionDigits={colProps.precision || 2}
+            maxFractionDigits={colProps.precision || 2}
           />
           <InputNumber
             inputId={`max_${fieldname}`}
@@ -392,6 +403,8 @@ export const fieldTypeConfigurations = {
             onValueChange={(e) => filterApplyCallback([from, e.value])}
             placeholder="Max"
             className="p-column-filter w-full"
+            minFractionDigits={colProps.precision || 2}
+            maxFractionDigits={colProps.precision || 2}
           />
         </div>
       );
@@ -527,7 +540,9 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   Date: {
-    formComponent: (props) => <Calendar {...props} dateFormat="dd/mm/yy" />,
+    formComponent: (props) => (
+      <Calendar {...props} dateFormat="dd/mm/yy" showIcon />
+    ),
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDisplayDate(rowData[fieldname]),
     tableFilterElement: (
@@ -552,7 +567,13 @@ export const fieldTypeConfigurations = {
   },
   Datetime: {
     formComponent: (props) => (
-      <Calendar {...props} dateFormat="dd/mm/yy" showTime showSeconds />
+      <Calendar
+        {...props}
+        dateFormat="dd/mm/yy"
+        showTime
+        showSeconds
+        showIcon
+      />
     ),
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDisplayDateTime(rowData[fieldname]),
@@ -579,7 +600,9 @@ export const fieldTypeConfigurations = {
     dataType: "date",
   },
   Time: {
-    formComponent: (props) => <Calendar {...props} timeOnly showSeconds />,
+    formComponent: (props) => (
+      <Calendar {...props} timeOnly showSeconds showIcon />
+    ),
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDisplayTime(rowData[fieldname], true),
     tableFilterElement: (
@@ -597,6 +620,7 @@ export const fieldTypeConfigurations = {
         placeholder="HH:MM:SS"
         mask="99:99:99"
         className="p-column-filter"
+        showIcon
       />
     ),
     sortable: true,
@@ -604,7 +628,7 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   Duration: {
-    formComponent: InputText,
+    formComponent: InputText, // Form component might need a custom duration picker or validation
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDuration(rowData[fieldname]),
     tableFilterElement: (
@@ -635,15 +659,15 @@ export const fieldTypeConfigurations = {
     },
     sortable: true,
     filterable: true,
-    dataType: "numeric",
+    dataType: "numeric", // Sorting/filtering by seconds
   },
   "Text Editor": {
-    formComponent: (props) => <Editor {...props} style={{ height: "320px" }} />,
+    formComponent: (props) => <Editor {...props} style={{ height: "200px" }} />,
     tableBodyComponent: (rowData, fieldname) => (
       <div
-        className="prose max-w-none"
+        className="prose max-w-none line-clamp-3"
         dangerouslySetInnerHTML={{ __html: rowData[fieldname] }}
-      />
+      /> // Added line-clamp
     ),
     tableFilterElement: null,
     sortable: false,
@@ -691,12 +715,34 @@ export const fieldTypeConfigurations = {
         placeholder="Any Nationality"
         className="p-column-filter"
         itemTemplate={(option) => <span>{option.label}</span>}
-        optionLabel="label" // This should now work as options are {label, value}
+        optionLabel="label"
         optionValue="value"
-        maxSelectedLabels={1} // Show only 1 selected item, others as "+X more"
-        display="chip" // Show selected items as chips
+        maxSelectedLabels={1}
+        display="chip"
         showClear
         filter
+      />
+    ),
+    sortable: true,
+    filterable: true,
+    dataType: "text",
+  },
+  Default: {
+    // Fallback for unconfigured types
+    formComponent: InputText,
+    tableBodyComponent: (rowData, fieldname) =>
+      String(rowData[fieldname] ?? ""),
+    tableFilterElement: (
+      colProps,
+      fieldname,
+      filterValue,
+      filterApplyCallback
+    ) => (
+      <InputText
+        value={filterValue || ""}
+        onChange={(e) => filterApplyCallback(e.target.value)}
+        placeholder={`Search ${colProps.header || fieldname}`}
+        className="p-column-filter"
       />
     ),
     sortable: true,
@@ -713,5 +759,7 @@ export const getFieldConfig = (fieldType, fieldname) => {
   ) {
     return fieldTypeConfigurations["Nationality"];
   }
-  return fieldTypeConfigurations[fieldType] || fieldTypeConfigurations["Data"];
+  return (
+    fieldTypeConfigurations[fieldType] || fieldTypeConfigurations["Default"]
+  ); // Use "Default" as fallback
 };
