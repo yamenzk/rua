@@ -10,11 +10,11 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
 
 // Custom Utils & Components
-import { getFieldConfig } from "@/utils/FieldManager.jsx";
-import * as _formatters from "@/utils/formatters.jsx";
-import { useLayout } from "@/contexts/LayoutContext.jsx";
-import UniversalLayoutRenderer from "./UniversalLayoutRenderer"; // Make sure path is correct
-import { parseDescription } from "@/utils/schemaUtils";
+import { getFieldConfig } from "@/utils/FieldManager.jsx"; // Ensure this path is correct
+import * as _formatters from "@/utils/formatters.jsx"; // Ensure this path is correct
+import { useLayout } from "@/contexts/LayoutContext.jsx"; // Ensure this path is correct
+import UniversalLayoutRenderer from "./UniversalLayoutRenderer"; // Path to your updated renderer
+import { parseDescription } from "@/utils/schemaUtils"; // Ensure this path is correct
 
 const UniversalDocViewer = ({
   doctypeName,
@@ -25,10 +25,11 @@ const UniversalDocViewer = ({
   onBack,
   listPageUrl,
   fieldDisplayConfig,
+  customUIAugmentations, // <<<< NEW PROP for custom tabs and content
 }) => {
   const navigate = useNavigate();
   const { setPageTitle } = useLayout();
-  const [activeTabIndex, setActiveTabIndex] = useState(0); // Can be controlled by UniversalLayoutRenderer too
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
 
   const {
     data: schemaApiResponse,
@@ -41,13 +42,14 @@ const UniversalDocViewer = ({
     { enabled: !externalFormSchema }
   );
   const formSchema = externalFormSchema || schemaApiResponse?.message;
+  
 
   const {
     data: docDataInternal,
     isLoading: isLoadingDoc,
     error: docError,
   } = useFrappeGetDoc(doctypeName, docname, {
-    fields: ["*"],
+    fields: ["*"], // Fetch all fields for viewer and potential custom components
     enabled: !externalDocData && !!docname && !!formSchema,
   });
   const docData = externalDocData || docDataInternal;
@@ -76,22 +78,21 @@ const UniversalDocViewer = ({
   }, [docData, docname, formSchema, setPageTitle, doctypeName]);
 
   const renderFieldDisplay = useCallback(
-    (fieldSchema) => {
+    // UniversalLayoutRenderer will pass fieldSchema and docData.
+    // We can use docData from closure, or the one passed as argument.
+    // For simplicity, this implementation continues to use docData from closure.
+    (fieldSchema, _docDataFromRendererIgnored) => {
       if (!fieldSchema || fieldSchema.hidden) return null;
 
       const { fieldname, fieldtype, label, bold } = fieldSchema;
       const value = docData?.[fieldname];
 
-      const descriptionData = parseDescription(fieldSchema.description); // <<< ADD THIS
+      const descriptionData = parseDescription(fieldSchema.description);
 
       const { tooltip: labelTooltip, ...otherDescriptionProps } =
         descriptionData;
       const schemaDrivenDisplayProps = otherDescriptionProps;
-
-      // Viewer-specific overrides from the component's props
       const viewerSpecificProps = fieldDisplayConfig?.[fieldname] || {};
-
-      // Merge them: viewerSpecificProps can override schemaDrivenDisplayProps
       const effectiveDisplayProps = {
         ...schemaDrivenDisplayProps,
         ...viewerSpecificProps,
@@ -111,18 +112,19 @@ const UniversalDocViewer = ({
           </span>
         );
       } else if (config.tableBodyComponent) {
+        // Assuming tableBodyComponent is your viewer component
         let extendedDisplayProps = { ...effectiveDisplayProps };
         if (fieldtype === "Attach Image") {
           extendedDisplayProps.imageWidth =
             extendedDisplayProps.imageWidth ||
             descriptionData.imageWidth ||
-            "150"; // Allow description to set default
+            "150";
           extendedDisplayProps.imageClassName =
             extendedDisplayProps.imageClassName ||
-            descriptionData.imageClassName || // Allow description to set default
+            descriptionData.imageClassName ||
             "object-contain rounded-md border border-surface-border shadow-sm max-h-48";
           extendedDisplayProps.asAvatar =
-            effectiveDisplayProps.asAvatar ?? false; // Respect effectiveDisplayProps
+            effectiveDisplayProps.asAvatar ?? false;
         }
         if (fieldtype === "Text Editor") {
           displayValue = (
@@ -135,7 +137,7 @@ const UniversalDocViewer = ({
           displayValue = config.tableBodyComponent(
             docData,
             fieldname,
-            extendedDisplayProps, // Pass the combined display props
+            extendedDisplayProps,
             _formatters
           );
         }
@@ -149,7 +151,7 @@ const UniversalDocViewer = ({
             className={`block text-xs font-medium text-text-color-secondary uppercase tracking-wider mb-1 ${
               bold ? "font-bold" : ""
             }`}
-            title={descriptionData.tooltip} // <<< ADD TOOLTIP TO LABEL
+            title={labelTooltip || fieldSchema.label} // Use labelTooltip or default to field label
           >
             {label ||
               fieldname
@@ -162,28 +164,47 @@ const UniversalDocViewer = ({
         </div>
       );
     },
-    [docData, fieldDisplayConfig] // Add parseDescription or its utility if it's not pure
+    [docData, fieldDisplayConfig] // Added allFieldsSchema if getFieldConfig depends on it or if it's dynamic
+    // parseDescription should be pure or memoized if it's expensive
   );
 
   const renderLayout = () => {
-    // Basic check before passing to the layout renderer
-    if (!formSchema || !formSchema.fields) {
+    if (!formSchema || !formSchema.fields || !docData) {
+      // Ensure docData is also available for context
       return (
         <Message
           severity="warn"
-          text="Form layout or fields definition is missing in schema."
+          text="Form layout, fields definition, or document data is missing."
           className="m-4"
         />
       );
     }
 
+    // <<<< CREATE CUSTOM COMPONENT CONTEXT >>>>
+    const customComponentContext = {
+      docname,
+      doctypeName,
+      docData, // Provide full docData
+      formSchema, // Provide full formSchema
+      navigate, // Provide navigate if custom components need routing
+      setPageTitle, // Provide setPageTitle if custom components need to alter page title
+      // You can add more context as needed, e.g., currentUser, specific API callers
+    };
+
     return (
       <UniversalLayoutRenderer
         formSchema={formSchema}
-        allFieldsSchema={formSchema.fields}
+        allFieldsSchema={formSchema.fields} // Pass all field definitions
         renderFieldItem={renderFieldDisplay}
         initialActiveTabIndex={activeTabIndex}
         onTabChangeCallback={(e) => setActiveTabIndex(e.index)}
+        // <<<< PASS NEW PROPS TO RENDERER >>>>
+        customUIAugmentations={customUIAugmentations}
+        docData={docData} // Pass docData for custom components and schema field rendering
+        customComponentContext={customComponentContext}
+        // Pass through any styling props if UniversalDocViewer controls them
+        // bubbleStyle={true} // Example
+        // tabViewBackgroundColor="transparent" // Example
       />
     );
   };
@@ -209,13 +230,20 @@ const UniversalDocViewer = ({
     );
   }
   if (!formSchema || !docData) {
+    // Refined loading/error states for clarity
+    if (!formSchema && !schemaError)
+      return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+          <ProgressSpinner /> {/* Still loading schema */}
+        </div>
+      );
     if (docname && !docData && !docError)
       return (
         <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
           <ProgressSpinner /> {/* Still loading doc */}
         </div>
       );
-    if (docname && docError)
+    if (docname && docError && !docData)
       return (
         <Message
           severity="error"
@@ -223,10 +251,11 @@ const UniversalDocViewer = ({
           className="m-4"
         />
       );
+
     return (
       <Message
         severity="warn"
-        text="Document data or schema is not available."
+        text="Document data or schema is not available to render."
         className="m-4"
       />
     );
@@ -241,7 +270,7 @@ const UniversalDocViewer = ({
             className:
               "text-xl font-semibold text-text-color px-4 md:px-6 pt-5 pb-0",
           },
-          content: { className: "p-0" }, // UniversalLayoutRenderer's TabPanel will handle padding
+          content: { className: "p-0" },
         }}
       >
         {renderLayout()}
@@ -277,6 +306,11 @@ const UniversalDocViewer = ({
       </Card>
     </>
   );
+};
+
+UniversalDocViewer.defaultProps = {
+  // <<<< Add default prop for customUIAugmentations
+  customUIAugmentations: null, // Or: { additionalTabs: [], injectIntoTabs: [] }
 };
 
 export default UniversalDocViewer;

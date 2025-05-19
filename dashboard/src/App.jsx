@@ -6,16 +6,14 @@ import { Toast } from "primereact/toast";
 import { ProgressSpinner } from "primereact/progressspinner";
 
 // Context
-import { LayoutProvider } from "@/contexts/LayoutContext"; // Path to your LayoutContext.jsx
+import { LayoutProvider } from "@/contexts/LayoutContext";
 
 // Pages
-import LoginPage from "@/pages/LoginPage"; // Path to your LoginPage.jsx
-import HomePage from "@/pages/HomePage"; // Path to your HomePage.jsx
-import EmployeesPage from "@/pages/EmployeesPage"; // Path to your EmployeesPage.jsx
-// Placeholder for future pages
-// import CreateEmployeePage from "./pages/CreateEmployeePage";
-import ViewEmployeePage from "./pages/ViewEmployeePage";
-import EditEmployeePage from "./pages/EditEmployeePage";
+import LoginPage from "@/pages/LoginPage"; 
+import HomePage from "@/pages/HomePage"; 
+import EmployeesPage from "@/pages/employee/EmployeesPage"; 
+import ViewEmployeePage from "@/pages/employee/ViewEmployeePage";
+import EditEmployeePage from "@/pages/employee/EditEmployeePage";
 
 // Layout
 import MainLayout from "./layouts/MainLayout"; // Path to your MainLayout.jsx

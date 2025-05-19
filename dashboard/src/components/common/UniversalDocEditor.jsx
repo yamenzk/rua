@@ -340,7 +340,6 @@ const UniversalDocEditor = ({
             severity: "info",
             summary: "Uploading",
             detail: `Uploading ${selectedFileObject.name}...`,
-            sticky: true,
             key: uniqueToastKey,
           });
           // Use sdkUploadFile here
@@ -371,7 +370,6 @@ const UniversalDocEditor = ({
               sdkUploadError?.message ||
               e.message ||
               `Failed to upload ${selectedFileObject.name}`,
-            sticky: true,
           });
           console.error("Direct file upload error:", e, sdkUploadError);
           resetSdkUpload();
@@ -452,7 +450,6 @@ const UniversalDocEditor = ({
           severity: "info",
           summary: "Attaching Files",
           detail: "Please wait...",
-          sticky: true,
         });
         const successfullyAttachedFilesData = {};
 
@@ -484,7 +481,6 @@ const UniversalDocEditor = ({
               severity: "error",
               summary: `Attachment Failed: ${fileObject.name}`,
               detail: sdkUploadError?.message || uploadError.message,
-              sticky: true,
             });
             resetSdkUpload();
           }

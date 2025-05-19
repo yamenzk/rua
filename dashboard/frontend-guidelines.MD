@@ -1,257 +1,352 @@
-# Rua App: Frontend Development Guidelines
+Okay, this is a substantial but very valuable task. Based on the `UniversalDocEditor.jsx` code you've provided, and making educated inferences about the other modules you've listed, I can outline a comprehensive set of Frontend Development Guidelines.
 
-**Version: 2.1**
-**Last Updated:** May 18, 2025
+This document aims to help developers understand the architecture, key components, and how they collaborate to create a dynamic, schema-driven frontend for your Frappe backend.
 
-This document outlines the established preferences and guidelines for frontend development in the Rua application. It focuses on PrimeReact components, styling with Tailwind CSS, layout principles, state management strategies, the detailed usage of the `frappe-react-sdk`, and documentation for core reusable UI components.
+```markdown
+# Frontend Development Guidelines
 
-## 1. Core Philosophy & Design Language
+## 1. Introduction & Philosophy
 
-* **Overall Aesthetic:** Modern, clean, professional, and user-centric. Interfaces should be intuitive and visually appealing.
-* **Branding:**
-    * **Logo:** The "Rua" company logo (`logo.png`) is to be used on the login page and other key branding touchpoints (e.g., application header if applicable). Ensure `favicon.png` is used for the browser icon.
-    * **Company Name:** Use "Rua" for general display. For formal contexts like page footers, use the full legal name: "Rua Company Glass & Aluminum L.L.C O.P.C".
-* **Accessibility:** Strive to meet WCAG AA standards where feasible. Ensure good color contrast, keyboard navigability, and semantic HTML.
+Welcome to the frontend development guide for our Frappe-integrated React application. Our frontend is built with React, utilizing PrimeReact for UI components and the Frappe React SDK for seamless backend communication.
 
-## 2. Styling, Theming, and Layout
+**Core Principles:**
 
-### 2.1. Theming & Color Palette
-* **PrimeReact Theme:** The application uses the "Lara Amber" PrimeReact theme family. Theme switching between light (`lara-light-amber`) and dark (`lara-dark-amber`) modes should be supported.
-* **Backgrounds:**
-    * Page backgrounds should primarily be dictated by the active PrimeReact theme's `--surface-ground` CSS variable. Avoid hardcoding page background colors with Tailwind utilities like `bg-gray-100` to allow seamless theme switching.
-    * Card backgrounds and similar surfaces should use the theme's `--surface-card` variable.
-* **Text Colors:**
-    * Utilize PrimeReact's theme-aware CSS variables for text, mapped to Tailwind utilities (see Section 2.3).
-        * Primary text: `text-text-color`
-        * Secondary/subtle text: `text-text-color-secondary`
-        * Adjust opacity (e.g., `opacity-75`) for finer control over subtlety.
-* **Accent Colors:** The Lara Amber theme's amber shades (available via `primary-color` and `primary-50` through `primary-900` in the Tailwind config) should be used for primary actions, highlights, and interactive elements to maintain brand consistency.
+* **Schema-Driven UI:** A cornerstone of our architecture. Forms, viewers, and even tables are dynamically rendered based on Frappe DocType schemas. This minimizes frontend code duplication when backend models change and ensures consistency.
+* **Reusability:** Components are designed to be reusable across different DocTypes and contexts (e.g., `UniversalDocEditor`, `UniversalDocViewer`, `DynamicDataTable`).
+* **Separation of Concerns:** Logic is modularized into specific components and utility functions (e.g., schema parsing, field rendering, API calls, data formatting) to enhance maintainability and testability.
+* **Developer Experience:** Leveraging the power of the Frappe React SDK simplifies data fetching, mutations, and real-time updates.
 
-### 2.2. Layout & Structure
-* **Responsiveness:** Design for a fully responsive experience using Tailwind CSS's responsive prefixes (`sm:`, `md:`, `lg:`, etc.).
-* **Structure:** Employ Tailwind CSS flexbox (`flex`) and grid (`grid`) utilities for page and component layouts.
-* **Spacing:** Maintain consistent spacing using Tailwind's spacing scale.
-* **Containers:** PrimeReact `Card` components are preferred for grouping related content and actions.
+## 2. Core Technologies & Libraries
 
-### 2.3. Tailwind CSS Configuration
-* Tailwind CSS is used for utility-first styling and complements PrimeReact.
-* **Theme Integration:** The `tailwind.config.js` file is extended to include PrimeReact's theme CSS variables, allowing Tailwind utility classes to use theme-aware colors.
+* **React (`react`):** The fundamental library for building user interfaces.
+* **Frappe React SDK (`frappe-react-sdk`):** Provides hooks and utilities for interacting with your Frappe backend. Key hooks include:
+    * `useFrappeGetDoc`: Fetches a single document.
+    * `useFrappeGetDocList`: Fetches a list of documents (not explicitly in `UniversalDocEditor` but commonly used with `DynamicDataTable`).
+    * `useFrappeUpdateDoc`: Updates an existing document.
+    * `useFrappeCreateDoc`: Creates a new document.
+    * `useFrappeDeleteDoc`: Deletes a document.
+    * `useFrappeGetCall`: Calls a whitelisted Frappe GET API method.
+    * `useFrappePostCall`: Calls a whitelisted Frappe POST API method (can be used for `frappe.call` to any whitelisted Python method).
+    * `useFrappeFileUpload`: Handles file uploads to Frappe.
+* **PrimeReact (`primereact`):** Our chosen UI component library, offering a rich set of customizable components.
+* **React Router (`react-router-dom`):** For client-side routing and navigation.
+* **Date Util (`date-fns` or similar):** Likely used within formatters for robust date/time manipulation (inferred).
 
+## 3. Project Structure (Inferred & Recommended)
+
+A typical project structure that aligns with the observed patterns:
+
+```
+
+src/
+├── assets/                  \# Static assets like images, global styles
+├── components/              \# Reusable UI components
+│   ├── common/              \# Generic components (e.g., FileUploadDialog, ConfirmDialog, AppBreadcrumb)
+│   ├── document/            \# DocType specific components (e.g., UniversalDocEditor, UniversalDocViewer)
+│   ├── layout/              \# Layout components (e.g., AppShell, Sidebar, UniversalLayoutRenderer)
+│   └── specific\_doctype/    \# Custom components for a particular DocType if needed
+├── contexts/                \# React Contexts (e.g., LayoutContext, AuthContext)
+├── hooks/                   \# Custom React hooks
+├── pages/                   \# Top-level components representing application pages
+├── services/                \# API call definitions (if not directly using SDK hooks in components)
+├── store/                   \# State management (e.g., Zustand, Redux - if Frappe SDK cache is insufficient)
+├── types/                   \# TypeScript type definitions
+├── utils/                   \# Utility functions and modules
+│   ├── FieldManager.jsx     \# Maps Frappe fieldtypes to React components
+│   ├── FormFieldAdapter.js  \# Adapts Frappe field schema to component props
+│   ├── formatters.jsx       \# Data formatting functions
+│   ├── schemaUtils.js       \# DocType schema manipulation utilities
+│   └── validators.js        \# Custom validation functions
+├── App.jsx                  \# Main application component, router setup
+└── main.jsx                 \# Application entry point
+
+````
+
+## 4. Key Architectural Concepts & Components
+
+Our frontend heavily relies on dynamically interpreting Frappe DocType schemas to render UI. This makes the system flexible and reduces the need for manual UI changes when DocTypes are modified.
+
+### 4.1. Schema-Driven UI Generation
+
+* **Fetching Doctype Schemas:** Custom Frappe API methods (e.g., `rua.apiv2.get_doctype_form_schema` used in `UniversalDocEditor`) are called to fetch a comprehensive schema for a given DocType. This schema includes fields, layout information, permissions, and other metadata.
+* **`formSchema` Object:** This object, once fetched, becomes the single source of truth for rendering forms and viewers.
+
+### 4.2. Core Component: `UniversalDocEditor.jsx`
+
+* **Purpose:** A versatile component for creating and editing any Frappe document dynamically based on its DocType schema.
+* **Key Features:**
+    * **Mode Detection:** Handles both "create" (`!docname`) and "edit" (`docname` provided) modes.
+    * **Schema & Data Loading:** Fetches the DocType schema using `useFrappeGetCall` and document data (for edit mode) using `useFrappeGetDoc`.
+    * **Default Values:** Applies default values from the schema, including dynamic defaults like "Today" or "Now", using `applySchemaDefaults`.
+    * **Form Data Management:** Manages form state (`formData`) and input changes (`handleInputChange`) efficiently.
+    * **Validation:** Performs client-side validation based on `mandatory` fields in the schema (`validateForm`, `formErrors`).
+    * **Dynamic Field Rendering:** Delegates the rendering of individual fields via the `renderFormField` callback, which uses `FieldManager` and `FormFieldAdapter`.
+    * **Layout Rendering:** Uses `UniversalLayoutRenderer` to render the overall form structure (tabs, sections, columns).
+    * **Link Field Searching:** Implements `handleLinkSearch` for dynamic server-side searches for "Link" fields, with special handling for the "User" DocType (using `frappe.client.get_list` vs. `frappe.desk.search.search_link`).
+    * **File Attachments:**
+        * Integrates `FileUploadDialog.jsx` for selecting files.
+        * Uses `useFrappeFileUpload` (`sdkUploadFile`) for uploading.
+        * Handles "pending files" for new documents (files uploaded after the document is created).
+        * Updates form data with file URLs upon successful upload.
+    * **Submission Logic (`handleSubmit`):**
+        * Performs validation.
+        * Calls `createDoc` or `updateDoc` from `frappe-react-sdk`.
+        * Handles sequential upload of pending files after document creation.
+        * Provides user feedback via `Toast` notifications.
+    * **Page Context:** Updates page title using `useLayout` context.
+* **Interactions:**
+    * `UniversalLayoutRenderer`: For rendering the form's structure.
+    * `renderFormField` (internal callback): For rendering each field.
+    * `FieldManager`, `FormFieldAdapter`, `schemaUtils`, `formatters`: For field-level logic and presentation.
+    * `FileUploadDialog`: For file selection.
+    * Frappe React SDK Hooks: For all backend communication.
+
+### 4.3. `UniversalDocViewer.jsx` (Inferred)
+
+* **Purpose:** To display Frappe documents in a read-only format, driven by the DocType schema.
+* **Likely Features:**
+    * Similar schema loading mechanism as `UniversalDocEditor`.
+    * Uses `UniversalLayoutRenderer` for layout.
+    * `renderFieldItem` callback would render fields in a display-only (non-interactive) mode.
+    * May not include submission logic, file upload interactions (unless displaying attachments), or extensive state management for form inputs.
+
+### 4.4. `UniversalLayoutRenderer.jsx`
+
+* **Purpose:** Renders the overall structure of a form or viewer (tabs, sections, columns, field order) based on layout information within the fetched Frappe `formSchema`.
+* **Key Props:**
+    * `formSchema`: The complete DocType schema containing layout rules.
+    * `allFieldsSchema`: The array of field definitions.
+    * `renderFieldItem`: A callback function (like `renderFormField` in `UniversalDocEditor`) that this component calls to render each individual field within the layout.
+    * `initialActiveTabIndex`, `onTabChangeCallback`: For managing tab states if the layout includes tabs.
+* **Functionality:** It parses the layout definition from the schema and iterates through it, placing fields accordingly and invoking `renderFieldItem` for each. This decouples the overall form structure from individual field rendering logic.
+
+### 4.5. `FieldManager.jsx` (via `getFieldConfig`)
+
+* **Purpose:** Acts as a central registry or configuration manager that maps Frappe fieldtypes (e.g., "Data", "Link", "Attach", "Check", "Select") to specific React components responsible for rendering them.
+* **Input:** `fieldtype` (string), `fieldname` (string, for context if needed).
+* **Output:** A configuration object, crucially containing the `formComponent` (a reference to the React component to be used for that field type).
+* **Example:**
     ```javascript
-    // tailwind.config.js (Relevant excerpt)
-    module.exports = {
-      // darkMode: 'class', // or 'media'
-      theme: {
-        extend: {
-          colors: {
-            'text-color': 'var(--text-color)',
-            'text-color-secondary': 'var(--text-color-secondary)',
-            'primary-color': 'var(--primary-color)',
-            'primary-color-text': 'var(--primary-color-text)',
-            'surface-ground': 'var(--surface-ground)',
-            'surface-card': 'var(--surface-card)',
-            // ... (include all surface, primary, and other palette colors as previously defined)
-            primary: generateColorShades('primary'), // Helper function generates 50-900
-            gray: generateColorShades('gray'),
-            // ... other palette colors
-          },
-          borderRadius: {
-            'DEFAULT': '0.5rem', // Default for `rounded` class
-            'theme': 'var(--border-radius)', // PrimeReact's specific default
-            // xl: '0.75rem' (used for login card)
-          },
-          // ... other extensions like fontFamily, boxShadow, spacing
-        },
-      },
+    // Inside FieldManager.jsx (conceptual)
+    import { InputText } from 'primereact/inputtext';
+    import { Checkbox } from 'primereact/checkbox';
+    // ... other field components
+
+    export const getFieldConfig = (fieldtype, fieldname) => {
+      switch (fieldtype) {
+        case 'Data':
+        case 'Text':
+          return { formComponent: InputText, /* other config */ };
+        case 'Check':
+          return { formComponent: Checkbox, /* other config */ };
+        // ... other fieldtypes
+        default:
+          return { formComponent: () => <div>Unsupported: {fieldtype}</div> };
+      }
     };
     ```
-    *(Ensure the `generateColorShades` helper function is present in your actual `tailwind.config.js`)*
 
-### 2.4. Border Radius
-* **Default:** A default border radius of `0.5rem` (equivalent to Tailwind's `rounded-lg`) is preferred for most elements like inputs and buttons. This is set as `borderRadius.DEFAULT` in `tailwind.config.js`.
-* **Cards:** Larger cards may use a slightly larger radius, e.g., `rounded-xl` (0.75rem).
-* Apply rounding consistently using Tailwind classes (e.g., `rounded`, `rounded-xl`).
+### 4.6. `FormFieldAdapter.js` (via `getAdaptedProps`)
 
-## 3. PrimeReact Component Usage
+* **Purpose:** A crucial adapter that translates Frappe field schema properties and the current editor's context into a props object suitable for the actual UI component chosen by `FieldManager`.
+* **Inputs:**
+    * `fieldSchema`: The schema object for the individual field (contains `fieldname`, `label`, `read_only`, `mandatory`, `options`, `description`, etc.).
+    * `adapterContext`: An object containing:
+        * `formData`: The current state of the form.
+        * `handleInputChange`: Callback to update form data.
+        * `linkSuggestions`: Suggestions for "Link" fields.
+        * `handleLinkSearch`: Callback to trigger link searches.
+        * `isCreateMode`: Boolean indicating if the form is in create mode.
+        * `toast`: Reference to the Toast component.
+        * `openUploadModal`: Callback to open the file upload dialog.
+* **Output:** A props object (`componentSpecificProps`) to be spread onto the UI component. This includes adapting `onChange` handlers, providing `value`/`checked` attributes from `formData`, setting `disabled` states, `placeholder` text, and any other props required by the specific PrimeReact or custom input component.
+* **Example Task:** For a "Link" field, `getAdaptedProps` would prepare props for an `AutoComplete` component, including the `suggestions` from `linkSuggestions`, the `completeMethod` wired to `handleLinkSearch`, and the `onChange` handler.
 
-* **Primary UI Library:** Leverage PrimeReact components extensively.
-* **Styling Components:**
-    1.  Use built-in props first.
-    2.  Apply Tailwind CSS utility classes via `className` for layout and minor style adjustments.
-    3.  Use the `pt` (PassThrough) prop for fine-grained control over internal elements if necessary, but with caution to avoid excessive theme overrides.
-* **Input Fields (`InputText`, `Password`, `InputNumber`, `Calendar`, `Dropdown`, `AutoComplete`, `Editor`, `ColorPicker`, `Checkbox`, `InputSwitch`):**
-    * Use standard `placeholder` attributes.
-    * For inputs with icons: Utilize `<IconField iconPosition="left"><InputIcon className="pi pi-..." /><InputText ... /></IconField>`.
-    * `Password` component: Use `toggleMask` prop and `feedback={false}`. Style the internal input using `inputClassName="w-full rounded-lg"`.
-    * Consider `readOnly` and validation props as needed.
-* **Buttons (`Button`):**
-    * Primary action buttons should reflect the theme's primary color (amber).
-    * Include icons where they enhance clarity (`icon="pi pi-..."`).
-    * Always provide user feedback for actions using the `loading` prop.
-* **DataTable:** See Section 6.1 for `DynamicDataTable` component guidelines.
+### 4.7. `schemaUtils.js`
 
-## 4. State Management
+* **Purpose:** A collection of utility functions for processing and manipulating Frappe DocType schemas.
+* **`parseDescription(descriptionString)`:**
+    * Parses JSON data often embedded within a field's `description` property in Frappe.
+    * This allows storing extra metadata like `tooltip` text or `link_filters` (as seen in `UniversalDocEditor`).
+    * Returns a structured object (e.g., `{ tooltip: "...", link_filters: [["fieldname", "op", "value"]] }`).
+* **`schemaToColumns(fieldsSchemaArray)` (Inferred):**
+    * Takes an array of field schema objects (e.g., `formSchema.fields`).
+    * Transforms this into a column definition array suitable for data table components like PrimeReact's `DataTable` (used within `DynamicDataTable.jsx`).
+    * Maps `label` to column header, `fieldname` to data key, and potentially handles formatting or custom cell rendering based on `fieldtype`.
 
-* **Server State:** **SWR (via `frappe-react-sdk`) is the primary solution for managing server state.** This includes fetching, caching, revalidating, and updating data that originates from the Frappe backend. Its built-in features should be leveraged to handle data fetching lifecycles.
-* **Client-Side State:**
-    * **Local Component State:** For state that is confined to a single component, use React's `useState` or `useReducer`.
-    * **Shared/Global Client State:**
-        1.  **React Context API:** For simple global UI state that doesn't update with high frequency (e.g., theme toggles, basic user preferences not tied to backend, like `LayoutContext` for page titles).
-        2.  **Lightweight Store (e.g., Zustand):** If Context becomes insufficient, a minimal store like Zustand can be considered. Avoid if not strictly necessary.
-    * **Avoid Redux:** Generally not needed given SWR's capabilities.
-* **User Preferences Persistence**:
-    * UI state specific to a component instance (e.g., column order, visibility, pagination settings in `DynamicDataTable`) should be persisted using browser cookies.
-    * Utilize utility functions in `src/utils/cookies.jsx` (`setCookie`, `getCookie`, `eraseCookie`).
-    * A `uniqueTableKey` prop should be passed to components like `DynamicDataTable` to create distinct cookie names for each table instance, allowing individual preference storage.
+### 4.8. `DynamicDataTable.jsx` (Inferred)
 
-## 5. Frappe React SDK Usage Guide (`frappe-react-sdk`)
+* **Purpose:** A reusable component for displaying lists of Frappe documents or child table data in a tabular format.
+* **Likely Props:**
+    * `doctypeName`: The DocType to fetch and display.
+    * `filters`: Frappe filters to apply when fetching data.
+    * `fields` or `columns`: Either a list of fieldnames to display or a pre-defined column configuration (possibly generated by `schemaToColumns`).
+    * `parentDoc` / `parentField`: For displaying child table data.
+* **Functionality:**
+    * Fetches data using `useFrappeGetDocList` (or a similar Frappe API call).
+    * Uses PrimeReact's `DataTable` component for rendering.
+    * May use `schemaToColumns` from `schemaUtils.js` to dynamically generate column configurations if not explicitly provided.
+    * Handles features like pagination, sorting, and potentially row actions (view, edit, delete).
 
-The `frappe-react-sdk` integrates SWR for robust data handling.
+### 4.9. File Handling: `FileUploadDialog.jsx` & `useFrappeFileUpload`
 
-### 5.1. Setup (`FrappeProvider`)
-Ensure `FrappeProvider` wraps the application, configured with `url`, `siteName`, `enableSocket: true`, and `socketPort` as appropriate for realtime functionality.
+* **Workflow:**
+    1.  User interacts with an "Attach" field or button in `UniversalDocEditor`.
+    2.  `openUploadModal(fieldname)` is called, setting state to show `FileUploadDialog`.
+    3.  `FileUploadDialog` handles the browser's file selection UI.
+    4.  On file selection, `onFileSelect(fileObject, targetFieldname)` (which is `handleFileSelectedInDialog` in `UniversalDocEditor`) is invoked.
+    5.  **If document already exists (edit mode):**
+        * `handleFileSelectedInDialog` directly calls `sdkUploadFile` (from `useFrappeFileUpload`) with the file and necessary arguments (`doctype`, `docname`, `fieldname`, `isPrivate`, `folder`).
+        * On success, `handleInputChange` updates `formData` with the `file_url` returned by the SDK.
+        * Progress and error handling are managed by `useFrappeFileUpload` and displayed via `Toast`.
+    6.  **If new document (create mode):**
+        * The `fileObject` is stored in `pendingFiles` state, keyed by `fieldname`.
+        * `handleInputChange` updates `formData` with a placeholder like `"Pending: <filename>"`.
+        * After the main document is successfully created via `createDoc` (in `handleSubmit`), the code iterates through `pendingFiles`.
+        * For each pending file, `sdkUploadFile` is called to attach it to the newly created document.
+        * If these uploads are successful and it was a new document, an `updateDoc` call might be needed to save the file URLs back to the main document fields if they are direct Attach fields (not just attachments). (The current `UniversalDocEditor` code does this by collecting `successfullyAttachedFilesData` and calling `updateDoc`).
 
-### 5.2. Authentication (`useFrappeAuth`)
-Manages user authentication state.
-* **Login**: Due to SDK limitations, a manual `Workspace` is used. After successful manual login, call `getUserCookie()` and `await updateCurrentUser()` to sync SDK state.
-* **Logout**: Use `await logout()`.
-* `currentUser`, `isLoading`, `error` are key state variables.
+### 4.10. `formatters.jsx`
 
-### 5.3. Data Fetching (Docs, Lists, Counts - SWR-based)
-* Single Documents: `useFrappeGetDoc("Doctype", "docname", { /* SWR options */ })`
-* Document Lists: `useFrappeGetDocList("Doctype", { fields: ['*'], limit: 0, ...otherFetchArgs }, { /* SWR options */ })`. For `DynamicDataTable`, initially fetch all (`limit: 0`) for client-side operations; server-side pagination is a future enhancement.
-* Document Count: `useFrappeGetDocCount("Doctype", [["field", "=", "value"]])`
+* **Purpose:** Provides utility functions for formatting data for display or for transmission to the server.
+* **Examples from `UniversalDocEditor`:**
+    * `formatServerDate(new Date())`: Converts a JavaScript Date object to a string format expected by the Frappe backend (e.g., "YYYY-MM-DD").
+    * `formatServerTime(new Date())`: For time values.
+    * `formatServerDateTime(new Date())`: For datetime values.
+* **Other potential uses:** Formatting currency, numbers, or creating display-friendly versions of internal status codes.
 
-### 5.4. Data Mutation (Create, Update, Delete - Stateful Hooks)
-* Create: `useFrappeCreateDoc()` -> `await createDoc("Doctype", { ...data })`
-* Update: `useFrappeUpdateDoc()` -> `await updateDoc("Doctype", "docname", { ...updatedData })`
-* Delete: `useFrappeDeleteDoc()` -> `await deleteDoc("Doctype", "docname")`
+### 4.11. Constants
 
-### 5.5. Generic API Calls
-Refer to SDK documentation.
+* **Purpose:** Store application-wide static values.
+* **Examples (Inferred):**
+    * API endpoint paths (if not using SDK's ability to infer).
+    * Default query parameters (e.g., page lengths).
+    * UI constants (e.g., animation timings, debounce delays).
+    * Special Frappe doctype/field names.
+* **Location:** Typically `src/constants/index.js` or similar.
 
-### 5.6. File Uploads (`useFrappeFileUpload`)
-* Provides `upload`, `progress`, etc.
-* **Important for New Documents:** The main document must be created (e.g., using `useFrappeCreateDoc`) and its `docname` obtained *before* calling `file.uploadFile` with `doctype` and `docname` in `fileArgs`. This usually involves a two-step save process or disabling file attachment until the main document is saved once.
+### 4.12. Cookies
 
-### 5.7. Searching (`useSearch` - Frappe v15+)
-Refer to SDK documentation.
+* **Purpose:** While not explicitly detailed in `UniversalDocEditor.jsx`, cookies are fundamental for web applications.
+* **Frappe Context:** Frappe itself uses cookies (e.g., `sid` for session ID) for authentication and session management. The `frappe-react-sdk` likely relies on these cookies being handled correctly by the browser and Frappe backend.
+* **Application Use:** The frontend application might use cookies for:
+    * Storing user preferences (e.g., theme, language - though `localStorage` is often preferred for this).
+    * Session-related flags if needed beyond Frappe's `sid`.
+* **Management:** Use a library like `js-cookie` if direct cookie manipulation is needed, or rely on browser handling for Frappe's session cookies.
 
-### 5.8. Realtime Events (Socket.IO)
-* **Primary Method for List Views**: Use `useFrappeDocTypeEventListener(doctype, callback)` to listen for standard `list_update` events when documents of a specific `doctype` are created, updated, or deleted on the server. The callback should typically call `mutate()` from the corresponding `useFrappeGetDocList` hook to re-fetch data.
-    ```javascript
-    // Example in a component using useFrappeGetDocList
-    const { data, mutate } = useFrappeGetDocList(doctype, ...);
-    const handleDocTypeUpdate = useCallback((eventData) => {
-      if (eventData.doctype === doctype) {
-        mutate();
-      }
-    }, [doctype, mutate]);
-    useFrappeDocTypeEventListener(doctype, handleDocTypeUpdate);
-    ```
-* **Custom Events**: `useFrappeEventListener('custom_event_name', callback)` can still be used for scenarios not covered by standard DocType events.
-* Ensure `FrappeProvider` has `enableSocket: true` and correct `socketPort`.
+## 5. State Management
 
-### 5.9. SWR - Key Principles
-* Server State Authority, Automatic Revalidation (on focus, reconnect, configurable interval), Caching, `mutate` function for programmatic re-fetches or optimistic updates.
+* **Component-Level State (`useState`, `useReducer`):** Used for managing UI state specific to individual components (e.g., `formData`, `formErrors`, `activeTabIndex`, `isFileDialogVisible` in `UniversalDocEditor`).
+* **React Context (`useContext`):** For sharing global or layout-specific state that doesn't change too frequently (e.g., `LayoutContext` for `pageTitle`, potentially theme or user information).
+* **Frappe React SDK:** Manages server state, caching, and provides hooks for mutations. It often reduces the need for complex client-side state management solutions like Redux or Zustand for server data.
 
-## 6. Core UI Components & Utilities
+## 6. Working with Frappe Doctype Schemas
 
-This section details reusable components and utilities built for the Rua application.
+Understanding the structure of the schema object received from Frappe (e.g., via `rua.apiv2.get_doctype_form_schema`) is crucial. Key properties per field include:
 
-### 6.1. `DynamicDataTable.jsx`
-* **Purpose**: A highly configurable and reusable PrimeReact DataTable wrapper for displaying lists of Frappe doctypes.
-* **Location**: `dashboard/src/components/common/DynamicDataTable.jsx`
-* **Key Props**:
-    * `doctype: string` (Required): The Frappe Doctype name to display.
-    * `columnsConfig: ColumnConfig[]` (Required): Array of column definition objects. See below for `ColumnConfig` structure.
-    * `uniqueTableKey: string` (Required): A unique string key for this table instance (e.g., "rua_employee_list"). Used for persisting user preferences (column order, visibility, pagination, sorting) in cookies.
-    * `WorkspaceArgs?: object`: Initial arguments for `useFrappeGetDocList` (e.g., filters, orderBy). Defaults to `fields: ['*'], limit: 0`.
-    * `onRowClick?: (rowData) => void`: Callback when a row is clicked.
-    * `contextMenuItemsModel?: MenuItem[]`: PrimeReact ContextMenu model for row actions.
-    * `globalFilterFields?: string[]`: Array of fieldnames to include in global search (default: `['name']`).
-    * `headerActions?: JSX.Element`: Custom JSX (e.g., "Create New" button) to render in the table header.
-    * `enableColumnReordering?: boolean`: Enables/disables column drag-and-drop reordering (default: `true`).
-    * `showColumnToggle?: boolean`: Shows/hides the column visibility toggler (default: `true`).
-    * `showPaginator?: boolean`: (default: `true`)
-    * `initialRows?: number`: (default: `10`)
-    * `rowsPerPageOptions?: number[]`: (default: `[10, 25, 50, 100]`)
-    * `dataKey?: string`: Unique key for rows (default: `'name'`).
-* **Features**:
-    * Dynamic column rendering based on `columnsConfig` and `FieldManager`.
-    * Client-side sorting, pagination, global filtering, and per-column filtering. (Server-side is a future enhancement).
-    * Column visibility toggling using `MultiSelect`.
-    * Column reordering (drag and drop).
-    * User preference persistence for visible columns, column order, pagination (current page, rows per page), and sort state via cookies, scoped by `uniqueTableKey`.
-    * Optional row context menu.
-    * Realtime updates via `useFrappeDocTypeEventListener` (refreshes data on backend changes to the specified `doctype`).
-    * Customizable header actions.
-* **`ColumnConfig` Object Structure (for `columnsConfig` prop)**:
-    ```typescript
-    interface ColumnConfig {
-      fieldname: string;      // Frappe fieldname
-      header: string;         // Column header text
-      fieldtype: string;      // Frappe fieldtype (e.g., "Data", "Link", "Attach Image")
-      sortable?: boolean;     // Default: true for sortable types via FieldManager
-      filterable?: boolean;   // Default: true for filterable types via FieldManager
-      defaultVisible?: boolean; // Default: true
-      options?: any[] | string; // For Select (array of options) or Link (linked Doctype name string)
-      filterOptions?: { label: string, value: any }[]; // Pre-fetched options for Link/Select filters in the table
-      displayProps?: {      // Props passed to FieldManager for custom rendering
-        asChip?: boolean;
-        chipColors?: { [value: string]: string }; // e.g., { "Open": "info", "Closed": "success" }
-        chipRounded?: boolean;
-        asAvatar?: boolean;
-        iconOnly?: boolean; // For Attach field, to show only an icon
-        precision?: number; // For Float fields
-      };
-      bodyTemplate?: (rowData, formatters) => JSX.Element | string; // Optional custom cell body renderer
-      filterElementTemplate?: (filterProps, currentOptions) => JSX.Element; // Optional custom filter element
-      minWidth?: string;      // e.g., '150px'
-      style?: object;         // Custom style for the column
-      showFilterMatchModes?: boolean; // Override default
-      filterMatchModeOptions?: any[]; // Override default PrimeReact options
-    }
-    ```
+* `fieldname`: The unique ID of the field.
+* `fieldtype`: Determines the kind of data and often the UI control (e.g., "Data", "Link", "Select", "Date", "Attach", "Table").
+* `label`: The display label for the field.
+* `mandatory`: Boolean, if the field is required.
+* `read_only`: Boolean, if the field cannot be edited.
+* `hidden`: Boolean, if the field should not be visible.
+* `default_value`: A default value for the field when creating a new document.
+* `options`: Context-dependent. For "Select" fields, it's the list of choices. For "Link" fields, it's the target DocType.
+* `description`: Can contain plain text tooltips or, as used in this project, JSON strings for richer metadata like `link_filters`.
+* `reqd`: Often an alternative or synonym for `mandatory`.
+* `no_copy`: If the field value should not be copied when duplicating a document.
+* **Layout Information:** The schema also contains directives for how fields should be arranged in sections, columns, and tabs. `UniversalLayoutRenderer` interprets this.
 
-### 6.2. `FieldManager.jsx`
-* **Purpose**: Provides a centralized configuration for mapping Frappe fieldtypes to React components and defining their display logic in tables (cells and filters).
-* **Location**: `dashboard/src/utils/FieldManager.jsx`
-* **Key Exports**:
-    * `fieldTypeConfigurations: object`: A configuration map where keys are Frappe fieldtypes (e.g., "Attach", "Link", "Currency"). Each value is an object specifying:
-        * `formComponent`: The React component (usually a PrimeReact component) for rendering the field in a form.
-        * `tableBodyComponent: (rowData, fieldname, displayProps, formatters) => JSX.Element | string`: A function that returns the JSX/string for rendering the field in a DataTable cell.
-        * `tableFilterElement: (colConfig, fieldname, filterValue, filterApplyCallback, filterOptions) => JSX.Element`: A function that returns the JSX for the filter input for that column type.
-        * `sortable: boolean`: Default sortable status.
-        * `filterable: boolean`: Default filterable status.
-        * `dataType: string`: PrimeReact DataTable `dataType` (e.g., "text", "numeric", "date", "boolean").
-    * `getFieldConfig(fieldType: string, fieldname?: string): object`: A function that returns the appropriate configuration from `fieldTypeConfigurations`. It includes special handling (e.g., for a "Data" field named "nationality" it can return a specific "Nationality" configuration). Defaults to "Data" field config if a specific type is not found.
-* **Dependencies**: Uses components from PrimeReact and functions from `formatters.jsx`.
-* **Extensibility**: Designed to be easily extended with new field types or custom handling for specific fieldnames.
+## 7. API Interaction (Frappe React SDK)
 
-### 6.3. `formatters.jsx`
-* **Purpose**: Contains utility functions for formatting data for display.
-* **Location**: `dashboard/src/utils/formatters.jsx`
-* **Key Functions**:
-    * `formatDisplayDateTime(dateInput)`: Formats to "DD/MM/YYYY HH:MM:SS" (en-AE).
-    * `formatServerDateTime(dateInput)`: Formats to "YYYY-MM-DD HH:MM:SS".
-    * `formatDisplayDate(dateInput)`: Formats to "DD/MM/YYYY" (en-AE).
-    * `formatServerDate(dateInput)`: Formats to "YYYY-MM-DD".
-    * `formatDisplayTime(dateInput, includeSeconds?)`: Formats to "HH:MM(:SS)" (en-AE).
-    * `formatServerTime(dateInput)`: Formats to "HH:MM:SS".
-    * `formatCurrencyAED(value)`: Formats a number to AED currency string, appending an SVG for the AED symbol (`public/aed.svg`). Returns JSX.
-    * `formatDuration(totalSeconds)`: Converts seconds to "Xh Ym Zs" string.
-    * `parseDuration(durationString)`: (Optional) Converts "Xh Ym Zs" string to seconds.
+The `frappe-react-sdk` is the primary way to interact with the Frappe backend.
 
-### 6.4. Common Dialogs
-* **`ConfirmDialog.jsx`**:
-    * **Location**: `dashboard/src/components/common/ConfirmDialog.jsx`
-    * **Purpose**: A reusable modal dialog for confirming actions, especially destructive ones. Supports an optional input field where the user must type a specific confirmation text.
-* **Attachment Dialog (Conceptual)**:
-    * A shared dialog should be created for handling file/image uploads.
-    * This dialog would be triggered by form fields of type "Attach" or "Attach Image".
-    * It should encapsulate the PrimeReact `FileUpload` component (in custom mode) and use `frappe-react-sdk`'s `file.uploadFile` method.
-    * It must handle the case for new documents: ensure the main document is saved and `docname` is available before attempting to link the uploaded file.
+* **Queries:** Use `useFrappeGetDoc` for single documents and `useFrappeGetDocList` for lists. `useFrappeGetCall` is for custom GET API endpoints.
+* **Mutations:** Use `useFrappeCreateDoc`, `useFrappeUpdateDoc`, `useFrappeDeleteDoc` for CRUD operations. `useFrappePostCall` is for custom methods that modify data or perform actions (often wrapping `frappe.call`).
+* **File Uploads:** `useFrappeFileUpload` provides `upload` function, progress tracking, and error/loading states.
+* **Automatic Re-fetching & Caching:** The SDK handles caching and can automatically re-fetch data after mutations, keeping the UI consistent.
+* **Error Handling & Loading States:** All SDK hooks return `error` and `loading` (or similar) states, which must be handled in the UI to provide feedback to the user (e.g., displaying spinners or error messages).
 
-## 7. Code Quality and Conventions
-Follow standard React best practices (functional components, hooks). Keep components small and focused on a single responsibility.
+## 8. UI Components (PrimeReact)
+
+* PrimeReact is the standard UI library. Familiarize yourself with its documentation and common components: `Button`, `Card`, `InputText`, `Dropdown`, `AutoComplete`, `Checkbox`, `Calendar`, `FileUpload`, `Toast`, `ProgressSpinner`, `Message`, `Dialog`, `DataTable`, etc.
+* Custom styling should be applied consistently, possibly through a theme file or utility CSS classes.
+* When a PrimeReact component doesn't perfectly fit, consider wrapping it in a custom component to adapt its API or add specific behaviors before creating a new component from scratch.
+
+## 9. Adding New Features / Modifying Existing Ones
+
+### 9.1. Adding a New Field Type to Forms (Schema-Driven)
+
+1.  **Frappe Backend:** Define the new field in the relevant Frappe DocType, specifying its `fieldname`, `fieldtype`, `label`, and other properties.
+2.  **`FieldManager.jsx` (`getFieldConfig`):**
+    * Add a case for the new `fieldtype`.
+    * Map it to an existing or new React component (e.g., a PrimeReact component or a custom one).
+3.  **React Component (if new):**
+    * Create the React component that will render this field type. It should accept props like `value`, `onChange`, `disabled`, `placeholder`, etc.
+4.  **`FormFieldAdapter.js` (`getAdaptedProps`):**
+    * If the new component requires special props derived from the field schema or form context, update `getAdaptedProps` to provide them. For many standard input types, existing adaptations might suffice.
+5.  **Schema Delivery:** Ensure your schema-fetching API (e.g., `rua.apiv2.get_doctype_form_schema`) includes this new field and its properties.
+6.  **Testing:** The `UniversalDocEditor` and `UniversalDocViewer` should now automatically render this new field type based on the schema.
+
+### 9.2. Creating a New Page with a Dynamic Form/Viewer
+
+1.  Create a new React component for the page.
+2.  Inside this page component, use `<UniversalDocEditor doctypeName="YourDocType" ... />` or `<UniversalDocViewer doctypeName="YourDocType" ... />`.
+3.  Pass the required `doctypeName` and, for editing/viewing an existing document, the `docname`.
+4.  Set up routing to this new page.
+
+### 9.3. Adding a New Data Table Display
+
+1.  Use the `DynamicDataTable.jsx` component.
+2.  Provide essential props:
+    * `doctypeName`: The DocType for the table.
+    * Optional: `filters` (Frappe filters), `columns` (if you want to manually define columns instead of relying purely on `schemaToColumns`).
+3.  `DynamicDataTable` will handle fetching data and rendering the table. If it uses `schemaToColumns`, ensure that utility correctly maps your desired fields to table columns.
+
+## 10. Best Practices & Conventions
+
+* **Naming Conventions:**
+    * Components: `PascalCase` (e.g., `UniversalDocEditor.jsx`).
+    * Functions/Variables: `camelCase` (e.g., `handleInputChange`).
+    * CSS classes: `kebab-case` or follow a chosen methodology like BEM.
+* **Code Style:** Use Prettier and ESLint with a shared configuration to maintain consistent code formatting and catch potential errors.
+* **Error Handling:**
+    * Always check for `loading` and `error` states from Frappe React SDK hooks and display appropriate UI feedback.
+    * Use `try...catch` blocks for asynchronous operations.
+    * Display user-friendly error messages using `Toast` or inline `Message` components.
+* **Accessibility (A11y):**
+    * Use semantic HTML.
+    * Ensure form fields have associated labels (`htmlFor`).
+    * Manage focus appropriately, especially in modals and dynamic content.
+    * Use ARIA attributes where necessary.
+* **Testing:** (Outline, specific tools may vary)
+    * Unit tests for utility functions (`formatters.jsx`, `schemaUtils.js`).
+    * Component tests for individual UI components, especially those with complex logic.
+    * Integration tests for workflows involving multiple components and API calls.
+* **Commenting & Documentation:**
+    * Comment complex logic or non-obvious code sections.
+    * Use JSDoc for functions and components to explain their purpose, props, and return values.
+    * Keep this guidelines document updated as the frontend evolves.
+* **Immutability:** When updating state, especially objects and arrays, ensure you're creating new instances rather than mutating directly to avoid unexpected behavior with React's change detection.
+* **Performance:**
+    * Use `React.memo`, `useCallback`, `useMemo` where appropriate to prevent unnecessary re-renders, especially in lists or complex forms.
+    * Be mindful of the data fetched; only request what's needed.
+    * Debounce expensive operations like search-as-you-type API calls.
+
+## 11. Appendix: Key Utils/Components Quick Reference
+
+| Component/Util         | Purpose                                                                  | Key Inputs (Examples)                                   | Key Outputs/Effects                                       |
+| :--------------------- | :----------------------------------------------------------------------- | :------------------------------------------------------ | :-------------------------------------------------------- |
+| `UniversalDocEditor`   | Create/Edit Frappe docs dynamically based on schema.                     | `doctypeName`, `docname?`, `onSaveSuccess?`             | Renders form, handles data input, validation, submission. |
+| `UniversalDocViewer` | Display Frappe docs read-only, based on schema.                        | `doctypeName`, `docname`                                | Renders document data in a structured, non-editable way.  |
+| `UniversalLayoutRenderer`| Renders the overall layout (tabs, sections, columns) of a form/viewer. | `formSchema`, `renderFieldItem` callback              | Structures the display of fields.                       |
+| `getFieldConfig`       | Maps Frappe `fieldtype` to a React UI component.                         | `fieldtype` (string)                                    | Config object with `formComponent`.                     |
+| `getAdaptedProps`      | Translates Frappe field schema + context to props for UI components.     | `fieldSchema`, `adapterContext` (form data, handlers) | Props object for the specific field component.          |
+| `parseDescription`     | Extracts metadata (tooltip, link_filters) from field description.      | `descriptionString`                                     | Structured object (e.g., `{tooltip, link_filters}`).    |
+| `schemaToColumns`      | Converts Frappe field schemas to data table column definitions.          | `fieldsSchemaArray`                                     | Array of column objects for a `DataTable`.              |
+| `DynamicDataTable`     | Reusable component for displaying lists of Frappe documents.             | `doctypeName`, `filters?`, `columns?`                   | Renders a data table with fetched Frappe data.            |
+| `FileUploadDialog`     | Modal for file selection.                                                | `visible`, `onHide`, `onFileSelect`                     | Calls `onFileSelect` with chosen file object.           |
+| `_formatters.jsx`      | Utility functions for data formatting (dates, numbers, etc.).          | Data value, target format                               | Formatted string or data.                               |
+
+This document provides a solid foundation. As your project evolves, remember to update these guidelines to reflect new patterns, components, or architectural decisions.
+````
