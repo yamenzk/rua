@@ -1,5 +1,12 @@
-// src/components/document/UniversalDocEditor.jsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+// src/components/common/UniversalDocEditor.jsx
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useImperativeHandle, // Keep
+  forwardRef, // Keep
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useFrappeGetDoc,
@@ -7,15 +14,13 @@ import {
   useFrappeCreateDoc,
   useFrappeGetCall,
   useFrappePostCall,
-  useFrappeFileUpload, // Import the hook
+  useFrappeFileUpload,
 } from "frappe-react-sdk";
 
 // PrimeReact Components
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Toast } from "primereact/toast";
-import { Divider } from "primereact/divider";
 import { Message } from "primereact/message";
 
 // Custom Utils & Components
@@ -54,406 +59,453 @@ const applySchemaDefaults = (
       } else if (defaultValue !== undefined && defaultValue !== null) {
         formData[field.fieldname] = defaultValue;
       } else if (field.fieldtype === "Check" && defaultValue === undefined) {
-        formData[field.fieldname] = 0;
+        formData[field.fieldname] = 0; // Default Check to 0 (false)
       }
     }
   });
   return formData;
 };
 
-const UniversalDocEditor = ({
-  doctypeName,
-  docname,
-  onSaveSuccess,
-  onCancel,
-}) => {
-  const navigate = useNavigate();
-  const { setPageTitle } = useLayout();
-  const toast = useRef(null);
-  const isCreateModeInitial = !docname;
+const UniversalDocEditor = forwardRef(
+  ({ doctypeName, docname, onSaveSuccess, onSaveError }, ref) => {
+    const navigate = useNavigate(); // Not used directly, but good to keep if onCancel default behavior is needed
+    const { setPageTitle } = useLayout();
+    const toast = useRef(null);
+    const isCreateModeInitial = !docname;
 
-  const {
-    data: apiResponse,
-    isLoading: isLoadingSchema,
-    error: schemaError,
-  } = useFrappeGetCall(
-    "rua.apiv2.get_doctype_form_schema",
-    { doctype_name: doctypeName },
-    `doctype_schema_${doctypeName}`
-  );
-  const formSchema = apiResponse?.message;
+    const {
+      data: apiResponse,
+      isLoading: isLoadingSchema,
+      error: schemaError,
+    } = useFrappeGetCall(
+      "rua.apiv2.get_doctype_form_schema",
+      { doctype_name: doctypeName },
+      `doctype_schema_${doctypeName}`
+    );
+    const formSchema = apiResponse?.message;
 
-  const {
-    data: docData,
-    isLoading: isLoadingDoc,
-    error: docError,
-    mutate: mutateDoc,
-  } = useFrappeGetDoc(doctypeName, docname, {
-    fields: ["*"],
-    enabled: !isCreateModeInitial && !!formSchema && !!docname,
-  });
+    const {
+      data: docData,
+      isLoading: isLoadingDoc,
+      error: docError,
+      mutate: mutateDoc,
+    } = useFrappeGetDoc(doctypeName, docname, {
+      fields: ["*"],
+      enabled: !isCreateModeInitial && !!formSchema && !!docname,
+    });
 
-  const { updateDoc, loading: isUpdatingDoc } = useFrappeUpdateDoc();
-  const { createDoc, loading: isCreatingDoc } = useFrappeCreateDoc();
-  const {
-    upload: sdkUploadFile,
-    progress: sdkUploadProgress, // You can use this to show progress for individual uploads
-    loading: isUploadingWithHook,
-    error: sdkUploadError, // Check this for errors from the hook
-    reset: resetSdkUpload,
-  } = useFrappeFileUpload();
+    const { updateDoc, loading: isUpdatingDoc } = useFrappeUpdateDoc();
+    const { createDoc, loading: isCreatingDoc } = useFrappeCreateDoc();
+    const {
+      upload: sdkUploadFile,
+      // progress: sdkUploadProgress,
+      loading: isUploadingWithHook,
+      error: sdkUploadError,
+      reset: resetSdkUpload,
+    } = useFrappeFileUpload();
 
-  const isSaving = isCreatingDoc || isUpdatingDoc || isUploadingWithHook;
+    const isSaving = isCreatingDoc || isUpdatingDoc || isUploadingWithHook;
 
-  const [formData, setFormData] = useState({});
-  const [formErrors, setFormErrors] = useState({});
-  const [linkSuggestions, setLinkSuggestions] = useState({});
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
-  const [isFileDialogVisible, setIsFileDialogVisible] = useState(false);
-  const [fileUploadTarget, setFileUploadTarget] = useState({
-    fieldname: null,
-    currentDocnameForUpload: docname,
-  });
-  const [pendingFiles, setPendingFiles] = useState({});
+    const [formData, setFormData] = useState({});
+    const [formErrors, setFormErrors] = useState({});
+    const [linkSuggestions, setLinkSuggestions] = useState({});
+    const [activeTabIndex, setActiveTabIndex] = useState(0);
+    const [isFileDialogVisible, setIsFileDialogVisible] = useState(false);
+    const [fileUploadTarget, setFileUploadTarget] = useState({
+      fieldname: null,
+      currentDocnameForUpload: docname, // Will be updated if docname changes (e.g., after creation)
+    });
+    const [pendingFiles, setPendingFiles] = useState({});
 
-  const { call: searchLinkCall } = useFrappePostCall(
-    "frappe.desk.search.search_link"
-  );
-  const { call: getUserListCall } = useFrappePostCall("frappe.client.get_list");
+    const { call: searchLinkCall } = useFrappePostCall(
+      "frappe.desk.search.search_link"
+    );
+    const { call: getUserListCall } = useFrappePostCall(
+      "frappe.client.get_list"
+    );
 
-  useEffect(() => {
-    let titleNamePart = docname;
-    const currentDisplayData = isCreateModeInitial ? formData : docData;
-    if (currentDisplayData && formSchema?.fields) {
-      const commonTitleFields = [
-        "title",
-        "subject",
-        "employee_name",
-        "project_name",
-        "party",
-        "item_name",
-        formSchema.title_field,
-      ].filter(Boolean);
-      for (const fieldName of commonTitleFields) {
-        if (currentDisplayData[fieldName]) {
-          titleNamePart = currentDisplayData[fieldName];
-          break;
+    // Effect for setting the page title
+    useEffect(() => {
+      let titleNamePart = docname;
+      const currentDisplayData = isCreateModeInitial ? formData : docData;
+      if (currentDisplayData && formSchema?.fields) {
+        const commonTitleFields = [
+          "title",
+          "subject",
+          "employee_name",
+          "project_name",
+          "party",
+          "item_name",
+          formSchema.title_field,
+        ].filter(Boolean);
+        for (const fieldName of commonTitleFields) {
+          if (currentDisplayData[fieldName]) {
+            titleNamePart = currentDisplayData[fieldName];
+            break;
+          }
         }
       }
-    }
-    const title = isCreateModeInitial
-      ? `New ${formSchema?.label || doctypeName}`
-      : `Edit: ${titleNamePart || formSchema?.label || doctypeName}`;
-    setPageTitle(title);
-  }, [
-    isCreateModeInitial,
-    docData,
-    formData,
-    docname,
-    formSchema,
-    setPageTitle,
-    doctypeName,
-  ]);
+      const title = isCreateModeInitial
+        ? `New ${formSchema?.label || doctypeName}`
+        : `Edit: ${titleNamePart || formSchema?.label || doctypeName}`;
+      setPageTitle(title);
+    }, [
+      isCreateModeInitial,
+      docData,
+      formData,
+      docname,
+      formSchema,
+      setPageTitle,
+      doctypeName,
+    ]);
 
-  useEffect(() => {
-    if (formSchema?.fields) {
-      const initialData = isCreateModeInitial ? {} : docData || {};
-      setFormData(
-        applySchemaDefaults(
-          formSchema.fields,
-          initialData,
-          isCreateModeInitial ? "create" : "edit"
-        )
-      );
-    }
-  }, [formSchema, docData, isCreateModeInitial]);
+    // Effect for initializing form data
+    useEffect(() => {
+      if (formSchema?.fields) {
+        const initialData = isCreateModeInitial ? {} : docData || {};
+        setFormData(
+          applySchemaDefaults(
+            formSchema.fields,
+            initialData,
+            isCreateModeInitial ? "create" : "edit"
+          )
+        );
+      }
+    }, [formSchema, docData, isCreateModeInitial]);
 
-  const handleInputChange = useCallback(
-    (fieldname, value) => {
-      setFormData((prev) => ({ ...prev, [fieldname]: value }));
-      if (formErrors[fieldname] != null) {
-        // Check if there was an error to clear (not just truthy, but actually exists)
-        setFormErrors((prevErrors) => {
-          // Only create a new object if the specific error for this field actually existed
-          if (
-            prevErrors[fieldname] === undefined ||
-            prevErrors[fieldname] === null
-          ) {
-            return prevErrors; // No error was set for this field, so no change needed. Return same object.
-          }
-          const newErrors = { ...prevErrors };
-          delete newErrors[fieldname]; // Or set to null
-          // Check if anything actually changed to avoid returning a new object reference unnecessarily
-          if (
-            Object.keys(newErrors).length === Object.keys(prevErrors).length &&
-            prevErrors[fieldname] !== undefined &&
-            newErrors[fieldname] === undefined
-          ) {
-            return newErrors;
-          } else if (
-            Object.keys(newErrors).length !== Object.keys(prevErrors).length
-          ) {
-            return newErrors;
-          }
-          return prevErrors; // Fallback if no meaningful change occurred for this field's error state
+    // Effect to update fileUploadTarget.currentDocnameForUpload when docname changes (after creation)
+    useEffect(() => {
+      if (docname) {
+        setFileUploadTarget((prev) => ({
+          ...prev,
+          currentDocnameForUpload: docname,
+        }));
+      }
+    }, [docname]);
+
+    const handleInputChange = useCallback(
+      (fieldname, value) => {
+        setFormData((prev) => ({ ...prev, [fieldname]: value }));
+        if (formErrors[fieldname] != null) {
+          setFormErrors((prevErrors) => {
+            if (
+              prevErrors[fieldname] === undefined ||
+              prevErrors[fieldname] === null
+            ) {
+              return prevErrors;
+            }
+            const newErrors = { ...prevErrors };
+            delete newErrors[fieldname];
+            if (
+              Object.keys(newErrors).length ===
+                Object.keys(prevErrors).length &&
+              prevErrors[fieldname] !== undefined &&
+              newErrors[fieldname] === undefined
+            ) {
+              return newErrors;
+            } else if (
+              Object.keys(newErrors).length !== Object.keys(prevErrors).length
+            ) {
+              return newErrors;
+            }
+            return prevErrors;
+          });
+        }
+      },
+      [formErrors] // formErrors is a dependency
+    );
+
+    const validateForm = useCallback(() => {
+      if (!formSchema || !formSchema.fields) return false;
+      const errors = {};
+      formSchema.fields.forEach((field) => {
+        if (
+          field.mandatory &&
+          (formData[field.fieldname] === undefined ||
+            formData[field.fieldname] === null ||
+            (typeof formData[field.fieldname] === "string" &&
+              String(formData[field.fieldname]).trim() === "") ||
+            (typeof formData[field.fieldname] === "string" && // Check for pending attachments
+              String(formData[field.fieldname]).startsWith("Pending:")))
+        ) {
+          errors[field.fieldname] = `${
+            field.label || field.fieldname
+          } is required.`;
+        }
+      });
+      setFormErrors(errors);
+      return Object.keys(errors).length === 0;
+    }, [formSchema, formData]);
+
+    const handleSubmit = useCallback(async () => {
+      if (!validateForm()) {
+        toast.current?.show({
+          severity: "warn",
+          summary: "Validation Error",
+          detail: "Please fill all mandatory fields.",
+          life: 3000,
         });
+        if (onSaveError) onSaveError(new Error("Validation Failed"));
+        return;
       }
-    },
-    [formErrors]
-  );
 
-  const validateForm = useCallback(() => {
-    if (!formSchema || !formSchema.fields) return false;
-    const errors = {};
-    formSchema.fields.forEach((field) => {
-      if (
-        field.mandatory &&
-        (formData[field.fieldname] === undefined ||
-          formData[field.fieldname] === null ||
-          (typeof formData[field.fieldname] === "string" &&
-            String(formData[field.fieldname]).trim() === "") ||
-          (typeof formData[field.fieldname] === "string" &&
-            String(formData[field.fieldname]).startsWith("Pending:")))
-      ) {
-        errors[field.fieldname] = `${
-          field.label || field.fieldname
-        } is required.`;
-      }
-    });
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  }, [formSchema, formData]);
-
-  const handleLinkSearch = useCallback(
-    async (event, linkedDoctype, fieldDescriptionString) => {
-      if (!linkedDoctype) return;
-
-      const descriptionData = parseDescription(fieldDescriptionString);
-      // Link filters are directly an array of arrays from the description,
-      // e.g., { "tooltip": "...", "link_filters": [["status", "=", "Active"]] }
-      // Default to an empty array if link_filters is not present or not an array.
-      let filtersFromDescription = [];
-      if (descriptionData && Array.isArray(descriptionData.link_filters)) {
-        filtersFromDescription = descriptionData.link_filters;
-      }
+      let currentDocForSave = docname; // Use existing docname for updates
+      let isNewDocCreatedInThisSubmit = false;
 
       try {
-        let response;
-        let suggestions = [];
+        let mainDocResponse;
+        const dataToSubmit = { ...formData };
 
-        if (linkedDoctype === "User") {
-          // Combine static User filters with those from the description
-          const userFilters = [
-            ["name", "!=", "Administrator"], // Static base filter for User
-            ...filtersFromDescription, // Additional filters from field's description
-          ];
-
-          // Add search text as a filter for full_name (or name, as appropriate)
-          if (event.query && String(event.query).trim() !== "") {
-            userFilters.push(["full_name", "like", `%${event.query}%`]);
+        // Clear "Pending:" placeholders for actual Attach fields before saving main doc
+        // This is important so we don't try to save "Pending: filename.txt" as a URL
+        Object.keys(pendingFiles).forEach((fieldname) => {
+          const fieldSchemaDef = formSchema.fields.find(
+            (f) => f.fieldname === fieldname
+          );
+          if (
+            fieldSchemaDef &&
+            (fieldSchemaDef.fieldtype === "Attach" ||
+              fieldSchemaDef.fieldtype === "Attach Image")
+          ) {
+            // If a file is pending for this attach field, remove the placeholder from dataToSubmit
+            // The actual URL will be set after successful upload.
+            // If it's an existing document and the value wasn't "Pending:", it keeps its old URL.
+            if (
+              typeof dataToSubmit[fieldname] === "string" &&
+              dataToSubmit[fieldname].startsWith("Pending:")
+            ) {
+              delete dataToSubmit[fieldname];
+            }
           }
+        });
 
-          const apiPayload = {
-            doctype: "User",
-            fields: ["name", "full_name"], // Specify fields to fetch for User
-            filters: userFilters, // Pass the combined array of arrays
-            page_length: 20,
-          };
-          response = await getUserListCall(apiPayload); // Use the dedicated hook for get_list
-          // Adapt response: get_list returns an array of objects with specified fields
-          suggestions =
-            response.message?.map((item) => item.full_name || item.name) || [];
+        if (isCreateModeInitial) {
+          mainDocResponse = await createDoc(doctypeName, dataToSubmit);
+          currentDocForSave = mainDocResponse.name; // IMPORTANT: Update currentDocForSave for file uploads
+          isNewDocCreatedInThisSubmit = true;
+          toast.current?.show({
+            severity: "success",
+            summary: "Created",
+            detail: `${
+              formSchema?.label || doctypeName
+            } created: ${currentDocForSave}.`,
+            life: 3000,
+          });
         } else {
-          // For all other doctypes
-          const apiPayload = {
-            doctype: linkedDoctype,
-            txt: event.query, // Search text for frappe.desk.search.search_link
-            page_length: 20,
-            filters: filtersFromDescription, // Pass filters from description directly (already array of arrays)
-          };
-          response = await searchLinkCall(apiPayload);
-          // search_link response is usually { message: [{ value: "...", ... }, ...] }
-          suggestions = response.message?.map((item) => item.value) || [];
+          mainDocResponse = await updateDoc(
+            doctypeName,
+            currentDocForSave,
+            dataToSubmit
+          );
+          toast.current?.show({
+            severity: "success",
+            summary: "Updated",
+            detail: `${formSchema?.label || doctypeName} updated.`,
+            life: 3000,
+          });
+          mutateDoc();
         }
 
-        setLinkSuggestions((prev) => ({
-          ...prev,
-          [linkedDoctype]: suggestions,
-        }));
-      } catch (error) {
-        console.error(`Error fetching options for ${linkedDoctype}:`, error);
-        if (toast.current) {
-          toast.current.show({
+        // Handle pending file uploads AFTER the document exists (either created or was already existing)
+        if (Object.keys(pendingFiles).length > 0 && currentDocForSave) {
+          const stickyToastKey = "pendingFilesUploadSticky";
+          toast.current?.show({
+            key: stickyToastKey,
+            severity: "info",
+            summary: "Attaching Files",
+            detail: "Please wait...",
+            sticky: true,
+          });
+
+          const successfullyAttachedFilesData = {};
+          for (const [fieldname, fileObject] of Object.entries(pendingFiles)) {
+            const fieldSchemaDef = formSchema.fields.find(
+              (f) => f.fieldname === fieldname
+            );
+            const fileArgs = {
+              isPrivate: fieldSchemaDef?.is_private || false,
+              folder: fieldSchemaDef?.folder || "Home/Attachments",
+              doctype: doctypeName,
+              docname: currentDocForSave, // Use the definite docname
+              fieldname: fieldname,
+            };
+            try {
+              const uploadResponse = await sdkUploadFile(fileObject, fileArgs);
+              successfullyAttachedFilesData[fieldname] =
+                uploadResponse.file_url;
+              resetSdkUpload();
+            } catch (uploadError) {
+              console.error(
+                `Error attaching file for ${fieldname}:`,
+                sdkUploadError || uploadError
+              );
+              toast.current?.show({
+                severity: "error",
+                summary: `Attachment Failed: ${fileObject.name}`,
+                detail: sdkUploadError?.message || uploadError.message,
+              });
+              resetSdkUpload();
+            }
+          }
+
+          if (Object.keys(successfullyAttachedFilesData).length > 0) {
+            // Update the document with the URLs of successfully uploaded files
+            await updateDoc(
+              doctypeName,
+              currentDocForSave,
+              successfullyAttachedFilesData
+            );
+            toast.current?.show({
+              severity: "success",
+              summary: "Files Processed",
+              detail: "File attachments updated successfully.",
+              life: 3000,
+            });
+            // Update local formData to reflect new file URLs
+            setFormData((prev) => ({
+              ...prev,
+              ...successfullyAttachedFilesData,
+            }));
+            if (isNewDocCreatedInThisSubmit) {
+              // If it was a new doc, onSaveSuccess might expect the doc with file URLs
+              mainDocResponse = {
+                ...mainDocResponse,
+                ...successfullyAttachedFilesData,
+              };
+            } else {
+              mutateDoc(); // Re-fetch to ensure UI consistency for existing doc
+            }
+          }
+          toast.current?.remove(stickyToastKey);
+          setPendingFiles({}); // Clear pending files
+        }
+
+        if (onSaveSuccess) onSaveSuccess(mainDocResponse);
+      } catch (e) {
+        toast.current?.remove("pendingFilesUploadSticky");
+        toast.current?.show({
+          severity: "error",
+          summary: "Save Error",
+          detail:
+            e.message || `Could not save ${formSchema?.label || doctypeName}.`,
+          life: 5000,
+        });
+        console.error("Save error:", e);
+        if (onSaveError) onSaveError(e);
+      }
+    }, [
+      validateForm,
+      onSaveError,
+      docname,
+      formData,
+      isCreateModeInitial,
+      createDoc,
+      updateDoc,
+      doctypeName,
+      formSchema,
+      mutateDoc,
+      pendingFiles,
+      sdkUploadFile,
+      resetSdkUpload,
+      sdkUploadError,
+      onSaveSuccess,
+      toast, // Ensure all dependencies are stable or listed
+    ]);
+
+    useImperativeHandle(ref, () => ({
+      triggerSubmit: handleSubmit,
+    }));
+
+    const handleLinkSearch = useCallback(
+      async (event, linkedDoctype, fieldDescriptionString) => {
+        if (!linkedDoctype) return;
+        const descriptionData = parseDescription(fieldDescriptionString);
+        let filtersFromDescription = [];
+        if (descriptionData && Array.isArray(descriptionData.link_filters)) {
+          filtersFromDescription = descriptionData.link_filters;
+        }
+        try {
+          let response;
+          let suggestions = [];
+          if (linkedDoctype === "User") {
+            const userFilters = [
+              ["name", "!=", "Administrator"],
+              ...filtersFromDescription,
+            ];
+            if (event.query && String(event.query).trim() !== "") {
+              userFilters.push(["full_name", "like", `%${event.query}%`]);
+            }
+            response = await getUserListCall({
+              doctype: "User",
+              fields: ["name", "full_name"],
+              filters: userFilters,
+              page_length: 20,
+            });
+            suggestions =
+              response.message?.map((item) => item.full_name || item.name) ||
+              [];
+          } else {
+            response = await searchLinkCall({
+              doctype: linkedDoctype,
+              txt: event.query,
+              page_length: 20,
+              filters: filtersFromDescription,
+            });
+            suggestions = response.message?.map((item) => item.value) || [];
+          }
+          setLinkSuggestions((prev) => ({
+            ...prev,
+            [linkedDoctype]: suggestions,
+          }));
+        } catch (error) {
+          console.error(`Error fetching options for ${linkedDoctype}:`, error);
+          toast.current?.show({
             severity: "error",
             summary: `Search Error`,
             detail: `Could not fetch options for ${linkedDoctype}. ${error.message}`,
             life: 3000,
           });
+          setLinkSuggestions((prev) => ({ ...prev, [linkedDoctype]: [] }));
         }
-        setLinkSuggestions((prev) => ({ ...prev, [linkedDoctype]: [] }));
-      }
-    },
-    [searchLinkCall, getUserListCall, toast] // Dependencies for useCallback
-  );
+      },
+      [searchLinkCall, getUserListCall, toast]
+    );
 
-  const openUploadModal = useCallback(
-    (fieldnameForUpload) => {
-      setFileUploadTarget({
-        fieldname: fieldnameForUpload,
-        currentDocnameForUpload: docname,
-      });
-      setIsFileDialogVisible(true);
-    },
-    [docname]
-  );
-
-  const handleFileSelectedInDialog = useCallback(
-    async (selectedFileObject, fieldname) => {
-      if (!selectedFileObject || !fieldname) return;
-      const isNewDocScenario = !fileUploadTarget.currentDocnameForUpload;
-
-      if (isNewDocScenario) {
-        setPendingFiles((prev) => ({
-          ...prev,
-          [fieldname]: selectedFileObject,
-        }));
-        handleInputChange(fieldname, `Pending: ${selectedFileObject.name}`);
-        toast.current.show({
-          severity: "info",
-          summary: "File Selected",
-          detail: `${selectedFileObject.name} will be uploaded on save.`,
+    const openUploadModal = useCallback(
+      (fieldnameForUpload) => {
+        // Use currentDocnameForUpload from state for existing docs, or null for new ones
+        setFileUploadTarget({
+          fieldname: fieldnameForUpload,
+          currentDocnameForUpload: docname, // docname prop is stable for existing, null for new
         });
-      } else {
-        const fieldSchemaDef = formSchema.fields.find(
-          (f) => f.fieldname === fieldname
-        );
-        const fileArgs = {
-          isPrivate: fieldSchemaDef?.is_private || false,
-          folder: fieldSchemaDef?.folder || "Home/Attachments",
-          doctype: doctypeName,
-          docname: fileUploadTarget.currentDocnameForUpload,
-          fieldname: fieldname,
-        };
-        try {
-          const uniqueToastKey = `singleUpload_${fieldname}_${Date.now()}`;
-          toast.current.show({
+        setIsFileDialogVisible(true);
+      },
+      [docname] // Depends on the initial docname prop
+    );
+
+    const handleFileSelectedInDialog = useCallback(
+      async (selectedFileObject, fieldname) => {
+        if (!selectedFileObject || !fieldname) return;
+
+        // fileUploadTarget.currentDocnameForUpload is the key.
+        // If it's null/undefined, it's a new document, so we stage the file.
+        // If it has a value, it's an existing document, so we upload directly.
+        const isForExistingDoc = !!fileUploadTarget.currentDocnameForUpload;
+
+        if (!isForExistingDoc) {
+          // Staging for a new document
+          setPendingFiles((prev) => ({
+            ...prev,
+            [fieldname]: selectedFileObject,
+          }));
+          handleInputChange(fieldname, `Pending: ${selectedFileObject.name}`);
+          toast.current?.show({
             severity: "info",
-            summary: "Uploading",
-            detail: `Uploading ${selectedFileObject.name}...`,
-            key: uniqueToastKey,
+            summary: "File Selected",
+            detail: `${selectedFileObject.name} will be uploaded on save.`,
           });
-          // Use sdkUploadFile here
-          const uploadResponse = await sdkUploadFile(
-            selectedFileObject,
-            fileArgs
-          ); // uploadResponse is FrappeFileUploadResponse
-          toast.current.remove(uniqueToastKey);
-          toast.current.show({
-            severity: "success",
-            summary: "Upload Complete",
-            detail: `${selectedFileObject.name} uploaded.`,
-          });
-          handleInputChange(fieldname, uploadResponse.file_url);
-          setPendingFiles((prev) => {
-            const newPending = { ...prev };
-            delete newPending[fieldname];
-            return newPending;
-          });
-          resetSdkUpload();
-        } catch (e) {
-          const uniqueToastKey = `singleUpload_${fieldname}_${Date.now()}`;
-          toast.current.remove(uniqueToastKey); // Ensure previous sticky is removed
-          toast.current.show({
-            severity: "error",
-            summary: "Upload Failed",
-            detail:
-              sdkUploadError?.message ||
-              e.message ||
-              `Failed to upload ${selectedFileObject.name}`,
-          });
-          console.error("Direct file upload error:", e, sdkUploadError);
-          resetSdkUpload();
-        }
-      }
-    },
-    [
-      fileUploadTarget.currentDocnameForUpload,
-      doctypeName,
-      formSchema,
-      handleInputChange,
-      sdkUploadFile,
-      resetSdkUpload,
-      toast,
-      sdkUploadError,
-    ]
-  );
-
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      toast.current.show({
-        severity: "warn",
-        summary: "Validation Error",
-        detail: "Please fill all mandatory fields.",
-        life: 3000,
-      });
-      return;
-    }
-
-    let currentDocForSave = docname;
-    let isNewDocCreatedInThisSubmit = false;
-
-    try {
-      let mainDocResponse;
-      const dataToSubmit = { ...formData };
-      if (isCreateModeInitial) {
-        Object.keys(pendingFiles).forEach((fn) => {
-          if (
-            typeof dataToSubmit[fn] === "string" &&
-            dataToSubmit[fn].startsWith("Pending:")
-          ) {
-            delete dataToSubmit[fn];
-          }
-        });
-      }
-
-      if (isCreateModeInitial) {
-        mainDocResponse = await createDoc(doctypeName, dataToSubmit);
-        currentDocForSave = mainDocResponse.name;
-        isNewDocCreatedInThisSubmit = true;
-        toast.current.show({
-          severity: "success",
-          summary: "Created",
-          detail: `${
-            formSchema?.label || doctypeName
-          } created with ID: ${currentDocForSave}.`,
-          life: 2000,
-        });
-      } else {
-        mainDocResponse = await updateDoc(
-          doctypeName,
-          currentDocForSave,
-          dataToSubmit
-        );
-        toast.current.show({
-          severity: "success",
-          summary: "Updated",
-          detail: `${formSchema?.label || doctypeName} updated.`,
-          life: 3000,
-        });
-        mutateDoc();
-      }
-
-      if (Object.keys(pendingFiles).length > 0 && currentDocForSave) {
-        const stickyToastKey = "pendingFilesUploadSticky";
-        toast.current.show({
-          key: stickyToastKey,
-          severity: "info",
-          summary: "Attaching Files",
-          detail: "Please wait...",
-        });
-        const successfullyAttachedFilesData = {};
-
-        for (const [fieldname, fileObject] of Object.entries(pendingFiles)) {
+        } else {
+          // Direct upload for an existing document
           const fieldSchemaDef = formSchema.fields.find(
             (f) => f.fieldname === fieldname
           );
@@ -461,272 +513,242 @@ const UniversalDocEditor = ({
             isPrivate: fieldSchemaDef?.is_private || false,
             folder: fieldSchemaDef?.folder || "Home/Attachments",
             doctype: doctypeName,
-            docname: currentDocForSave,
+            docname: fileUploadTarget.currentDocnameForUpload, // This is the existing docname
             fieldname: fieldname,
           };
+          const uniqueToastKey = `singleUpload_${fieldname}_${Date.now()}`;
           try {
-            const uploadResponse = await sdkUploadFile(fileObject, fileArgs);
-            successfullyAttachedFilesData[fieldname] = uploadResponse.file_url;
-            console.log(
-              `Attached pending file for ${fieldname}: ${uploadResponse.file_url}`
-            );
-            resetSdkUpload();
-          } catch (uploadError) {
-            console.error(
-              `Error attaching pending file for ${fieldname}:`,
-              uploadError,
-              sdkUploadError
-            );
-            toast.current.show({
-              severity: "error",
-              summary: `Attachment Failed: ${fileObject.name}`,
-              detail: sdkUploadError?.message || uploadError.message,
+            toast.current?.show({
+              severity: "info",
+              summary: "Uploading",
+              detail: `Uploading ${selectedFileObject.name}...`,
+              key: uniqueToastKey,
+              sticky: true,
             });
+            const uploadResponse = await sdkUploadFile(
+              selectedFileObject,
+              fileArgs
+            );
+            toast.current?.remove(uniqueToastKey);
+            toast.current?.show({
+              severity: "success",
+              summary: "Upload Complete",
+              detail: `${selectedFileObject.name} uploaded. File URL: ${uploadResponse.file_url}`,
+              life: 4000,
+            });
+            handleInputChange(fieldname, uploadResponse.file_url); // Update form with actual URL
+            // No need to add to pendingFiles if uploaded directly for existing doc
+            setPendingFiles((prev) => {
+              const newPending = { ...prev };
+              delete newPending[fieldname];
+              return newPending;
+            });
+            resetSdkUpload();
+          } catch (e) {
+            toast.current?.remove(uniqueToastKey);
+            toast.current?.show({
+              severity: "error",
+              summary: "Upload Failed",
+              detail:
+                sdkUploadError?.message ||
+                e.message ||
+                `Failed to upload ${selectedFileObject.name}`,
+            });
+            console.error("Direct file upload error:", e, sdkUploadError);
             resetSdkUpload();
           }
         }
+      },
+      [
+        fileUploadTarget.currentDocnameForUpload, // Use from state
+        doctypeName,
+        formSchema,
+        handleInputChange,
+        sdkUploadFile,
+        resetSdkUpload,
+        toast,
+        sdkUploadError,
+      ]
+    );
 
-        if (
-          isNewDocCreatedInThisSubmit &&
-          Object.keys(successfullyAttachedFilesData).length > 0
-        ) {
-          await updateDoc(
-            doctypeName,
-            currentDocForSave,
-            successfullyAttachedFilesData
+    const renderFormField = useCallback(
+      (fieldSchema) => {
+        if (!fieldSchema || fieldSchema.hidden) return null;
+        const {
+          fieldname,
+          fieldtype,
+          label,
+          read_only,
+          set_only_once,
+          bold,
+          mandatory,
+          placeholder,
+        } = fieldSchema;
+        const descriptionData = parseDescription(fieldSchema.description);
+        const config = getFieldConfig(fieldtype, fieldname);
+
+        if (!config.formComponent) {
+          return (
+            <div key={fieldname} className="my-3 text-red-500">
+              Unsupported: {label || fieldname} ({fieldtype})
+            </div>
           );
-          toast.current.show({
-            severity: "success",
-            summary: "Files Attached",
-            detail: "Selected files attached successfully.",
-            life: 3000,
-          });
-          setFormData((prev) => ({
-            ...prev,
-            ...successfullyAttachedFilesData,
-          }));
-        } else if (
-          !isNewDocCreatedInThisSubmit &&
-          Object.keys(successfullyAttachedFilesData).length > 0
-        ) {
-          mutateDoc();
-          toast.current.show({
-            severity: "success",
-            summary: "Files Updated",
-            detail: "Attachments updated.",
-            life: 3000,
-          });
         }
-        toast.current.remove(stickyToastKey);
-        setPendingFiles({});
-      }
-      if (onSaveSuccess) onSaveSuccess(mainDocResponse);
-    } catch (e) {
-      toast.current.remove("pendingFilesUploadSticky");
-      toast.current.show({
-        severity: "error",
-        summary: "Save Error",
-        detail:
-          e.message || `Could not save ${formSchema?.label || doctypeName}.`,
-        life: 5000,
-      });
-      console.error("Save error:", e);
-    }
-  };
+        const ComponentToRender = config.formComponent;
+        const isEffectivelyReadOnly =
+          read_only || (set_only_once && !isCreateModeInitial && !!docname);
 
-  const renderFormField = useCallback(
-    (fieldSchema) => {
-      if (!fieldSchema || fieldSchema.hidden) return null;
-      const {
-        fieldname,
-        fieldtype,
-        label,
-        read_only,
-        set_only_once,
-        bold,
-        mandatory,
-        placeholder,
-      } = fieldSchema;
-      const descriptionData = parseDescription(fieldSchema.description);
+        const adapterContext = {
+          formData,
+          handleInputChange,
+          linkSuggestions,
+          handleLinkSearch: (event, linkedDoctype) =>
+            handleLinkSearch(event, linkedDoctype, fieldSchema.description),
+          isCreateMode: isCreateModeInitial && !docname, // isCreateMode refers to the overall form session
+          toast,
+          openUploadModal,
+        };
+        const componentSpecificProps = FormFieldAdapter.getAdaptedProps(
+          fieldSchema,
+          adapterContext
+        );
 
-      const config = getFieldConfig(fieldtype, fieldname);
-      if (!config.formComponent) {
+        let valuePropName = "value";
+        if (fieldtype === "Check") valuePropName = "checked";
+
+        const commonProps = {
+          id: fieldname,
+          [valuePropName]:
+            componentSpecificProps[valuePropName] !== undefined
+              ? componentSpecificProps[valuePropName]
+              : formData[fieldname],
+          disabled: isEffectivelyReadOnly,
+          placeholder:
+            placeholder || `Enter ${label || fieldname.replace(/_/g, " ")}`,
+          className: `w-full ${formErrors[fieldname] ? "p-invalid" : ""} ${
+            bold ? "font-bold" : ""
+          }`,
+          tooltip: descriptionData.tooltip,
+          tooltipOptions: { position: "top" },
+          ...componentSpecificProps,
+        };
+
         return (
-          <div key={fieldname} className="my-3 text-red-500">
-            Unsupported: {label || fieldname} ({fieldtype})
+          <div key={fieldname} className="field w-full mb-3">
+            <label
+              htmlFor={fieldname}
+              className={`block text-xs font-medium text-text-color-secondary uppercase tracking-wider mb-1 ${
+                bold ? "font-bold" : ""
+              }`}
+            >
+              {label ||
+                fieldname
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
+              {mandatory && <span className="text-red-500">*</span>}
+            </label>
+            <ComponentToRender {...commonProps} />
+            {formErrors[fieldname] && (
+              <small className="p-error block mt-1">
+                {formErrors[fieldname]}
+              </small>
+            )}
           </div>
         );
-      }
-      const ComponentToRender = config.formComponent;
-      const isEffectivelyReadOnly =
-        read_only || (set_only_once && !isCreateModeInitial && !!docname);
-      const adapterContext = {
+      },
+      [
         formData,
+        formErrors,
         handleInputChange,
+        isCreateModeInitial,
+        docname,
         linkSuggestions,
-        handleLinkSearch: (event, linkedDoctype) => {
-          handleLinkSearch(event, linkedDoctype, fieldSchema.description);
-        },
-        isCreateMode: isCreateModeInitial && !docname,
+        handleLinkSearch,
         toast,
-        openUploadModal,
-      };
-      const componentSpecificProps = FormFieldAdapter.getAdaptedProps(
-        fieldSchema,
-        adapterContext
-      );
-      let valuePropName = "value";
-      if (fieldtype === "Check") valuePropName = "checked";
+        openUploadModal, // Removed formSchema.fields
+      ]
+    );
 
-      const commonProps = {
-        id: fieldname,
-        [valuePropName]:
-          componentSpecificProps[valuePropName] !== undefined
-            ? componentSpecificProps[valuePropName]
-            : formData[fieldname],
-        disabled: isEffectivelyReadOnly,
-        placeholder:
-          placeholder || `Enter ${label || fieldname.replace(/_/g, " ")}`,
-        className: `w-full ${formErrors[fieldname] ? "p-invalid" : ""} ${
-          bold ? "font-bold" : ""
-        }`,
-        tooltip: descriptionData.tooltip,
-        tooltipOptions: { position: "top" },
-        ...componentSpecificProps,
-      };
-
+    const renderLayout = () => {
+      if (!formSchema || !formSchema.fields) {
+        return (
+          <Message
+            severity="warn"
+            text="Form schema/fields not available."
+            className="m-4"
+          />
+        );
+      }
       return (
-        <div key={fieldname} className="field w-full mb-3">
-          <label
-            htmlFor={fieldname}
-            className={`block text-xs font-medium text-text-color-secondary uppercase tracking-wider mb-1 ${
-              bold ? "font-bold" : ""
-            }`}
-          >
-            {label ||
-              fieldname
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
-            {mandatory && <span className="text-red-500">*</span>}
-          </label>
-          <ComponentToRender {...commonProps} />
-          {formErrors[fieldname] && (
-            <small className="p-error block mt-1">
-              {formErrors[fieldname]}
-            </small>
-          )}
+        <UniversalLayoutRenderer
+          formSchema={formSchema}
+          allFieldsSchema={formSchema.fields}
+          renderFieldItem={renderFormField}
+          initialActiveTabIndex={activeTabIndex}
+          onTabChangeCallback={(e) => setActiveTabIndex(e.index)}
+        />
+      );
+    };
+
+    if (isLoadingSchema || (isLoadingDoc && !isCreateModeInitial && docname)) {
+      return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+          <ProgressSpinner />
         </div>
       );
-    },
-    [
-      formData,
-      formErrors,
-      handleInputChange,
-      isCreateModeInitial,
-      docname,
-      linkSuggestions,
-      handleLinkSearch,
-      toast,
-      openUploadModal,
-    ]
-  );
-
-  const renderLayout = () => {
-    if (!formSchema || !formSchema.fields) {
+    }
+    if (
+      (schemaError && !formSchema) ||
+      (docError && !isCreateModeInitial && docname && !docData)
+    ) {
       return (
         <Message
-          severity="warn"
-          text="Form schema/fields not available."
+          severity="error"
+          text={
+            schemaError?.message || docError?.message || "Could not load data."
+          }
           className="m-4"
         />
       );
     }
-    return (
-      <UniversalLayoutRenderer
-        formSchema={formSchema}
-        allFieldsSchema={formSchema.fields}
-        renderFieldItem={renderFormField}
-        initialActiveTabIndex={activeTabIndex}
-        onTabChangeCallback={(e) => setActiveTabIndex(e.index)}
-      />
-    );
-  };
-
-  if (isLoadingSchema || (isLoadingDoc && !isCreateModeInitial && docname)) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-        <ProgressSpinner />
-      </div>
-    );
-  }
-  if (
-    (schemaError && !formSchema) ||
-    (docError && !isCreateModeInitial && docname && !docData)
-  ) {
-    return (
-      <Message
-        severity="error"
-        text={
-          schemaError?.message || docError?.message || "Could not load data."
-        }
-        className="m-4"
-      />
-    );
-  }
-  if (!formSchema || !formSchema.fields) {
-    return (
-      <Message
-        severity="warn"
-        text="Form schema or fields definition is incomplete."
-        className="m-4"
-      />
-    );
-  }
-
-  return (
-    <>
-      <Toast ref={toast} />
-      <Card
-        className="mt-4 shadow-none rounded-xl overflow-hidden bg-transparent"
-        pt={{ content: { className: "p-0" } }}
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-        >
-          {renderLayout()}
-          <div className="flex justify-end gap-2 px-4 md:px-6 pb-5 pt-1">
-            <Button
-              type="button"
-              label="Cancel"
-              icon="pi pi-times"
-              className="p-button-text rounded-lg"
-              onClick={() => (onCancel ? onCancel() : navigate(-1))}
-            />
-            <Button
-              type="submit"
-              label={isSaving ? "Saving..." : "Save"}
-              icon="pi pi-check"
-              className="p-button-primary rounded-lg"
-              loading={isSaving}
-            />
-          </div>
-        </form>
-      </Card>
-
-      {isFileDialogVisible && (
-        <FileUploadDialog
-          visible={isFileDialogVisible}
-          onHide={() => setIsFileDialogVisible(false)}
-          onFileSelect={handleFileSelectedInDialog}
-          targetFieldname={fileUploadTarget.fieldname}
-          isNewDocument={!fileUploadTarget.currentDocnameForUpload}
+    if (!formSchema || !formSchema.fields) {
+      return (
+        <Message
+          severity="warn"
+          text="Form schema or fields definition is incomplete."
+          className="m-4"
         />
-      )}
-    </>
-  );
-};
+      );
+    }
+
+    return (
+      <>
+        <Toast ref={toast} />
+        <Card
+          className="mt-0 shadow-none rounded-xl overflow-hidden bg-transparent"
+          pt={{ content: { className: "p-0" } }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault(); /* Submission via toolbar ref */
+            }}
+          >
+            {renderLayout()}
+          </form>
+        </Card>
+        {isFileDialogVisible && (
+          <FileUploadDialog
+            visible={isFileDialogVisible}
+            onHide={() => setIsFileDialogVisible(false)}
+            onFileSelect={handleFileSelectedInDialog}
+            targetFieldname={fileUploadTarget.fieldname}
+            isNewDocument={!fileUploadTarget.currentDocnameForUpload} // This now correctly reflects if it's for a new (unsaved) doc
+          />
+        )}
+      </>
+    );
+  }
+);
+UniversalDocEditor.displayName = "UniversalDocEditor";
 
 export default UniversalDocEditor;

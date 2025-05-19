@@ -42,6 +42,23 @@ const UniversalDocViewer = ({
     { enabled: !externalFormSchema }
   );
   const formSchema = externalFormSchema || schemaApiResponse?.message;
+
+  const internalOnBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (listPageUrl) {
+      navigate(listPageUrl);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const internalOnEdit = () => {
+    if (onEdit && docname) {
+      // Ensure docname exists for editing
+      onEdit(doctypeName, docname);
+    }
+  };
   
 
   const {
@@ -274,35 +291,6 @@ const UniversalDocViewer = ({
         }}
       >
         {renderLayout()}
-
-        <div className="flex justify-end gap-2 px-4 md:px-6 pb-5 pt-1">
-          {onBack ? (
-            <Button
-              type="button"
-              label="Back"
-              icon="pi pi-arrow-left"
-              className="p-button-text rounded-lg"
-              onClick={onBack}
-            />
-          ) : listPageUrl ? (
-            <Button
-              type="button"
-              label="Back to List"
-              icon="pi pi-arrow-left"
-              className="p-button-text rounded-lg"
-              onClick={() => navigate(listPageUrl)}
-            />
-          ) : null}
-          {onEdit && docname && (
-            <Button
-              type="button"
-              label="Edit"
-              icon="pi pi-pencil"
-              className="p-button-primary rounded-lg"
-              onClick={() => onEdit(doctypeName, docname)}
-            />
-          )}
-        </div>
       </Card>
     </>
   );
