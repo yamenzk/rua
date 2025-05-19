@@ -1,14 +1,20 @@
 // dashboard/src/components/employees/EmployeeTable.jsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFrappeGetDocList, useFrappeDeleteDoc } from "frappe-react-sdk";
+import {
+  useFrappeGetDocList,
+  useFrappeDeleteDoc,
+  useFrappeGetCall,
+} from "frappe-react-sdk";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
-import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
+import { ProgressSpinner } from "primereact/progressspinner"; // Added for loading state
+import { RUA_EMPLOYEE_DOCTYPE } from "@/constants"; //
 
-import DynamicDataTable from "@/components/common/DynamicDataTable"; // Adjust path as needed
-import ConfirmDialog from "@/components/common/ConfirmDialog"; // Adjust path as needed
-import nationalities from "@/utils/nationalities.json"; // For Nationality options
+import DynamicDataTable from "@/components/common/DynamicDataTable"; //
+import ConfirmDialog from "@/components/common/ConfirmDialog"; //
+import nationalities from "@/utils/nationalities.json"; //
+import { transformSchemaToColumnConfig } from "@/utils/schemaToColumns"; // Assuming you created this util
 
 const EmployeeTable = () => {
   const navigate = useNavigate();
@@ -23,44 +29,62 @@ const EmployeeTable = () => {
     limit: 0, // Fetch all users for filter dropdown
   });
 
-  const userOptions = usersList
-    ? usersList.map((u) => ({ label: u.full_name || u.name, value: u.name }))
-    : [];
+  const userOptions = useMemo(() => {
+    return usersList
+      ? usersList.map((u) => ({ label: u.full_name || u.name, value: u.name }))
+      : [];
+  }, [usersList]);
 
-  const nationalityOptions = nationalities.map((n) => ({
-    label: `${n.flag} ${n.name}`,
-    value: n.name,
-  }));
+  const nationalityOptions = useMemo(() => {
+    return nationalities.map((n) => ({
+      //
+      label: `${n.flag} ${n.name}`, //
+      value: n.name, //
+    }));
+  }, []);
+
+  // Fetch the form schema for RUA Employee
+  const {
+    data: schemaApiResponse,
+    isLoading: isLoadingSchema,
+    error: schemaError,
+  } = useFrappeGetCall(
+    "rua.apiv2.get_doctype_form_schema",
+    { doctype_name: RUA_EMPLOYEE_DOCTYPE.name }, //
+    `doctype_schema_${RUA_EMPLOYEE_DOCTYPE.name}` //
+  );
+  const formSchema = schemaApiResponse?.message;
 
   const {
     deleteDoc,
     loading: deleteLoading,
-    error: deleteError,
-    isCompleted: deleteCompleted,
+    // error: apiDeleteError, // Renamed to avoid conflict with schemaError
+    // isCompleted: deleteCompleted, // Renamed to avoid conflict
   } = useFrappeDeleteDoc();
 
+  // Using separate useEffect for delete operation feedback to avoid conflicts
   useEffect(() => {
-    if (deleteCompleted && !deleteError) {
-      toast.current.show({
-        severity: "success",
-        summary: "Success",
-        detail: "Employee deleted successfully",
-        life: 3000,
-      });
-      // Trigger a re-fetch of the employee list in DynamicDataTable by calling its mutate function
-      // This needs DynamicDataTable to expose its mutate function, or re-fetch based on a prop change.
-      // For now, a page refresh or navigating away and back would show the change.
-      // A more direct way is to pass the `mutate` function from DynamicDataTable up or use a global state/event.
-    }
-    if (deleteError) {
-      toast.current.show({
-        severity: "error",
-        summary: "Error",
-        detail: `Failed to delete employee: ${deleteError.message}`,
-        life: 5000,
-      });
-    }
-  }, [deleteCompleted, deleteError]);
+    // This useEffect is just for observing delete operation.
+    // Actual delete success/error is handled by the deleteDoc promise in confirmDeleteEmployee
+  }, []);
+
+  const employeeColumnsConfig = useMemo(() => {
+    if (!formSchema) return [];
+    return transformSchemaToColumnConfig(formSchema, {
+      userOptions,
+      nationalityOptions,
+    });
+  }, [formSchema, userOptions, nationalityOptions]);
+
+  const globalFilterFields = useMemo(() => {
+    if (!formSchema || !formSchema.fields)
+      return ["name", "employee_name", "position", "email", "phone", "branch"]; // Default
+
+    const gfs = formSchema.fields
+      .filter((f) => f.in_global_search === true)
+      .map((f) => f.fieldname);
+    return gfs.length > 0 ? gfs : ["name", "employee_name"]; // Ensure some defaults if none are marked
+  }, [formSchema]);
 
   const handleRowClick = (rowData) => {
     navigate(`/employees/view/${rowData.name}`);
@@ -78,10 +102,22 @@ const EmployeeTable = () => {
   const confirmDeleteEmployee = async () => {
     if (employeeToDelete) {
       try {
-        await deleteDoc("RUA Employee", employeeToDelete.name);
-        // DataTable will re-fetch via its own useFrappeGetDocList SWR hook if data changes globally or mutate is called.
+        await deleteDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeToDelete.name); //
+        toast.current.show({
+          severity: "success",
+          summary: "Success",
+          detail: "Employee deleted successfully",
+          life: 3000,
+        });
+        // DataTable will re-fetch via its own useFrappeGetDocList SWR hook
+        // or if DynamicDataTable's mutate function is exposed and called.
       } catch (e) {
-        // Error already handled by the deleteError useEffect
+        toast.current.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Failed to delete employee: ${e.message || "Unknown error"}`,
+          life: 5000,
+        });
       } finally {
         setShowDeleteDialog(false);
         setEmployeeToDelete(null);
@@ -89,179 +125,28 @@ const EmployeeTable = () => {
     }
   };
 
-  const contextMenuItemsModel = [
-    {
-      label: "View",
-      icon: "pi pi-fw pi-search",
-      command: (e) => handleRowClick(employeeToDelete || e.data),
-    }, // e.data is from DataTable's event if not using selectedRow state for menu
-    {
-      label: "Edit",
-      icon: "pi pi-fw pi-pencil",
-      command: () => handleEditEmployee(employeeToDelete),
-    },
-    { separator: true },
-    {
-      label: "Delete",
-      icon: "pi pi-fw pi-times",
-      command: () => handleDeleteEmployee(employeeToDelete),
-    },
-  ];
-
-  // Define columns for the RUA Employee doctype
-  const employeeColumnsConfig = [
-    {
-      fieldname: "image",
-      header: "Avatar",
-      fieldtype: "Attach Image",
-      sortable: false,
-      filterable: false,
-      defaultVisible: true,
-      displayProps: { asAvatar: true },
-      minWidth: "80px",
-    },
-    {
-      fieldname: "employee_name",
-      header: "Name",
-      fieldtype: "Data",
-      sortable: true,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "200px",
-    },
-    {
-      fieldname: "name",
-      header: "Employee ID",
-      fieldtype: "Data", // This is the 'name' (primary key)
-      sortable: true,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "150px",
-    },
-    {
-      fieldname: "user",
-      header: "User Account",
-      fieldtype: "Link",
-      options: "User", // Doctype being linked
-      filterOptions: userOptions, // Pass fetched options for the filter dropdown
-      sortable: true,
-      filterable: true,
-      defaultVisible: false,
-      minWidth: "200px",
-    },
-    {
-      fieldname: "position",
-      header: "Position",
-      fieldtype: "Data",
-      sortable: true,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "180px",
-    },
-    {
-      fieldname: "branch",
-      header: "Branch",
-      fieldtype: "Select",
-      options: ["Main", "Branch 1", "Branch 2"], // Static options from schema
-      displayProps: {
-        asChip: true,
-        chipColors: {
-          Main: "info",
-          "Branch 1": "success",
-          "Branch 2": "warning",
-        },
-        chipRounded: true,
+  const contextMenuItemsModel = useMemo(
+    () => [
+      {
+        label: "View",
+        icon: "pi pi-fw pi-search",
+        command: () => employeeToDelete && handleRowClick(employeeToDelete),
       },
-      sortable: true,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "120px",
-    },
-    {
-      fieldname: "phone",
-      header: "Phone",
-      fieldtype: "Data", // Frappe fieldtype 'Data' with options 'Phone'
-      sortable: false,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "150px",
-    },
-    {
-      fieldname: "email",
-      header: "Email",
-      fieldtype: "Data", // Frappe fieldtype 'Data' with options 'Email'
-      sortable: true,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "250px",
-    },
-    {
-      fieldname: "salary",
-      header: "Salary",
-      fieldtype: "Currency",
-      sortable: true,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "120px",
-    },
-    {
-      fieldname: "basic",
-      header: "Basic Salary",
-      fieldtype: "Currency",
-      sortable: true,
-      filterable: true,
-      defaultVisible: false, // Hidden by default
-      minWidth: "120px",
-    },
-    {
-      fieldname: "allowance",
-      header: "Allowance",
-      fieldtype: "Currency",
-      sortable: true,
-      filterable: true,
-      defaultVisible: false, // Hidden by default
-      minWidth: "120px",
-    },
-    {
-      fieldname: "joining_date",
-      header: "Joining Date",
-      fieldtype: "Date",
-      sortable: true,
-      filterable: true,
-      defaultVisible: true,
-      minWidth: "150px",
-    },
-    {
-      fieldname: "nationality",
-      header: "Nationality",
-      fieldtype: "Data", // Using 'Data' type with special handling
-      options: nationalityOptions, // Pass formatted options for filter dropdown
-      sortable: true,
-      filterable: true,
-      defaultVisible: false,
-      minWidth: "180px",
-    },
-    {
-      fieldname: "gender",
-      header: "Gender",
-      fieldtype: "Select",
-      options: ["Male", "Female"],
-      displayProps: { asChip: true, chipRounded: true },
-      sortable: true,
-      filterable: true,
-      defaultVisible: false,
-      minWidth: "100px",
-    },
-    {
-      fieldname: "date_of_birth",
-      header: "Date of Birth",
-      fieldtype: "Date",
-      sortable: true,
-      filterable: true,
-      defaultVisible: false,
-      minWidth: "150px",
-    },
-  ];
+      {
+        label: "Edit",
+        icon: "pi pi-fw pi-pencil",
+        command: () => employeeToDelete && handleEditEmployee(employeeToDelete),
+      },
+      { separator: true },
+      {
+        label: "Delete",
+        icon: "pi pi-fw pi-times",
+        command: () =>
+          employeeToDelete && handleDeleteEmployee(employeeToDelete),
+      },
+    ],
+    [employeeToDelete]
+  ); // employeeToDelete is the dependency
 
   const headerActions = (
     <Button
@@ -274,26 +159,56 @@ const EmployeeTable = () => {
     />
   );
 
+  if (isLoadingSchema) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+        <ProgressSpinner />
+      </div>
+    );
+  }
+
+  if (schemaError) {
+    return (
+      <div className="p-card p-4 m-4 rounded-lg bg-red-100 border border-red-400 text-red-700">
+        <p className="font-bold">
+          Error loading schema for {RUA_EMPLOYEE_DOCTYPE.name}:
+        </p>{" "}
+        {/* */}
+        <p>{schemaError.message || JSON.stringify(schemaError)}</p>
+      </div>
+    );
+  }
+
+  if (!formSchema || employeeColumnsConfig.length === 0) {
+    // This condition might be hit if schema is loaded but no fields are in_list_view
+    // or if there's an issue with formSchema structure.
+    return (
+      <div className="p-card p-4 m-4 rounded-lg">
+        <p>
+          No columns configured for display. Please check the DocType schema
+          configuration for '{RUA_EMPLOYEE_DOCTYPE.name}'.
+        </p>{" "}
+        {/* */}
+      </div>
+    );
+  }
+
   return (
     <>
       <Toast ref={toast} />
       <DynamicDataTable
-        doctype="RUA Employee"
-        uniqueTableKey="rua_employee_list"
+        doctype={RUA_EMPLOYEE_DOCTYPE.name} //
+        uniqueTableKey={`rua_employee_list_${RUA_EMPLOYEE_DOCTYPE.name}`} //
         columnsConfig={employeeColumnsConfig}
-        // fetchArgs={{ orderBy: { field: 'employee_name', order: 'asc' } }} // Example initial sort
         onRowClick={handleRowClick}
         contextMenuItemsModel={contextMenuItemsModel}
-        globalFilterFields={[
-          "name",
-          "employee_name",
-          "position",
-          "email",
-          "phone",
-          "branch",
-        ]}
+        globalFilterFields={globalFilterFields}
         headerActions={headerActions}
-        dataKey="name" // Use the unique identifier for rows
+        dataKey="name"
+        // Pass employeeToDelete to DynamicDataTable if it needs to manage selection for context menu
+        // Otherwise, DynamicDataTable's internal onContextMenu and onContextMenuSelectionChange will handle it.
+        // selectedRowForContextMenu={employeeToDelete} // If you want to control this from parent
+        // onSelectedRowForContextMenuChange={setEmployeeToDelete} // If you want to control this from parent
       />
       <ConfirmDialog
         visible={showDeleteDialog}
@@ -303,9 +218,10 @@ const EmployeeTable = () => {
         message={`Are you sure you want to delete ${
           employeeToDelete?.employee_name || "this employee"
         }? This action cannot be undone.`}
-        confirmationText={employeeToDelete?.name} // Confirm by typing employee ID (name)
+        confirmationText={employeeToDelete?.name}
         confirmButtonLabel="Delete"
         confirmButtonIcon="pi pi-trash"
+        loading={deleteLoading}
       />
     </>
   );

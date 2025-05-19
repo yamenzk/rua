@@ -49,17 +49,6 @@ const ViewEmployeePage = () => {
   const handleBack = () => {
     navigate("/employees"); // Adjust to your list page route
   };
-  const employeeViewerDisplayConfig = {
-    gender: {
-      asChip: true,
-      chipRounded: true,
-      chipColors: {
-        Male: "info",
-        Female: "danger", 
-        Other: "warning",
-      },
-    },
-  };
 
 
   return (
@@ -68,7 +57,6 @@ const ViewEmployeePage = () => {
       docname={employeeId}
       onEdit={handleEdit}
       onBack={handleBack}
-      fieldDisplayConfig={employeeViewerDisplayConfig} 
     />
   );
 };

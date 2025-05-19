@@ -24,6 +24,7 @@ import { setCookie, getCookie } from "@/utils/cookies.js"; // Ensure .jsx if it 
 
 import * as formatters from "@/utils/formatters.jsx"; // Ensure .jsx if it contains JSX
 import { getFieldConfig } from "@/utils/FieldManager.jsx"; // Ensure .jsx
+import { parseDescription } from "@/utils/schemaUtils";
 
 const DynamicDataTable = ({
   doctype,
@@ -120,6 +121,7 @@ const DynamicDataTable = ({
         return validSavedColumnObjects;
       }
     }
+    // Use col.defaultVisible which should be set based on in_standard_filter
     return columnsConfig.filter((col) => col.defaultVisible !== false);
   });
 
@@ -323,10 +325,13 @@ const DynamicDataTable = ({
 
   const dynamicColumns = useMemo(() => {
     return visibleColumns.map((colConfig) => {
+      // colConfig now has properties like filterable, minWidth, displayProps, etc., from schema
       const fieldConfig = getFieldConfig(
+        // getFieldConfig gives generic behavior
         colConfig.fieldtype,
         colConfig.fieldname
       );
+
       const bodyRenderer = colConfig.bodyTemplate
         ? (rowData) => colConfig.bodyTemplate(rowData, formatters)
         : fieldConfig.tableBodyComponent
@@ -334,7 +339,7 @@ const DynamicDataTable = ({
             fieldConfig.tableBodyComponent(
               rowData,
               colConfig.fieldname,
-              colConfig.displayProps,
+              colConfig.displayProps, // <<< Use displayProps from colConfig
               formatters
             )
         : (rowData) => rowData[colConfig.fieldname];
@@ -343,48 +348,54 @@ const DynamicDataTable = ({
         ? (options) =>
             colConfig.filterElementTemplate(
               options,
-              colConfig.options || colConfig.filterOptions
+              colConfig.options || colConfig.filterOptions // colConfig.options is from schema's select_options_data
             )
         : fieldConfig.tableFilterElement
         ? (options) =>
             fieldConfig.tableFilterElement(
-              colConfig,
+              colConfig, // Pass full colConfig which includes header, fieldname etc.
               colConfig.fieldname,
               options.value,
               options.filterApplyCallback,
-              colConfig.filterOptions || colConfig.options
+              // Use filterOptions from colConfig if provided (e.g., for Links),
+              // otherwise use colConfig.options (for Selects from schema)
+              colConfig.filterOptions && colConfig.filterOptions.length > 0
+                ? colConfig.filterOptions
+                : colConfig.options || []
             )
         : null;
 
       return (
         <Column
           key={colConfig.fieldname}
-          columnKey={colConfig.fieldname} // Important for reordering
+          columnKey={colConfig.fieldname}
           field={colConfig.fieldname}
-          header={colConfig.header}
+          header={colConfig.header} // From schema: label
           body={bodyRenderer}
           sortable={
             colConfig.sortable !== false && fieldConfig.sortable !== false
           }
+          // colConfig.filterable is from schema: is_filterable
           filter={
-            colConfig.filterable !== false && fieldConfig.filterable !== false
+            colConfig.filterable === true && fieldConfig.filterable !== false
           }
           filterElement={filterElementRenderer}
-          filterMatchMode={filters[colConfig.fieldname]?.matchMode} // Ensure this uses the state
+          filterMatchMode={filters[colConfig.fieldname]?.matchMode}
           dataType={fieldConfig.dataType || "text"}
           style={{
-            minWidth: colConfig.minWidth || "150px",
-            ...colConfig.style,
+            minWidth: colConfig.minWidth, // From schema: width or default
+            ...(colConfig.style || {}), // Allow additional style overrides
           }}
           showFilterMatchModes={
             colConfig.showFilterMatchModes !== false &&
             fieldConfig.dataType !== "boolean"
           }
           filterMatchModeOptions={colConfig.filterMatchModeOptions}
+          headerTooltip={parseDescription(colConfig.description)?.tooltip} // <<< Add header tooltip
         />
       );
     });
-  }, [visibleColumns, columnsConfig, filters]); // Add filters to dependencies if filterMatchMode relies on it
+  }, [visibleColumns, columnsConfig, filters, getFieldConfig]);
 
   if (loading && !tableData.length) {
     // Show spinner only on initial load or if data is truly empty

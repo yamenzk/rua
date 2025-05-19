@@ -25,6 +25,7 @@ import * as _formatters from "@/utils/formatters.jsx";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 import UniversalLayoutRenderer from "./UniversalLayoutRenderer";
 import FileUploadDialog from "@/components/common/FileUploadDialog.jsx";
+import { parseDescription } from "@/utils/schemaUtils";
 
 // Helper to apply default values from schema
 const applySchemaDefaults = (
@@ -496,7 +497,9 @@ const UniversalDocEditor = ({
         set_only_once,
         bold,
         mandatory,
+        placeholder,
       } = fieldSchema;
+      const descriptionData = parseDescription(fieldSchema.description);
 
       const config = getFieldConfig(fieldtype, fieldname);
       if (!config.formComponent) {
@@ -533,12 +536,11 @@ const UniversalDocEditor = ({
             : formData[fieldname],
         disabled: isEffectivelyReadOnly,
         placeholder:
-          fieldSchema.placeholder ||
-          `Enter ${label || fieldname.replace(/_/g, " ")}`,
+          placeholder || `Enter ${label || fieldname.replace(/_/g, " ")}`,
         className: `w-full ${formErrors[fieldname] ? "p-invalid" : ""} ${
           bold ? "font-bold" : ""
         }`,
-        tooltip: fieldSchema.description,
+        tooltip: descriptionData.tooltip,
         tooltipOptions: { position: "top" },
         ...componentSpecificProps,
       };

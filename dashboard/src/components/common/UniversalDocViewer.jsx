@@ -14,6 +14,7 @@ import { getFieldConfig } from "@/utils/FieldManager.jsx";
 import * as _formatters from "@/utils/formatters.jsx";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 import UniversalLayoutRenderer from "./UniversalLayoutRenderer"; // Make sure path is correct
+import { parseDescription } from "@/utils/schemaUtils";
 
 const UniversalDocViewer = ({
   doctypeName,
@@ -74,20 +75,28 @@ const UniversalDocViewer = ({
     setPageTitle(title);
   }, [docData, docname, formSchema, setPageTitle, doctypeName]);
 
-  // This function is passed to UniversalLayoutRenderer
   const renderFieldDisplay = useCallback(
     (fieldSchema) => {
       if (!fieldSchema || fieldSchema.hidden) return null;
 
       const { fieldname, fieldtype, label, bold } = fieldSchema;
       const value = docData?.[fieldname];
-      const displayPropsFromSchema = fieldSchema.displayProps || {};
-      const schemaDisplayProps = fieldSchema.displayProps || {}; 
-      const viewerSpecificProps = fieldDisplayConfig?.[fieldname] || {}; 
+
+      const descriptionData = parseDescription(fieldSchema.description); // <<< ADD THIS
+
+      const { tooltip: labelTooltip, ...otherDescriptionProps } =
+        descriptionData;
+      const schemaDrivenDisplayProps = otherDescriptionProps;
+
+      // Viewer-specific overrides from the component's props
+      const viewerSpecificProps = fieldDisplayConfig?.[fieldname] || {};
+
+      // Merge them: viewerSpecificProps can override schemaDrivenDisplayProps
       const effectiveDisplayProps = {
-        ...schemaDisplayProps,
+        ...schemaDrivenDisplayProps,
         ...viewerSpecificProps,
       };
+
       const config = getFieldConfig(fieldtype, fieldname);
       let displayValue;
 
@@ -105,11 +114,15 @@ const UniversalDocViewer = ({
         let extendedDisplayProps = { ...effectiveDisplayProps };
         if (fieldtype === "Attach Image") {
           extendedDisplayProps.imageWidth =
-            extendedDisplayProps.imageWidth || "150";
+            extendedDisplayProps.imageWidth ||
+            descriptionData.imageWidth ||
+            "150"; // Allow description to set default
           extendedDisplayProps.imageClassName =
             extendedDisplayProps.imageClassName ||
+            descriptionData.imageClassName || // Allow description to set default
             "object-contain rounded-md border border-surface-border shadow-sm max-h-48";
-          extendedDisplayProps.asAvatar = false;
+          extendedDisplayProps.asAvatar =
+            effectiveDisplayProps.asAvatar ?? false; // Respect effectiveDisplayProps
         }
         if (fieldtype === "Text Editor") {
           displayValue = (
@@ -120,9 +133,9 @@ const UniversalDocViewer = ({
           );
         } else {
           displayValue = config.tableBodyComponent(
-            docData, // Pass docData explicitly
+            docData,
             fieldname,
-            extendedDisplayProps,
+            extendedDisplayProps, // Pass the combined display props
             _formatters
           );
         }
@@ -131,14 +144,12 @@ const UniversalDocViewer = ({
       }
 
       return (
-        // The UniversalLayoutRenderer wraps this in a div with a key,
-        // so this outermost div might be adjusted or removed depending on desired spacing.
-        // For now, keeping it to maintain the structure from the original viewer.
         <div className="py-1">
           <div
             className={`block text-xs font-medium text-text-color-secondary uppercase tracking-wider mb-1 ${
               bold ? "font-bold" : ""
             }`}
+            title={descriptionData.tooltip} // <<< ADD TOOLTIP TO LABEL
           >
             {label ||
               fieldname
@@ -151,8 +162,8 @@ const UniversalDocViewer = ({
         </div>
       );
     },
-    [docData, fieldDisplayConfig]
-  ); // docData is the main dependency here
+    [docData, fieldDisplayConfig] // Add parseDescription or its utility if it's not pure
+  );
 
   const renderLayout = () => {
     // Basic check before passing to the layout renderer

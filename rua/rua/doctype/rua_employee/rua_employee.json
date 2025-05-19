@@ -35,7 +35,9 @@
   {
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "in_filter": 1,
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Employee Name",
    "placeholder": "Enter The Name",
    "reqd": 1
@@ -46,16 +48,19 @@
    "label": "Date of Birth"
   },
   {
+   "description": "{\n  \"tooltip\": \"Select the employee's gender identity.\",\n  \"asChip\": true,\n  \"chipRounded\": true,\n  \"chipColors\": {\n    \"Male\": \"info\",\n    \"Female\": \"danger\"\n  }\n}",
    "fieldname": "gender",
    "fieldtype": "Select",
    "in_filter": 1,
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Gender",
    "options": "\nMale\nFemale"
   },
   {
    "fieldname": "nationality",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Nationality"
   },
   {
@@ -88,6 +93,9 @@
   {
    "fieldname": "user",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "User",
    "options": "User"
   },
@@ -157,7 +165,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-19 15:06:07.010238",
+ "modified": "2025-05-19 16:39:48.553360",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
