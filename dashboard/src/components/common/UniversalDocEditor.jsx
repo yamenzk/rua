@@ -170,8 +170,32 @@ const UniversalDocEditor = ({
   const handleInputChange = useCallback(
     (fieldname, value) => {
       setFormData((prev) => ({ ...prev, [fieldname]: value }));
-      if (formErrors[fieldname]) {
-        setFormErrors((prev) => ({ ...prev, [fieldname]: null }));
+      if (formErrors[fieldname] != null) {
+        // Check if there was an error to clear (not just truthy, but actually exists)
+        setFormErrors((prevErrors) => {
+          // Only create a new object if the specific error for this field actually existed
+          if (
+            prevErrors[fieldname] === undefined ||
+            prevErrors[fieldname] === null
+          ) {
+            return prevErrors; // No error was set for this field, so no change needed. Return same object.
+          }
+          const newErrors = { ...prevErrors };
+          delete newErrors[fieldname]; // Or set to null
+          // Check if anything actually changed to avoid returning a new object reference unnecessarily
+          if (
+            Object.keys(newErrors).length === Object.keys(prevErrors).length &&
+            prevErrors[fieldname] !== undefined &&
+            newErrors[fieldname] === undefined
+          ) {
+            return newErrors;
+          } else if (
+            Object.keys(newErrors).length !== Object.keys(prevErrors).length
+          ) {
+            return newErrors;
+          }
+          return prevErrors; // Fallback if no meaningful change occurred for this field's error state
+        });
       }
     },
     [formErrors]
