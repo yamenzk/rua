@@ -133,12 +133,9 @@ const getTextEditorProps = (context) => {
 
 const getAttachmentProps = (context) => {
 	const { fieldname, label } = context.fieldSchema;
-	// This prop is what the component (RuaAttachmentFormField) should call
-	// when it wants to trigger an upload action (e.g., open a dialog).
-	// The actual upload and `handleInputChange` call would happen in the editor.
 	return {
-		value: context.formData[fieldname] || "", // To display current file
-		fieldname: fieldname, // Useful for the component
+		value: context.formData[fieldname] || "",
+		fieldname: fieldname, 
 		onFileUploadTrigger: () => {
 			if (typeof context.openUploadModal === "function") {
 				context.openUploadModal(context.fieldSchema.fieldname);

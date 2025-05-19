@@ -98,6 +98,11 @@ const UniversalLayoutRendererInternal = ({
   renderFieldItem,
   initialActiveTabIndex = 0,
   onTabChangeCallback,
+  // New props for customization
+  tabViewBackgroundColor = "transparent",
+  tabContentBackgroundColor = "transparent",
+  tabPadding = "0",
+  bubbleStyle = true,
 }) => {
   const [activeTabIndex, setActiveTabIndex] = useState(initialActiveTabIndex);
 
@@ -173,21 +178,83 @@ const UniversalLayoutRendererInternal = ({
     );
   }
 
+  // Custom TabView styling using pt prop
+  const tabViewPt = {
+    root: {
+      style: {
+        backgroundColor: tabViewBackgroundColor,
+      },
+      className: "p-tabview-custom",
+    },
+    nav: {
+      style: {
+        backgroundColor: "transparent",
+        border: "none",
+        padding: bubbleStyle ? "8px 2px 16px 2px" : "0",
+      },
+      className: bubbleStyle ? "flex gap-2 justify-start flex-wrap" : "",
+    },
+    navContainer: {
+      style: {
+        backgroundColor: "transparent",
+      },
+    },
+    inkbar: {
+      style: {
+        display: bubbleStyle ? "none" : "block", // Hide ink bar for bubble style
+      },
+    },
+    panelContainer: {
+      style: {
+        backgroundColor: tabContentBackgroundColor,
+        padding: tabPadding,
+        border: "none",
+      },
+    },
+  };
+
+  // Custom TabPanel styling for each panel
+  const getTabPanelPt = (isActive) => ({
+    headerAction: {
+      className: bubbleStyle
+        ? `px-4 py-3 rounded-full border-2 transition-all duration-200 text-sm font-medium focus:outline-none ${
+            isActive
+              ? "bg-primary-500 text-white border-primary-500 shadow-md"
+              : "bg-white text-gray-600 border-gray-300 hover:border-primary-300 hover:bg-primary-50"
+          }`
+        : `rounded-t-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-color focus:ring-offset-1 ${
+            isActive ? "bg-white" : "bg-gray-50 hover:bg-gray-100"
+          }`,
+      style: bubbleStyle
+        ? {
+            border: "none",
+            borderRadius: "9999px",
+          }
+        : {},
+    },
+    content: {
+      style: {
+        backgroundColor: tabContentBackgroundColor,
+        padding: tabPadding,
+        border: "none",
+      },
+      className: bubbleStyle ? "border-none" : "rounded-b-lg border-none",
+    },
+  });
+  
+
   return (
-    <TabView activeIndex={activeTabIndex} onTabChange={handleTabChange}>
+    <TabView
+      activeIndex={activeTabIndex}
+      onTabChange={handleTabChange}
+      pt={tabViewPt}
+      className={bubbleStyle ? "custom-bubble-tabs" : ""}
+    >
       {trulyFinalTabsConfig.map((tab, tabIdx) => (
         <TabPanel
           key={`tab-${tabIdx}-${tab.label?.replace(/\s+/g, "-") || "default"}`}
           header={tab.label}
-          pt={{
-            headerAction: {
-              className:
-                "rounded-t-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-color focus:ring-offset-1",
-            },
-            content: {
-              className: "rounded-b-lg p-3 md:p-4",
-            },
-          }}
+          pt={getTabPanelPt(tabIdx === activeTabIndex)}
         >
           {(() => {
             const sectionGroups = [];

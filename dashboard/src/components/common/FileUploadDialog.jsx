@@ -1,99 +1,253 @@
 // src/components/common/FileUploadDialog.jsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import { FileUpload } from "primereact/fileupload";
 import { Message } from "primereact/message";
-// No frappe SDK import needed here anymore
+import { Divider } from "primereact/divider";
+import { Card } from "primereact/card";
 
 const FileUploadDialog = ({
   visible,
   onHide,
-  onFileSelect, // Changed from onUploadComplete: (selectedFile: File, targetFieldname: string) => void
+  onFileSelect,
   targetFieldname,
-  isNewDocument, // New prop to indicate if the parent document is new
+  isNewDocument,
 }) => {
-  const fileUploadRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef(null);
 
-  const handleHide = () => {
-    if (fileUploadRef.current) {
-      fileUploadRef.current.clear();
-    }
+  const handleHide = useCallback(() => {
+    setSelectedFile(null);
+    setIsDragOver(false);
     onHide();
+  }, [onHide]);
+
+  const handleFileSelect = useCallback((file) => {
+    if (file && file.size <= 10000000) {
+      // 10MB limit
+      setSelectedFile(file);
+    } else if (file && file.size > 10000000) {
+      // Handle file too large - you might want to show a toast instead
+      console.warn("File too large. Maximum size is 10MB.");
+    }
+  }, []);
+
+  const handleConfirmSelection = useCallback(() => {
+    if (selectedFile && targetFieldname) {
+      onFileSelect(selectedFile, targetFieldname);
+      handleHide();
+    }
+  }, [selectedFile, targetFieldname, onFileSelect, handleHide]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [handleFileSelect]
+  );
+
+  const handleFileInputChange = useCallback(
+    (e) => {
+      const files = e.target.files;
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [handleFileSelect]
+  );
+
+  const openFileSelector = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  // This is now the primary action: selecting a file.
-  // The PrimeReact FileUpload component will call this when a file is chosen by the user.
-  const handleFileSelectionAndConfirm = (event) => {
-    const file = event.files[0];
-    if (file && targetFieldname) {
-      onFileSelect(file, targetFieldname); // Pass the raw File object back
-      handleHide(); // Close dialog after selection
-    } else if (fileUploadRef.current) {
-      // If somehow called without a file (e.g. user cancels OS dialog)
-      // ensure the FileUpload component is cleared if needed.
-      // This might be redundant if onClear handles it.
-    }
+  const getFileIcon = (file) => {
+    if (!file) return "pi pi-file";
+
+    const type = file.type.toLowerCase();
+    if (type.startsWith("image/")) return "pi pi-image";
+    if (type.includes("pdf")) return "pi pi-file-pdf";
+    if (type.includes("word") || type.includes("document"))
+      return "pi pi-file-word";
+    if (type.includes("excel") || type.includes("sheet"))
+      return "pi pi-file-excel";
+    if (type.includes("powerpoint") || type.includes("presentation"))
+      return "pi pi-chart-bar";
+    return "pi pi-file";
   };
 
   const dialogFooter = (
-    <div>
+    <div className="flex justify-end gap-2">
       <Button
+        type="button"
         label="Cancel"
         icon="pi pi-times"
         onClick={handleHide}
         className="p-button-text"
       />
-      {/* The FileUpload component itself will trigger file selection.
-          We don't need a separate "Upload" button in the dialog footer
-          if the FileUpload's "Choose" button implicitly leads to onFileSelect via its uploadHandler.
-          PrimeReact's FileUpload with customUpload=true expects uploadHandler to do the work.
-          We'll use its "Choose" (or "Select") button effectively as the confirmation.
-      */}
+      <Button
+        type="button"
+        label="Attach File"
+        icon="pi pi-check"
+        onClick={handleConfirmSelection}
+        disabled={!selectedFile}
+        className="p-button-primary"
+      />
     </div>
   );
 
-  // This handler is for the FileUpload component's internal clear button
-  const handleClearInFileUpload = () => {
-    // setSelectedFile(null); // No local selectedFile state needed anymore
-  };
-
   return (
     <Dialog
-      header={`Select File for ${targetFieldname || "Attachment"}`}
+      header={
+        <div className="flex items-center gap-2">
+          <i className="pi pi-upload text-primary-color"></i>
+          <span>Attach File</span>
+          {targetFieldname && (
+            <span className="text-text-color-secondary text-sm">
+              for {targetFieldname.replace(/_/g, " ")}
+            </span>
+          )}
+        </div>
+      }
       visible={visible}
-      style={{ width: "50vw", maxWidth: "600px" }}
+      style={{ width: "90vw", maxWidth: "500px" }}
       modal
-      footer={dialogFooter} // Footer might be optional if FileUpload's own UI is sufficient
+      footer={dialogFooter}
       onHide={handleHide}
       blockScroll
+      dismissableMask={false}
+      className="p-dialog-custom"
     >
-      <div className="p-fluid">
-        {isNewDocument && ( // Use the new prop
+      <div className="space-y-4">
+        {isNewDocument && (
           <Message
             severity="info"
-            className="mb-3"
-            text="For new documents, the file will be attached after you save the document."
+            className="border-l-4 border-primary-color"
+            content={
+              <div className="flex items-center gap-2">
+                <i className="pi pi-info-circle"></i>
+                <span>File will be attached after you save the document</span>
+              </div>
+            }
           />
         )}
-        <FileUpload
-          ref={fileUploadRef}
-          name="dialogFileUploader" // Just a name for the input
-          customUpload // Crucial for this flow
-          uploadHandler={handleFileSelectionAndConfirm} // This is called when user "uploads" via component UI
-          onClear={handleClearInFileUpload}
-          multiple={false}
+
+        {/* File Drop Zone */}
+        <Card className="p-0 shadow-sm border-2 border-dashed border-surface-border hover:border-primary-color transition-colors">
+          <div
+            className={`p-6 text-center cursor-pointer transition-all duration-200 ${
+              isDragOver
+                ? "bg-primary-50 border-primary-color"
+                : "hover:bg-surface-hover"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={openFileSelector}
+          >
+            <div className="space-y-3">
+              <div
+                className={`text-4xl ${
+                  isDragOver
+                    ? "text-primary-color"
+                    : "text-text-color-secondary"
+                }`}
+              >
+                <i className="pi pi-cloud-upload"></i>
+              </div>
+              <div>
+                <p className="text-text-color font-medium mb-1">
+                  {isDragOver
+                    ? "Drop your file here"
+                    : "Click to browse or drag & drop"}
+                </p>
+                <p className="text-text-color-secondary text-sm">
+                  Maximum file size: 10MB
+                </p>
+              </div>
+              <p className="text-xs text-text-color-secondary opacity-75">
+                Supported: Images, PDF, Word, Excel, PowerPoint, Text files
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={handleFileInputChange}
           accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,.txt,.csv"
-          maxFileSize={10000000} // 10MB
-          chooseLabel="Choose File"
-          // uploadLabel="Confirm Selection" // The "upload" button in FileUpload UI now confirms selection
-          // cancelLabel="Clear" // The "cancel" button in FileUpload UI clears the selection
-          progressBarTemplate={<></>} // No progress bar inside dialog anymore
-          emptyTemplate={
-            <p className="m-0">Drag and drop a file here or click to browse.</p>
-          }
+          style={{ display: "none" }}
         />
-        {/* No upload progress or error display within the dialog itself anymore */}
+
+        {/* Selected File Preview */}
+        {selectedFile && (
+          <>
+            <Divider className="my-4" />
+            <Card className="p-0 shadow-sm">
+              <div className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+                      <i
+                        className={`${getFileIcon(
+                          selectedFile
+                        )} text-primary-color`}
+                      ></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-text-color truncate">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-sm text-text-color-secondary">
+                        {formatFileSize(selectedFile.size)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    icon="pi pi-times"
+                    onClick={clearSelection}
+                    className="p-button-text p-button-rounded p-button-sm"
+                    tooltip="Remove file"
+                    tooltipOptions={{ position: "top" }}
+                  />
+                </div>
+              </div>
+            </Card>
+          </>
+        )}
       </div>
     </Dialog>
   );

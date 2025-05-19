@@ -252,12 +252,14 @@ const UniversalDocViewer = ({
     { label: breadcrumbDocName },
   ];
   const homeBreadcrumb = { icon: "pi pi-home", url: "/" };
+  
 
   return (
     <>
       <AppBreadcrumb items={breadcrumbItems} home={homeBreadcrumb} />
+      
       <Card
-        className="mt-4 shadow-lg rounded-xl overflow-hidden"
+        className="mt-4 bg-transparent shadow-none overflow-hidden"
         pt={{
           title: {
             className:
@@ -267,9 +269,7 @@ const UniversalDocViewer = ({
         }}
       >
         {renderLayout()}
-        {(onBack || (onEdit && docname)) && (
-          <Divider className="my-4 mx-4 md:mx-6" />
-        )}
+        
         <div className="flex justify-end gap-2 px-4 md:px-6 pb-5 pt-1">
           {onBack ? (
             <Button

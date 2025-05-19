@@ -668,7 +668,7 @@ const UniversalDocEditor = ({
       <Toast ref={toast} />
       <AppBreadcrumb items={breadcrumbItems} home={homeBreadcrumb} />
       <Card
-        className="mt-4 shadow-lg rounded-xl overflow-hidden"
+        className="mt-4 shadow-none rounded-xl overflow-hidden bg-transparent"
         pt={{ content: { className: "p-0" } }}
       >
         <form
@@ -678,7 +678,6 @@ const UniversalDocEditor = ({
           }}
         >
           {renderLayout()}
-          <Divider className="my-4 mx-4 md:mx-6" />
           <div className="flex justify-end gap-2 px-4 md:px-6 pb-5 pt-1">
             <Button
               type="button"

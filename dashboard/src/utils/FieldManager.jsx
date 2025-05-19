@@ -47,6 +47,7 @@ const RuaAttachmentFormField = ({
       </div>
     )}
     <Button
+      type="button"
       label={
         value &&
         (String(value).startsWith("http") || String(value).startsWith("/"))
