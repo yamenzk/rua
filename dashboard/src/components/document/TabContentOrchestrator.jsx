@@ -1,4 +1,4 @@
-// src/components/common/document/TabContentOrchestrator.jsx
+// src/components/document/TabContentOrchestrator.jsx
 import React, { memo, useMemo } from "react";
 import SchemaSectionRenderer from "./SchemaSectionRenderer";
 import CustomItemRenderer from "./CustomItemRenderer";
@@ -6,26 +6,40 @@ import {
   isSectionBreak,
   isColumnBreak,
   isTabBreak,
-  createTabSlug, // Ensure this handles falsy labels consistently
+  createTabSlug,
 } from "@/utils/layoutUtils"; // Adjust path as needed
 
-const TabContentOrchestrator = ({
-  tab, // The current tab object to render content for
-  allFieldsSchema, // All field definitions for the doctype
-  renderFieldItem, // Function to render an individual field
-  docData, // The document data object
-  customComponentContext, // Context for custom components
-  customUIAugmentations, // For injectIntoTabs
+const TabContentOrchestratorInternal = ({
+  tab,
+  allFieldsSchema,
+  renderFieldItem,
+  docData,
+  customComponentContext,
+  customUIAugmentations,
 }) => {
-  const tabRenderableItems = useMemo(() => {
-    let items = [];
-    let baseOrderCounter = 0; // Used for all item types to ensure a base uniqueness for ordering
+  // console.log(`[TCO] Rendering for Tab: ${tab?.label}`); // Optional: Keep if very light logging is desired
 
-    // A. Populate items from schema (if it's a schema tab)
+  const tabRenderableItems = useMemo(() => {
+    // console.log(`[TCO] Recalculating items for Tab: ${tab?.label}`); // Optional
+    let items = [];
+    let baseOrderCounter = 0;
+
+    if (!tab) {
+      console.error(
+        "[TCO] 'tab' prop is undefined in useMemo. Cannot calculate items."
+      );
+      return [];
+    }
+
+    // A. Populate items from schema
     if (tab.isSchemaTab && tab._schemaTabContentElements) {
+      if (tab._schemaTabContentElements.length === 0) {
+        // This warning can be useful if a schema tab is unexpectedly empty
+        // console.warn(`[TCO] Schema Tab "${tab?.label}" has 0 _schemaTabContentElements.`);
+      }
       let currentSectionElements = [];
       let currentSectionConfig = null;
-      let internalSchemaSectionCounter = 0; // Counter for unique section IDs within this tab
+      let internalSchemaSectionCounter = 0;
 
       const finalizeAndAddSchemaSection = () => {
         if (
@@ -37,13 +51,11 @@ const TabContentOrchestrator = ({
         ) {
           const sectionLabelSlug = currentSectionConfig?.label
             ? createTabSlug(currentSectionConfig.label)
-            : `unlabeled-section`; // Consistent slug for unlabeled
-
+            : `unlabeled-section`;
           const sectionId = `schema-section-${
             tab.id || "default-tab-id"
           }-${sectionLabelSlug}-${internalSchemaSectionCounter}`;
           internalSchemaSectionCounter++;
-
           items.push({
             id: sectionId,
             type: "SCHEMA_SECTION_BLOCK",
@@ -54,7 +66,6 @@ const TabContentOrchestrator = ({
             _sectionConfig: currentSectionConfig,
             _sectionElements: [...currentSectionElements],
           });
-          // Update baseOrderCounter based on the order of the section just added
           baseOrderCounter =
             Math.max(
               baseOrderCounter,
@@ -66,51 +77,41 @@ const TabContentOrchestrator = ({
         currentSectionElements = [];
         currentSectionConfig = null;
       };
-
       tab._schemaTabContentElements.forEach((layoutEl) => {
         if (isSectionBreak(layoutEl)) {
           finalizeAndAddSchemaSection();
           currentSectionConfig = { ...layoutEl };
-          // If layoutEl.idx is not defined, it will use baseOrderCounter in finalizeAndAddSchemaSection
         } else {
           if (
             !currentSectionConfig &&
             !isColumnBreak(layoutEl) &&
             !isTabBreak(layoutEl)
           ) {
-            // Default section for fields before any explicit section break
-            currentSectionConfig = {
-              label: null,
-              collapsible: false,
-              // idx will be assigned based on baseOrderCounter
-            };
+            currentSectionConfig = { label: null, collapsible: false };
           }
           if (currentSectionConfig) {
             currentSectionElements.push(layoutEl);
           } else {
-            // This case should ideally not happen if logic is correct,
-            // but it's a safeguard for elements not fitting into a section.
-            // Could push them as individual items or log a warning.
             console.warn(
-              "Layout element found outside of a section definition:",
+              "[TCO] Layout element found outside section (should not happen):",
               layoutEl
             );
           }
         }
       });
-      finalizeAndAddSchemaSection(); // Finalize the last section
+      finalizeAndAddSchemaSection();
     }
 
-    // B. Populate items from purely custom tab definition (tab.content or tab.cards)
+    // B. Populate items from purely custom tab definition
     if (!tab.isSchemaTab) {
-      let customItemSequentialId = 0; // Counter for custom items within this non-schema tab
+      let customItemSequentialId = 0;
       if (tab.content) {
         items.push({
           id: `${tab.id}-custom-content-${customItemSequentialId++}`,
           type: "CUSTOM_ITEM",
           order: tab.order !== undefined ? tab.order : baseOrderCounter,
           _itemConfig: {
-            id: `${tab.id}-custom-content-item-${customItemSequentialId - 1}`, // Ensure unique internal ID too
+            id: `${tab.id}-custom-content-item-${customItemSequentialId - 1}`,
             content: tab.content,
             type: "CustomComponent",
           },
@@ -141,12 +142,16 @@ const TabContentOrchestrator = ({
               : baseOrderCounter + (tab.cards.length - 1) * 10;
           baseOrderCounter = Math.max(baseOrderCounter, lastCardOrder) + 10;
         }
+      } else {
+        // Optional: Log if a custom tab has no direct content method
+        // console.log(`[TCO] Custom Tab "${tab?.label}" has no 'content' or 'cards'.`);
       }
     }
 
-    // C. Populate items from injectIntoTabs for the current tab
-    let injectedItemSequentialId = 0; // Counter for injected items
-    (customUIAugmentations?.injectIntoTabs || []).forEach((injection) => {
+    // C. Populate items from injectIntoTabs
+    const injections = customUIAugmentations?.injectIntoTabs || [];
+    let injectedItemSequentialId = 0;
+    injections.forEach((injection) => {
       if (
         (injection.targetTab.id && injection.targetTab.id === tab.id) ||
         (injection.targetTab.label &&
@@ -178,65 +183,68 @@ const TabContentOrchestrator = ({
       }
     });
 
-    // D. Sort all renderable items for the tab based on their 'order' property
     items.sort((a, b) => (a.order || 0) - (b.order || 0));
     return items;
-  }, [tab, customUIAugmentations]); // allFieldsSchema is passed to SchemaSectionRenderer, not directly used for this memoization logic
-
-  let isFirstSchemaSectionRenderedInTab = true; // Used by SchemaSectionRenderer via SectionWrapper
+  }, [tab, customUIAugmentations]);
 
   if (!tab) {
-    // Should not happen if UniversalLayoutRenderer filters tabs correctly, but good for robustness
+    console.error(
+      "[TCO] CRITICAL: 'tab' prop is missing during render phase! Cannot render content."
+    );
     return (
       <div className="p-4 text-sm text-text-color-secondary">
-        Tab data is missing.
+        Tab data is critically missing.
       </div>
     );
   }
+  // console.log(`[TCO] AFTER useMemo. Tab "${tab?.label}" will render ${tabRenderableItems.length} items.`); // Optional
 
   return (
     <div className="space-y-8">
       {tabRenderableItems.length === 0 && (
         <div className="p-4 text-sm text-text-color-secondary italic">
-          No content defined for this tab.
+          No content has been defined or generated for this tab: "{tab?.label}"
         </div>
       )}
       {tabRenderableItems.map((itemBlock, itemBlockIdx) => {
         if (itemBlock.type === "SCHEMA_SECTION_BLOCK") {
-          const currentSectionIsFirst = isFirstSchemaSectionRenderedInTab;
-          // A section is considered "rendered" if it has elements or a label, thus affecting the next 'isFirst'
-          if (
-            (itemBlock._sectionElements &&
-              itemBlock._sectionElements.length > 0) ||
-            (itemBlock._sectionConfig && itemBlock._sectionConfig.label)
-          ) {
-            isFirstSchemaSectionRenderedInTab = false;
-          }
           return (
             <SchemaSectionRenderer
-              key={itemBlock.id} // Unique ID generated above
+              key={itemBlock.id}
               itemBlock={itemBlock}
               allFieldsSchema={allFieldsSchema}
               renderFieldItem={renderFieldItem}
               docData={docData}
               customComponentContext={customComponentContext}
-              isFirstSectionInTab={currentSectionIsFirst}
+              isFirstSectionInTab={
+                tabRenderableItems.findIndex(
+                  (it) => it.type === "SCHEMA_SECTION_BLOCK"
+                ) === itemBlockIdx
+              }
             />
           );
         } else if (itemBlock.type === "CUSTOM_ITEM") {
           return (
             <CustomItemRenderer
-              key={itemBlock.id} // Unique ID generated above
+              key={itemBlock.id}
               itemBlock={itemBlock}
               docData={docData}
               customComponentContext={customComponentContext}
             />
           );
         }
-        // Fallback for an unknown item type, using itemBlock.id or index as key
+        // Fallback for an unknown item type
+        console.warn(
+          `[TCO] Encountered unknown itemBlock type: ${itemBlock.type}`,
+          itemBlock
+        );
         return (
-          <div key={itemBlock.id || `unknown-item-${itemBlockIdx}`}>
-            Unknown item type in tab: {itemBlock.type}
+          <div
+            key={itemBlock.id || `unknown-item-${itemBlockIdx}`}
+            className="p-4 text-red-500"
+          >
+            Error: Unknown layout item type "{itemBlock.type}" for item ID "
+            {itemBlock.id}".
           </div>
         );
       })}
@@ -244,4 +252,7 @@ const TabContentOrchestrator = ({
   );
 };
 
-export default memo(TabContentOrchestrator);
+const TabContentOrchestrator = memo(TabContentOrchestratorInternal);
+TabContentOrchestrator.displayName = "TabContentOrchestrator";
+
+export default TabContentOrchestrator;
