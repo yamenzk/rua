@@ -119,6 +119,7 @@ const UniversalDocEditor = ({
   const { call: searchLinkCall } = useFrappePostCall(
     "frappe.desk.search.search_link"
   );
+  const { call: getUserListCall } = useFrappePostCall("frappe.client.get_list");
 
   useEffect(() => {
     let titleNamePart = docname;
@@ -224,24 +225,75 @@ const UniversalDocEditor = ({
   }, [formSchema, formData]);
 
   const handleLinkSearch = useCallback(
-    async (event, linkedDoctype) => {
+    async (event, linkedDoctype, fieldDescriptionString) => {
       if (!linkedDoctype) return;
+
+      const descriptionData = parseDescription(fieldDescriptionString);
+      // Link filters are directly an array of arrays from the description,
+      // e.g., { "tooltip": "...", "link_filters": [["status", "=", "Active"]] }
+      // Default to an empty array if link_filters is not present or not an array.
+      let filtersFromDescription = [];
+      if (descriptionData && Array.isArray(descriptionData.link_filters)) {
+        filtersFromDescription = descriptionData.link_filters;
+      }
+
       try {
-        const response = await searchLinkCall({
-          doctype: linkedDoctype,
-          txt: event.query,
-          page_length: 20,
-        });
+        let response;
+        let suggestions = [];
+
+        if (linkedDoctype === "User") {
+          // Combine static User filters with those from the description
+          const userFilters = [
+            ["name", "!=", "Administrator"], // Static base filter for User
+            ...filtersFromDescription, // Additional filters from field's description
+          ];
+
+          // Add search text as a filter for full_name (or name, as appropriate)
+          if (event.query && String(event.query).trim() !== "") {
+            userFilters.push(["full_name", "like", `%${event.query}%`]);
+          }
+
+          const apiPayload = {
+            doctype: "User",
+            fields: ["name", "full_name"], // Specify fields to fetch for User
+            filters: userFilters, // Pass the combined array of arrays
+            page_length: 20,
+          };
+          response = await getUserListCall(apiPayload); // Use the dedicated hook for get_list
+          // Adapt response: get_list returns an array of objects with specified fields
+          suggestions =
+            response.message?.map((item) => item.full_name || item.name) || [];
+        } else {
+          // For all other doctypes
+          const apiPayload = {
+            doctype: linkedDoctype,
+            txt: event.query, // Search text for frappe.desk.search.search_link
+            page_length: 20,
+            filters: filtersFromDescription, // Pass filters from description directly (already array of arrays)
+          };
+          response = await searchLinkCall(apiPayload);
+          // search_link response is usually { message: [{ value: "...", ... }, ...] }
+          suggestions = response.message?.map((item) => item.value) || [];
+        }
+
         setLinkSuggestions((prev) => ({
           ...prev,
-          [linkedDoctype]: response.message?.map((item) => item.value) || [],
+          [linkedDoctype]: suggestions,
         }));
       } catch (error) {
         console.error(`Error fetching options for ${linkedDoctype}:`, error);
+        if (toast.current) {
+          toast.current.show({
+            severity: "error",
+            summary: `Search Error`,
+            detail: `Could not fetch options for ${linkedDoctype}. ${error.message}`,
+            life: 3000,
+          });
+        }
         setLinkSuggestions((prev) => ({ ...prev, [linkedDoctype]: [] }));
       }
     },
-    [searchLinkCall]
+    [searchLinkCall, getUserListCall, toast] // Dependencies for useCallback
   );
 
   const openUploadModal = useCallback(
@@ -516,7 +568,9 @@ const UniversalDocEditor = ({
         formData,
         handleInputChange,
         linkSuggestions,
-        handleLinkSearch,
+        handleLinkSearch: (event, linkedDoctype) => {
+          handleLinkSearch(event, linkedDoctype, fieldSchema.description);
+        },
         isCreateMode: isCreateModeInitial && !docname,
         toast,
         openUploadModal,
