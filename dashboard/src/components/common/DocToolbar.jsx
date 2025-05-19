@@ -1,15 +1,18 @@
-// src/components/common/DocToolbar.jsx
+// Fixed DocToolbar.jsx with more lenient tab validation
 import React from "react";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
-import { Avatar } from "primereact/avatar"; // Import Avatar
 
 const DocToolbar = ({
   title,
   primaryActions = [],
   secondaryActions = [],
   onBack,
-  leftContent, // New prop for custom content on the left
+  leftContent,
+  // Tab props
+  tabs = [],
+  activeTabIndex = 0, // Default to 0 instead of undefined
+  onTabSelect,
 }) => {
   const menuRef = React.useRef(null);
 
@@ -22,16 +25,16 @@ const DocToolbar = ({
       disabled: action.disabled,
       className: action.className,
       style: action.style,
-      visible: action.visible !== false,
     }));
 
+  // More lenient tab validation - just check if tabs exist and have length
+  const shouldShowTabs = tabs && tabs.length > 0 && onTabSelect;
+
   return (
-    <div className="doc-toolbar bg-surface-section p-3 md:p-4 m-4 rounded-2xl shadow-sm sticky top-0 z-50">
-      {" "}
-      {/* Made sticky */}
+    <div className="doc-toolbar bg-surface-section p-3 md:px-4 md:py-3 m-4 rounded-2xl shadow-sm sticky top-0 z-50">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Left side: Back button, Custom Left Content, and Optional Title */}
-        <div className="flex items-center gap-3 flex-grow">
+        {/* Left side: Back button, Custom Left Content */}
+        <div className="flex items-center gap-3 flex-grow min-w-0">
           {onBack && (
             <Button
               icon="pi pi-arrow-left"
@@ -46,16 +49,54 @@ const DocToolbar = ({
           )}
           {/* Custom content area */}
           {leftContent && (
-            <div className="flex items-center gap-3">{leftContent}</div>
+            <div className="flex items-center gap-3 overflow-hidden">
+              {leftContent}
+            </div>
           )}
-
-          {/* Optional Title - can be removed if page title is always handled by LayoutContext via Header */}
+          {/* Optional Title */}
           {title && !leftContent && (
             <h2 className="text-xl font-semibold text-text-color m-0 truncate">
               {title}
             </h2>
           )}
         </div>
+
+        {/* Middle: Tabs (if any) */}
+        {shouldShowTabs && (
+          <div className="flex-shrink sm:flex-grow-0 flex justify-center items-center gap-1 sm:gap-2 px-2 sm:px-0 md:px-4 overflow-x-auto no-scrollbar mx-auto">
+            {tabs.map((tab, index) => {
+              // Ensure tab has required properties
+              const tabId = tab.id || tab.slug || `toolbar-tab-${index}`;
+              const tabLabel = tab.label || `Tab ${index + 1}`;
+              const isActive = index === (activeTabIndex ?? 0); // Handle null/undefined activeTabIndex
+
+              return (
+                <Button
+                  key={tabId}
+                  label={tabLabel}
+                  icon={
+                    tab.icon
+                      ? `pi ${
+                          tab.icon.startsWith("pi-")
+                            ? tab.icon
+                            : `pi-${tab.icon}`
+                        }`
+                      : undefined
+                  }
+                  className={`p-button-sm rounded-full whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:ring-offset-1 ${
+                    isActive
+                      ? "bg-primary text-primary-contrast hover:bg-primary-emphasis"
+                      : "p-button-text text-text-color-secondary hover:bg-surface-hover hover:text-text-color"
+                  }`}
+                  onClick={() => onTabSelect(index, tab)}
+                  disabled={tab.disabled}
+                  tooltip={tab.tooltip || tabLabel}
+                  tooltipOptions={{ position: "bottom", showDelay: 500 }}
+                />
+              );
+            })}
+          </div>
+        )}
 
         {/* Right side: Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -73,8 +114,11 @@ const DocToolbar = ({
                 disabled={action.disabled}
                 loading={action.loading}
                 tooltip={action.tooltip}
-                tooltipOptions={{ position: "top", ...action.tooltipOptions }}
-                visible={action.visible !== false}
+                tooltipOptions={{
+                  position: "top",
+                  showDelay: 500,
+                  ...action.tooltipOptions,
+                }}
               />
             ))}
           {moreActionsModel.length > 0 && (
@@ -84,6 +128,11 @@ const DocToolbar = ({
                 popup
                 ref={menuRef}
                 id="doc_toolbar_actions_menu"
+                pt={{
+                  menuitem: ({ context }) => ({
+                    className: context.item.className,
+                  }),
+                }}
               />
               <Button
                 icon="pi pi-ellipsis-v"
@@ -95,7 +144,7 @@ const DocToolbar = ({
                 aria-controls="doc_toolbar_actions_menu"
                 className="p-button-secondary text-text-color-secondary hover:text-primary-color hover:bg-surface-hover"
                 tooltip="More Actions"
-                tooltipOptions={{ position: "top" }}
+                tooltipOptions={{ position: "top", showDelay: 500 }}
               />
             </>
           )}
