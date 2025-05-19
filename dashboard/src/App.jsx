@@ -177,6 +177,12 @@ function App() {
                         path="employees/edit/:employeeId"
                         element={<EditEmployeePage />}
                       />
+                      <Route
+                        path="/employees/new"
+                        element={
+                            <EditEmployeePage />
+                        }
+                      />
                       <Route path="*" element={<Navigate to="/" replace />} />{" "}
                       {/* Fallback for unknown authenticated routes */}
                     </Routes>

@@ -1,71 +1,91 @@
+// dashboard/src/pages/EmployeesPage.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import AppBreadcrumb from "@/components/common/AppBreadcrumb"; // Adjust path as needed
 import EmployeeTable from "@/components/employees/EmployeeTable"; // Adjust path as needed
 import { setCookie, getCookie } from "@/utils/cookies"; // Adjust path as needed
 import { useLayout } from "@/contexts/LayoutContext"; // Adjust path as needed
 
+
 const VIEW_MODE_COOKIE = "employee_view_mode";
 
 const EmployeesPage = () => {
-  const { setLayoutConfig } = useLayout();
-  const [viewMode, setViewMode] = useState("list");
+  const { setPageTitle, setBreadcrumbItems, setHomeLink } = useLayout();
+  const [viewMode, setViewMode] = useState("list"); // Default view mode
 
+  // Effect for initializing viewMode from cookie
   useEffect(() => {
-    setLayoutConfig({ title: "Employees Management" });
     const savedViewMode = getCookie(VIEW_MODE_COOKIE);
     if (savedViewMode) {
       setViewMode(savedViewMode);
     }
-  }, [setLayoutConfig]);
+  }, []);
 
   const handleToggleView = useCallback((newViewMode) => {
     setViewMode(newViewMode);
     setCookie(VIEW_MODE_COOKIE, newViewMode, 30);
-  }, []);
+  }, []); // Empty dependency array as setViewMode and setCookie are stable
 
-  const breadcrumbItems = [
-    { label: "Employees", url: "/employees" },
-    {
-      label: viewMode === "list" ? "List View" : "Grid View",
-      template: () => (
-        <div className="flex items-center">
-          <a
-            onClick={() => handleToggleView("list")}
-            className={`p-menuitem-link cursor-pointer ${
-              viewMode === "list"
-                ? "text-primary-color font-semibold"
-                : "hover:text-primary-color"
-            }`}
-            role="button"
-            tabIndex={0}
-            onKeyPress={(e) => e.key === "Enter" && handleToggleView("list")}
-          >
-            <span className="pi pi-list mr-2" /> List
-          </a>
-          <span className="mx-2 text-text-color-secondary">/</span>
-          <a
-            onClick={() => handleToggleView("grid")}
-            className={`p-menuitem-link cursor-pointer ${
-              viewMode === "grid"
-                ? "text-primary-color font-semibold"
-                : "hover:text-primary-color"
-            }`}
-            role="button"
-            tabIndex={0}
-            onKeyPress={(e) => e.key === "Enter" && handleToggleView("grid")}
-          >
-            <span className="pi pi-th-large mr-2" /> Grid
-          </a>
-        </div>
-      ),
-    },
-  ];
+  // Effect for setting page title and breadcrumbs
+  useEffect(() => {
+    setPageTitle("Employees Management");
+    setHomeLink({ icon: "pi pi-home", url: "/" });
 
-  const homeBreadcrumb = { icon: "pi pi-home", url: "/" };
+    const currentBreadcrumbItems = [
+      { label: "Employees", url: "/employees" }, // Or remove URL if it's the current page and should not be clickable
+      {
+        label: viewMode === "list" ? "List View" : "Grid View", // Fallback label for screen readers or if template doesn't render
+        template: () => (
+          <div className="flex items-center">
+            <a
+              onClick={() => handleToggleView("list")}
+              className={`p-menuitem-link cursor-pointer ${
+                viewMode === "list"
+                  ? "text-primary-color font-semibold" // Example: highlight active view
+                  : "hover:text-primary-color"
+              }`}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === "Enter" && handleToggleView("list")}
+              aria-label="Switch to List View"
+            >
+              <span className="pi pi-list mr-2" /> List
+            </a>
+            <span className="mx-2 text-text-color-secondary">/</span>
+            <a
+              onClick={() => handleToggleView("grid")}
+              className={`p-menuitem-link cursor-pointer ${
+                viewMode === "grid"
+                  ? "text-primary-color font-semibold" // Example: highlight active view
+                  : "hover:text-primary-color"
+              }`}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === "Enter" && handleToggleView("grid")}
+              aria-label="Switch to Grid View"
+            >
+              <span className="pi pi-th-large mr-2" /> Grid
+            </a>
+          </div>
+        ),
+      },
+    ];
+    setBreadcrumbItems(currentBreadcrumbItems);
+
+    // Cleanup function to clear breadcrumbs when the component unmounts
+    return () => {
+      setBreadcrumbItems([]);
+      // Optionally reset page title if needed, e.g., setPageTitle("Dashboard");
+    };
+  }, [
+    setPageTitle,
+    setBreadcrumbItems,
+    setHomeLink,
+    viewMode,
+    handleToggleView,
+  ]);
 
   return (
     <>
-      <AppBreadcrumb items={breadcrumbItems} home={homeBreadcrumb} />
+      {/* AppBreadcrumb is no longer rendered here. It's in MainLayout > Header */}
       {viewMode === "list" && <EmployeeTable />}
       {viewMode === "grid" && (
         <div className="p-card p-5 rounded-lg bg-surface-card shadow-md">

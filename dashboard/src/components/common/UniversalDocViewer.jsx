@@ -7,14 +7,11 @@ import { useFrappeGetDoc, useFrappeGetCall } from "frappe-react-sdk";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
-// TabView, TabPanel, Panel are now handled by UniversalLayoutRenderer
-import { Divider } from "primereact/divider";
 import { Message } from "primereact/message";
 
 // Custom Utils & Components
 import { getFieldConfig } from "@/utils/FieldManager.jsx";
 import * as _formatters from "@/utils/formatters.jsx";
-import AppBreadcrumb from "@/components/common/AppBreadcrumb.jsx";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 import UniversalLayoutRenderer from "./UniversalLayoutRenderer"; // Make sure path is correct
 
@@ -26,9 +23,10 @@ const UniversalDocViewer = ({
   onEdit,
   onBack,
   listPageUrl,
+  fieldDisplayConfig,
 }) => {
   const navigate = useNavigate();
-  const { setLayoutConfig } = useLayout();
+  const { setPageTitle } = useLayout();
   const [activeTabIndex, setActiveTabIndex] = useState(0); // Can be controlled by UniversalLayoutRenderer too
 
   const {
@@ -73,8 +71,8 @@ const UniversalDocViewer = ({
       }
     }
     const title = `View ${formSchema?.label || doctypeName}: ${displayTitle}`;
-    setLayoutConfig({ title });
-  }, [docData, docname, formSchema, setLayoutConfig, doctypeName]);
+    setPageTitle(title);
+  }, [docData, docname, formSchema, setPageTitle, doctypeName]);
 
   // This function is passed to UniversalLayoutRenderer
   const renderFieldDisplay = useCallback(
@@ -84,6 +82,12 @@ const UniversalDocViewer = ({
       const { fieldname, fieldtype, label, bold } = fieldSchema;
       const value = docData?.[fieldname];
       const displayPropsFromSchema = fieldSchema.displayProps || {};
+      const schemaDisplayProps = fieldSchema.displayProps || {}; 
+      const viewerSpecificProps = fieldDisplayConfig?.[fieldname] || {}; 
+      const effectiveDisplayProps = {
+        ...schemaDisplayProps,
+        ...viewerSpecificProps,
+      };
       const config = getFieldConfig(fieldtype, fieldname);
       let displayValue;
 
@@ -98,7 +102,7 @@ const UniversalDocViewer = ({
           </span>
         );
       } else if (config.tableBodyComponent) {
-        let extendedDisplayProps = { ...displayPropsFromSchema };
+        let extendedDisplayProps = { ...effectiveDisplayProps };
         if (fieldtype === "Attach Image") {
           extendedDisplayProps.imageWidth =
             extendedDisplayProps.imageWidth || "150";
@@ -147,7 +151,7 @@ const UniversalDocViewer = ({
         </div>
       );
     },
-    [docData]
+    [docData, fieldDisplayConfig]
   ); // docData is the main dependency here
 
   const renderLayout = () => {
@@ -217,47 +221,8 @@ const UniversalDocViewer = ({
     );
   }
 
-  let breadcrumbDocName = docData?.name || docname;
-  if (docData && formSchema?.fields) {
-    const commonTitleFields = [
-      "title",
-      "subject",
-      "employee_name",
-      "project_name",
-      "party",
-      "item_name",
-      formSchema.title_field,
-    ].filter(Boolean);
-    for (const field of commonTitleFields) {
-      if (docData[field]) {
-        breadcrumbDocName = docData[field];
-        break;
-      }
-    }
-  }
-  const breadcrumbListRoute =
-    listPageUrl ||
-    `/${
-      formSchema?.name?.toLowerCase().replace("rua ", "").replace(/\s+/g, "-") +
-        "s" ||
-      doctypeName.toLowerCase().replace("rua ", "").replace(/\s+/g, "-") + "s"
-    }`;
-
-  const breadcrumbItems = [
-    {
-      label:
-        formSchema?.labelPlural || `${doctypeName.replace("RUA ", "")} List`,
-      url: breadcrumbListRoute,
-    },
-    { label: breadcrumbDocName },
-  ];
-  const homeBreadcrumb = { icon: "pi pi-home", url: "/" };
-  
-
   return (
     <>
-      <AppBreadcrumb items={breadcrumbItems} home={homeBreadcrumb} />
-      
       <Card
         className="mt-4 bg-transparent shadow-none overflow-hidden"
         pt={{
@@ -269,7 +234,7 @@ const UniversalDocViewer = ({
         }}
       >
         {renderLayout()}
-        
+
         <div className="flex justify-end gap-2 px-4 md:px-6 pb-5 pt-1">
           {onBack ? (
             <Button

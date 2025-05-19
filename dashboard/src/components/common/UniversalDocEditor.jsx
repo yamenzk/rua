@@ -22,7 +22,6 @@ import { Message } from "primereact/message";
 import { getFieldConfig } from "@/utils/FieldManager.jsx";
 import * as FormFieldAdapter from "@/utils/FormFieldAdapter.js";
 import * as _formatters from "@/utils/formatters.jsx";
-import AppBreadcrumb from "@/components/common/AppBreadcrumb.jsx";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 import UniversalLayoutRenderer from "./UniversalLayoutRenderer";
 import FileUploadDialog from "@/components/common/FileUploadDialog.jsx";
@@ -68,7 +67,7 @@ const UniversalDocEditor = ({
   onCancel,
 }) => {
   const navigate = useNavigate();
-  const { setLayoutConfig } = useLayout();
+  const { setPageTitle } = useLayout();
   const toast = useRef(null);
   const isCreateModeInitial = !docname;
 
@@ -143,14 +142,14 @@ const UniversalDocEditor = ({
     const title = isCreateModeInitial
       ? `New ${formSchema?.label || doctypeName}`
       : `Edit: ${titleNamePart || formSchema?.label || doctypeName}`;
-    setLayoutConfig({ title });
+    setPageTitle(title);
   }, [
     isCreateModeInitial,
     docData,
     formData,
     docname,
     formSchema,
-    setLayoutConfig,
+    setPageTitle,
     doctypeName,
   ]);
 
@@ -632,41 +631,9 @@ const UniversalDocEditor = ({
     );
   }
 
-  let breadcrumbDocName = docname;
-  if (!isCreateModeInitial && docData && formSchema?.fields) {
-    const commonTitleFields = [
-      "title",
-      "subject",
-      "employee_name",
-      "project_name",
-      "party",
-      "item_name",
-      formSchema.title_field,
-    ].filter(Boolean);
-    for (const fieldName of commonTitleFields) {
-      if (docData[fieldName]) {
-        breadcrumbDocName = docData[fieldName];
-        break;
-      }
-    }
-  }
-  const breadcrumbItems = [
-    {
-      label:
-        formSchema?.labelPlural || `${doctypeName.replace("RUA ", "")} List`,
-      url: `/${
-        formSchema?.routePrefix ||
-        doctypeName.toLowerCase().replace("rua ", "").replace(/\s+/g, "-") + "s"
-      }`,
-    },
-    { label: isCreateModeInitial ? "New" : breadcrumbDocName || "Edit" },
-  ];
-  const homeBreadcrumb = { icon: "pi pi-home", url: "/" };
-
   return (
     <>
       <Toast ref={toast} />
-      <AppBreadcrumb items={breadcrumbItems} home={homeBreadcrumb} />
       <Card
         className="mt-4 shadow-none rounded-xl overflow-hidden bg-transparent"
         pt={{ content: { className: "p-0" } }}

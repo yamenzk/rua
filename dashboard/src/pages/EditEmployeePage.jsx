@@ -1,15 +1,42 @@
-// Example: src/pages/EditEmployeePage.jsx (Simplified)
-import React from "react";
+// src/pages/EditEmployeePage.jsx
+import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import UniversalDocEditor from "@/components/common/UniversalDocEditor";
 import { RUA_EMPLOYEE_DOCTYPE } from "@/constants"; // { name: "RUA Employee" }
+import { useLayout } from "@/contexts/LayoutContext"; // Import useLayout
 
 const EditEmployeePage = () => {
-  const { employeeId } = useParams(); // docname for the editor
+  const { employeeId } = useParams();
   const navigate = useNavigate();
+  const { setBreadcrumbItems, setHomeLink, setPageTitle } = useLayout(); // Use layout context
+
+  useEffect(() => {
+    const baseBreadcrumbs = [{ label: "Employees", url: "/employees" }];
+
+    if (employeeId) {
+      setPageTitle(`Edit Employee: ${employeeId}`);
+      baseBreadcrumbs.push({
+        label: employeeId, // Or fetch employee name for better UX
+        url: `/employees/view/${employeeId}`,
+      });
+    } else {
+      setPageTitle("Create New Employee");
+      // Optionally, add a "New" breadcrumb if it's a create page different from edit
+    }
+
+    baseBreadcrumbs.push({ label: "Edit" }); // Add "Edit" as non-clickable
+
+    setBreadcrumbItems(baseBreadcrumbs);
+    setHomeLink({ icon: "pi pi-home", url: "/" }); // Standard home link
+
+    // Clean up breadcrumbs when component unmounts
+    return () => {
+      setBreadcrumbItems([]);
+      setPageTitle("Dashboard"); // Reset to default or previous
+    };
+  }, [employeeId, setBreadcrumbItems, setHomeLink, setPageTitle]);
 
   const handleSaveSuccess = (savedDoc) => {
-    // Navigate to the view page or list page after save
     navigate(`/employees/view/${savedDoc.name}`);
   };
 
@@ -20,7 +47,7 @@ const EditEmployeePage = () => {
   return (
     <UniversalDocEditor
       doctypeName={RUA_EMPLOYEE_DOCTYPE.name}
-      docname={employeeId} // Pass undefined/null if it's a "create new" route
+      docname={employeeId}
       onSaveSuccess={handleSaveSuccess}
       onCancel={handleCancel}
     />

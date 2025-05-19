@@ -4,8 +4,10 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { CSSTransition } from "react-transition-group";
 import UserProfileSection from "@/components/layout/UserProfileSection"; // Adjust path as needed
+import AppBreadcrumb from "@/components/common/AppBreadcrumb"; // Import AppBreadcrumb
 
-const Header = ({ pageTitle, user, onLogout }) => {
+const Header = ({ pageTitle, user, onLogout, breadcrumbItems, homeLink }) => {
+  // Added breadcrumbItems and homeLink props
   const [searchActive, setSearchActive] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const searchIconBtnRef = useRef(null);
@@ -33,21 +35,23 @@ const Header = ({ pageTitle, user, onLogout }) => {
   };
 
   return (
-    <header className="h-16 flex items-center justify-between px-4 md:px-6 z-0 shrink-0">
-      <div className="flex items-center">
-        {/* Dynamic Page Title */}
-        <span className="text-lg font-semibold text-text-color hidden sm:block">
-          {pageTitle || "Dashboard"}{" "}
-          {/* Fallback to "Dashboard" if no title is provided */}
-        </span>
+    <header className="h-auto md:h-16 flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 z-0 shrink-0 pt-2 md:pt-0">
+      <div className="flex flex-col items-start w-full md:w-auto">
+        {breadcrumbItems && breadcrumbItems.length > 0 && (
+          <div className="mt-1 md:mt-0 w-full">
+            {" "}
+            {/* Ensure breadcrumb fits well */}
+            <AppBreadcrumb items={breadcrumbItems} home={homeLink} />
+          </div>
+        )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mt-2 md:mt-0 self-end md:self-center">
         <div className="relative flex items-center">
           <CSSTransition
             nodeRef={searchIconBtnRef}
             in={!searchActive}
             timeout={200}
-            classNames="fade-fast" /* Ensure these CSS classes are defined for the transition */
+            classNames="fade-fast"
             unmountOnExit
           >
             <div ref={searchIconBtnRef}>
@@ -64,7 +68,7 @@ const Header = ({ pageTitle, user, onLogout }) => {
             nodeRef={searchInputSpanRef}
             in={searchActive}
             timeout={300}
-            classNames="search-input" /* Ensure these CSS classes are defined for the transition */
+            classNames="search-input"
             unmountOnExit
             onEntered={() => searchInputRef.current?.focus()}
           >
@@ -78,7 +82,7 @@ const Header = ({ pageTitle, user, onLogout }) => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => {
                   if (e.key === "Enter" && searchTerm) {
-                    toggleSearch(); // Perform search on Enter key
+                    toggleSearch();
                   }
                 }}
                 placeholder="Search..."

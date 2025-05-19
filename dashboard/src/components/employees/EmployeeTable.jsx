@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useFrappeGetDocList, useFrappeDeleteDoc } from "frappe-react-sdk";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
+import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
 
 import DynamicDataTable from "@/components/common/DynamicDataTable"; // Adjust path as needed
 import ConfirmDialog from "@/components/common/ConfirmDialog"; // Adjust path as needed
@@ -268,9 +269,7 @@ const EmployeeTable = () => {
       icon="pi pi-plus"
       className="p-button-sm rounded-lg"
       onClick={() => {
-        /* navigate('/employees/create'); */ console.log(
-          "Navigate to create employee"
-        );
+        navigate(`/${RUA_EMPLOYEE_DOCTYPE.route}/new`); //
       }}
     />
   );
