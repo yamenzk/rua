@@ -29,7 +29,19 @@
   "column_break_hewc",
   "salary",
   "test_tab_tab",
-  "date_of_birth"
+  "date_of_birth",
+  "column_break_ffzo",
+  "very_long_ass_text",
+  "the_percentage_of_something",
+  "is_it_time",
+  "column_break_efeh",
+  "list_of_stuff",
+  "is_it_enabled",
+  "what_is_your_color",
+  "datetimes",
+  "good_dates",
+  "the_durations",
+  "what_does_this_do"
  ],
  "fields": [
   {
@@ -45,7 +57,8 @@
   {
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
-   "label": "Date of Birth"
+   "label": "Date of Birth",
+   "reqd": 1
   },
   {
    "description": "{\n  \"tooltip\": \"Select the employee's gender identity.\",\n  \"asChip\": true,\n  \"chipRounded\": true,\n  \"chipColors\": {\n    \"Male\": \"info\",\n    \"Female\": \"danger\"\n  }\n}",
@@ -164,12 +177,75 @@
   {
    "fieldname": "salary_com_column",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ffzo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "very_long_ass_text",
+   "fieldtype": "Long Text",
+   "label": "very long ass text"
+  },
+  {
+   "fieldname": "the_percentage_of_something",
+   "fieldtype": "Percent",
+   "label": "the percentage of something"
+  },
+  {
+   "fieldname": "is_it_time",
+   "fieldtype": "Time",
+   "label": "is it time"
+  },
+  {
+   "fieldname": "column_break_efeh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "list_of_stuff",
+   "fieldtype": "Autocomplete",
+   "label": "List of Stuff",
+   "options": "\nApple\nVegetable\nLemon\nGrass"
+  },
+  {
+   "default": "0",
+   "description": "{\n\"aside\" : \"right\",\n\"asSwitch\" : true\n}",
+   "fieldname": "is_it_enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "is it enabled"
+  },
+  {
+   "fieldname": "what_is_your_color",
+   "fieldtype": "Color",
+   "label": "what is your color"
+  },
+  {
+   "fieldname": "datetimes",
+   "fieldtype": "Datetime",
+   "label": "datetimes"
+  },
+  {
+   "fieldname": "good_dates",
+   "fieldtype": "Date",
+   "label": "good dates"
+  },
+  {
+   "fieldname": "the_durations",
+   "fieldtype": "Duration",
+   "label": "the durations"
+  },
+  {
+   "description": "{\n  \"level\": \"h1\",\n\"hideLabel\": true,\n  \"tooltip\": \"This is a main section heading\"\n}",
+   "fieldname": "what_does_this_do",
+   "fieldtype": "Heading",
+   "label": "what does this do"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-19 18:46:14.223133",
+ "modified": "2025-05-20 20:32:44.687372",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

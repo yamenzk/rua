@@ -85,7 +85,7 @@ const UniversalLayoutRendererInternal = ({
     const firstTabFallback = trulyFinalTabsConfig[0];
     if (firstTabFallback) {
       return (
-        <div className="tab-content-wrapper p-4">
+        <div className="tab-content-wrapper">
           {" "}
           {/* Default padding, can be configured via props if needed */}
           <TabContentOrchestrator
@@ -110,7 +110,7 @@ const UniversalLayoutRendererInternal = ({
   }
 
   return (
-    <div className="tab-content-wrapper p-4">
+    <div className="tab-content-wrapper">
       {" "}
       {/* Default padding, can be configured via props if needed */}
       <TabContentOrchestrator

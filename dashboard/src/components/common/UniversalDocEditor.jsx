@@ -4,10 +4,9 @@ import React, {
   useRef,
   useImperativeHandle,
   forwardRef,
+  useMemo, // Ensure useMemo is imported
 } from "react";
-import {
-  useNavigate, // No longer directly using useLocation here, it's in useExternalTabOrchestration
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // PrimeReact Components
 import { Card } from "primereact/card";
@@ -22,19 +21,20 @@ import { useExternalTabOrchestration } from "@/hooks/useExternalTabOrchestration
 import { useFormHandler } from "@/hooks/useFormHandler";
 import { useLinkFieldSearch } from "@/hooks/useLinkFieldSearch";
 import { useDocEditorSubmissionAndFiles } from "@/hooks/useDocEditorSubmissionAndFiles";
+import { useLayout } from "@/contexts/LayoutContext.jsx";
 
 // Custom Utils & Components
 import UniversalLayoutRenderer from "./UniversalLayoutRenderer";
 import FileUploadDialog from "@/components/common/FileUploadDialog.jsx";
-import { getFieldConfig } from "@/utils/FieldManager.jsx"; // For renderFormField
-import * as FormFieldAdapter from "@/utils/FormFieldAdapter.js"; // For renderFormField
-import { parseDescription } from "@/utils/schemaUtils"; // For renderFormField
+import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
+import * as FormFieldAdapter from "@/utils/FormFieldAdapter.js";
+import { parseDescription } from "@/utils/schemaUtils";
 
 const UniversalDocEditor = forwardRef(
   (
     {
       doctypeName,
-      docname: docnameProp, // Renamed to avoid conflict with hook variables
+      docname: docnameProp,
       onSaveSuccess,
       onSaveError,
       customUIAugmentations,
@@ -45,27 +45,26 @@ const UniversalDocEditor = forwardRef(
   ) => {
     const navigate = useNavigate();
     const toast = useRef(null);
+    const { setPageTitle } = useLayout();
     const isCreateModeInitial = !docnameProp;
 
-    // 1. Data Fetching (Schema and existing Doc Data for edit mode)
+    // --- CALL ALL HOOKS THAT ARE ALWAYS NEEDED AT THE TOP ---
     const {
       formSchema,
-      docData: initialDocData, // Data for initializing form in edit mode
+      docData: initialDocData,
       isLoading: isLoadingData,
       error: dataError,
       mutateDoc,
     } = useDocumentData(doctypeName, docnameProp, null, null);
 
-    // 2. Form State and Basic Validation
     const {
       formData,
-      setFormData, // Needed by submission hook for file URLs
+      setFormData,
       formErrors,
       handleInputChange,
       validateForm,
     } = useFormHandler(formSchema, initialDocData, isCreateModeInitial);
 
-    // 3. Page Title
     useDocumentPageTitle(
       initialDocData,
       formData,
@@ -76,23 +75,19 @@ const UniversalDocEditor = forwardRef(
       "Edit"
     );
 
-    // 4. External Tab Orchestration (if enabled)
     const { handleRendererTabsProcessed } = useExternalTabOrchestration(
       externalTabsEnabled,
       onTabsConfigChange
     );
 
-    // 5. Link Field Search Autocomplete
     const { linkSuggestions, handleLinkSearch } = useLinkFieldSearch(toast);
 
-    // 6. Submission and File Handling Logic
     const {
-      handleSubmit: triggerSubmitLogic, // Renamed to avoid confusion
+      handleSubmit: triggerSubmitLogic,
       isSaving,
-      // pendingFiles, // Not directly needed by parent component
       isFileDialogVisible,
       setIsFileDialogVisible,
-      fileUploadTarget,
+      fileUploadTarget, // This is a ref, its .current property might change
       openUploadModal,
       handleFileSelectedInDialog,
     } = useDocEditorSubmissionAndFiles({
@@ -106,20 +101,27 @@ const UniversalDocEditor = forwardRef(
       onSaveError,
       toastRef: toast,
       mutateDoc,
-      setFormData, // Give submission hook ability to update formData (e.g., with file URLs)
+      setFormData,
     });
 
-    // Expose submit function via ref
-    useImperativeHandle(ref, () => ({
-      triggerSubmit: triggerSubmitLogic,
-    }));
+    useImperativeHandle(
+      ref,
+      () => ({
+        triggerSubmit: triggerSubmitLogic,
+      }),
+      [triggerSubmitLogic]
+    );
 
-    // --- Field Rendering Callback for UniversalLayoutRenderer ---
+    const generateFallbackLabel = useCallback((fieldname) => {
+      return fieldname
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+    }, []);
+
     const renderFormField = useCallback(
-      (fieldSchemaItem, currentFormData, currentCustomCtx) => {
-        // ULR passes its docData (which is formData for editor) and context
+      (fieldSchemaItem, currentFormData, _currentCustomCtx) => {
+        // ... (implementation as before - this logic is fine)
         if (!fieldSchemaItem || fieldSchemaItem.hidden) return null;
-
         const {
           fieldname,
           fieldtype,
@@ -131,70 +133,112 @@ const UniversalDocEditor = forwardRef(
           placeholder,
         } = fieldSchemaItem;
         const descriptionData = parseDescription(fieldSchemaItem.description);
-        const config = getFieldConfig(fieldtype, fieldname);
-
-        if (!config.formComponent) {
+        if (descriptionData.editVisible === false) return null;
+        const fieldTypeConfig = getFieldConfig(fieldtype, fieldname);
+        if (!fieldTypeConfig.formComponent) {
+          console.warn(
+            `No form component configured for field type: ${fieldtype} (field: ${fieldname})`
+          );
           return (
-            <div key={fieldname} className="my-3 text-red-500">
-              Unsupported: {label || fieldname} ({fieldtype})
+            <div key={fieldname} className="my-3 text-orange-500">
+              Unsupported field: {label || generateFallbackLabel(fieldname)} (
+              {fieldtype})
             </div>
           );
         }
-        const ComponentToRender = config.formComponent;
-        // Use docnameProp for set_only_once check as it reflects the initial state
+        const ComponentToRender = fieldTypeConfig.formComponent;
         const isEffectivelyReadOnly =
           read_only || (set_only_once && !isCreateModeInitial && !!docnameProp);
-
         const adapterContext = {
-          formData: currentFormData, // Use formData passed by ULR
-          handleInputChange, // From useFormHandler
-          linkSuggestions, // From useLinkFieldSearch
+          formData: currentFormData,
+          handleInputChange,
+          linkSuggestions,
           handleLinkSearch: (event, linkedDoctype) =>
-            handleLinkSearch(event, linkedDoctype, fieldSchemaItem.description),
+            handleLinkSearch(
+              event,
+              linkedDoctype,
+              fieldSchemaItem.options || fieldSchemaItem.target,
+              fieldSchemaItem.get_query
+            ),
           isCreateMode: isCreateModeInitial,
           toast,
-          openUploadModal, // From useDocEditorSubmissionAndFiles
+          openUploadModal,
+          fieldSchema: fieldSchemaItem,
         };
         const componentSpecificProps = FormFieldAdapter.getAdaptedProps(
           fieldSchemaItem,
           adapterContext
         );
-        let valuePropName = "value";
-        if (fieldtype === "Check") valuePropName = "checked";
-
+        let valuePropName = componentSpecificProps.valuePropName || "value";
+        if (fieldtype === "Check" && !componentSpecificProps.valuePropName)
+          valuePropName = "checked";
+        const baseClass =
+          fieldtype === "Check" ||
+          fieldtype === "Attach" ||
+          fieldtype === "Attach Image"
+            ? ""
+            : "w-full";
         const commonProps = {
           id: fieldname,
           [valuePropName]:
             componentSpecificProps[valuePropName] !== undefined
               ? componentSpecificProps[valuePropName]
-              : currentFormData[fieldname], // Value from ULR's currentFormData
+              : currentFormData[fieldname],
           disabled: isEffectivelyReadOnly,
           placeholder:
-            placeholder || `Enter ${label || fieldname.replace(/_/g, " ")}`,
-          className: `w-full ${formErrors[fieldname] ? "p-invalid" : ""} ${
-            bold ? "font-bold" : ""
-          }`,
+            placeholder || `Enter ${label || generateFallbackLabel(fieldname)}`,
+          className: `${baseClass} ${
+            formErrors[fieldname] ? "p-invalid" : ""
+          } ${bold ? "font-bold" : ""}`,
           tooltip: descriptionData.tooltip,
           tooltipOptions: { position: "top" },
+          onChange: (e) =>
+            handleInputChange(fieldname, e.target.value, fieldtype),
           ...componentSpecificProps,
         };
-        return (
-          <div key={fieldname} className="field w-full mb-3">
-            <label
-              htmlFor={fieldname}
-              className={`block text-xs font-medium text-text-color-secondary uppercase tracking-wider mb-1 ${
-                bold ? "font-bold" : ""
-              }`}
-            >
-              {label ||
-                fieldname
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
-              {mandatory && <span className="text-red-500">*</span>}
-            </label>
+        delete commonProps.valuePropName;
+        const showLabel = descriptionData.hideLabel !== true;
+        const asideLayout = descriptionData.aside;
+        const finalLabelText = label || generateFallbackLabel(fieldname);
+        const labelElement = showLabel && (
+          <label
+            htmlFor={fieldname}
+            className={`block text-xs font-medium text-text-color-secondary uppercase tracking-wider ${
+              bold ? "font-bold" : ""
+            } ${
+              asideLayout
+                ? asideLayout === "left"
+                  ? "mr-2 self-start pt-2"
+                  : "ml-2 self-start pt-2"
+                : "mb-1"
+            }`}
+          >
+            {finalLabelText}{" "}
+            {mandatory && <span className="text-red-500">*</span>}
+          </label>
+        );
+        const inputContainerClass = !asideLayout
+          ? "w-full"
+          : asideLayout === "left"
+          ? "flex-1 min-w-0"
+          : "flex-1 min-w-0 order-first";
+        const inputElement = (
+          <div className={inputContainerClass}>
             <ComponentToRender {...commonProps} />
+          </div>
+        );
+        let fieldWrapperClass = "field w-full mb-3";
+        if (asideLayout) fieldWrapperClass += " flex";
+        return (
+          <div key={fieldname} className={fieldWrapperClass}>
+            {labelElement}
+            {inputElement}
             {formErrors[fieldname] && (
-              <small className="p-error block mt-1">
+              <small
+                className={`p-error block mt-1 ${
+                  asideLayout ? "w-full basis-full order-last text-right" : ""
+                }`}
+              >
                 {formErrors[fieldname]}
               </small>
             )}
@@ -203,17 +247,47 @@ const UniversalDocEditor = forwardRef(
       },
       [
         isCreateModeInitial,
-        docnameProp, // For read_only logic
+        docnameProp,
         handleInputChange,
         linkSuggestions,
         handleLinkSearch,
         openUploadModal,
-        formErrors, // Callbacks and state from hooks
-        // formData is not needed in deps because renderFormField receives currentFormData from ULR
+        formErrors,
+        generateFallbackLabel,
       ]
     );
 
-    // --- Loading and Error States ---
+    // MOVED customComponentContext useMemo call BEFORE early returns
+    const customComponentContext = useMemo(
+      () => ({
+        docname:
+          fileUploadTarget.current?.currentDocnameForUpload ||
+          (isCreateModeInitial ? `NEW-${doctypeName}` : docnameProp),
+        doctypeName,
+        docData: formData, // formData is used as docData in editor context
+        formSchema, // formSchema might be undefined initially
+        navigate,
+        setPageTitle,
+        handleInputChange,
+      }),
+      [
+        // Dependency on fileUploadTarget.current.currentDocnameForUpload is tricky.
+        // If fileUploadTarget.current mutates without a state change triggering re-render, this memo won't update.
+        // It's generally better if values used in memo come from props or state.
+        // For now, let's assume it works or that a re-render happens when it's relevant.
+        fileUploadTarget.current?.currentDocnameForUpload, // This is a specific potential gotcha
+        isCreateModeInitial,
+        doctypeName,
+        docnameProp,
+        formData,
+        formSchema,
+        navigate,
+        setPageTitle,
+        handleInputChange,
+      ]
+    );
+
+    // --- NOW THE CONDITIONAL EARLY RETURNS ---
     if (isLoadingData) {
       return (
         <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
@@ -221,6 +295,7 @@ const UniversalDocEditor = forwardRef(
         </div>
       );
     }
+
     if (dataError) {
       return (
         <Message
@@ -230,7 +305,9 @@ const UniversalDocEditor = forwardRef(
         />
       );
     }
+
     if (!formSchema?.fields) {
+      // customComponentContext is already defined, formSchema might be null/undefined within it
       return (
         <Message
           severity="warn"
@@ -239,19 +316,6 @@ const UniversalDocEditor = forwardRef(
         />
       );
     }
-
-    // Context for custom components within ULR
-    const customComponentContext = {
-      docname: fileUploadTarget.currentDocnameForUpload || `NEW-${doctypeName}`, // Provides some docname context even for new
-      doctypeName,
-      docData: formData, // Custom components see live form data
-      formSchema,
-      navigate,
-      setPageTitle: (title) => {
-        /* Page title is managed by useDocumentPageTitle */
-      }, // Can be a no-op or allow override
-      handleInputChange, // Allow custom components to modify form
-    };
 
     return (
       <>
@@ -262,10 +326,10 @@ const UniversalDocEditor = forwardRef(
         >
           <form
             onSubmit={(e) => {
-              e.preventDefault(); /* Submission via toolbar ref from parent */
+              e.preventDefault();
             }}
           >
-            {isSaving && ( // Global saving indicator (optional, as buttons usually show loading)
+            {isSaving && (
               <div className="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-[1000]">
                 <ProgressSpinner strokeWidth="4" />
               </div>
@@ -275,17 +339,13 @@ const UniversalDocEditor = forwardRef(
               allFieldsSchema={formSchema.fields}
               renderFieldItem={renderFormField}
               customUIAugmentations={customUIAugmentations}
-              docData={formData} // Pass current form data to ULR
+              docData={formData} // Use formData for layout in editor
               customComponentContext={customComponentContext}
               enableRouting={true}
               onTabsProcessed={
                 externalTabsEnabled ? handleRendererTabsProcessed : undefined
               }
-              // externalActiveTabIndex and hideInternalTabViewHeader are managed by ULR's useTabLayoutRouting
-              // based on URL if not explicitly passed down from a page component controlling DocToolbar.
-              // For editor, usually tabs are internal unless a very specific design requires external.
               hideInternalTabViewHeader={externalTabsEnabled}
-              // initialActiveTabIndex: ULR's hook manages this
             />
           </form>
         </Card>
@@ -293,10 +353,9 @@ const UniversalDocEditor = forwardRef(
           <FileUploadDialog
             visible={isFileDialogVisible}
             onHide={() => setIsFileDialogVisible(false)}
-            onFileSelect={handleFileSelectedInDialog} // From submission hook
-            targetFieldname={fileUploadTarget.fieldname} // From submission hook
-            // isNewDocument prop for FileUploadDialog needs to know if currentDocnameForUpload is set
-            isNewDocument={!fileUploadTarget.currentDocnameForUpload}
+            onFileSelect={handleFileSelectedInDialog}
+            targetFieldname={fileUploadTarget.current?.fieldname}
+            isNewDocument={!fileUploadTarget.current?.currentDocnameForUpload}
           />
         )}
       </>

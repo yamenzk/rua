@@ -116,8 +116,16 @@ const EditEmployeePage = () => {
   const editorPrimaryActions = [
     {
       id: "saveEmployee",
-      label: isEditorCurrentlySaving ? "Saving..." : "Save",
-      icon: isEditorCurrentlySaving ? undefined : "pi pi-check",
+      label: isEditorCurrentlySaving
+        ? "Saving..."
+        : employeeId
+        ? "Save Changes"
+        : "Create Employee",
+      icon: isEditorCurrentlySaving
+        ? undefined
+        : employeeId
+        ? "pi pi-save"
+        : "pi pi-user-plus",
       command: triggerSave,
       loading: isEditorCurrentlySaving,
       className: "p-button-primary",
@@ -134,21 +142,22 @@ const EditEmployeePage = () => {
         </div>
       );
     } else if (toolbarLeftContentData) {
+      const isEditing = Boolean(employeeId);
+      const displayName = toolbarLeftContentData.name || "Document";
       customToolbarLeftContent = (
-        /* ... Avatar and name/branch JSX ... */
         <div className="flex items-center gap-3 overflow-hidden">
           <Avatar
             image={toolbarLeftContentData.image || undefined}
             label={
               !toolbarLeftContentData.image
-                ? toolbarLeftContentData.name?.[0]?.toUpperCase() ||
+                ? displayName?.[0]?.toUpperCase() ||
                   RUA_EMPLOYEE_DOCTYPE.name?.[0]?.toUpperCase()
                 : undefined
             }
             shape="circle"
             size="large"
             className="bg-primary-100 text-primary-color flex-shrink-0"
-            imageAlt={toolbarLeftContentData.name || "Document"}
+            imageAlt={displayName}
             onError={(e) => {
               if (e.target) e.target.style.display = "none";
             }}
@@ -156,11 +165,11 @@ const EditEmployeePage = () => {
           <div className="flex flex-col overflow-hidden">
             <span
               className="font-semibold text-text-color text-lg truncate"
-              title={toolbarLeftContentData.name}
+              title={displayName}
             >
-              {toolbarLeftContentData.name || "Document"}
+              {isEditing ? `Editing ${displayName}` : displayName}
             </span>
-            {toolbarLeftContentData.branch && (
+            {!isEditing && toolbarLeftContentData.branch && (
               <span
                 className="text-sm text-text-color-secondary truncate"
                 title={toolbarLeftContentData.branch}
@@ -184,7 +193,7 @@ const EditEmployeePage = () => {
         />
         <div className="flex flex-col overflow-hidden">
           <span className="font-semibold text-text-color text-lg truncate">
-            New {RUA_EMPLOYEE_DOCTYPE.name}
+            New {RUA_EMPLOYEE_DOCTYPE.title}
           </span>
         </div>
       </div>

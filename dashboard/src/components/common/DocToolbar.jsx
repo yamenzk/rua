@@ -31,7 +31,7 @@ const DocToolbar = ({
     }));
 
   return (
-    <div className="doc-toolbar bg-surface-section p-3 md:px-4 md:py-3 m-4 rounded-2xl shadow-sm sticky top-0 z-50">
+    <div className="doc-toolbar bg-surface-section m-[1.25rem] shadow-xl p-3 rounded-xl sticky top-0 z-50">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left side: Back button, Custom Left Content */}
         <div className="flex items-center gap-3 flex-shrink-0">

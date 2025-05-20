@@ -1,5 +1,5 @@
 // src/components/document/UniversalDocViewer.jsx
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react"; // Ensure useMemo is imported
 import { useNavigate } from "react-router-dom";
 
 // PrimeReact Components
@@ -11,15 +11,16 @@ import { Message } from "primereact/message";
 import { useDocumentData } from "@/hooks/useDocumentData";
 import { useDocumentPageTitle } from "@/hooks/useDocumentPageTitle";
 import { useExternalTabOrchestration } from "@/hooks/useExternalTabOrchestration";
-import { getFieldConfig } from "@/utils/FieldManager.jsx";
-import * as _formatters from "@/utils/formatters.jsx";
+// getFieldConfig and _formatters are used inside renderFieldDisplay, which is fine
+import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
+import * as _formatters from "@/utils/formatters";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 import UniversalLayoutRenderer from "./UniversalLayoutRenderer";
 import { parseDescription } from "@/utils/schemaUtils";
 
 const UniversalDocViewer = ({
   doctypeName,
-  docname,
+  docname, // This prop is used in customComponentContext
   externalFormSchema: externalFormSchemaProp,
   externalDocData: externalDocDataProp,
   fieldDisplayConfig,
@@ -31,8 +32,8 @@ const UniversalDocViewer = ({
   const { setPageTitle } = useLayout();
 
   const {
-    formSchema,
-    docData,
+    formSchema, // Used in customComponentContext
+    docData, // Used in customComponentContext
     isLoading,
     error: dataError,
   } = useDocumentData(
@@ -42,6 +43,7 @@ const UniversalDocViewer = ({
     externalDocDataProp
   );
 
+  // Call all hooks that are always needed at the top
   useDocumentPageTitle(
     docData,
     null,
@@ -57,12 +59,20 @@ const UniversalDocViewer = ({
     onTabsConfigChange
   );
 
+  const generateFallbackLabel = useCallback((fieldname) => {
+    return fieldname
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+  }, []);
+
   const renderFieldDisplay = useCallback(
     (fieldSchemaItem, currentDocData, _customCtx) => {
+      // ... (implementation as before, this is fine)
       if (!fieldSchemaItem || fieldSchemaItem.hidden) return null;
       const { fieldname, fieldtype, label, bold } = fieldSchemaItem;
       const value = currentDocData?.[fieldname];
       const descriptionData = parseDescription(fieldSchemaItem.description);
+      if (descriptionData.readVisible === false) return null;
       const { tooltip: labelTooltip, ...otherDescriptionProps } =
         descriptionData;
       const schemaDrivenDisplayProps = otherDescriptionProps;
@@ -71,10 +81,15 @@ const UniversalDocViewer = ({
         ...schemaDrivenDisplayProps,
         ...viewerSpecificProps,
       };
-      const config = getFieldConfig(fieldtype, fieldname);
+      const fieldTypeConfig = getFieldConfig(fieldtype, fieldname);
       let displayValue;
-
-      if (
+      if (fieldtype === "Heading") {
+        displayValue = (
+          <span className="text-lg font-semibold">
+            {label || generateFallbackLabel(fieldname)}
+          </span>
+        );
+      } else if (
         value === null ||
         value === undefined ||
         String(value).trim() === ""
@@ -84,60 +99,87 @@ const UniversalDocViewer = ({
             Not set
           </span>
         );
-      } else if (config.tableBodyComponent) {
+      } else if (fieldtype === "Text Editor") {
+        displayValue = (
+          <div
+            className="prose max-w-full text-text-color text-sm"
+            dangerouslySetInnerHTML={{ __html: value }}
+          />
+        );
+      } else if (fieldTypeConfig.tableBodyComponent) {
         let extendedDisplayProps = { ...effectiveDisplayProps };
         if (fieldtype === "Attach Image") {
           extendedDisplayProps.imageWidth =
-            extendedDisplayProps.imageWidth ||
-            descriptionData.imageWidth ||
-            "150";
+            effectiveDisplayProps.imageWidth || "150";
           extendedDisplayProps.imageClassName =
-            extendedDisplayProps.imageClassName ||
-            descriptionData.imageClassName ||
+            effectiveDisplayProps.imageClassName ||
             "object-contain rounded-md border border-surface-border shadow-sm max-h-48";
           extendedDisplayProps.asAvatar =
             effectiveDisplayProps.asAvatar ?? false;
         }
-        if (fieldtype === "Text Editor") {
-          displayValue = (
-            <div
-              className="prose max-w-full text-text-color text-sm"
-              dangerouslySetInnerHTML={{ __html: value }}
-            />
-          );
-        } else {
-          displayValue = config.tableBodyComponent(
-            docData,
-            fieldname,
-            extendedDisplayProps,
-            _formatters
-          );
-        }
+        displayValue = fieldTypeConfig.tableBodyComponent(
+          currentDocData,
+          fieldname,
+          extendedDisplayProps,
+          _formatters
+        );
       } else {
         displayValue = <span className="text-sm">{String(value)}</span>;
       }
+      const showLabel = descriptionData.hideLabel !== true;
+      const asideLayout = descriptionData.aside;
+      const finalLabel = label || generateFallbackLabel(fieldname);
+      const labelElement = showLabel && (
+        <div
+          className={`text-xs font-medium text-text-color-secondary uppercase tracking-wider ${
+            asideLayout
+              ? asideLayout === "left"
+                ? "mr-2"
+                : "ml-2"
+              : "mb-1 block"
+          } ${bold ? "font-bold" : ""}`}
+          title={labelTooltip || fieldSchemaItem.label}
+        >
+          {finalLabel}
+        </div>
+      );
+      if (asideLayout) {
+        return (
+          <div className="py-1 flex items-center">
+            {asideLayout === "left" && labelElement}
+            <div className="text-text-color text-sm break-words min-w-0 flex-1">
+              {displayValue}
+            </div>
+            {asideLayout === "right" && labelElement}
+          </div>
+        );
+      }
       return (
         <div className="py-1">
-          <div
-            className={`block text-xs font-medium text-text-color-secondary uppercase tracking-wider mb-1 ${
-              bold ? "font-bold" : ""
-            }`}
-            title={labelTooltip || fieldSchemaItem.label}
-          >
-            {label ||
-              fieldname
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase())}
-          </div>
+          {labelElement}
           <div className="text-text-color text-sm break-words">
             {displayValue}
           </div>
         </div>
       );
     },
-    [docData, fieldDisplayConfig]
+    [fieldDisplayConfig, generateFallbackLabel]
   );
 
+  // MOVED customComponentContext useMemo call BEFORE early returns
+  const customComponentContext = useMemo(
+    () => ({
+      docname,
+      doctypeName,
+      docData, // docData might be undefined initially, but that's okay for the context value
+      formSchema, // formSchema might be undefined initially
+      navigate,
+      setPageTitle,
+    }),
+    [docname, doctypeName, docData, formSchema, navigate, setPageTitle]
+  );
+
+  // Now the conditional returns
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
@@ -145,6 +187,7 @@ const UniversalDocViewer = ({
       </div>
     );
   }
+
   if (dataError) {
     return (
       <Message
@@ -154,7 +197,10 @@ const UniversalDocViewer = ({
       />
     );
   }
+
   if (!formSchema) {
+    // Even if formSchema is null here, customComponentContext has already been created
+    // with formSchema as potentially undefined.
     return (
       <Message
         severity="warn"
@@ -163,7 +209,9 @@ const UniversalDocViewer = ({
       />
     );
   }
+
   if (docname && !docData) {
+    // Even if docData is null here, customComponentContext has already been created
     return (
       <Message
         severity="warn"
@@ -173,23 +221,10 @@ const UniversalDocViewer = ({
     );
   }
 
-  const customComponentContext = {
-    docname,
-    doctypeName,
-    docData,
-    formSchema,
-    navigate,
-    setPageTitle,
-  };
-
-  // Remove the problematic setState call during render
-  // The activeTabIndex is now handled entirely by useExternalTabOrchestration
-  // which communicates with the parent via onTabsConfigChange
-
   return (
     <Card
       className="mt-4 bg-transparent shadow-none overflow-hidden"
-      pt={{ content: { className: "p-0" } }}
+      pt={{ content: { className: "p-0 " } }}
     >
       {docData || !docname ? (
         <UniversalLayoutRenderer
@@ -198,7 +233,7 @@ const UniversalDocViewer = ({
           renderFieldItem={renderFieldDisplay}
           customUIAugmentations={customUIAugmentations}
           docData={docData}
-          customComponentContext={customComponentContext}
+          customComponentContext={customComponentContext} // Now customComponentContext is always defined
           enableRouting={true}
           onTabsProcessed={
             externalTabsEnabled ? handleRendererTabsProcessed : undefined

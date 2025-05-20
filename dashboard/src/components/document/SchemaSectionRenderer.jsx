@@ -67,7 +67,7 @@ const SchemaSectionRenderer = ({
         return (
           <PrimeReactCard
             key={`${itemBlock.id}-col-${originalColIdx}`}
-            className="bg-surface-card shadow-lg rounded-xl"
+            className="bg-surface-card border-none shadow-none rounded-xl"
             pt={{ body: { className: "p-4" } }}
           >
             {columnLabelsForThisSection[originalColIdx] && (

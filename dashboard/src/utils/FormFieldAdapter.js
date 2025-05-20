@@ -15,10 +15,53 @@ import * as _formatters from "./formatters.jsx"; // Ensure this path is correct
  */
 
 const getCheckProps = (context) => {
-	const { fieldname } = context.fieldSchema;
+	const { fieldname, description } = context.fieldSchema; // Extract fieldSchema info
+
+	// Get the actual boolean value, ensuring type consistency
+	const currentValue = context.formData[fieldname];
+	const isBooleanValue = typeof currentValue === "boolean";
+	const isNumericValue = typeof currentValue === "number";
+
+	// Convert from database value (could be 0/1 or true/false) to boolean for component
+	let checkedValue = false;
+	if (isBooleanValue) {
+		checkedValue = currentValue;
+	} else if (isNumericValue) {
+		checkedValue = currentValue === 1;
+	} else {
+		checkedValue = !!currentValue;
+	}
+
 	return {
-		checked: !!context.formData[fieldname],
-		onChange: (e) => context.handleInputChange(fieldname, e.checked ? 1 : 0),
+		checked: checkedValue,
+		onChange: (event) => {
+			// Handle different event structures from different components
+			let newValue = false;
+
+			if (event && typeof event === "object") {
+				if (typeof event.checked === "boolean") {
+					// PrimeReact Checkbox event
+					newValue = event.checked;
+				} else if (typeof event.value === "boolean") {
+					// PrimeReact InputSwitch event
+					newValue = event.value;
+				} else if (event.target && typeof event.target.checked === "boolean") {
+					// Standard HTML checkbox event
+					newValue = event.target.checked;
+				} else {
+					// Fallback
+					newValue = !!event;
+				}
+			} else {
+				// Direct value passed
+				newValue = !!event;
+			}
+
+			// Store as 0/1 in the database - important to maintain consistency
+			context.handleInputChange(fieldname, newValue ? 1 : 0);
+		},
+		// Pass the original description to the component so it can determine rendering
+		fieldSchemaItem: context.fieldSchema,
 	};
 };
 
@@ -68,6 +111,7 @@ const getLinkProps = (context) => {
 		onChange: (e) => context.handleInputChange(fieldname, e.value),
 	};
 };
+
 
 const getNumberInputProps = (context) => {
 	const {
@@ -172,12 +216,13 @@ export const getAdaptedProps = (fieldSchema, context) => {
 		case "Float":
 		case "Percent":
 			return getNumberInputProps(fullContext);
+		case "Heading":
+			return { label: fieldSchema.label, fieldSchemaItem: fieldSchema };
 		case "Select":
+		case "Autocomplete":
 			return getSelectProps(fullContext);
-		case "Nationality": // Assuming Nationality formComponent is Dropdown
-			// and options are prepared in fieldSchema.select_options_data
-			// If options are static from nationalities.json, needs its own adapter.
-			return getSelectProps(fullContext); // Or a dedicated getNationalityProps(fullContext)
+		case "Nationality": 
+			return getSelectProps(fullContext); 
 		case "Text Editor":
 			return getTextEditorProps(fullContext);
 		case "Attach":

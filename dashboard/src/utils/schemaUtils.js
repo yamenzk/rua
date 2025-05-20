@@ -4,7 +4,7 @@
  * Parses a field's description string, which might contain JSON for display properties
  * and a tooltip.
  * @param {string | undefined} descriptionString - The description string from the field schema.
- * @returns {{tooltip: string, asChip?: boolean, chipColors?: object, chipRounded?: boolean, [key: string]: any}}
+ * @returns {{tooltip: string, asChip?: boolean, chipColors?: object, chipRounded?: boolean, editVisible?: boolean, readVisible?: boolean, hideLabel?: boolean, [key: string]: any}}
  * An object containing the tooltip and any other properties parsed from JSON.
  */
 export const parseDescription = (descriptionString) => {
