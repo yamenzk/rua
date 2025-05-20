@@ -1,58 +1,50 @@
-// dashboard/src/utils/fieldTypeConfigurations.js
+// src/utils/fieldTypeConfigurations.jsx
 import React from "react";
 
-// PrimeReact Components (used directly as form components or for simple cases)
+// --- PrimeReact Components (used directly or as base for formComponents) ---
 import { InputText } from "primereact/inputtext";
-import { InputNumber } from "primereact/inputnumber"; // For Duration form field
-import { AutoComplete } from "primereact/autocomplete";
-import { Dropdown } from "primereact/dropdown"; // For Select form field (if not wrapped)
+import { InputNumber } from "primereact/inputnumber"; // For default Duration form field
+import { Dropdown } from "primereact/dropdown"; // For Select & Autocomplete formComponent
 
-// Custom Form Field Components
-import AttachmentFormField from "@/components/formFields/AttachmentFormField";
-import ColorPickerFormField from "@/components/formFields/ColorPickerFormField.jsx"; 
-import HeadingField from "@/components/formFields/HeadingField"; 
-import CheckSwitchFormField from "@/components/formFields/CheckSwitchFormField"; 
-import CurrencyFormField from "@/components/formFields/CurrencyFormField";
-import GenericInputNumberFormField from "@/components/formFields/GenericInputNumberFormField";
-import DateFormField from "@/components/formFields/DateFormField";
-import DateTimeFormField from "@/components/formFields/DateTimeFormField";
-import TimeFormField from "@/components/formFields/TimeFormField";
-import GenericTextareaFormField from "@/components/formFields/GenericTextareaFormField";
-import TextEditorFormField from "@/components/formFields/TextEditorFormField";
-import NationalityFormField from "@/components/formFields/NationalityFormField";
-import SearchableSelectFormField from "@/components/formFields/SearchableSelectFormField.jsx";
+// --- Custom Form Field Components ---
+import AttachmentFormField from "@/components/formFields/AttachmentFormField.jsx";
+import ColorPickerFormField from "@/components/formFields/ColorPickerFormField.jsx";
+import HeadingField from "@/components/formFields/HeadingField.jsx";
+import CheckSwitchFormField from "@/components/formFields/CheckSwitchFormField.jsx";
+import CurrencyFormField from "@/components/formFields/CurrencyFormField.jsx";
+import GenericInputNumberFormField from "@/components/formFields/GenericInputNumberFormField.jsx";
+import DateFormField from "@/components/formFields/DateFormField.jsx";
+import DateTimeFormField from "@/components/formFields/DateTimeFormField.jsx";
+import TimeFormField from "@/components/formFields/TimeFormField.jsx";
+import GenericTextareaFormField from "@/components/formFields/GenericTextareaFormField.jsx";
+import TextEditorFormField from "@/components/formFields/TextEditorFormField.jsx"; // Wrapper for PrimeReact Editor
+import NationalityFormField from "@/components/formFields/NationalityFormField.jsx";
 
-// Table Cell Components
-import AttachCell from "@/components/table/cells/AttachCell";
-import AttachImageCell from "@/components/table/cells/AttachImageCell";
-import SelectCell from "@/components/table/cells/SelectCell";
-import LinkCell from "@/components/table/cells/LinkCell";
-import CheckboxCell from "@/components/table/cells/CheckboxCell";
-import ColorCell from "@/components/table/cells/ColorCell";
-import RichTextCell from "@/components/table/cells/RichTextCell";
-import NationalityCell from "@/components/table/cells/NationalityCell";
-import DefaultCell from "@/components/table/cells/DefaultCell";
+// --- Table Cell Components ---
+import AttachCell from "@/components/table/cells/AttachCell.jsx";
+import AttachImageCell from "@/components/table/cells/AttachImageCell.jsx";
+import SelectCell from "@/components/table/cells/SelectCell.jsx"; // Used by Select & Autocomplete
+// LinkCell was for a different "Link" type, not the Autocomplete we are discussing now
+import CheckboxCell from "@/components/table/cells/CheckboxCell.jsx";
+import ColorCell from "@/components/table/cells/ColorCell.jsx";
+import RichTextCell from "@/components/table/cells/RichTextCell.jsx";
+import NationalityCell from "@/components/table/cells/NationalityCell.jsx";
+import DefaultCell from "@/components/table/cells/DefaultCell.jsx";
 
+// --- Table Filter Components ---
+import TextTableFilter from "@/components/table/filters/TextTableFilter.jsx";
+import NumericRangeTableFilter from "@/components/table/filters/NumericRangeTableFilter.jsx";
+import DateTableFilter from "@/components/table/filters/DateTableFilter.jsx";
+import SelectTableFilter from "@/components/table/filters/SelectTableFilter.jsx"; // Used by Select & Autocomplete
+import MultiSelectTableFilter from "@/components/table/filters/MultiSelectTableFilter.jsx"; // For Link & Nationality
+import TriStateCheckboxTableFilter from "@/components/table/filters/TriStateCheckboxTableFilter.jsx";
 
-// Table Filter Components
-import TextTableFilter from "@/components/table/filters/TextTableFilter";
-import NumericRangeTableFilter from "@/components/table/filters/NumericRangeTableFilter";
-import DateTableFilter from "@/components/table/filters/DateTableFilter";
-import SelectTableFilter from "@/components/table/filters/SelectTableFilter";
-import MultiSelectTableFilter from "@/components/table/filters/MultiSelectTableFilter";
-import TriStateCheckboxTableFilter from "@/components/table/filters/TriStateCheckboxTableFilter";
-
-
-// Custom Formatters & Data
-import * as formatters from "./formatters";
-import nationalitiesData from "./nationalities.json"; // Renamed to avoid conflict
-
-const nationalityOptionsForFilter = nationalitiesData.map((n) => ({
-	label: `${n.flag} ${n.name}`,
-	value: n.name,
-}));
+// --- Custom Formatters & Data ---
+import * as formatters from "./formatters.jsx";
+import { parseDescription } from "@/utils/schemaUtils";
 
 export const fieldTypeConfigurations = {
+  // --- Attachment Types ---
   Attach: {
     formComponent: AttachmentFormField,
     tableBodyComponent: (rowData, fieldname, displayProps) => (
@@ -81,28 +73,10 @@ export const fieldTypeConfigurations = {
     filterable: false,
     dataType: "text",
   },
-  Autocomplete: {
-    formComponent: SearchableSelectFormField,
-    tableBodyComponent: SelectCell,
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <SelectTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
-        optionsFromSchema={colProps.options_from_schema}
-        placeholder={`Filter ${colProps.header || fieldname}`}
-      />
-    ),
-    sortable: true,
-    filterable: true,
-    dataType: "text",
-  },
+
+  // --- Selection Types ---
   Select: {
-    formComponent: Dropdown, // Can be a direct PrimeReact component or a wrapped one if more logic is needed
+    formComponent: Dropdown, // Uses getSelectProps from adapter (filter: undefined by default)
     tableBodyComponent: (rowData, fieldname, displayProps) => (
       <SelectCell
         rowData={rowData}
@@ -114,24 +88,86 @@ export const fieldTypeConfigurations = {
       colProps,
       fieldname,
       filterValue,
-      filterApplyCallback,
-      filterOptions
+      filterApplyCallback
     ) => (
       <SelectTableFilter
         value={filterValue}
-        options={filterOptions || colProps.options || []}
+        options={colProps.options || []} // Expects {label,value} array from transformSchemaToColumnConfig
         onChange={filterApplyCallback}
-        placeholder="Select"
+        placeholder={`Select ${colProps.header || fieldname}`}
       />
     ),
     sortable: true,
     filterable: true,
     dataType: "text",
   },
-  Link: {
-    formComponent: AutoComplete,
+  Autocomplete: {
+    // Configured to behave like a searchable Select
+    formComponent: Dropdown, // Uses getSelectProps from adapter (filter: true by default for this type)
     tableBodyComponent: (rowData, fieldname, displayProps) => (
-      <LinkCell
+      <SelectCell
+        rowData={rowData}
+        fieldname={fieldname}
+        displayProps={displayProps}
+      /> // Reuses SelectCell
+    ),
+    tableFilterElement: (
+      colProps,
+      fieldname,
+      filterValue,
+      filterApplyCallback
+    ) => (
+      <SelectTableFilter // Reuses SelectTableFilter
+        value={filterValue}
+        options={colProps.options || []} // Expects {label,value} array from transformSchemaToColumnConfig
+        onChange={filterApplyCallback}
+        placeholder={`Search ${colProps.header || fieldname}`}
+      />
+    ),
+    sortable: true,
+    filterable: true,
+    dataType: "text",
+  },
+  Nationality: {
+    formComponent: NationalityFormField, // Specific component using nationalities.json
+    tableBodyComponent: (rowData, fieldname) => (
+      <NationalityCell rowData={rowData} fieldname={fieldname} />
+    ),
+    tableFilterElement: (
+      colProps,
+      fieldname,
+      filterValue,
+      filterApplyCallback
+    ) => (
+      <MultiSelectTableFilter // Nationalities can be filtered with MultiSelect
+        value={filterValue}
+        options={colProps.options || []} // Expects {label,value} with flags from transformSchemaToColumnConfig
+        onChange={filterApplyCallback}
+        placeholder="Any Nationality"
+        multiSelectProps={{
+          itemTemplate: (option) => <span>{option.label}</span>, // For flag display
+          maxSelectedLabels: 1,
+          display: "chip",
+          showClear: true,
+          filter: true,
+        }}
+      />
+    ),
+    sortable: true,
+    filterable: true,
+    dataType: "text",
+  },
+
+  // --- Link Types ---
+  Link: {
+    // This is for Frappe-style server-side searched Links
+    formComponent: (await import("primereact/autocomplete")).AutoComplete, // Dynamic import example or direct
+    tableBodyComponent: (
+      rowData,
+      fieldname,
+      displayProps // Can use SelectCell if chip display is desired
+    ) => (
+      <SelectCell
         rowData={rowData}
         fieldname={fieldname}
         displayProps={displayProps}
@@ -146,7 +182,7 @@ export const fieldTypeConfigurations = {
     ) => (
       <MultiSelectTableFilter
         value={filterValue}
-        options={filterOptions || []}
+        options={filterOptions || []} // DynamicDataTable should populate these for Link filters
         onChange={filterApplyCallback}
         placeholder="Any"
         multiSelectProps={{
@@ -161,7 +197,8 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   "Dynamic Link": {
-    formComponent: AutoComplete,
+    // Similar to Link, but perhaps different adapter logic
+    formComponent: (await import("primereact/autocomplete")).AutoComplete,
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
     ),
@@ -184,14 +221,13 @@ export const fieldTypeConfigurations = {
     filterable: true,
     dataType: "text",
   },
+
+  // --- Boolean/Check Type ---
   Check: {
-    formComponent: CheckSwitchFormField,
-    tableBodyComponent: (
-      rowData,
-      fieldname,
-      _displayProps,
-      _formatters // _formatters kept for signature consistency
-    ) => <CheckboxCell rowData={rowData} fieldname={fieldname} />,
+    formComponent: CheckSwitchFormField, // Handles Checkbox or InputSwitch based on description
+    tableBodyComponent: (rowData, fieldname) => (
+      <CheckboxCell rowData={rowData} fieldname={fieldname} />
+    ),
     tableFilterElement: (
       colProps,
       fieldname,
@@ -207,6 +243,8 @@ export const fieldTypeConfigurations = {
     filterable: true,
     dataType: "boolean",
   },
+
+  // --- Color Type ---
   Color: {
     formComponent: ColorPickerFormField,
     tableBodyComponent: (rowData, fieldname) => (
@@ -228,8 +266,10 @@ export const fieldTypeConfigurations = {
     filterable: true,
     dataType: "text",
   },
+
+  // --- Numeric Types ---
   Currency: {
-    formComponent: CurrencyFormField,
+    formComponent: CurrencyFormField, // Wrapper for InputNumber with currency mode
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatCurrencyAED(rowData[fieldname]),
     tableFilterElement: (
@@ -340,7 +380,10 @@ export const fieldTypeConfigurations = {
     filterable: true,
     dataType: "numeric",
   },
+
+  // --- Text Input Types ---
   Data: {
+    // Generic text input
     formComponent: InputText,
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
@@ -420,10 +463,22 @@ export const fieldTypeConfigurations = {
         placeholder={`Search ${colProps.header || fieldname}`}
       />
     ),
-    sortable: false, // As per original
+    sortable: false,
     filterable: true,
     dataType: "text",
   },
+  "Text Editor": {
+    formComponent: TextEditorFormField, // Wrapper for PrimeReact Editor
+    tableBodyComponent: (rowData, fieldname) => (
+      <RichTextCell rowData={rowData} fieldname={fieldname} />
+    ),
+    tableFilterElement: null,
+    sortable: false,
+    filterable: false,
+    dataType: "text",
+  },
+
+  // --- Date & Time Types ---
   Date: {
     formComponent: DateFormField,
     tableBodyComponent: (rowData, fieldname) =>
@@ -443,13 +498,6 @@ export const fieldTypeConfigurations = {
     sortable: true,
     filterable: true,
     dataType: "date",
-  },
-  Heading: {
-    formComponent: HeadingField,
-    tableBodyComponent: () => null, // No display in table
-    sortable: false,
-    filterable: false,
-    dataType: "custom",
   },
   Datetime: {
     formComponent: DateTimeFormField,
@@ -493,10 +541,11 @@ export const fieldTypeConfigurations = {
     ),
     sortable: true,
     filterable: true,
-    dataType: "text", // Or 'time' if your backend/sorting handles it
+    dataType: "text",
   },
   Duration: {
-    formComponent: InputNumber, // Or a custom duration picker, simple InputNumber for seconds
+    // Assuming stored as seconds, displayed formatted
+    formComponent: InputNumber, // Or a custom duration picker
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDuration(rowData[fieldname]),
     tableFilterElement: (
@@ -517,45 +566,18 @@ export const fieldTypeConfigurations = {
     filterable: true,
     dataType: "numeric",
   },
-  "Text Editor": {
-    formComponent: TextEditorFormField,
-    tableBodyComponent: (rowData, fieldname) => (
-      <RichTextCell rowData={rowData} fieldname={fieldname} />
-    ),
+
+  // --- Layout/Display Only Types ---
+  Heading: {
+    formComponent: HeadingField,
+    tableBodyComponent: () => null, // Headings don't typically appear in table data rows
     tableFilterElement: null,
     sortable: false,
     filterable: false,
-    dataType: "text",
+    dataType: "custom",
   },
-  Nationality: {
-    formComponent: NationalityFormField,
-    tableBodyComponent: (rowData, fieldname) => (
-      <NationalityCell rowData={rowData} fieldname={fieldname} />
-    ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <MultiSelectTableFilter
-        value={filterValue}
-        options={nationalityOptionsForFilter}
-        onChange={filterApplyCallback}
-        placeholder="Any Nationality"
-        multiSelectProps={{
-          itemTemplate: (option) => <span>{option.label}</span>,
-          maxSelectedLabels: 1,
-          display: "chip",
-          showClear: true,
-          filter: true,
-        }}
-      />
-    ),
-    sortable: true,
-    filterable: true,
-    dataType: "text",
-  },
+
+  // --- Default Fallback ---
   Default: {
     formComponent: InputText,
     tableBodyComponent: (rowData, fieldname) => (
@@ -579,14 +601,26 @@ export const fieldTypeConfigurations = {
   },
 };
 
-export const getFieldConfig = (fieldType, fieldname) => {
-	// Special handling for 'nationality' field if its doctype field_type is 'Data'
-	if (
-		fieldname === "nationality" &&
-		fieldType === "Data" && // Assuming 'Data' is a generic type that could be overridden
-		fieldTypeConfigurations["Nationality"]
-	) {
-		return fieldTypeConfigurations["Nationality"];
-	}
-	return fieldTypeConfigurations[fieldType] || fieldTypeConfigurations["Default"];
+// --- Helper function to get configuration ---
+export const getFieldConfig = (fieldType, fieldname, fieldSchema = null) => {
+  // Special handling for 'nationality' field if its doctype field_type is 'Data'
+  // but we want to treat it as "Nationality" type for UI.
+  if (
+    fieldname === "nationality" &&
+    (fieldType === "Data" || fieldType === "Select") && // If backend type is Data/Select but field is 'nationality'
+    fieldTypeConfigurations["Nationality"]
+  ) {
+    return fieldTypeConfigurations["Nationality"];
+  }
+
+  // Example: If you use a `ui_control` hint in description for "CustomAutoComplete" / "SearchableSelect"
+  if (fieldSchema && (fieldType === "Data" || fieldType === "Small Text")) {
+      const desc = parseDescription(fieldSchema.description); // Ensure parseDescription is imported or available
+      if (desc.ui_control && fieldTypeConfigurations[desc.ui_control]) {
+          return fieldTypeConfigurations[desc.ui_control];
+      }
+  }
+
+
+  return fieldTypeConfigurations[fieldType] || fieldTypeConfigurations["Default"];
 };

@@ -57,6 +57,8 @@
   {
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "Date of Birth",
    "reqd": 1
   },
@@ -185,11 +187,14 @@
   {
    "fieldname": "very_long_ass_text",
    "fieldtype": "Long Text",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "very long ass text"
   },
   {
    "fieldname": "the_percentage_of_something",
    "fieldtype": "Percent",
+   "in_list_view": 1,
    "label": "the percentage of something"
   },
   {
@@ -204,6 +209,8 @@
   {
    "fieldname": "list_of_stuff",
    "fieldtype": "Autocomplete",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "List of Stuff",
    "options": "\nApple\nVegetable\nLemon\nGrass"
   },
@@ -212,12 +219,15 @@
    "description": "{\n\"aside\" : \"right\",\n\"asSwitch\" : true\n}",
    "fieldname": "is_it_enabled",
    "fieldtype": "Check",
+   "in_filter": 1,
    "in_list_view": 1,
    "label": "is it enabled"
   },
   {
    "fieldname": "what_is_your_color",
    "fieldtype": "Color",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "what is your color"
   },
   {
@@ -245,7 +255,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-20 20:32:44.687372",
+ "modified": "2025-05-21 01:41:51.356992",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
