@@ -4,7 +4,7 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { ScrollPanel } from "primereact/scrollpanel";
-import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
+import { getFieldConfig } from "@/components/document/utils/fieldTypeConfigurations.jsx";
 
 const ColumnDialog = ({
   visible,

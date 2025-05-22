@@ -1,6 +1,6 @@
 // dashboard/src/pages/EmployeesPage.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import EmployeeTable from "@/components/employees/EmployeeTable"; // Adjust path as needed
+import EmployeeTable from "@/pages/employee/doctype/EmployeeTable"; // Adjust path as needed
 import { setCookie, getCookie } from "@/utils/cookies"; // Adjust path as needed
 import { useLayout } from "@/contexts/LayoutContext"; // Adjust path as needed
 

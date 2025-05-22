@@ -1,7 +1,7 @@
 // src/pages/employee/EditEmployeePage.jsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import UniversalDocEditor from "@/components/common/UniversalDocEditor";
+import DocEditor from "@/components/document/DocEditor";
 import DocToolbar from "@/components/common/DocToolbar";
 import { Avatar } from "primereact/avatar";
 import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
@@ -108,7 +108,7 @@ const EditEmployeePage = () => {
         setIsEditorCurrentlySaving(false);
       }
     } else {
-      console.warn("UniversalDocEditor ref or triggerSubmit not available.");
+      console.warn("DocEditor ref or triggerSubmit not available.");
       setIsEditorCurrentlySaving(false);
     }
   }, [editorRef]); // isEditorCurrentlySaving removed from deps as it's set inside
@@ -210,7 +210,7 @@ const EditEmployeePage = () => {
         activeTabIndex={docToolbarTabProps.activeIndex}
         onTabSelect={docToolbarTabProps.onTabSelect}
       />
-      <UniversalDocEditor
+      <DocEditor
         ref={editorRef}
         doctypeName={RUA_EMPLOYEE_DOCTYPE.name}
         docname={employeeId}

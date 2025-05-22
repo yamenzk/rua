@@ -6,7 +6,7 @@ const ColorPickerFormField = (props) => {
   const {
     id, // fieldname
     value, // current color value (can be with or without #)
-    onChange, // The callback from UniversalDocEditor's commonProps (handleInputChange)
+    onChange, // The callback from DocEditor's commonProps (handleInputChange)
     className,
     disabled,
     // fieldSchemaItem is available if FormFieldAdapter passes it, but not strictly needed here
@@ -20,13 +20,13 @@ const ColorPickerFormField = (props) => {
 
   const handleChange = (e) => {
     // e.value is the new color string (e.g., "ff0000") from ColorPicker
-    // The parent UniversalDocEditor's default onChange expects an event-like structure
+    // The parent DocEditor's default onChange expects an event-like structure
     // or the adapter can provide a custom onChange.
     // Assuming the adapter/editor expects: handleInputChange(fieldname, newValue, fieldtype)
     // We need to call onChange with the field's ID/name and the new value.
     if (onChange) {
       // The standard `handleInputChange` in `useFormHandler` expects (name, value, fieldtype)
-      // The `onChange` prop passed here by `UniversalDocEditor`'s `commonProps`
+      // The `onChange` prop passed here by `DocEditor`'s `commonProps`
       // is already tailored to call `handleInputChange(fieldname, e.target.value, fieldtype)`.
       // So we need to construct an event-like object that `handleInputChange` can destructure.
       // OR, the FormFieldAdapter for "Color" type should provide a specific onChange.

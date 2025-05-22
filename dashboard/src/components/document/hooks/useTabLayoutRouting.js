@@ -1,7 +1,7 @@
-// src/hooks/useTabLayoutRouting.js
+// src/components/document/hooks/useTabLayoutRouting.js
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { parseTabFromUrl, updateUrlWithTab } from "@/utils/layoutUtils"; // Adjust path
+import { parseTabFromUrl, updateUrlWithTab } from "@/components/document/utils/layoutUtils"; // Adjust path
 
 export const useTabLayoutRouting = ({
 	trulyFinalTabsConfig = [],

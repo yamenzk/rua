@@ -1,4 +1,4 @@
-// src/utils/layoutUtils.js
+// src/components/document/utils/layoutUtils.js
 
 export const isColumnBreak = (element) => {
 	return element && (element.type === "Column Break" || element.type === "ColumnBreak");
@@ -33,7 +33,7 @@ export const getGridClasses = (columnCount) => {
 
 export const createTabSlug = (tabLabel) => {
 	if (!tabLabel || typeof tabLabel !== "string" || String(tabLabel).trim() === "") {
-		return ""; 
+		return "";
 	}
 	return tabLabel
 		.toLowerCase()

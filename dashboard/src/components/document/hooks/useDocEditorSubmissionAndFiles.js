@@ -1,4 +1,4 @@
-// src/hooks/useDocEditorSubmissionAndFiles.js
+// src/components/document/hooks/useDocEditorSubmissionAndFiles.js
 import { useState, useCallback, useEffect } from "react";
 import { useFrappeUpdateDoc, useFrappeCreateDoc, useFrappeFileUpload } from "frappe-react-sdk";
 
@@ -288,7 +288,6 @@ export const useDocEditorSubmissionAndFiles = ({
 		mutateDoc,
 		setFormData,
 	]);
-
 
 	return {
 		handleSubmit,

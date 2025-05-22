@@ -1,4 +1,4 @@
-// src/components/common/UniversalDocEditor.jsx
+// src/components/document/DocEditor.jsx
 import React, {
   useCallback,
   useRef,
@@ -15,22 +15,22 @@ import { Toast } from "primereact/toast";
 import { Message } from "primereact/message";
 
 // Custom Hooks
-import { useDocumentData } from "@/hooks/useDocumentData";
-import { useDocumentPageTitle } from "@/hooks/useDocumentPageTitle";
-import { useExternalTabOrchestration } from "@/hooks/useExternalTabOrchestration";
-import { useFormHandler } from "@/hooks/useFormHandler";
-import { useLinkFieldSearch } from "@/hooks/useLinkFieldSearch";
-import { useDocEditorSubmissionAndFiles } from "@/hooks/useDocEditorSubmissionAndFiles";
+import { useDocumentData } from "@/components/document/hooks/useDocumentData";
+import { useDocumentPageTitle } from "@/components/document/hooks/useDocumentPageTitle";
+import { useExternalTabOrchestration } from "@/components/document/injector/hooks/useExternalTabOrchestration";
+import { useFormHandler } from "@/components/document/hooks/useFormHandler";
+import { useLinkFieldSearch } from "@/components/document/hooks/useLinkFieldSearch";
+import { useDocEditorSubmissionAndFiles } from "@/components/document/hooks/useDocEditorSubmissionAndFiles";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 
 // Custom Utils & Components
-import UniversalLayoutRenderer from "./UniversalLayoutRenderer";
+import DocLayoutRenderer from "./layout/DocLayoutRenderer";
 import FileUploadDialog from "@/components/common/FileUploadDialog.jsx";
-import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
-import * as FormFieldAdapter from "@/utils/FormFieldAdapter.js";
-import { parseDescription } from "@/utils/schemaUtils";
+import { getFieldConfig } from "@/components/document/utils/fieldTypeConfigurations.jsx";
+import * as FormFieldAdapter from "@/components/document/utils/FormFieldAdapter.js";
+import { parseDescription } from "@/components/document/utils/schemaUtils";
 
-const UniversalDocEditor = forwardRef(
+const DocEditor = forwardRef(
   (
     {
       doctypeName,
@@ -348,7 +348,7 @@ const UniversalDocEditor = forwardRef(
                 <ProgressSpinner strokeWidth="4" />
               </div>
             )}
-            <UniversalLayoutRenderer
+            <DocLayoutRenderer
               formSchema={formSchema}
               allFieldsSchema={formSchema.fields}
               renderFieldItem={renderFormField}
@@ -376,12 +376,12 @@ const UniversalDocEditor = forwardRef(
     );
   }
 );
-UniversalDocEditor.displayName = "UniversalDocEditor";
+DocEditor.displayName = "DocEditor";
 
-UniversalDocEditor.defaultProps = {
+DocEditor.defaultProps = {
   customUIAugmentations: null,
   onTabsConfigChange: null,
   externalTabsEnabled: false,
 };
 
-export default UniversalDocEditor;
+export default DocEditor;

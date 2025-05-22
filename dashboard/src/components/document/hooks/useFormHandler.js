@@ -1,4 +1,4 @@
-// src/hooks/useFormHandler.js
+// src/components/document/hooks/useFormHandler.js
 import { useState, useEffect, useCallback } from "react";
 import * as _formatters from "@/utils/formatters.jsx"; // For applySchemaDefaults
 

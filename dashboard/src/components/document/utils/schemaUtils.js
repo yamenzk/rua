@@ -1,4 +1,4 @@
-// dashboard/src/utils/schemaUtils.js
+// dashboard/src/components/document/utils/schemaUtils.js
 
 /**
  * Parses a field's description string, which might contain JSON for display properties

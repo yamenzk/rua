@@ -1,7 +1,7 @@
-// src/hooks/useExternalTabOrchestration.js
+// src/components/document/injector/hooks/useExternalTabOrchestration.js
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { parseTabFromUrl, updateUrlWithTab } from "@/utils/layoutUtils";
+import { parseTabFromUrl, updateUrlWithTab } from "@/components/document/utils/layoutUtils";
 
 export const useExternalTabOrchestration = (externalTabsEnabled, onTabsConfigChange) => {
 	const navigate = useNavigate();

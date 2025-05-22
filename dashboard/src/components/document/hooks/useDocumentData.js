@@ -1,4 +1,4 @@
-// src/hooks/useDocumentData.js
+// src/components/document/hooks/useDocumentData.js
 import { useFrappeGetDoc, useFrappeGetCall } from "frappe-react-sdk";
 import { useEffect, useState } from "react";
 

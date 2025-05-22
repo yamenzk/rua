@@ -1,4 +1,4 @@
-// src/components/document/UniversalDocViewer.jsx
+// src/components/document/DocViewer.jsx
 import React, { useCallback, useMemo } from "react"; // Ensure useMemo is imported
 import { useNavigate } from "react-router-dom";
 
@@ -8,17 +8,17 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
 
 // Custom Hooks & Utils
-import { useDocumentData } from "@/hooks/useDocumentData";
-import { useDocumentPageTitle } from "@/hooks/useDocumentPageTitle";
-import { useExternalTabOrchestration } from "@/hooks/useExternalTabOrchestration";
+import { useDocumentData } from "@/components/document/hooks/useDocumentData";
+import { useDocumentPageTitle } from "@/components/document/hooks/useDocumentPageTitle";
+import { useExternalTabOrchestration } from "@/components/document/injector/hooks/useExternalTabOrchestration";
 // getFieldConfig and _formatters are used inside renderFieldDisplay, which is fine
-import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
+import { getFieldConfig } from "@/components/document/utils/fieldTypeConfigurations.jsx";
 import * as _formatters from "@/utils/formatters";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
-import UniversalLayoutRenderer from "./UniversalLayoutRenderer";
-import { parseDescription } from "@/utils/schemaUtils";
+import DocLayoutRenderer from "./layout/DocLayoutRenderer";
+import { parseDescription } from "@/components/document/utils/schemaUtils";
 
-const UniversalDocViewer = ({
+const DocViewer = ({
   doctypeName,
   docname, // This prop is used in customComponentContext
   externalFormSchema: externalFormSchemaProp,
@@ -227,7 +227,7 @@ const UniversalDocViewer = ({
       pt={{ content: { className: "p-0 " } }}
     >
       {docData || !docname ? (
-        <UniversalLayoutRenderer
+        <DocLayoutRenderer
           formSchema={formSchema}
           allFieldsSchema={formSchema.fields}
           renderFieldItem={renderFieldDisplay}
@@ -251,11 +251,11 @@ const UniversalDocViewer = ({
   );
 };
 
-UniversalDocViewer.defaultProps = {
+DocViewer.defaultProps = {
   customUIAugmentations: null,
   onTabsConfigChange: null,
   externalTabsEnabled: false,
   fieldDisplayConfig: {},
 };
 
-export default UniversalDocViewer;
+export default DocViewer;

@@ -1,6 +1,6 @@
-// src/hooks/useTabConfiguration.js
+// src/components/document/hooks/useTabConfiguration.js
 import { useMemo } from "react";
-import { isTabBreak, createTabSlug } from "@/utils/layoutUtils"; // Adjust path as needed
+import { isTabBreak, createTabSlug } from "@/components/document/utils/layoutUtils"; // Adjust path as needed
 
 export const useTabConfiguration = (formSchema, allFieldsSchema, customUIAugmentations) => {
 	return useMemo(() => {

@@ -2,10 +2,10 @@
 import React from "react";
 import { InputSwitch } from "primereact/inputswitch";
 import { Checkbox } from "primereact/checkbox";
-import { parseDescription } from "@/utils/schemaUtils";
+import { parseDescription } from "@/components/document/utils/schemaUtils";
 
 const CheckSwitchFormField = (props) => {
-  // Props from UniversalDocEditor's commonProps & componentSpecificProps:
+  // Props from DocEditor's commonProps & componentSpecificProps:
   // id, checked, onChange (which is handleInputChange wrapper), disabled, className,
   // fieldSchemaItem, tooltip, etc.
   const {
@@ -13,7 +13,7 @@ const CheckSwitchFormField = (props) => {
     checked, // This is correctly passed as currentFormData[fieldname] due to valuePropName logic
     onChange, // This is effectively (e) => handleInputChange(id, e.target.value, "Check")
     disabled,
-    className, // Applied by UniversalDocEditor to wrapper, not directly used here unless needed
+    className, // Applied by DocEditor to wrapper, not directly used here unless needed
     fieldSchemaItem,
     tooltip, // From commonProps
     ...otherProps // Any other specific props from FormFieldAdapter
@@ -22,7 +22,7 @@ const CheckSwitchFormField = (props) => {
   const descriptionData = parseDescription(fieldSchemaItem?.description || "");
   const label = fieldSchemaItem?.label || ""; // For Checkbox label if needed and not handled by editor
 
-  // The `onChange` prop from UniversalDocEditor's commonProps expects an event-like object.
+  // The `onChange` prop from DocEditor's commonProps expects an event-like object.
   // Both InputSwitch and Checkbox provide the new boolean state differently.
   // The FormFieldAdapter for "Check" should provide a tailored onChange.
   // If not, this component needs to adapt.
@@ -69,7 +69,7 @@ const CheckSwitchFormField = (props) => {
   }
 
   // For Checkbox, PrimeReact often expects a label beside it.
-  // The UniversalDocEditor's label is typically above or beside the whole field.
+  // The DocEditor's label is typically above or beside the whole field.
   // If a label specific to the checkbox input itself is desired (e.g., "Agree to terms"),
   // it can be parsed from description or fieldSchemaItem.
   const checkboxLabel =
@@ -92,4 +92,4 @@ const CheckSwitchFormField = (props) => {
   );
 };
 
-export default CheckSwitchFormField; 
+export default CheckSwitchFormField;

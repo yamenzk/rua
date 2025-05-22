@@ -1,7 +1,7 @@
-// src/hooks/useLinkFieldSearch.js
+// src/components/document/hooks/useLinkFieldSearch.js
 import { useState, useCallback } from "react";
 import { useFrappePostCall } from "frappe-react-sdk";
-import { parseDescription } from "@/utils/schemaUtils"; // Assuming parseDescription is here or in layoutUtils
+import { parseDescription } from "@/components/document/utils/schemaUtils"; // Assuming parseDescription is here or in layoutUtils
 
 export const useLinkFieldSearch = (toastRef) => {
 	const [linkSuggestions, setLinkSuggestions] = useState({});

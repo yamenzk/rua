@@ -1,4 +1,4 @@
-// dashboard/src/utils/fieldTypeConfigurations.jsx - Updated with clean filter approach
+// dashboard/src/components/document/utils/fieldTypeConfigurations.jsx - Updated with clean filter approach
 import React from "react";
 
 // --- PrimeReact Components ---
@@ -38,8 +38,8 @@ import MultiSelectFilter from "@/components/table/filters/MultiSelectFilter.jsx"
 import TriStateFilter from "@/components/table/filters/TriStateFilter.jsx";
 
 // --- Formatters ---
-import * as formatters from "./formatters.jsx";
-import { parseDescription } from "@/utils/schemaUtils";
+import * as formatters from "../../../utils/formatters.jsx";
+import { parseDescription } from "@/components/document/utils/schemaUtils";
 
 export const fieldTypeConfigurations = {
   // --- Attachment Types ---

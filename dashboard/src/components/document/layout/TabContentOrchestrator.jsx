@@ -1,13 +1,13 @@
-// src/components/document/TabContentOrchestrator.jsx
+// src/components/document/layout/TabContentOrchestrator.jsx
 import React, { memo, useMemo } from "react";
 import SchemaSectionRenderer from "./SchemaSectionRenderer";
-import CustomItemRenderer from "./CustomItemRenderer";
+import CustomItemRenderer from "@/components/document/injector/utils/CustomItemRenderer";
 import {
   isSectionBreak,
   isColumnBreak,
   isTabBreak,
   createTabSlug,
-} from "@/utils/layoutUtils"; // Adjust path as needed
+} from "@/components/document/utils/layoutUtils"; // Adjust path as needed
 
 const TabContentOrchestratorInternal = ({
   tab,

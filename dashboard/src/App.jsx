@@ -12,8 +12,8 @@ import { LayoutProvider } from "@/contexts/LayoutContext";
 import LoginPage from "@/pages/LoginPage"; 
 import HomePage from "@/pages/HomePage"; 
 import EmployeesPage from "@/pages/employee/EmployeesPage"; 
-import ViewEmployeePage from "@/pages/employee/ViewEmployeePage";
-import EditEmployeePage from "@/pages/employee/EditEmployeePage";
+import ViewEmployeePage from "@/pages/employee/doc/ViewEmployeePage";
+import EditEmployeePage from "@/pages/employee/doc/EditEmployeePage";
 
 // Layout
 import MainLayout from "./layouts/MainLayout"; // Path to your MainLayout.jsx

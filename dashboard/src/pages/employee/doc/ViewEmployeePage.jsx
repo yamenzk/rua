@@ -1,7 +1,7 @@
 // src/pages/employee/ViewEmployeePage.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import UniversalDocViewer from "@/components/common/UniversalDocViewer";
+import DocViewer from "@/components/document/DocViewer";
 import DocToolbar from "@/components/common/DocToolbar";
 import { Avatar } from "primereact/avatar";
 import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
@@ -168,7 +168,7 @@ const ViewEmployeePage = () => {
         activeTabIndex={docToolbarTabProps.activeIndex}
         onTabSelect={docToolbarTabProps.onTabSelect}
       />
-      <UniversalDocViewer
+      <DocViewer
         doctypeName={RUA_EMPLOYEE_DOCTYPE.name}
         docname={employeeId}
         externalTabsEnabled={true}

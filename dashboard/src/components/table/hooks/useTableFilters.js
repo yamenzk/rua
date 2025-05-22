@@ -1,7 +1,7 @@
 // dashboard/src/components/common/table-components/useTableFilters.js
 import { useState, useCallback, useEffect } from "react";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
-import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
+import { getFieldConfig } from "@/components/document/utils/fieldTypeConfigurations.jsx";
 
 export const useTableFilters = (columnsConfig) => {
 	const [filters, setFilters] = useState({});

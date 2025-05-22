@@ -1,15 +1,15 @@
-// src/components/common/UniversalLayoutRenderer.jsx
+// src/components/common/DocLayoutRenderer.jsx
 import React, { memo, useEffect } from "react";
 import { Message } from "primereact/message"; // Keep Message for error/info
 
 // Custom Hooks
-import { useTabConfiguration } from "@/hooks/useTabConfiguration";
-import { useTabLayoutRouting } from "@/hooks/useTabLayoutRouting";
+import { useTabConfiguration } from "@/components/document/hooks/useTabConfiguration";
+import { useTabLayoutRouting } from "@/components/document/hooks/useTabLayoutRouting";
 
 // Child Components
-import TabContentOrchestrator from "@/components/document/TabContentOrchestrator";
+import TabContentOrchestrator from "@/components/document/layout/TabContentOrchestrator";
 
-const UniversalLayoutRendererInternal = ({
+const DocLayoutRendererInternal = ({
   formSchema,
   allFieldsSchema,
   renderFieldItem,
@@ -49,7 +49,7 @@ const UniversalLayoutRendererInternal = ({
     return (
       <Message
         severity="warn"
-        text="Form schema or allFieldsSchema is missing for UniversalLayoutRenderer."
+        text="Form schema or allFieldsSchema is missing for DocLayoutRenderer."
         className="m-4"
       />
     );
@@ -125,9 +125,9 @@ const UniversalLayoutRendererInternal = ({
     </div>
   );
 };
-UniversalLayoutRendererInternal.displayName = "UniversalLayoutRendererInternal";
+DocLayoutRendererInternal.displayName = "DocLayoutRendererInternal";
 
-const UniversalLayoutRenderer = memo(UniversalLayoutRendererInternal);
-UniversalLayoutRenderer.displayName = "UniversalLayoutRenderer";
+const DocLayoutRenderer = memo(DocLayoutRendererInternal);
+DocLayoutRenderer.displayName = "DocLayoutRenderer";
 
-export default UniversalLayoutRenderer;
+export default DocLayoutRenderer;

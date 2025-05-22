@@ -2,7 +2,10 @@
 import React, { memo } from "react";
 import { Card as PrimeReactCard } from "primereact/card";
 import SectionWrapper from "./SectionWrapper"; // Moved to its own file
-import { isColumnBreak, getGridClasses } from "@/utils/layoutUtils"; // Adjust path
+import {
+  isColumnBreak,
+  getGridClasses,
+} from "@/components/document/utils/layoutUtils"; // Adjust path
 
 const SchemaSectionRenderer = ({
   itemBlock,

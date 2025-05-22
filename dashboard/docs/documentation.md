@@ -7,7 +7,7 @@ Welcome to the frontend development guide for our Frappe-integrated React applic
 **Core Principles:**
 
 - **Schema-Driven UI:** A cornerstone of our architecture. Forms and viewers are dynamically rendered based on Frappe DocType schemas. This minimizes frontend code duplication when backend models change and ensures consistency across the application.
-- **Reusability & Composability:** Components and custom React hooks are designed to be modular, reusable, and composable. This allows for flexible UI construction and promotes a clean separation of concerns (e.g., UniversalLayoutRenderer, TabContentOrchestrator, and various data-fetching or UI logic hooks).
+- **Reusability & Composability:** Components and custom React hooks are designed to be modular, reusable, and composable. This allows for flexible UI construction and promotes a clean separation of concerns (e.g., DocLayoutRenderer, TabContentOrchestrator, and various data-fetching or UI logic hooks).
 - **Separation of Concerns:** Logic is carefully modularized. UI rendering, state management, API interactions, and business logic are handled by distinct components, hooks, and utility functions to enhance maintainability, testability, and developer understanding.
 - **Modern, Clean Design & UX:** We aim for a modern, clean, and minimal user interface with a strong focus on User Experience (UX). Our chosen theme is lara-light-amber from PrimeReact, which guides our visual styling and component selection.
 - **Developer Experience:** Leveraging the power of our Frappe SDK simplifies data fetching, mutations, caching, and real-time updates. PrimeReact offers a rich set of UI components that align with our design goals.
@@ -70,30 +70,30 @@ The frontend dynamically renders UIs based on Frappe DocType schemas, enhanced b
 
 This section details the primary components and their roles after recent refactoring.
 
-#### **5.2.1.** UniversalDocViewer.jsx **&** UniversalDocEditor.jsx
+#### **5.2.1.** DocViewer.jsx **&** DocEditor.jsx
 
-- **Purpose:** These are high-level orchestrator components. UniversalDocViewer handles the read-only display of a document, while UniversalDocEditor manages the creation and editing of documents.
+- **Purpose:** These are high-level orchestrator components. DocViewer handles the read-only display of a document, while DocEditor manages the creation and editing of documents.
 - **Key Responsibilities:**
 - **Data & Schema Management:** Utilize the useDocumentData hook to fetch the necessary formSchema and docData (for existing documents).
 - **Page Title:** Employ the useDocumentPageTitle hook to dynamically set the browser/page title.
 - **Tab Orchestration:** Use the useExternalTabOrchestration hook to manage tab configurations when externalTabsEnabled is true. This involves:
-- Receiving processed tab definitions from UniversalLayoutRenderer via its onTabsProcessed prop (which connects to handleRendererTabsProcessed from the hook).
+- Receiving processed tab definitions from DocLayoutRenderer via its onTabsProcessed prop (which connects to handleRendererTabsProcessed from the hook).
 - Communicating the complete tab setup (list of tabs, active tab index, and tab selection handler) to the parent page component (e.g., ViewEmployeePage) via the onTabsConfigChange prop.
-- **Layout Rendering:** Delegate the actual rendering of the active tab's content to UniversalLayoutRenderer.
-- **Editor-Specific Logic (**UniversalDocEditor **only):**
+- **Layout Rendering:** Delegate the actual rendering of the active tab's content to DocLayoutRenderer.
+- **Editor-Specific Logic (**DocEditor **only):**
 - Uses useFormHandler for managing formData state, default value application, input change handling, and validation.
 - Uses useLinkFieldSearch for "Link" field autocomplete functionality.
 - Uses useDocEditorSubmissionAndFiles to encapsulate all logic related to saving/creating documents and handling file attachments.
 - Exposes a triggerSubmit method via React.forwardRef and useImperativeHandle for parent components (like EditEmployeePage) to initiate form submission.
 - **Key Props (Common):** doctypeName (String), docname (String, optional for editor in create mode), customUIAugmentations (Object, optional), externalTabsEnabled (Boolean, defaults to false), onTabsConfigChange (Function, used when externalTabsEnabled is true).
 
-#### **5.2.2.** UniversalLayoutRenderer.jsx **(Refactored Role)**
+#### **5.2.2.** DocLayoutRenderer.jsx **(Refactored Role)**
 
 - **Purpose:** This component is now solely responsible for rendering the content of the _currently active tab_. It no longer manages or renders tab headers directly.
 - **Key Props:**
 - formSchema: The full DocType schema.
 - allFieldsSchema: The array of field definitions from formSchema.fields.
-- renderFieldItem: A callback function provided by UniversalDocViewer or UniversalDocEditor to render each individual field.
+- renderFieldItem: A callback function provided by DocViewer or DocEditor to render each individual field.
 - docData: The current document data (for viewers) or form data (for editors) to be used as context for rendering.
 - customComponentContext: An object with additional context (like navigate, docname) for custom components.
 - customUIAugmentations: Used to incorporate custom tabs and inject content into tabs.
@@ -141,7 +141,7 @@ This section details the primary components and their roles after recent refacto
 - Uses to render the section's header (label, description, collapse button if collapsible).
 - Parses itemBlock.\_sectionElements for column breaks (isColumnBreak) to create a grid layout (using getGridClasses).
 - Columns are typically rendered as PrimeReactCard components.
-- For each field within a column, it calls the renderFieldItem prop (which is the renderFieldDisplay from UniversalDocViewer or renderFormField from UniversalDocEditor), passing the field's schema, docData, and customComponentContext.
+- For each field within a column, it calls the renderFieldItem prop (which is the renderFieldDisplay from DocViewer or renderFormField from DocEditor), passing the field's schema, docData, and customComponentContext.
 
 #### **5.2.5.** CustomItemRenderer.jsx
 
@@ -176,37 +176,37 @@ Our architecture extensively uses custom React Hooks to encapsulate stateful log
 - **Purpose:** Centralized logic for parsing the formSchema.layout.elements and customUIAugmentations to produce the definitive, sorted list of all tabs (trulyFinalTabsConfig) that will be available for rendering.
 - **Inputs:** formSchema, allFieldsSchema, customUIAugmentations.
 - **Output:** Memoized trulyFinalTabsConfig array. Each tab object in this array contains properties like id, label, slug, order, isSchemaTab, and \_schemaTabContentElements (for schema tabs) or content (for custom tabs).
-- **Used by:** UniversalLayoutRenderer.
+- **Used by:** DocLayoutRenderer.
 - useTabLayoutRouting.js:
-- **Purpose:** Determines the activeTabIndex that UniversalLayoutRenderer should use to display content. It prioritizes URL parameters, then externalActiveTabIndex prop (if hideInternalTabViewHeader is true), then initialActiveTabIndex.
+- **Purpose:** Determines the activeTabIndex that DocLayoutRenderer should use to display content. It prioritizes URL parameters, then externalActiveTabIndex prop (if hideInternalTabViewHeader is true), then initialActiveTabIndex.
 - **Inputs:** trulyFinalTabsConfig, enableRouting, initialActiveTabIndex, externalActiveTabIndex, hideInternalTabViewHeader (this prop is now effectively always true for this hook's main URL-parsing path since ULR doesn't render its own headers).
-- **Output:** { activeTabIndex, handleTabChange }. The activeTabIndex is consumed by UniversalLayoutRenderer. handleTabChange would be for an internal PrimeReact TabView, so it's less relevant in the current custom tab setup.
-- **Used by:** UniversalLayoutRenderer.
+- **Output:** { activeTabIndex, handleTabChange }. The activeTabIndex is consumed by DocLayoutRenderer. handleTabChange would be for an internal PrimeReact TabView, so it's less relevant in the current custom tab setup.
+- **Used by:** DocLayoutRenderer.
 - useDocumentData.js:
 - **Purpose:** Encapsulates fetching the DocType schema (via useFrappeGetCall to a custom API) and the document data itself (via useFrappeGetDoc for existing documents).
 - **Inputs:** doctypeName, docname (optional), externalFormSchema (optional, if schema is pre-loaded), externalDocData (optional, if data is pre-loaded).
 - **Output:** An object { formSchema, docData, isLoading, error, mutateDoc }. mutateDoc is the SWR mutate function for the document data, useful for re-fetching or updating cache after edits.
-- **Used by:** UniversalDocViewer, UniversalDocEditor.
+- **Used by:** DocViewer, DocEditor.
 - useDocumentPageTitle.js:
 - **Purpose:** Dynamically sets the main page title (e.g., browser tab title, header title) using LayoutContext. It constructs the title based on DocType label, document name/title field, and mode (View/Edit/New).
 - **Inputs:** docData (for viewer), formData (for editor in create/edit mode), docname, formSchema, doctypeName, isCreateMode (boolean), viewOrEditPrefix (string, e.g., "View", "Edit").
 - **Output:** None (side effect: calls setPageTitle from LayoutContext).
-- **Used by:** UniversalDocViewer, UniversalDocEditor.
+- **Used by:** DocViewer, DocEditor.
 - useExternalTabOrchestration.js:
-- **Purpose:** The central piece for managing tab state when tab headers are rendered externally (e.g., by DocToolbar). It bridges UniversalLayoutRenderer (which defines tabs) with the parent page (which controls DocToolbar).
+- **Purpose:** The central piece for managing tab state when tab headers are rendered externally (e.g., by DocToolbar). It bridges DocLayoutRenderer (which defines tabs) with the parent page (which controls DocToolbar).
 - **Inputs:** externalTabsEnabled (boolean), onTabsConfigChange (a stable callback from the parent page, e.g., handleTabsConfigFromViewer).
 - **Output:** An object containing { handleRendererTabsProcessed }.
 - **Core Functionality:**
 
-1.  handleRendererTabsProcessed: Receives trulyFinalTabsConfig from UniversalLayoutRenderer (via its onTabsProcessed prop) and stores them in processedTabs state.
+1.  handleRendererTabsProcessed: Receives trulyFinalTabsConfig from DocLayoutRenderer (via its onTabsProcessed prop) and stores them in processedTabs state.
 2.  URL Synchronization useEffect: Watches location and processedTabs. If the URL's ?tab= parameter changes or doesn't match a valid tab, it updates its internal currentActiveTabIndex state. It also handles redirecting to the first valid tab if the URL slug is invalid or missing.
 3.  handleExternalTabSelect: A useCallback provided to the parent (via onTabsConfigChange). When called (by DocToolbar), it uses updateUrlWithTab to change the URL's ?tab= parameter.
 4.  Parent Notification useEffect: Watches its internal processedTabs and currentActiveTabIndex. When these change, it calls the onTabsConfigChange prop, passing an object { tabs: processedTabs, activeIndex: currentActiveTabIndex, onTabSelect: handleExternalTabSelect } to the parent page component. This allows the parent to update DocToolbar.
 5.  Uses React.useRef for onTabSelectRef (to hold handleExternalTabSelectLogic) and a lastNotifiedState ref to prevent infinite loops by being more discerning about when onTabsConfigChange is called.
 
-- **Used by:** UniversalDocViewer, UniversalDocEditor.
+- **Used by:** DocViewer, DocEditor.
 - useFormHandler.js **(Editor Specific)**:
-- **Purpose:** Manages all core form state for UniversalDocEditor.
+- **Purpose:** Manages all core form state for DocEditor.
 - **Inputs:** formSchema, initialDocData (from useDocumentData in edit mode), isCreateMode.
 - **Output:** An object { formData, setFormData, formErrors, handleInputChange, validateForm }.
 - formData: The current state of all form fields.
@@ -215,7 +215,7 @@ Our architecture extensively uses custom React Hooks to encapsulate stateful log
 - handleInputChange(fieldname, value): Standard callback for field value changes.
 - validateForm(): Function to perform client-side validation based on schema.
 - **Internal Logic:** Includes useEffect to apply schema defaults (applySchemaDefaults) when the form initializes or switches modes.
-- **Used by:** UniversalDocEditor.
+- **Used by:** DocEditor.
 - useLinkFieldSearch.js **(Editor Specific)**:
 - **Purpose:** Handles the asynchronous search and suggestion logic for "Link" type fields (autocomplete).
 - **Inputs:** toastRef (for displaying search errors).
@@ -223,7 +223,7 @@ Our architecture extensively uses custom React Hooks to encapsulate stateful log
 - linkSuggestions: State object holding suggestions per linked DocType.
 - handleLinkSearch(event, linkedDoctype, fieldDescriptionString): Callback to trigger the search.
 - **Internal Logic:** Uses useFrappePostCall for frappe.desk.search.search_link and frappe.client.get_list (for Users). Parses link_filters from field descriptions.
-- **Used by:** UniversalDocEditor (passed into adapterContext for renderFormField).
+- **Used by:** DocEditor (passed into adapterContext for renderFormField).
 - useDocEditorSubmissionAndFiles.js **(Editor Specific)**:
 - **Purpose:** Encapsulates the entire complex logic of document submission (create or update) and associated file attachments.
 - **Inputs:** doctypeName, docnameFromProp (original docname for edits), formData, formSchema, isCreateMode, validateForm (from useFormHandler), onSaveSuccess (callback), onSaveError (callback), toastRef, mutateDoc (from useDocumentData), setFormData (from useFormHandler to update with file URLs).
@@ -236,7 +236,7 @@ Our architecture extensively uses custom React Hooks to encapsulate stateful log
 - Manages pendingFiles state for new documents.
 - Handles API calls, error/success toasts, and calls onSaveSuccess/onSaveError.
 - Updates formData with uploaded file URLs.
-- **Used by:** UniversalDocEditor.
+- **Used by:** DocEditor.
 
 ### **5.4. Utility Modules**
 
@@ -244,7 +244,7 @@ Our architecture extensively uses custom React Hooks to encapsulate stateful log
 - Maps Frappe fieldtypes (e.g., "Data", "Link", "Select") to specific React components for rendering input controls (in editor) or display elements (in viewer).
 - Returns a config object, typically including { formComponent: YourReactFieldComponent, tableBodyComponent: YourDisplayComponent }.
 - FormFieldAdapter.js **(via** getAdaptedProps**):**
-- (Primarily for UniversalDocEditor) Takes a fieldSchema and an adapterContext (containing formData, handleInputChange, linkSuggestions, etc.).
+- (Primarily for DocEditor) Takes a fieldSchema and an adapterContext (containing formData, handleInputChange, linkSuggestions, etc.).
 - Returns a props object tailored for the specific React input component being rendered (e.g., props for PrimeReact's InputText, Dropdown, AutoComplete).
 - layoutUtils.js**:**
 - Contains helper functions for layout processing and tab management:
@@ -261,18 +261,18 @@ Our architecture extensively uses custom React Hooks to encapsulate stateful log
 
 ## **6\. Tab Management and Routing Flow (Custom Implementation)**
 
-With the shift away from PrimeReact's TabView within UniversalLayoutRenderer, tab navigation is orchestrated as follows:
+With the shift away from PrimeReact's TabView within DocLayoutRenderer, tab navigation is orchestrated as follows:
 
-1.  **Tab Definition (**UniversalLayoutRenderer **+** useTabConfiguration**):**
+1.  **Tab Definition (**DocLayoutRenderer **+** useTabConfiguration**):**
 
-- UniversalLayoutRenderer calls useTabConfiguration.
+- DocLayoutRenderer calls useTabConfiguration.
 - useTabConfiguration processes formSchema.layout.elements and customUIAugmentations to generate trulyFinalTabsConfig (a sorted array of all tab objects with properties like id, label, slug, order, isSchemaTab, \_schemaTabContentElements or content).
-- UniversalLayoutRenderer then calls its onTabsProcessed prop, passing trulyFinalTabsConfig upwards.
+- DocLayoutRenderer then calls its onTabsProcessed prop, passing trulyFinalTabsConfig upwards.
 
-1.  **Tab State Communication (Page Component via** UniversalDocViewer/Editor**):**
+1.  **Tab State Communication (Page Component via** DocViewer/Editor**):**
 
-- The page component (e.g., ViewEmployeePage) provides an onTabsConfigChange callback to UniversalDocViewer/Editor.
-- Inside UniversalDocViewer/Editor, the useExternalTabOrchestration hook is active because externalTabsEnabled={true} is passed.
+- The page component (e.g., ViewEmployeePage) provides an onTabsConfigChange callback to DocViewer/Editor.
+- Inside DocViewer/Editor, the useExternalTabOrchestration hook is active because externalTabsEnabled={true} is passed.
 - useExternalTabOrchestration's handleRendererTabsProcessed (aliased as onTabsProcessed when passed to ULR) receives trulyFinalTabsConfig and stores it in its processedTabs state.
 
 1.  **URL to Active Tab Index (**useExternalTabOrchestration**):**
@@ -305,18 +305,18 @@ With the shift away from PrimeReact's TabView within UniversalLayoutRenderer, ta
 - handleExternalTabSelect calls updateUrlWithTab with the clicked tab's slug.
 - This URL change brings us back to step 3, and the UI (toolbar highlight and content in ULR) updates reactively.
 
-1.  **Content Display (**UniversalLayoutRenderer**):**
+1.  **Content Display (**DocLayoutRenderer**):**
 
-- UniversalLayoutRenderer _also_ has its own useTabLayoutRouting hook that independently watches the URL (via useLocation).
+- DocLayoutRenderer _also_ has its own useTabLayoutRouting hook that independently watches the URL (via useLocation).
 - When the URL changes (due to DocToolbar interaction), useTabLayoutRouting updates ULR's internal activeTabIndex.
 - ULR re-renders and uses this activeTabIndex to select the correct activeTabObject from its trulyFinalTabsConfig.
 - It then renders , ensuring the content matches the active tab defined by the URL. A unique key on TabContentOrchestrator ensures it re-mounts/updates correctly.
 
-This decoupled system uses the URL as the primary source of truth for the active tab, with DocToolbar initiating changes and UniversalLayoutRenderer reactively displaying the corresponding content.
+This decoupled system uses the URL as the primary source of truth for the active tab, with DocToolbar initiating changes and DocLayoutRenderer reactively displaying the corresponding content.
 
 ## **7\. UI Augmentation (**customUIAugmentations**)**
 
-The customUIAugmentations prop, passed to UniversalDocViewer or UniversalDocEditor, allows for extending the schema-driven UI with custom tabs or by injecting custom content into existing tabs.
+The customUIAugmentations prop, passed to DocViewer or DocEditor, allows for extending the schema-driven UI with custom tabs or by injecting custom content into existing tabs.
 
 **Structure:**
 
@@ -372,9 +372,9 @@ Passed to content functions:
 - doctypeName (String)
 - docData (Object, same as the first argument to the content function)
 - formSchema (Object)
-- navigate (Function from react-router-dom, passed down from UniversalDocViewer/Editor)
+- navigate (Function from react-router-dom, passed down from DocViewer/Editor)
 - setPageTitle (Function from LayoutContext)
-- For UniversalDocEditor, it also includes handleInputChange to allow custom components to modify form data.
+- For DocEditor, it also includes handleInputChange to allow custom components to modify form data.
 
 ## **8\. Creating a Document Viewer Page (e.g., for "Task" DocType)**
 
@@ -411,15 +411,15 @@ Passed to content functions:
 - **Input:** fieldtype (string), fieldname (string, for context if needed).
 - **Output:** A configuration object. Crucially, this object contains:
 - formComponent: A reference to the React component used for rendering the field in an editable form (e.g., PrimeReact InputText, Dropdown, Checkbox, Calendar, or custom components for "Link", "Attach", "Table").
-- tableBodyComponent: A reference to the React component or function used for rendering the field's value in a read-only display context (e.g., in UniversalDocViewer or a data table cell).
+- tableBodyComponent: A reference to the React component or function used for rendering the field's value in a read-only display context (e.g., in DocViewer or a data table cell).
 - **Example Entry (Conceptual):**// Inside FieldManager.jsxcase 'Link':  return {    formComponent: MyCustomLinkFieldEditor, // e.g., PrimeReact AutoComplete adapted    tableBodyComponent: (doc, fieldname) => ,    // other config like default props for the component  };
 
 ### **11.2.** FormFieldAdapter.js **(via** getAdaptedProps**)**
 
-- **Purpose:** (Primarily for UniversalDocEditor) Translates Frappe field schema properties and the current editor's context (form data, handlers) into a props object suitable for the actual UI input component chosen by FieldManager.
+- **Purpose:** (Primarily for DocEditor) Translates Frappe field schema properties and the current editor's context (form data, handlers) into a props object suitable for the actual UI input component chosen by FieldManager.
 - **Inputs:**
 - fieldSchema: The schema object for the individual field.
-- adapterContext: An object provided by UniversalDocEditor containing:
+- adapterContext: An object provided by DocEditor containing:
 - formData: The current state of the editor's form.
 - handleInputChange: Callback from useFormHandler to update formData.
 - linkSuggestions: Suggestions for "Link" fields from useLinkFieldSearch.
@@ -442,8 +442,8 @@ Passed to content functions:
 
 The useDocEditorSubmissionAndFiles hook now centralizes most of the file handling logic:
 
-1.  User interaction in UniversalDocEditor (e.g., clicking an attach button, which is rendered via renderFormField) calls openUploadModal from the hook.
-2.  FileUploadDialog.jsx is displayed (its visibility controlled by state within the hook, exposed to UniversalDocEditor).
+1.  User interaction in DocEditor (e.g., clicking an attach button, which is rendered via renderFormField) calls openUploadModal from the hook.
+2.  FileUploadDialog.jsx is displayed (its visibility controlled by state within the hook, exposed to DocEditor).
 3.  FileUploadDialog's onFileSelect calls handleFileSelectedInDialog (from the hook).
 4.  handleFileSelectedInDialog:
 
@@ -490,7 +490,7 @@ The process remains largely the same as your original documentation, but note wh
 3.  **React Component (if new):** Create the component.
 4.  FormFieldAdapter.js **(**getAdaptedProps**):** (For editor forms) If needed, adapt schema to props for the new formComponent.
 5.  **Schema Delivery API:** Ensure your schema API includes the new field.
-6.  **Testing:** UniversalDocEditor (via renderFormField) and UniversalDocViewer (via renderFieldDisplay) should now render it.
+6.  **Testing:** DocEditor (via renderFormField) and DocViewer (via renderFieldDisplay) should now render it.
 
 ### **14.2. Creating New Viewer/Editor Pages**
 

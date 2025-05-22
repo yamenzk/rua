@@ -1,4 +1,4 @@
-// dashboard/src/utils/schemaToColumns.js
+// dashboard/src/components/document/utils/schemaToColumns.js
 import { parseDescription } from "./schemaUtils";
 import nationalitiesData from "@/utils/nationalities.json"; // Import if Nationality filter options are built here
 

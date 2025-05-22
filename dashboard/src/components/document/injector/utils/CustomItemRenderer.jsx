@@ -1,4 +1,4 @@
-// src/components/common/document/CustomItemRenderer.jsx
+// src/components/common/documentcomponents/document/injector/CustomItemRenderer.jsx
 import React, { memo } from "react";
 import { Card as PrimeReactCard } from "primereact/card";
 

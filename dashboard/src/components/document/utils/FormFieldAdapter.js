@@ -1,5 +1,5 @@
-// src/utils/FormFieldAdapter.js
-import * as _formatters from "./formatters.jsx"; // Ensure this path is correct
+// src/components/document/utils/FormFieldAdapter.js
+import * as _formatters from "../../../utils/formatters.jsx"; // Ensure this path is correct
 import nationalitiesData from "@/utils/nationalities.json"; // Assuming path for Nationality field
 
 /**
@@ -31,7 +31,7 @@ const getCheckProps = (context) => {
 
 	return {
 		checked: checkedValue,
-		// The onChange from commonProps in UniversalDocEditor is already:
+		// The onChange from commonProps in DocEditor is already:
 		// (e) => handleInputChange(fieldname, e.target.value, fieldtype)
 		// Our CheckSwitchFormField's internal handleChange adapts its own event to this structure.
 		// So, the default commonProps.onChange can be used if CheckSwitchFormField does the adaptation.
@@ -329,7 +329,7 @@ export const getAdaptedProps = (fieldSchema, context) => {
 		case "Duration": // <--- ADDED Duration here to use getNumberInputProps
 			return getNumberInputProps(fullContext);
 		case "Heading":
-			// HeadingField takes fieldSchemaItem directly. UniversalDocEditor's commonProps
+			// HeadingField takes fieldSchemaItem directly. DocEditor's commonProps
 			// will pass fieldSchemaItem if the formComponent is HeadingField.
 			// We just need to ensure it gets the label.
 			return { label: fieldSchema.label, fieldSchemaItem: fieldSchema }; // Or let commonProps handle fieldSchemaItem

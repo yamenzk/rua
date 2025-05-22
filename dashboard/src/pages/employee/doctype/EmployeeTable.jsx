@@ -14,7 +14,7 @@ import { RUA_EMPLOYEE_DOCTYPE } from "@/constants"; //
 import DynamicDataTable from "@/components/table/DynamicDataTable"; //
 import ConfirmDialog from "@/components/common/ConfirmDialog"; //
 import nationalities from "@/utils/nationalities.json"; //
-import { transformSchemaToColumnConfig } from "@/utils/schemaToColumns"; //
+import { transformSchemaToColumnConfig } from "@/components/document/utils/schemaToColumns"; //
 
 const EmployeeTable = () => {
   const navigate = useNavigate();

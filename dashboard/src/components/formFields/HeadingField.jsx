@@ -1,11 +1,11 @@
 // dashboard/src/components/formFields/HeadingField.jsx
 import React from "react";
-import { parseDescription } from "@/utils/schemaUtils";
+import { parseDescription } from "@/components/document/utils/schemaUtils";
 
 // This component is intended for use as a formComponent for "Heading" fieldtype
 // to render visual headings within a form layout. It's not an input field.
 const HeadingField = (props) => {
-  // In the context of UniversalDocEditor, props will include:
+  // In the context of DocEditor, props will include:
   // id, value (likely null/undefined for Heading), onChange (no-op), className,
   // disabled, fieldSchemaItem, tooltip, placeholder, etc.
   // We primarily care about fieldSchemaItem and its label/description.
@@ -47,7 +47,7 @@ const HeadingField = (props) => {
   return (
     <HeadingTag
       className={`${marginClass} ${textSizeClass} ${textColorClass} ${borderClass} ${customClasses} font-semibold leading-tight`}
-      // If the UniversalDocEditor passes a tooltip via commonProps, it would be applied here.
+      // If the DocEditor passes a tooltip via commonProps, it would be applied here.
       // title={props.tooltip} // Example if props.tooltip is passed
     >
       {label}

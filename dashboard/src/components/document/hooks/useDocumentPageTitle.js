@@ -1,4 +1,4 @@
-// src/hooks/useDocumentPageTitle.js
+// src/components/document/hooks/useDocumentPageTitle.js
 import { useEffect } from "react";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 

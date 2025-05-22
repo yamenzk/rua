@@ -19,8 +19,8 @@ import { Button } from "primereact/button";
 import { ConfirmDialog } from "primereact/confirmdialog";
 
 import * as formatters from "@/utils/formatters";
-import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
-import { parseDescription } from "@/utils/schemaUtils";
+import { getFieldConfig } from "@/components/document/utils/fieldTypeConfigurations.jsx";
+import { parseDescription } from "@/components/document/utils/schemaUtils";
 
 // Import modular components
 import TableHeader from "@/components/table/components/TableHeader";
