@@ -1,10 +1,9 @@
-// src/utils/fieldTypeConfigurations.jsx
+// dashboard/src/utils/fieldTypeConfigurations.jsx - Updated with clean filter approach
 import React from "react";
 
-// --- PrimeReact Components (used directly or as base for formComponents) ---
+// --- PrimeReact Components ---
 import { InputText } from "primereact/inputtext";
-import { InputNumber } from "primereact/inputnumber"; // For default Duration form field
-import { Dropdown } from "primereact/dropdown"; // For Select & Autocomplete formComponent
+import { Dropdown } from "primereact/dropdown";
 
 // --- Custom Form Field Components ---
 import AttachmentFormField from "@/components/formFields/AttachmentFormField.jsx";
@@ -17,29 +16,28 @@ import DateFormField from "@/components/formFields/DateFormField.jsx";
 import DateTimeFormField from "@/components/formFields/DateTimeFormField.jsx";
 import TimeFormField from "@/components/formFields/TimeFormField.jsx";
 import GenericTextareaFormField from "@/components/formFields/GenericTextareaFormField.jsx";
-import TextEditorFormField from "@/components/formFields/TextEditorFormField.jsx"; // Wrapper for PrimeReact Editor
+import TextEditorFormField from "@/components/formFields/TextEditorFormField.jsx";
 import NationalityFormField from "@/components/formFields/NationalityFormField.jsx";
 
 // --- Table Cell Components ---
 import AttachCell from "@/components/table/cells/AttachCell.jsx";
 import AttachImageCell from "@/components/table/cells/AttachImageCell.jsx";
-import SelectCell from "@/components/table/cells/SelectCell.jsx"; // Used by Select & Autocomplete
-// LinkCell was for a different "Link" type, not the Autocomplete we are discussing now
+import SelectCell from "@/components/table/cells/SelectCell.jsx";
 import CheckboxCell from "@/components/table/cells/CheckboxCell.jsx";
 import ColorCell from "@/components/table/cells/ColorCell.jsx";
 import RichTextCell from "@/components/table/cells/RichTextCell.jsx";
 import NationalityCell from "@/components/table/cells/NationalityCell.jsx";
 import DefaultCell from "@/components/table/cells/DefaultCell.jsx";
 
-// --- Table Filter Components ---
-import TextTableFilter from "@/components/table/filters/TextTableFilter.jsx";
-import NumericRangeTableFilter from "@/components/table/filters/NumericRangeTableFilter.jsx";
-import DateTableFilter from "@/components/table/filters/DateTableFilter.jsx";
-import SelectTableFilter from "@/components/table/filters/SelectTableFilter.jsx"; // Used by Select & Autocomplete
-import MultiSelectTableFilter from "@/components/table/filters/MultiSelectTableFilter.jsx"; // For Link & Nationality
-import TriStateCheckboxTableFilter from "@/components/table/filters/TriStateCheckboxTableFilter.jsx";
+// --- Clean Table Filter Components ---
+import NumericFilter from "@/components/table/filters/NumericFilter.jsx";
+import CurrencyFilter from "@/components/table/filters/CurrencyFilter.jsx";
+import DateFilter from "@/components/table/filters/DateFilter.jsx";
+import SelectFilter from "@/components/table/filters/SelectFilter.jsx";
+import MultiSelectFilter from "@/components/table/filters/MultiSelectFilter.jsx";
+import TriStateFilter from "@/components/table/filters/TriStateFilter.jsx";
 
-// --- Custom Formatters & Data ---
+// --- Formatters ---
 import * as formatters from "./formatters.jsx";
 import { parseDescription } from "@/utils/schemaUtils";
 
@@ -76,7 +74,7 @@ export const fieldTypeConfigurations = {
 
   // --- Selection Types ---
   Select: {
-    formComponent: Dropdown, // Uses getSelectProps from adapter (filter: undefined by default)
+    formComponent: Dropdown,
     tableBodyComponent: (rowData, fieldname, displayProps) => (
       <SelectCell
         rowData={rowData}
@@ -84,16 +82,10 @@ export const fieldTypeConfigurations = {
         displayProps={displayProps}
       />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <SelectTableFilter
-        value={filterValue}
-        options={colProps.options || []} // Expects {label,value} array from transformSchemaToColumnConfig
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <SelectFilter
+        options={options}
+        selectOptions={colProps.options || []}
         placeholder={`Select ${colProps.header || fieldname}`}
       />
     ),
@@ -102,25 +94,18 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   Autocomplete: {
-    // Configured to behave like a searchable Select
-    formComponent: Dropdown, // Uses getSelectProps from adapter (filter: true by default for this type)
+    formComponent: Dropdown,
     tableBodyComponent: (rowData, fieldname, displayProps) => (
       <SelectCell
         rowData={rowData}
         fieldname={fieldname}
         displayProps={displayProps}
-      /> // Reuses SelectCell
+      />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <SelectTableFilter // Reuses SelectTableFilter
-        value={filterValue}
-        options={colProps.options || []} // Expects {label,value} array from transformSchemaToColumnConfig
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <SelectFilter
+        options={options}
+        selectOptions={colProps.options || []}
         placeholder={`Search ${colProps.header || fieldname}`}
       />
     ),
@@ -129,28 +114,17 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   Nationality: {
-    formComponent: NationalityFormField, // Specific component using nationalities.json
+    formComponent: NationalityFormField,
     tableBodyComponent: (rowData, fieldname) => (
       <NationalityCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <MultiSelectTableFilter // Nationalities can be filtered with MultiSelect
-        value={filterValue}
-        options={colProps.options || []} // Expects {label,value} with flags from transformSchemaToColumnConfig
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <MultiSelectFilter
+        options={options}
+        selectOptions={colProps.options || []}
         placeholder="Any Nationality"
-        multiSelectProps={{
-          itemTemplate: (option) => <span>{option.label}</span>, // For flag display
-          maxSelectedLabels: 1,
-          display: "chip",
-          showClear: true,
-          filter: true,
-        }}
+        itemTemplate={(option) => <span>{option.label}</span>}
+        maxSelectedLabels={1}
       />
     ),
     sortable: true,
@@ -160,61 +134,20 @@ export const fieldTypeConfigurations = {
 
   // --- Link Types ---
   Link: {
-    // This is for Frappe-style server-side searched Links
-    formComponent: (await import("primereact/autocomplete")).AutoComplete, // Dynamic import example or direct
-    tableBodyComponent: (
-      rowData,
-      fieldname,
-      displayProps // Can use SelectCell if chip display is desired
-    ) => (
+    formComponent: (await import("primereact/autocomplete")).AutoComplete,
+    tableBodyComponent: (rowData, fieldname, displayProps) => (
       <SelectCell
         rowData={rowData}
         fieldname={fieldname}
         displayProps={displayProps}
       />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback,
-      filterOptions
-    ) => (
-      <MultiSelectTableFilter
-        value={filterValue}
-        options={filterOptions || []} // DynamicDataTable should populate these for Link filters
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <MultiSelectFilter
+        options={options}
+        selectOptions={colProps.options || []}
         placeholder="Any"
-        multiSelectProps={{
-          maxSelectedLabels: 3,
-          showClear: true,
-          filter: true,
-        }}
-      />
-    ),
-    sortable: true,
-    filterable: true,
-    dataType: "text",
-  },
-  "Dynamic Link": {
-    // Similar to Link, but perhaps different adapter logic
-    formComponent: (await import("primereact/autocomplete")).AutoComplete,
-    tableBodyComponent: (rowData, fieldname) => (
-      <DefaultCell rowData={rowData} fieldname={fieldname} />
-    ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback,
-      filterOptions
-    ) => (
-      <MultiSelectTableFilter
-        value={filterValue}
-        options={filterOptions || []}
-        onChange={filterApplyCallback}
-        placeholder="Search"
-        multiSelectProps={{ filter: true }}
+        maxSelectedLabels={3}
       />
     ),
     sortable: true,
@@ -224,20 +157,12 @@ export const fieldTypeConfigurations = {
 
   // --- Boolean/Check Type ---
   Check: {
-    formComponent: CheckSwitchFormField, // Handles Checkbox or InputSwitch based on description
+    formComponent: CheckSwitchFormField,
     tableBodyComponent: (rowData, fieldname) => (
       <CheckboxCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <TriStateCheckboxTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
-      />
+    tableFilterElement: (colProps, fieldname, options) => (
+      <TriStateFilter options={options} label="Verified" />
     ),
     sortable: true,
     filterable: true,
@@ -250,16 +175,12 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname) => (
       <ColorCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <TextTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value, options.index)}
         placeholder="Hex color"
+        className="p-column-filter"
       />
     ),
     sortable: true,
@@ -269,25 +190,11 @@ export const fieldTypeConfigurations = {
 
   // --- Numeric Types ---
   Currency: {
-    formComponent: CurrencyFormField, // Wrapper for InputNumber with currency mode
+    formComponent: CurrencyFormField,
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatCurrencyAED(rowData[fieldname]),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <NumericRangeTableFilter
-        fieldname={fieldname}
-        filterValue={filterValue}
-        filterApplyCallback={filterApplyCallback}
-        inputNumberProps={{
-          mode: "currency",
-          currency: "AED",
-          locale: "en-AE",
-        }}
-      />
+    tableFilterElement: (colProps, fieldname, options) => (
+      <CurrencyFilter options={options} currency="AED" locale="en-AE" />
     ),
     sortable: true,
     filterable: true,
@@ -304,16 +211,13 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <NumericRangeTableFilter
-        fieldname={fieldname}
-        filterValue={filterValue}
-        filterApplyCallback={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <NumericFilter
+        options={options}
+        inputNumberProps={{
+          minFractionDigits: 0,
+          maxFractionDigits: 0,
+        }}
       />
     ),
     sortable: true,
@@ -333,16 +237,9 @@ export const fieldTypeConfigurations = {
         minimumFractionDigits: displayProps?.precision || 2,
         maximumFractionDigits: displayProps?.precision || 2,
       }),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <NumericRangeTableFilter
-        fieldname={fieldname}
-        filterValue={filterValue}
-        filterApplyCallback={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <NumericFilter
+        options={options}
         inputNumberProps={{
           minFractionDigits: colProps.precision || 2,
           maxFractionDigits: colProps.precision || 2,
@@ -363,17 +260,14 @@ export const fieldTypeConfigurations = {
           ? rowData[fieldname]
           : ""
       }%`,
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <NumericRangeTableFilter
-        fieldname={fieldname}
-        filterValue={filterValue}
-        filterApplyCallback={filterApplyCallback}
-        inputNumberProps={{ suffix: "%" }}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <NumericFilter
+        options={options}
+        inputNumberProps={{
+          suffix: "%",
+          min: 0,
+          max: 100,
+        }}
       />
     ),
     sortable: true,
@@ -383,21 +277,16 @@ export const fieldTypeConfigurations = {
 
   // --- Text Input Types ---
   Data: {
-    // Generic text input
     formComponent: InputText,
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <TextTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value, options.index)}
         placeholder={`Search ${colProps.header || fieldname}`}
+        className="p-column-filter"
       />
     ),
     sortable: true,
@@ -409,16 +298,12 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <TextTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value, options.index)}
         placeholder={`Search ${colProps.header || fieldname}`}
+        className="p-column-filter"
       />
     ),
     sortable: true,
@@ -430,16 +315,12 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <TextTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value, options.index)}
         placeholder={`Search ${colProps.header || fieldname}`}
+        className="p-column-filter"
       />
     ),
     sortable: true,
@@ -451,24 +332,20 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <TextTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value, options.index)}
         placeholder={`Search ${colProps.header || fieldname}`}
+        className="p-column-filter"
       />
     ),
-    sortable: false,
+    sortable: true,
     filterable: true,
     dataType: "text",
   },
   "Text Editor": {
-    formComponent: TextEditorFormField, // Wrapper for PrimeReact Editor
+    formComponent: TextEditorFormField,
     tableBodyComponent: (rowData, fieldname) => (
       <RichTextCell rowData={rowData} fieldname={fieldname} />
     ),
@@ -483,16 +360,11 @@ export const fieldTypeConfigurations = {
     formComponent: DateFormField,
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDisplayDate(rowData[fieldname]),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <DateTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
-        mask="99/99/9999"
+    tableFilterElement: (colProps, fieldname, options) => (
+      <DateFilter
+        options={options}
+        dateFormat="dd/mm/yy"
+        placeholder="dd/mm/yyyy"
       />
     ),
     sortable: true,
@@ -503,18 +375,13 @@ export const fieldTypeConfigurations = {
     formComponent: DateTimeFormField,
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDisplayDateTime(rowData[fieldname]),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <DateTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
-        placeholder="DD/MM/YYYY HH:MM:SS"
-        mask="99/99/9999 99:99:99"
-        calendarProps={{ showTime: true, showSeconds: true }}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <DateFilter
+        options={options}
+        dateFormat="dd/mm/yy"
+        placeholder="dd/mm/yyyy hh:mm:ss"
+        showTime
+        showSeconds
       />
     ),
     sortable: true,
@@ -525,18 +392,12 @@ export const fieldTypeConfigurations = {
     formComponent: TimeFormField,
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDisplayTime(rowData[fieldname], true),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <DateTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
-        placeholder="HH:MM:SS"
-        mask="99:99:99"
-        calendarProps={{ timeOnly: true, showSeconds: true, hourFormat: "24" }}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <DateFilter
+        options={options}
+        placeholder="hh:mm:ss"
+        timeOnly
+        showSeconds
       />
     ),
     sortable: true,
@@ -544,22 +405,24 @@ export const fieldTypeConfigurations = {
     dataType: "text",
   },
   Duration: {
-    // Assuming stored as seconds, displayed formatted
-    formComponent: InputNumber, // Or a custom duration picker
+    formComponent: (props) => (
+      <GenericInputNumberFormField
+        {...props}
+        minFractionDigits={0}
+        maxFractionDigits={0}
+        min={0}
+      />
+    ),
     tableBodyComponent: (rowData, fieldname) =>
       formatters.formatDuration(rowData[fieldname]),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <NumericRangeTableFilter
-        fieldname={fieldname}
-        filterValue={filterValue}
-        filterApplyCallback={filterApplyCallback}
-        minPlaceholder="Min (seconds)"
-        maxPlaceholder="Max (seconds)"
+    tableFilterElement: (colProps, fieldname, options) => (
+      <NumericFilter
+        options={options}
+        inputNumberProps={{
+          min: 0,
+          minFractionDigits: 0,
+          maxFractionDigits: 0,
+        }}
       />
     ),
     sortable: true,
@@ -570,7 +433,7 @@ export const fieldTypeConfigurations = {
   // --- Layout/Display Only Types ---
   Heading: {
     formComponent: HeadingField,
-    tableBodyComponent: () => null, // Headings don't typically appear in table data rows
+    tableBodyComponent: () => null,
     tableFilterElement: null,
     sortable: false,
     filterable: false,
@@ -583,16 +446,12 @@ export const fieldTypeConfigurations = {
     tableBodyComponent: (rowData, fieldname) => (
       <DefaultCell rowData={rowData} fieldname={fieldname} />
     ),
-    tableFilterElement: (
-      colProps,
-      fieldname,
-      filterValue,
-      filterApplyCallback
-    ) => (
-      <TextTableFilter
-        value={filterValue}
-        onChange={filterApplyCallback}
+    tableFilterElement: (colProps, fieldname, options) => (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value, options.index)}
         placeholder={`Search ${colProps.header || fieldname}`}
+        className="p-column-filter"
       />
     ),
     sortable: true,
@@ -603,24 +462,25 @@ export const fieldTypeConfigurations = {
 
 // --- Helper function to get configuration ---
 export const getFieldConfig = (fieldType, fieldname, fieldSchema = null) => {
-  // Special handling for 'nationality' field if its doctype field_type is 'Data'
+  // Special handling for 'nationality' field if its fieldtype is 'Data'
   // but we want to treat it as "Nationality" type for UI.
   if (
     fieldname === "nationality" &&
-    (fieldType === "Data" || fieldType === "Select") && // If backend type is Data/Select but field is 'nationality'
+    (fieldType === "Data" || fieldType === "Select") &&
     fieldTypeConfigurations["Nationality"]
   ) {
     return fieldTypeConfigurations["Nationality"];
   }
 
-  // Example: If you use a `ui_control` hint in description for "CustomAutoComplete" / "SearchableSelect"
+  // Example: If you use a `ui_control` hint in description for custom controls
   if (fieldSchema && (fieldType === "Data" || fieldType === "Small Text")) {
-      const desc = parseDescription(fieldSchema.description); // Ensure parseDescription is imported or available
-      if (desc.ui_control && fieldTypeConfigurations[desc.ui_control]) {
-          return fieldTypeConfigurations[desc.ui_control];
-      }
+    const desc = parseDescription(fieldSchema.description);
+    if (desc.ui_control && fieldTypeConfigurations[desc.ui_control]) {
+      return fieldTypeConfigurations[desc.ui_control];
+    }
   }
 
-
-  return fieldTypeConfigurations[fieldType] || fieldTypeConfigurations["Default"];
+  return (
+    fieldTypeConfigurations[fieldType] || fieldTypeConfigurations["Default"]
+  );
 };

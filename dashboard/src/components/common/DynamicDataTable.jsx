@@ -1,4 +1,4 @@
-// dashboard/src/components/common/DynamicDataTable.jsx
+// dashboard/src/components/common/DynamicDataTable.jsx - Clean Version
 import React, {
   useState,
   useEffect,
@@ -16,118 +16,23 @@ import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
 import { ContextMenu } from "primereact/contextmenu";
-import { FilterMatchMode } from "primereact/api";
+import { FilterMatchMode, FilterOperator } from "primereact/api";
 import { IconField } from "primereact/iconfield";
 import { InputIcon } from "primereact/inputicon";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { setCookie, getCookie } from "@/utils/cookies"; // .js or .jsx as appropriate
+import { setCookie, getCookie } from "@/utils/cookies";
 
-import * as formatters from "@/utils/formatters"; // .jsx not needed if build system handles it
-import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx"; // Corrected path
+import * as formatters from "@/utils/formatters";
+import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx";
 import { parseDescription } from "@/utils/schemaUtils";
-
-// Utility function to safely parse dates from Frappe backend
-const parseDateValue = (value, fieldtype) => {
-  if (!value) return null;
-
-  // If it's already a Date object, return it
-  if (value instanceof Date) return value;
-
-  // If it's a string, try to parse it
-  if (typeof value === "string") {
-    // Handle different date/time formats from Frappe
-    let parsedDate;
-
-    if (fieldtype === "Datetime") {
-      // Frappe datetime format: YYYY-MM-DD HH:MM:SS
-      parsedDate = new Date(value);
-    } else if (fieldtype === "Date") {
-      // Frappe date format: YYYY-MM-DD
-      parsedDate = new Date(value + "T00:00:00"); // Add time to avoid timezone issues
-    } else if (fieldtype === "Time") {
-      // Frappe time format: HH:MM:SS
-      // Create a date with today's date but the specified time
-      const today = new Date();
-      const [hours, minutes, seconds] = value.split(":").map(Number);
-      parsedDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        hours,
-        minutes,
-        seconds || 0
-      );
-    }
-
-    // Check if the parsed date is valid
-    if (parsedDate && !isNaN(parsedDate.getTime())) {
-      return parsedDate;
-    }
-  }
-
-  return null;
-};
-
-// Utility function to safely parse boolean values from Frappe backend
-const parseBooleanValue = (value) => {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value === 1;
-  if (typeof value === "string")
-    return value === "1" || value.toLowerCase() === "true";
-  return false;
-};
-
-// Transform data to convert date strings to Date objects and boolean strings to booleans
-const transformDataForSpecialFields = (data, columnsConfig) => {
-  if (!data || !Array.isArray(data)) return data;
-
-  const dateFields = columnsConfig.filter((col) =>
-    ["Date", "Datetime", "Time"].includes(col.fieldtype)
-  );
-
-  const booleanFields = columnsConfig.filter(
-    (col) => col.fieldtype === "Check"
-  );
-
-  if (dateFields.length === 0 && booleanFields.length === 0) return data;
-
-  return data.map((row) => {
-    const transformedRow = { ...row };
-
-    // Transform date fields
-    dateFields.forEach((field) => {
-      if (transformedRow[field.fieldname]) {
-        transformedRow[field.fieldname] = parseDateValue(
-          transformedRow[field.fieldname],
-          field.fieldtype
-        );
-      }
-    });
-
-    // Transform boolean fields
-    booleanFields.forEach((field) => {
-      if (typeof transformedRow[field.fieldname] !== "undefined") {
-        transformedRow[field.fieldname] = parseBooleanValue(
-          transformedRow[field.fieldname]
-        );
-      }
-    });
-
-    return transformedRow;
-  });
-};
 
 const DynamicDataTable = ({
   doctype,
-  columnsConfig, // Array of objects with fieldname, fieldtype, header, filterable, sortable, defaultVisible, options, displayProps, minWidth, style, description etc.
+  columnsConfig,
   fetchArgs = {},
   onRowClick,
   contextMenuItemsModel,
-  globalFilterFields = ["name"], // Fields to be searched by global filter
-  rowGroupMode,
-  groupRowsBy,
-  rowGroupHeaderTemplate,
-  rowGroupFooterTemplate,
+  globalFilterFields = ["name"],
   showColumnToggle = true,
   showPaginator = true,
   rowsPerPageOptions = [10, 25, 50, 100],
@@ -136,8 +41,8 @@ const DynamicDataTable = ({
   tableStyle = { minWidth: "50rem" },
   emptyMessage = "No records found.",
   enableColumnReordering = true,
-  uniqueTableKey, // IMPORTANT: For cookie state persistence
-  headerActions, // JSX or component for actions in the header
+  uniqueTableKey,
+  headerActions,
 }) => {
   const {
     data,
@@ -147,11 +52,11 @@ const DynamicDataTable = ({
   } = useFrappeGetDocList(
     doctype,
     {
-      fields: ["*"], // Fetch all fields, filtering/selection happens client-side or via columnsConfig
-      limit: 0, // Fetch all for client-side operations initially
-      ...fetchArgs, // Allows overriding fields, limit, filters, orderBy etc.
+      fields: ["*"],
+      limit: 0,
+      ...fetchArgs,
     },
-    {} // SWR config options if needed
+    {}
   );
 
   const handleDocTypeUpdate = useCallback(
@@ -199,7 +104,6 @@ const DynamicDataTable = ({
       savedState?.visibleColumns &&
       Array.isArray(savedState.visibleColumns)
     ) {
-      // Restore based on fieldnames, ensuring they still exist in current columnsConfig
       const validSavedColumnObjects = savedState.visibleColumns
         .map((fieldname) =>
           columnsConfig.find((cfg) => cfg.fieldname === fieldname)
@@ -228,6 +132,72 @@ const DynamicDataTable = ({
   const dt = useRef(null);
   const cm = useRef(null);
 
+  // Initialize filters following PrimeReact pattern
+  const initFilters = useCallback(() => {
+    const initialFilters = {
+      global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    };
+
+    columnsConfig.forEach((colConfig) => {
+      if (colConfig.filterable !== false) {
+        const fieldCfg = getFieldConfig(
+          colConfig.fieldtype,
+          colConfig.fieldname
+        );
+        if (fieldCfg.filterable === false) return;
+
+        let matchMode = FilterMatchMode.CONTAINS;
+        let operator = FilterOperator.AND;
+
+        // Set appropriate match modes based on data type
+        if (fieldCfg.dataType === "numeric") {
+          matchMode = FilterMatchMode.EQUALS;
+        } else if (fieldCfg.dataType === "date") {
+          matchMode = FilterMatchMode.DATE_IS;
+        } else if (fieldCfg.dataType === "boolean") {
+          matchMode = FilterMatchMode.EQUALS;
+        } else if (
+          colConfig.fieldtype === "Select" ||
+          colConfig.fieldtype === "Autocomplete"
+        ) {
+          matchMode = FilterMatchMode.EQUALS;
+        } else if (
+          colConfig.fieldtype === "Link" ||
+          colConfig.fieldtype === "Nationality"
+        ) {
+          matchMode = FilterMatchMode.IN;
+          operator = FilterOperator.OR;
+        }
+
+        // Use constraint-based filtering for most fields
+        if (fieldCfg.dataType === "numeric" || fieldCfg.dataType === "date") {
+          initialFilters[colConfig.fieldname] = {
+            operator: FilterOperator.AND,
+            constraints: [{ value: null, matchMode }],
+          };
+        } else if (
+          colConfig.fieldtype === "Link" ||
+          colConfig.fieldtype === "Nationality"
+        ) {
+          // Multi-select filters don't use constraints
+          initialFilters[colConfig.fieldname] = {
+            value: null,
+            matchMode,
+          };
+        } else {
+          // Text-based filters
+          initialFilters[colConfig.fieldname] = {
+            operator: FilterOperator.AND,
+            constraints: [{ value: null, matchMode }],
+          };
+        }
+      }
+    });
+
+    setFilters(initialFilters);
+    setGlobalFilterValue("");
+  }, [columnsConfig]);
+
   // Effect to save state to cookie
   useEffect(() => {
     if (tableStateCookieKey) {
@@ -237,23 +207,7 @@ const DynamicDataTable = ({
         rows,
         sortField,
         sortOrder,
-        filters: {
-          // Save only filter values, not complex objects
-          global: { value: globalFilterValue },
-          ...Object.entries(filters)
-            .filter(([key]) => key !== "global")
-            .reduce((acc, [key, value]) => {
-              if (value && typeof value.value !== "undefined") {
-                // For date filters, save as ISO string to preserve value
-                let filterValue = value.value;
-                if (filterValue instanceof Date) {
-                  filterValue = filterValue.toISOString();
-                }
-                acc[key] = { value: filterValue };
-              }
-              return acc;
-            }, {}),
-        },
+        globalFilter: globalFilterValue,
       };
       setCookie(tableStateCookieKey, JSON.stringify(stateToSave), 30);
     }
@@ -264,80 +218,8 @@ const DynamicDataTable = ({
     sortField,
     sortOrder,
     globalFilterValue,
-    filters,
     tableStateCookieKey,
   ]);
-
-  const initializeFilters = useCallback(
-    (savedFilterValues) => {
-      const initialFilters = {
-        global: {
-          value: savedFilterValues?.global?.value || null,
-          matchMode: FilterMatchMode.CONTAINS,
-        },
-      };
-      columnsConfig.forEach((colConfig) => {
-        if (colConfig.filterable !== false) {
-          // Check schema-defined filterable
-          const fieldCfg = getFieldConfig(
-            colConfig.fieldtype,
-            colConfig.fieldname
-          );
-          if (fieldCfg.filterable === false) return; // Check field type config filterable
-
-          let matchMode = FilterMatchMode.CONTAINS; // Default
-          if (fieldCfg.dataType === "numeric") {
-            matchMode = FilterMatchMode.EQUALS;
-          } else if (fieldCfg.dataType === "date") {
-            matchMode = FilterMatchMode.DATE_IS;
-          } else if (fieldCfg.dataType === "boolean") {
-            matchMode = FilterMatchMode.EQUALS;
-          } else if (
-            colConfig.fieldtype === "Select" ||
-            colConfig.fieldtype === "Link" ||
-            fieldCfg.formComponent === MultiSelect
-          ) {
-            matchMode = FilterMatchMode.IN;
-          }
-          if (
-            fieldCfg.tableFilterElement &&
-            (colConfig.fieldtype === "Link" ||
-              colConfig.fieldtype === "Dynamic Link")
-          ) {
-            matchMode = FilterMatchMode.IN;
-          }
-
-          // Handle saved filter values for different field types
-          let savedValue =
-            savedFilterValues?.[colConfig.fieldname]?.value || null;
-          if (savedValue !== null) {
-            if (["Date", "Datetime", "Time"].includes(colConfig.fieldtype)) {
-              // Convert saved ISO string back to Date object
-              if (typeof savedValue === "string") {
-                savedValue = new Date(savedValue);
-                if (isNaN(savedValue.getTime())) {
-                  savedValue = null;
-                }
-              }
-            } else if (colConfig.fieldtype === "Check") {
-              // Ensure boolean values for Check fields
-              savedValue = parseBooleanValue(savedValue);
-            }
-          }
-
-          initialFilters[colConfig.fieldname] = {
-            value: savedValue,
-            matchMode: matchMode, // Set programmatically, not from cookie for matchMode
-          };
-        }
-      });
-      setFilters(initialFilters);
-      if (savedFilterValues?.global?.value) {
-        setGlobalFilterValue(savedFilterValues.global.value);
-      }
-    },
-    [columnsConfig]
-  ); // Removed getFieldConfig from deps, it's stable
 
   useEffect(() => {
     if (frappeIsLoading) {
@@ -346,34 +228,23 @@ const DynamicDataTable = ({
     }
     if (data) {
       // Transform data to convert date strings to Date objects and boolean strings to booleans
-      const transformedData = transformDataForSpecialFields(
+      const transformedData = formatters.transformDataForSpecialFields(
         data,
         columnsConfig
       );
       setTableData(transformedData);
-
-      const savedState = loadStateFromCookie();
-      initializeFilters(savedState?.filters);
+      initFilters();
       setLoading(false);
     }
     if (error) {
       console.error(`Error fetching ${doctype} list:`, error);
       setLoading(false);
     }
-  }, [
-    data,
-    error,
-    frappeIsLoading,
-    doctype,
-    columnsConfig,
-    initializeFilters,
-    loadStateFromCookie,
-  ]);
+  }, [data, error, frappeIsLoading, doctype, columnsConfig, initFilters]);
 
   const onColumnToggle = useCallback(
     (event) => {
-      const selectedToggleColumns = event.value; // These are column config objects from MultiSelect
-      // Preserve the order from the original columnsConfig for newly added columns
+      const selectedToggleColumns = event.value;
       const newVisible = columnsConfig.filter((col) =>
         selectedToggleColumns.some(
           (selectedCol) => selectedCol.fieldname === col.fieldname
@@ -387,29 +258,19 @@ const DynamicDataTable = ({
   const onColumnReorder = useCallback(
     (event) => {
       if (event.columns && Array.isArray(event.columns)) {
-        // event.columns are the PrimeReact Column components in their new order
         const reorderedFieldnames = event.columns
           .map((primeCol) => primeCol.props.field)
           .filter(Boolean);
-        const newReorderedVisibleColumns = reorderedFieldnames
-          .map((fieldname) =>
-            visibleColumns.find((vc) => vc.fieldname === fieldname)
-          ) // Find from current visible
-          .filter(Boolean);
-
-        // If a column was reordered that wasn't previously visible (shouldn't happen with current setup)
-        // or to ensure all are from original config:
         const finalOrderedColumns = reorderedFieldnames
           .map((fieldname) =>
             columnsConfig.find((cfg) => cfg.fieldname === fieldname)
           )
           .filter(Boolean);
-
         setVisibleColumns(finalOrderedColumns);
       }
     },
-    [columnsConfig, visibleColumns]
-  ); // Added visibleColumns as it's used indirectly for reordering
+    [columnsConfig]
+  );
 
   const onGlobalFilterChange = useCallback((e) => {
     const value = e.target.value;
@@ -449,7 +310,7 @@ const DynamicDataTable = ({
   }, []);
 
   const handleContextMenu = useCallback((e) => {
-    setSelectedRow(e.data); // Important to set the selected row for context menu actions
+    setSelectedRow(e.data);
     cm.current?.show(e.originalEvent);
   }, []);
 
@@ -457,18 +318,30 @@ const DynamicDataTable = ({
     setSelectedRow(null);
   }, []);
 
+  const clearFilters = useCallback(() => {
+    initFilters();
+  }, [initFilters]);
+
   const headerContent = useMemo(
     () => (
       <div className="flex flex-wrap items-center justify-between gap-2 py-2">
         <div className="flex items-center gap-2">
           {headerActions}
           <Button
+            icon="pi pi-filter-slash"
+            label="Clear"
+            outlined
+            onClick={clearFilters}
+            tooltip="Clear all filters"
+            tooltipOptions={{ position: "top" }}
+          />
+          <Button
             icon="pi pi-refresh"
             rounded
             text
             severity="secondary"
             aria-label="Refresh Data"
-            onClick={mutate} // mutate is stable from SWR
+            onClick={mutate}
             tooltip="Refresh Data"
             tooltipOptions={{ position: "top" }}
           />
@@ -476,16 +349,16 @@ const DynamicDataTable = ({
         <div className="flex items-center gap-2">
           {showColumnToggle && (
             <MultiSelect
-              value={visibleColumns} // These are column config objects
-              options={columnsConfig} // All possible columns
-              optionLabel="header" // Display 'header' property of colConfig objects
+              value={visibleColumns}
+              options={columnsConfig}
+              optionLabel="header"
               onChange={onColumnToggle}
               className="w-full sm:w-auto md:w-60 p-multiselect-sm"
               display="chip"
               placeholder="Toggle Columns"
               itemTemplate={(option) => (
                 <span>{option.header || option.fieldname}</span>
-              )} // Ensure label if header missing
+              )}
             />
           )}
           <IconField iconPosition="left">
@@ -502,6 +375,7 @@ const DynamicDataTable = ({
     ),
     [
       headerActions,
+      clearFilters,
       mutate,
       showColumnToggle,
       visibleColumns,
@@ -528,71 +402,53 @@ const DynamicDataTable = ({
             )
         : (rowData) => {
             const value = rowData[colConfig.fieldname];
-            // For display purposes, format dates and booleans appropriately
+            // Default formatting for common types
             if (
               ["Date", "Datetime", "Time"].includes(colConfig.fieldtype) &&
               value instanceof Date
             ) {
               if (colConfig.fieldtype === "Date") {
-                return value.toLocaleDateString();
+                return formatters.formatDisplayDate(value);
               } else if (colConfig.fieldtype === "Time") {
-                return value.toLocaleTimeString();
+                return formatters.formatDisplayTime(value, true);
               } else if (colConfig.fieldtype === "Datetime") {
-                return value.toLocaleString();
+                return formatters.formatDisplayDateTime(value);
               }
             } else if (colConfig.fieldtype === "Check") {
-              // Display checkmark or X for boolean values
               return value ? "✓" : "✗";
             }
             return value;
           };
 
-      const filterElementRenderer = colConfig.filterElementTemplate
+      const filterElementRenderer = fieldCfg.tableFilterElement
         ? (options) =>
-            colConfig.filterElementTemplate(
-              options,
-              colConfig.options || colConfig.filterOptions
-            )
-        : fieldCfg.tableFilterElement
-        ? (options) =>
-            fieldCfg.tableFilterElement(
-              colConfig,
-              colConfig.fieldname,
-              options.value,
-              options.filterApplyCallback,
-              colConfig.filterOptions && colConfig.filterOptions.length > 0
-                ? colConfig.filterOptions
-                : colConfig.options || [] // options from schema (e.g. for Select)
-            )
+            fieldCfg.tableFilterElement(colConfig, colConfig.fieldname, options)
         : null;
-
-      const columnFilterConfig = filters[colConfig.fieldname];
 
       return (
         <Column
           key={colConfig.fieldname}
-          columnKey={colConfig.fieldname} // Important for reordering and state
+          columnKey={colConfig.fieldname}
           field={colConfig.fieldname}
-          header={colConfig.header || colConfig.label || colConfig.fieldname} // Fallback for header
+          header={colConfig.header || colConfig.label || colConfig.fieldname}
           body={bodyRenderer}
           sortable={colConfig.sortable !== false && fieldCfg.sortable !== false}
           filter={
             colConfig.filterable === true && fieldCfg.filterable !== false
           }
           filterElement={filterElementRenderer}
-          filterMatchMode={columnFilterConfig?.matchMode} // Use the one from filters state
           dataType={fieldCfg.dataType || "text"}
           style={{ minWidth: colConfig.minWidth, ...(colConfig.style || {}) }}
           showFilterMatchModes={
             colConfig.showFilterMatchModes !== false &&
             fieldCfg.dataType !== "boolean"
           }
-          filterMatchModeOptions={colConfig.filterMatchModeOptions} // Allow override from schema
+          filterMatchModeOptions={colConfig.filterMatchModeOptions}
           headerTooltip={parseDescription(colConfig.description)?.tooltip}
         />
       );
     });
-  }, [visibleColumns, columnsConfig, filters]); // getFieldConfig removed from deps as it's stable
+  }, [visibleColumns, columnsConfig]);
 
   if (loading && !tableData.length) {
     return (
@@ -657,16 +513,12 @@ const DynamicDataTable = ({
         tableStyle={tableStyle}
         selectionMode={contextMenuItemsModel || onRowClick ? "single" : null}
         selection={selectedRow}
-        onSelectionChange={(e) => setSelectedRow(e.value)} // PrimeReact internal selection
-        onRowSelect={handleRowSelect} // Custom handler for click/programmatic select
+        onSelectionChange={(e) => setSelectedRow(e.value)}
+        onRowSelect={handleRowSelect}
         onRowUnselect={handleRowUnselect}
-        contextMenuSelection={selectedRow} // For PrimeReact's built-in context menu selection tracking
+        contextMenuSelection={selectedRow}
         onContextMenuSelectionChange={(e) => setSelectedRow(e.value)}
         onContextMenu={handleContextMenu}
-        rowGroupMode={rowGroupMode}
-        groupRowsBy={groupRowsBy}
-        rowGroupHeaderTemplate={rowGroupHeaderTemplate}
-        rowGroupFooterTemplate={rowGroupFooterTemplate}
       >
         {dynamicColumns}
       </DataTable>

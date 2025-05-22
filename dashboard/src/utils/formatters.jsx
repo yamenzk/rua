@@ -1,4 +1,4 @@
-// dashboard/src/utils/formatters.js
+// dashboard/src/utils/formatters.jsx
 
 /**
  * Formats an ISO string or Date object into a displayable date and time string.
@@ -200,6 +200,111 @@ export const formatServerTime = (dateInput) => {
 };
 
 /**
+ * Utility function to safely parse dates from Frappe backend
+ * @param {string | Date} value - The date value from backend
+ * @param {string} fieldtype - The field type (Date, Datetime, Time)
+ * @returns {Date | null} Parsed Date object or null if invalid
+ */
+export const parseDateValue = (value, fieldtype) => {
+  if (!value) return null;
+
+  // If it's already a Date object, return it
+  if (value instanceof Date) return value;
+
+  // If it's a string, try to parse it
+  if (typeof value === "string") {
+    // Handle different date/time formats from Frappe
+    let parsedDate;
+
+    if (fieldtype === "Datetime") {
+      // Frappe datetime format: YYYY-MM-DD HH:MM:SS
+      parsedDate = new Date(value);
+    } else if (fieldtype === "Date") {
+      // Frappe date format: YYYY-MM-DD
+      parsedDate = new Date(value + "T00:00:00"); // Add time to avoid timezone issues
+    } else if (fieldtype === "Time") {
+      // Frappe time format: HH:MM:SS
+      // Create a date with today's date but the specified time
+      const today = new Date();
+      const [hours, minutes, seconds] = value.split(":").map(Number);
+      parsedDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        hours,
+        minutes,
+        seconds || 0
+      );
+    }
+
+    // Check if the parsed date is valid
+    if (parsedDate && !isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Utility function to safely parse boolean values from Frappe backend
+ * @param {any} value - The boolean value from backend
+ * @returns {boolean} Parsed boolean value
+ */
+export const parseBooleanValue = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string")
+    return value === "1" || value.toLowerCase() === "true";
+  return false;
+};
+
+/**
+ * Transform data to convert date strings to Date objects and boolean strings to booleans
+ * @param {Array} data - The data array from backend
+ * @param {Array} columnsConfig - The columns configuration
+ * @returns {Array} Transformed data array
+ */
+export const transformDataForSpecialFields = (data, columnsConfig) => {
+  if (!data || !Array.isArray(data)) return data;
+
+  const dateFields = columnsConfig.filter((col) =>
+    ["Date", "Datetime", "Time"].includes(col.fieldtype)
+  );
+
+  const booleanFields = columnsConfig.filter(
+    (col) => col.fieldtype === "Check"
+  );
+
+  if (dateFields.length === 0 && booleanFields.length === 0) return data;
+
+  return data.map((row) => {
+    const transformedRow = { ...row };
+
+    // Transform date fields
+    dateFields.forEach((field) => {
+      if (transformedRow[field.fieldname]) {
+        transformedRow[field.fieldname] = parseDateValue(
+          transformedRow[field.fieldname],
+          field.fieldtype
+        );
+      }
+    });
+
+    // Transform boolean fields
+    booleanFields.forEach((field) => {
+      if (typeof transformedRow[field.fieldname] !== "undefined") {
+        transformedRow[field.fieldname] = parseBooleanValue(
+          transformedRow[field.fieldname]
+        );
+      }
+    });
+
+    return transformedRow;
+  });
+};
+
+/**
  * Formats a numeric value as AED currency.
  * Uses toLocaleString for number formatting and appends an SVG for the AED symbol.
  * @param {number | string} value - The numeric value.
@@ -219,8 +324,12 @@ export const formatCurrencyAED = (value) => {
   // Adjust the path to your aed.svg if it's different
   return (
     <span className="inline-flex items-center">
+      <img
+        src="/aed.svg"
+        alt="AED"
+        className="h-6 w-[0.8rem] inline-block mr-1"
+      />
       {formattedNumber}
-      <img src="/aed.svg" alt="AED" className="ml-1 h-4 w-4 inline-block" />
     </span>
   );
 };
