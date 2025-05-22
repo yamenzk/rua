@@ -26,6 +26,97 @@ import * as formatters from "@/utils/formatters"; // .jsx not needed if build sy
 import { getFieldConfig } from "@/utils/fieldTypeConfigurations.jsx"; // Corrected path
 import { parseDescription } from "@/utils/schemaUtils";
 
+// Utility function to safely parse dates from Frappe backend
+const parseDateValue = (value, fieldtype) => {
+  if (!value) return null;
+
+  // If it's already a Date object, return it
+  if (value instanceof Date) return value;
+
+  // If it's a string, try to parse it
+  if (typeof value === "string") {
+    // Handle different date/time formats from Frappe
+    let parsedDate;
+
+    if (fieldtype === "Datetime") {
+      // Frappe datetime format: YYYY-MM-DD HH:MM:SS
+      parsedDate = new Date(value);
+    } else if (fieldtype === "Date") {
+      // Frappe date format: YYYY-MM-DD
+      parsedDate = new Date(value + "T00:00:00"); // Add time to avoid timezone issues
+    } else if (fieldtype === "Time") {
+      // Frappe time format: HH:MM:SS
+      // Create a date with today's date but the specified time
+      const today = new Date();
+      const [hours, minutes, seconds] = value.split(":").map(Number);
+      parsedDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        hours,
+        minutes,
+        seconds || 0
+      );
+    }
+
+    // Check if the parsed date is valid
+    if (parsedDate && !isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    }
+  }
+
+  return null;
+};
+
+// Utility function to safely parse boolean values from Frappe backend
+const parseBooleanValue = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string")
+    return value === "1" || value.toLowerCase() === "true";
+  return false;
+};
+
+// Transform data to convert date strings to Date objects and boolean strings to booleans
+const transformDataForSpecialFields = (data, columnsConfig) => {
+  if (!data || !Array.isArray(data)) return data;
+
+  const dateFields = columnsConfig.filter((col) =>
+    ["Date", "Datetime", "Time"].includes(col.fieldtype)
+  );
+
+  const booleanFields = columnsConfig.filter(
+    (col) => col.fieldtype === "Check"
+  );
+
+  if (dateFields.length === 0 && booleanFields.length === 0) return data;
+
+  return data.map((row) => {
+    const transformedRow = { ...row };
+
+    // Transform date fields
+    dateFields.forEach((field) => {
+      if (transformedRow[field.fieldname]) {
+        transformedRow[field.fieldname] = parseDateValue(
+          transformedRow[field.fieldname],
+          field.fieldtype
+        );
+      }
+    });
+
+    // Transform boolean fields
+    booleanFields.forEach((field) => {
+      if (typeof transformedRow[field.fieldname] !== "undefined") {
+        transformedRow[field.fieldname] = parseBooleanValue(
+          transformedRow[field.fieldname]
+        );
+      }
+    });
+
+    return transformedRow;
+  });
+};
+
 const DynamicDataTable = ({
   doctype,
   columnsConfig, // Array of objects with fieldname, fieldtype, header, filterable, sortable, defaultVisible, options, displayProps, minWidth, style, description etc.
@@ -153,8 +244,12 @@ const DynamicDataTable = ({
             .filter(([key]) => key !== "global")
             .reduce((acc, [key, value]) => {
               if (value && typeof value.value !== "undefined") {
-                // Ensure value exists
-                acc[key] = { value: value.value }; // Only save the 'value' part
+                // For date filters, save as ISO string to preserve value
+                let filterValue = value.value;
+                if (filterValue instanceof Date) {
+                  filterValue = filterValue.toISOString();
+                }
+                acc[key] = { value: filterValue };
               }
               return acc;
             }, {}),
@@ -191,8 +286,10 @@ const DynamicDataTable = ({
           if (fieldCfg.filterable === false) return; // Check field type config filterable
 
           let matchMode = FilterMatchMode.CONTAINS; // Default
-          if (fieldCfg.dataType === "numeric" || fieldCfg.dataType === "date") {
-            matchMode = FilterMatchMode.EQUALS; // Or specific like FilterMatchMode.DATE_IS for dates
+          if (fieldCfg.dataType === "numeric") {
+            matchMode = FilterMatchMode.EQUALS;
+          } else if (fieldCfg.dataType === "date") {
+            matchMode = FilterMatchMode.DATE_IS;
           } else if (fieldCfg.dataType === "boolean") {
             matchMode = FilterMatchMode.EQUALS;
           } else if (
@@ -200,10 +297,8 @@ const DynamicDataTable = ({
             colConfig.fieldtype === "Link" ||
             fieldCfg.formComponent === MultiSelect
           ) {
-            // This implies the filter element might be a MultiSelect expecting an array
             matchMode = FilterMatchMode.IN;
           }
-          // For "Link" and "Dynamic Link" where filter element is MultiSelect, use FilterMatchMode.IN
           if (
             fieldCfg.tableFilterElement &&
             (colConfig.fieldtype === "Link" ||
@@ -212,8 +307,26 @@ const DynamicDataTable = ({
             matchMode = FilterMatchMode.IN;
           }
 
+          // Handle saved filter values for different field types
+          let savedValue =
+            savedFilterValues?.[colConfig.fieldname]?.value || null;
+          if (savedValue !== null) {
+            if (["Date", "Datetime", "Time"].includes(colConfig.fieldtype)) {
+              // Convert saved ISO string back to Date object
+              if (typeof savedValue === "string") {
+                savedValue = new Date(savedValue);
+                if (isNaN(savedValue.getTime())) {
+                  savedValue = null;
+                }
+              }
+            } else if (colConfig.fieldtype === "Check") {
+              // Ensure boolean values for Check fields
+              savedValue = parseBooleanValue(savedValue);
+            }
+          }
+
           initialFilters[colConfig.fieldname] = {
-            value: savedFilterValues?.[colConfig.fieldname]?.value || null,
+            value: savedValue,
             matchMode: matchMode, // Set programmatically, not from cookie for matchMode
           };
         }
@@ -232,7 +345,13 @@ const DynamicDataTable = ({
       return;
     }
     if (data) {
-      setTableData(data);
+      // Transform data to convert date strings to Date objects and boolean strings to booleans
+      const transformedData = transformDataForSpecialFields(
+        data,
+        columnsConfig
+      );
+      setTableData(transformedData);
+
       const savedState = loadStateFromCookie();
       initializeFilters(savedState?.filters);
       setLoading(false);
@@ -246,6 +365,7 @@ const DynamicDataTable = ({
     error,
     frappeIsLoading,
     doctype,
+    columnsConfig,
     initializeFilters,
     loadStateFromCookie,
   ]);
@@ -406,7 +526,26 @@ const DynamicDataTable = ({
               colConfig.displayProps,
               formatters
             )
-        : (rowData) => rowData[colConfig.fieldname];
+        : (rowData) => {
+            const value = rowData[colConfig.fieldname];
+            // For display purposes, format dates and booleans appropriately
+            if (
+              ["Date", "Datetime", "Time"].includes(colConfig.fieldtype) &&
+              value instanceof Date
+            ) {
+              if (colConfig.fieldtype === "Date") {
+                return value.toLocaleDateString();
+              } else if (colConfig.fieldtype === "Time") {
+                return value.toLocaleTimeString();
+              } else if (colConfig.fieldtype === "Datetime") {
+                return value.toLocaleString();
+              }
+            } else if (colConfig.fieldtype === "Check") {
+              // Display checkmark or X for boolean values
+              return value ? "✓" : "✗";
+            }
+            return value;
+          };
 
       const filterElementRenderer = colConfig.filterElementTemplate
         ? (options) =>

@@ -86,6 +86,8 @@
   {
    "fieldname": "position",
    "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "Position"
   },
   {
@@ -123,18 +125,24 @@
   {
    "fieldname": "phone",
    "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "Phone",
    "options": "Phone"
   },
   {
    "fieldname": "email",
    "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "Email",
    "options": "Email"
   },
   {
    "fieldname": "branch",
    "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "Branch",
    "options": "\nMain\nBranch 1\nBranch 2"
   },
@@ -146,6 +154,8 @@
   {
    "fieldname": "allowance",
    "fieldtype": "Currency",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "Allowance"
   },
   {
@@ -202,6 +212,8 @@
   {
    "fieldname": "is_it_time",
    "fieldtype": "Time",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "is it time"
   },
   {
@@ -235,16 +247,22 @@
   {
    "fieldname": "datetimes",
    "fieldtype": "Datetime",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "datetimes"
   },
   {
    "fieldname": "good_dates",
    "fieldtype": "Date",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "good dates"
   },
   {
    "fieldname": "the_durations",
    "fieldtype": "Duration",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "the durations"
   },
   {
@@ -256,18 +274,21 @@
   {
    "fieldname": "attach_field",
    "fieldtype": "Attach",
+   "in_list_view": 1,
    "label": "Attach Field"
   },
   {
    "fieldname": "text",
    "fieldtype": "Text Editor",
+   "in_filter": 1,
+   "in_list_view": 1,
    "label": "Text"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-21 19:55:57.377809",
+ "modified": "2025-05-22 12:14:46.269052",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
