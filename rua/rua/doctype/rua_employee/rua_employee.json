@@ -7,6 +7,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "tab_1",
   "test_section",
   "test_column",
   "employee_name",
@@ -168,7 +169,7 @@
   {
    "fieldname": "test_tab_tab",
    "fieldtype": "Tab Break",
-   "label": "Test Tab"
+   "label": "\u2728 Test"
   },
   {
    "fieldname": "section_break_eawg",
@@ -285,12 +286,17 @@
    "in_filter": 1,
    "in_list_view": 1,
    "label": "Text"
+  },
+  {
+   "fieldname": "tab_1",
+   "fieldtype": "Tab Break",
+   "label": "\ud83d\ude0e Personal Information"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-23 00:27:02.037799",
+ "modified": "2025-05-23 02:05:58.795596",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

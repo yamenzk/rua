@@ -1,8 +1,12 @@
-// src/pages/employee/doc/ViewEmployeePage.jsx - Updated with audit info
+// Updated ViewEmployeePage.jsx with enhanced avatar for dynamic island
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DocViewer from "@/components/document/DocViewer";
-import DocToolbar from "@/components/common/DocToolbar";
+
+// Import both islands
+import LightDynamicIsland from "@/components/common/LightDynamicIsland";
+import BottomTabIsland from "@/components/common/BottomTabIsland";
+
 import { Avatar } from "primereact/avatar";
 import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
 import { useLayout } from "@/contexts/LayoutContext";
@@ -20,10 +24,10 @@ const ViewEmployeePage = () => {
     onTabSelect: null,
   });
 
-  // Fetch full employee data including audit fields for DocToolbar
+  // Fetch full employee data including audit fields
   const { data: employeeFullData, isLoading: isLoadingFullData } =
     useFrappeGetDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeId, {
-      fields: ["*"], // Get all fields including audit fields
+      fields: ["*"],
       enabled: !!employeeId,
     });
 
@@ -50,6 +54,7 @@ const ViewEmployeePage = () => {
       });
     }
 
+    // Set breadcrumbs
     const breadcrumbPath = [
       {
         label: RUA_EMPLOYEE_DOCTYPE.pluralLabel,
@@ -92,8 +97,14 @@ const ViewEmployeePage = () => {
       label: "Edit",
       icon: "pi pi-pencil",
       command: handleEdit,
-      className: "p-button-primary",
       tooltip: "Edit this employee's details",
+    },
+    {
+      id: "duplicateEmployee",
+      label: "Duplicate",
+      icon: "pi pi-copy",
+      command: () => console.log("Duplicate action"),
+      tooltip: "Create a copy of this employee",
     },
   ];
 
@@ -103,7 +114,6 @@ const ViewEmployeePage = () => {
       label: "Delete",
       icon: "pi pi-trash",
       command: () => console.log("Delete action for", employeeId),
-      className: "p-button-danger p-button-text",
       tooltip: "Delete this employee",
     },
     {
@@ -111,80 +121,95 @@ const ViewEmployeePage = () => {
       label: "Print",
       icon: "pi pi-print",
       command: () => window.print(),
+      tooltip: "Print employee details",
+    },
+    {
+      id: "exportEmployee",
+      label: "Export",
+      icon: "pi pi-download",
+      command: () => console.log("Export action"),
+      tooltip: "Export employee data",
+    },
+    {
+      id: "shareEmployee",
+      label: "Share",
+      icon: "pi pi-share-alt",
+      command: () => console.log("Share action"),
+      tooltip: "Share employee profile",
     },
   ];
 
-  let customToolbarLeftContent = null;
-  if (isLoadingMinimalData && employeeId) {
-    customToolbarLeftContent = (
-      <div className="text-sm text-text-color-secondary">
-        Loading details...
-      </div>
-    );
-  } else if (toolbarLeftContentData) {
-    customToolbarLeftContent = (
-      <div className="flex items-center gap-2 overflow-hidden">
-        <Avatar
-          image={toolbarLeftContentData.image || undefined}
-          label={
-            !toolbarLeftContentData.image
-              ? toolbarLeftContentData.name?.[0]?.toUpperCase() ||
-                RUA_EMPLOYEE_DOCTYPE.name?.[0]?.toUpperCase() ||
-                "D"
-              : undefined
-          }
-          shape="circle"
-          size="large"
-          className="bg-primary-100 text-primary-color flex-shrink-0"
-          imageAlt={toolbarLeftContentData.name || "Document"}
-          onError={(e) => {
-            if (e.target) e.target.style.display = "none";
-          }}
-        />
-        <div className="flex flex-col overflow-hidden">
-          <span
-            className="font-semibold text-text-color text-lg truncate"
-            title={toolbarLeftContentData.name}
-          >
-            {toolbarLeftContentData.name || "Document"}
+  // Create enhanced left content with bigger avatar for dynamic island
+  const customLeftContent = toolbarLeftContentData && (
+    <div className="flex items-center gap-3">
+      <Avatar
+        image={toolbarLeftContentData.image || undefined}
+        label={
+          !toolbarLeftContentData.image
+            ? toolbarLeftContentData.name?.[0]?.toUpperCase() || "E"
+            : undefined
+        }
+        shape="circle"
+        size="xlarge" // Changed from "large" to "xlarge" for bigger avatar
+        className="bg-primary-100 text-primary-600 border-2 border-primary-200 shadow-lg"
+        imageAlt={toolbarLeftContentData.name || "Employee"}
+        style={{
+          width: "48px",
+          height: "48px",
+          fontSize: "1.25rem", // Ensure text scales properly
+        }}
+      />
+      <div className="flex flex-col min-w-0">
+        {" "}
+        {/* Added min-w-0 for proper truncation */}
+        <span className="font-semibold text-base text-text-color truncate">
+          {toolbarLeftContentData.name || "Employee"}
+        </span>
+        {toolbarLeftContentData.branch && (
+          <span className="text-sm text-text-color-secondary truncate">
+            {toolbarLeftContentData.branch}
           </span>
-          {toolbarLeftContentData.branch && (
-            <span
-              className="text-sm text-text-color-secondary truncate"
-              title={toolbarLeftContentData.branch}
-            >
-              {toolbarLeftContentData.branch}
-            </span>
-          )}
-        </div>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="max-w-[1200px] mx-auto">
-      <DocToolbar
-        onBack={handleBack}
-        primaryActions={viewerPrimaryActions}
-        secondaryActions={viewerSecondaryActions}
-        leftContent={customToolbarLeftContent}
-        tabs={docToolbarTabProps.tabs}
-        activeTabIndex={docToolbarTabProps.activeIndex}
-        onTabSelect={docToolbarTabProps.onTabSelect}
-        // Pass audit information to DocToolbar
-        docData={employeeFullData}
-        showAuditInfo={true}
-      />
-      <DocViewer
-        doctypeName={RUA_EMPLOYEE_DOCTYPE.name}
-        docname={employeeId}
-        externalTabsEnabled={true}
-        onTabsConfigChange={handleTabsConfigFromViewer}
-        // Pass the full data to DocViewer so it has audit fields available
-        externalDocData={employeeFullData}
-        // customUIAugmentations={...} // Pass if needed
-        // fieldDisplayConfig={...} // Pass if needed
-      />
+    <div className="min-h-screen">
+      {/* Top Dynamic Island - Actions & Document Info */}
+      <div className="dynamic-island-container">
+        <LightDynamicIsland
+          onBack={handleBack}
+          primaryActions={viewerPrimaryActions}
+          secondaryActions={viewerSecondaryActions}
+          leftContent={customLeftContent}
+          docData={employeeFullData}
+          showAuditInfo={true}
+        />
+      </div>
+
+      {/* Bottom Tab Island - Navigation */}
+      <div className="dynamic-island-container">
+        <BottomTabIsland
+          tabs={docToolbarTabProps.tabs}
+          activeTabIndex={docToolbarTabProps.activeIndex}
+          onTabSelect={docToolbarTabProps.onTabSelect}
+        />
+      </div>
+
+      {/* Document Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <DocViewer
+          doctypeName={RUA_EMPLOYEE_DOCTYPE.name}
+          docname={employeeId}
+          externalTabsEnabled={true}
+          onTabsConfigChange={handleTabsConfigFromViewer}
+          externalDocData={employeeFullData}
+        />
+      </div>
+
+      {/* Bottom padding to prevent overlap with tab island */}
+      <div className="h-24" />
     </div>
   );
 };

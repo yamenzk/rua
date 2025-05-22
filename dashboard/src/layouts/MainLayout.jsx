@@ -20,7 +20,7 @@ const MainLayout = ({ children, user, onLogout }) => {
         />
         <main
           style={{ boxShadow: "inset 0 3px 4px rgba(0, 0, 0, 0.1)" }}
-          className="flex-1 bg-surface-ground overflow-y-auto relative p-4 md:p-6 rounded-tl-3xl rounded-tr-xl"
+          className="flex-1 bg-surface-100 overflow-y-auto relative p-4 md:p-6 rounded-tl-3xl rounded-tr-xl"
         >
           {/* If AppBreadcrumb was rendered here or in child components directly, remove it. */}
           {children}
