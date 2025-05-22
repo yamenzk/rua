@@ -69,3 +69,16 @@
 .relative {
   position: relative;
 }
+
+/* Skeleton Animations */
+@keyframes skeleton-loading {
+  0% {
+    background-color: var(--surface-200);
+  }
+  50% {
+    background-color: var(--surface-300);
+  }
+  100% {
+    background-color: var(--surface-200);
+  }
+}

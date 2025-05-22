@@ -86,7 +86,11 @@ const EmployeesPage = () => {
   return (
     <>
       {/* AppBreadcrumb is no longer rendered here. It's in MainLayout > Header */}
-      {viewMode === "list" && <EmployeeTable />}
+      {viewMode === "list" && (
+        <div class="max-w-[1500px] mx-auto">
+        <EmployeeTable />
+        </div>
+    )}
       {viewMode === "grid" && (
         <div className="p-card p-5 rounded-lg bg-surface-card shadow-md">
           <h3 className="text-xl font-semibold text-text-color mb-2">

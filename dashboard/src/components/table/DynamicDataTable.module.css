@@ -1,0 +1,318 @@
+/* Enhanced Header Styling */
+
+.dynamicDataTable :global(.p-datatable .p-datatable-thead > tr > th) {
+  border: none !important;
+  border-bottom: 1px solid var(--surface-200) !important;
+  background: var(--surface-100) !important;
+  color: var(--text-color-secondary) !important;
+  font-weight: 600 !important;
+  padding: 1rem !important;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.dynamicDataTable :global(.p-datatable .p-datatable-thead > tr > th:hover) {
+  background: var(--surface-200) !important;
+}
+
+/* Enhanced Body Row Styling */
+.dynamicDataTable :global(.p-datatable .p-datatable-tbody > tr) {
+  border: none !important;
+  border-bottom: 1px solid var(--surface-100) !important;
+  transition: all 0.15s ease;
+}
+
+.dynamicDataTable :global(.p-datatable .p-datatable-tbody > tr:hover) {
+  background: var(--surface-50) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dynamicDataTable :global(.p-datatable .p-datatable-tbody > tr.p-highlight) {
+  background: var(--primary-50) !important;
+  color: var(--primary-700) !important;
+}
+
+.dynamicDataTable :global(.p-datatable .p-datatable-tbody > tr.p-highlight:hover) {
+  background: var(--primary-100) !important;
+}
+
+/* Enhanced Cell Styling */
+.dynamicDataTable :global(.p-datatable .p-datatable-tbody > tr > td) {
+  border: none !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.15s ease;
+}
+
+/* View Mode Specific Styling */
+.dynamicDataTable :global(.p-datatable-sm .p-datatable-thead > tr > th),
+.dynamicDataTable :global(.p-datatable-sm .p-datatable-tbody > tr > td) {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
+}
+
+.dynamicDataTable :global(.p-datatable-lg .p-datatable-thead > tr > th),
+.dynamicDataTable :global(.p-datatable-lg .p-datatable-tbody > tr > td) {
+  padding: 1.25rem 1.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Enhanced Filter Styling */
+.dynamicDataTable :global(.p-column-filter) {
+  border-radius: 6px !important;
+  transition: all 0.2s ease;
+}
+
+.dynamicDataTable :global(.p-column-filter:focus) {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2) !important;
+}
+
+/* Enhanced Paginator */
+.dynamicDataTable :global(.p-paginator) {
+  border: none !important;
+  border-top: 1px solid var(--surface-200) !important;
+  padding: 1rem !important;
+}
+
+.dynamicDataTable :global(.p-paginator .p-paginator-pages .p-paginator-page) {
+  min-width: 2.5rem !important;
+  height: 2.5rem !important;
+  border-radius: 6px !important;
+  margin: 0 0.125rem !important;
+  transition: all 0.2s ease;
+}
+
+.dynamicDataTable :global(.p-paginator .p-paginator-pages .p-paginator-page:hover) {
+  background: var(--primary-50) !important;
+  color: var(--primary-600) !important;
+}
+
+.dynamicDataTable :global(.p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
+  background: var(--primary-color) !important;
+  color: var(--primary-color-text) !important;
+}
+
+/* Loading States */
+.dynamicDataTable :global(.p-datatable .p-datatable-loading-overlay) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Enhanced Sort Icons */
+.dynamicDataTable :global(.p-sortable-column .p-sortable-column-icon) {
+  color: var(--text-color-secondary) !important;
+  margin-left: 0.5rem !important;
+}
+
+.dynamicDataTable :global(.p-sortable-column:hover .p-sortable-column-icon) {
+  color: var(--primary-color) !important;
+}
+
+/* Custom Scrollbar for Table */
+.dynamicDataTable :global(.p-datatable-scrollable .p-datatable-wrapper::-webkit-scrollbar) {
+  width: 8px;
+  height: 8px;
+}
+
+.dynamicDataTable :global(.p-datatable-scrollable .p-datatable-wrapper::-webkit-scrollbar-track) {
+  background: var(--surface-100);
+  border-radius: 4px;
+}
+
+.dynamicDataTable :global(.p-datatable-scrollable .p-datatable-wrapper::-webkit-scrollbar-thumb) {
+  background: var(--surface-400);
+  border-radius: 4px;
+}
+
+.dynamicDataTable :global(.p-datatable-scrollable .p-datatable-wrapper::-webkit-scrollbar-thumb:hover) {
+  background: var(--surface-600);
+}
+
+/* Enhanced Column Resize Handle */
+.dynamicDataTable :global(.p-datatable .p-column-resizer-helper) {
+  background: var(--primary-color) !important;
+  width: 2px !important;
+}
+
+/* Modern Chip Styling */
+.dynamicDataTable :global(.p-chip) {
+  border-radius: 16px !important;
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+.dynamicDataTable :global(.p-chip.p-chip-removable .p-chip-remove-icon) {
+  color: var(--text-color-secondary) !important;
+  margin-left: 0.5rem !important;
+}
+
+.dynamicDataTable :global(.p-chip.p-chip-removable .p-chip-remove-icon:hover) {
+  color: var(--primary-color) !important;
+}
+
+/* Badge Enhancements */
+.dynamicDataTable :global(.p-badge) {
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+/* Enhanced MultiSelect */
+.dynamicDataTable :global(.p-multiselect) {
+  border-radius: 6px !important;
+  transition: all 0.2s ease;
+}
+
+.dynamicDataTable :global(.p-multiselect:not(.p-disabled):hover) {
+  border-color: var(--primary-color) !important;
+}
+
+.dynamicDataTable :global(.p-multiselect-token) {
+  background: var(--primary-50) !important;
+  color: var(--primary-700) !important;
+  border-radius: 4px !important;
+  padding: 0.125rem 0.5rem !important;
+  margin: 0.125rem !important;
+  font-size: 0.75rem !important;
+}
+
+/* Enhanced Dropdown */
+.dynamicDataTable :global(.p-dropdown) {
+  border-radius: 6px !important;
+  transition: all 0.2s ease;
+}
+
+.dynamicDataTable :global(.p-dropdown:not(.p-disabled):hover) {
+  border-color: var(--primary-color) !important;
+}
+
+/* Context Menu Enhancements */
+.dynamicDataTable :global(.p-contextmenu) {
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+  padding: 0.5rem 0 !important;
+}
+
+.dynamicDataTable :global(.p-contextmenu .p-menuitem-link) {
+  padding: 0.75rem 1rem !important;
+  border-radius: 0 !important;
+  transition: all 0.15s ease;
+}
+
+.dynamicDataTable :global(.p-contextmenu .p-menuitem-link:hover) {
+  background: var(--primary-50) !important;
+  color: var(--primary-600) !important;
+}
+
+/* Enhanced Dialog */
+.dynamicDataTable :global(.p-dialog .p-dialog-content) {
+  padding: 2rem !important;
+}
+
+.dynamicDataTable :global(.p-dialog .p-dialog-header) {
+  padding: 1.5rem 2rem 1rem 2rem !important;
+  border-bottom: 1px solid var(--surface-200) !important;
+}
+
+.dynamicDataTable :global(.p-dialog .p-dialog-footer) {
+  padding: 1rem 2rem 1.5rem 2rem !important;
+  border-top: 1px solid var(--surface-200) !important;
+}
+
+/* Skeleton Animations */
+@keyframes skeleton-loading {
+  0% {
+    background-color: var(--surface-200);
+  }
+  50% {
+    background-color: var(--surface-300);
+  }
+  100% {
+    background-color: var(--surface-200);
+  }
+}
+
+.dynamicDataTable :global(.p-skeleton) {
+  animation: skeleton-loading 1.5s ease-in-out infinite !important;
+  border-radius: 4px !important;
+}
+
+/* Enhanced Input Focus States */
+.dynamicDataTable :global(.p-inputtext:enabled:focus),
+.dynamicDataTable :global(.p-dropdown:not(.p-disabled).p-focus),
+.dynamicDataTable :global(.p-multiselect:not(.p-disabled).p-focus) {
+  outline: none !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2) !important;
+}
+
+/* Enhanced Button States */
+.dynamicDataTable :global(.p-button) {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.15s ease !important;
+}
+
+.dynamicDataTable :global(.p-button:enabled:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.dynamicDataTable :global(.p-button.p-button-text:enabled:hover) {
+  transform: none;
+  box-shadow: none !important;
+}
+
+/* Enhanced Icons */
+.dynamicDataTable :global(.pi) {
+  transition: all 0.15s ease;
+}
+
+/* Smooth Transitions */
+.dynamicDataTable :global(*) {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced Table Empty State */
+.dynamicDataTable :global(.p-datatable-emptymessage td) {
+  text-align: center !important;
+  padding: 3rem 1rem !important;
+  color: var(--text-color-secondary) !important;
+}
+
+/* Progress Spinner Enhancement */
+.dynamicDataTable :global(.p-progress-spinner-svg) {
+  animation: p-progress-spinner-rotate 2s linear infinite;
+}
+
+.dynamicDataTable :global(.p-progress-spinner) {
+  position: relative;
+  display: inline-block;
+}
+
+/* Enhanced Filter Panel */
+.dynamicDataTable :global(.filter-panel) {
+  background: var(--surface-0);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--surface-200);
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .dynamicDataTable :global(.p-datatable .p-datatable-thead > tr > th),
+  .dynamicDataTable :global(.p-datatable .p-datatable-tbody > tr > td) {
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .dynamicDataTable :global(.p-datatable-scrollable .p-datatable-wrapper) {
+    overflow-x: auto;
+  }
+}

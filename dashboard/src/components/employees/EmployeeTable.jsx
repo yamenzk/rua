@@ -11,7 +11,7 @@ import { Toast } from "primereact/toast";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { RUA_EMPLOYEE_DOCTYPE } from "@/constants"; //
 
-import DynamicDataTable from "@/components/common/DynamicDataTable"; //
+import DynamicDataTable from "@/components/table/DynamicDataTable"; //
 import ConfirmDialog from "@/components/common/ConfirmDialog"; //
 import nationalities from "@/utils/nationalities.json"; //
 import { transformSchemaToColumnConfig } from "@/utils/schemaToColumns"; //
@@ -150,7 +150,7 @@ const EmployeeTable = () => {
 
   const headerActions = (
     <Button
-      label="New Employee"
+      label="New"
       icon="pi pi-plus"
       className="p-button-sm rounded-lg"
       onClick={() => {
@@ -194,6 +194,7 @@ const EmployeeTable = () => {
       <Toast ref={toast} />
       <DynamicDataTable
         doctype={RUA_EMPLOYEE_DOCTYPE.name} //
+        title={`${RUA_EMPLOYEE_DOCTYPE.title}s`}
         uniqueTableKey={`rua_employee_list_${RUA_EMPLOYEE_DOCTYPE.name}`} //
         columnsConfig={employeeColumnsConfig}
         onRowClick={handleRowClick}
