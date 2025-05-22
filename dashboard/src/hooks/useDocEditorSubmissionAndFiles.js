@@ -85,7 +85,6 @@ export const useDocEditorSubmissionAndFiles = ({
 						summary: "Uploading",
 						detail: `Uploading ${selectedFileObject.name}...`,
 						key: uniqueToastKey,
-						sticky: true,
 					});
 					const uploadResponse = await sdkUploadFile(selectedFileObject, fileArgs);
 					toastRef.current?.remove(uniqueToastKey);
@@ -205,7 +204,6 @@ export const useDocEditorSubmissionAndFiles = ({
 					severity: "info",
 					summary: "Attaching Files",
 					detail: "Please wait...",
-					sticky: true,
 				});
 				const successfullyAttachedFilesData = {};
 
@@ -289,8 +287,8 @@ export const useDocEditorSubmissionAndFiles = ({
 		sdkUploadError,
 		mutateDoc,
 		setFormData,
-		setFileUploadTarget, // Added setFileUploadTarget
 	]);
+
 
 	return {
 		handleSubmit,

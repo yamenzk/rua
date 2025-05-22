@@ -87,7 +87,7 @@ const UniversalDocEditor = forwardRef(
       isSaving,
       isFileDialogVisible,
       setIsFileDialogVisible,
-      fileUploadTarget, // This is a ref, its .current property might change
+      fileUploadTarget, // This is a state object, not a ref
       openUploadModal,
       handleFileSelectedInDialog,
     } = useDocEditorSubmissionAndFiles({
@@ -195,19 +195,24 @@ const UniversalDocEditor = forwardRef(
             let newValue;
             // Prefer e.value for PrimeReact components (like InputNumber, Calendar, Dropdown)
             // Fallback to e.target.value for standard HTML inputs (like InputText)
-            if (e && typeof e === 'object' && 'value' in e) {
-                newValue = e.value;
-            } else if (e && typeof e === 'object' && e.target && 'value' in e.target) {
-                newValue = e.target.value;
+            if (e && typeof e === "object" && "value" in e) {
+              newValue = e.value;
+            } else if (
+              e &&
+              typeof e === "object" &&
+              e.target &&
+              "value" in e.target
+            ) {
+              newValue = e.target.value;
             } else {
-                // Last resort fallback, e.g., if e is the value itself for some very custom components
-                newValue = e;
+              // Last resort fallback, e.g., if e is the value itself for some very custom components
+              newValue = e;
             }
             handleInputChange(fieldname, newValue, fieldtype);
           },
-           ...componentSpecificProps,
-         };
-         delete commonProps.valuePropName;
+          ...componentSpecificProps,
+        };
+        delete commonProps.valuePropName;
 
         const showLabel = descriptionData.hideLabel !== true;
         const asideLayout = descriptionData.aside;
@@ -273,7 +278,7 @@ const UniversalDocEditor = forwardRef(
     const customComponentContext = useMemo(
       () => ({
         docname:
-          fileUploadTarget.current?.currentDocnameForUpload ||
+          fileUploadTarget.currentDocnameForUpload ||
           (isCreateModeInitial ? `NEW-${doctypeName}` : docnameProp),
         doctypeName,
         docData: formData, // formData is used as docData in editor context
@@ -283,11 +288,8 @@ const UniversalDocEditor = forwardRef(
         handleInputChange,
       }),
       [
-        // Dependency on fileUploadTarget.current.currentDocnameForUpload is tricky.
-        // If fileUploadTarget.current mutates without a state change triggering re-render, this memo won't update.
-        // It's generally better if values used in memo come from props or state.
-        // For now, let's assume it works or that a re-render happens when it's relevant.
-        fileUploadTarget.current?.currentDocnameForUpload, // This is a specific potential gotcha
+        // Fixed dependency to use state object instead of ref
+        fileUploadTarget.currentDocnameForUpload,
         isCreateModeInitial,
         doctypeName,
         docnameProp,
@@ -366,8 +368,8 @@ const UniversalDocEditor = forwardRef(
             visible={isFileDialogVisible}
             onHide={() => setIsFileDialogVisible(false)}
             onFileSelect={handleFileSelectedInDialog}
-            targetFieldname={fileUploadTarget.current?.fieldname}
-            isNewDocument={!fileUploadTarget.current?.currentDocnameForUpload}
+            targetFieldname={fileUploadTarget.fieldname}
+            isNewDocument={!fileUploadTarget.currentDocnameForUpload}
           />
         )}
       </>
