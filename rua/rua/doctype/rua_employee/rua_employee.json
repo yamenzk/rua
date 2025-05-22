@@ -50,6 +50,7 @@
    "fieldname": "employee_name",
    "fieldtype": "Data",
    "in_filter": 1,
+   "in_global_search": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Employee Name",
@@ -102,7 +103,7 @@
    "options": "RC-EMP-"
   },
   {
-   "description": "{\n\"asAvatar\": true\n}",
+   "description": "{\n  \"inTable\": \"true\",\n  \"inTable\": \"default\",\n  \"asAvatar\": true,\n  \"imageWidth\": \"80px\"\n}",
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "label": "Image"
@@ -289,7 +290,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-22 12:34:30.955768",
+ "modified": "2025-05-23 00:27:02.037799",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

@@ -1,4 +1,4 @@
-// src/pages/employee/ViewEmployeePage.jsx
+// src/pages/employee/doc/ViewEmployeePage.jsx - Updated with audit info
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DocViewer from "@/components/document/DocViewer";
@@ -11,7 +11,7 @@ import { useFrappeGetDoc } from "frappe-react-sdk";
 const ViewEmployeePage = () => {
   const { employeeId } = useParams();
   const navigate = useNavigate();
-  const { /* setPageTitle, */ setBreadcrumbItems, setHomeLink } = useLayout(); // Page title handled by Viewer
+  const { setBreadcrumbItems, setHomeLink } = useLayout();
 
   const [toolbarLeftContentData, setToolbarLeftContentData] = useState(null);
   const [docToolbarTabProps, setDocToolbarTabProps] = useState({
@@ -19,6 +19,13 @@ const ViewEmployeePage = () => {
     activeIndex: 0,
     onTabSelect: null,
   });
+
+  // Fetch full employee data including audit fields for DocToolbar
+  const { data: employeeFullData, isLoading: isLoadingFullData } =
+    useFrappeGetDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeId, {
+      fields: ["*"], // Get all fields including audit fields
+      enabled: !!employeeId,
+    });
 
   const { data: employeeMinimalData, isLoading: isLoadingMinimalData } =
     useFrappeGetDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeId, {
@@ -66,13 +73,10 @@ const ViewEmployeePage = () => {
   ]);
 
   const handleTabsConfigFromViewer = useCallback((config) => {
-    // console.log("[ViewPage] Received tabs config:", config); // Optional: Keep for debugging if needed
     setDocToolbarTabProps(
       config || { tabs: [], activeIndex: 0, onTabSelect: null }
     );
   }, []);
-
-  // console.log("[ViewPage] DocToolbarTabProps:", docToolbarTabProps); // Optional
 
   const handleEdit = () => {
     navigate(`/employees/edit/${employeeId}`);
@@ -98,7 +102,7 @@ const ViewEmployeePage = () => {
       id: "deleteEmployee",
       label: "Delete",
       icon: "pi pi-trash",
-      command: () => console.log("Delete action for", employeeId), // Implement actual delete
+      command: () => console.log("Delete action for", employeeId),
       className: "p-button-danger p-button-text",
       tooltip: "Delete this employee",
     },
@@ -167,12 +171,17 @@ const ViewEmployeePage = () => {
         tabs={docToolbarTabProps.tabs}
         activeTabIndex={docToolbarTabProps.activeIndex}
         onTabSelect={docToolbarTabProps.onTabSelect}
+        // Pass audit information to DocToolbar
+        docData={employeeFullData}
+        showAuditInfo={true}
       />
       <DocViewer
         doctypeName={RUA_EMPLOYEE_DOCTYPE.name}
         docname={employeeId}
         externalTabsEnabled={true}
         onTabsConfigChange={handleTabsConfigFromViewer}
+        // Pass the full data to DocViewer so it has audit fields available
+        externalDocData={employeeFullData}
         // customUIAugmentations={...} // Pass if needed
         // fieldDisplayConfig={...} // Pass if needed
       />

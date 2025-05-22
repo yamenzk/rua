@@ -1,25 +1,27 @@
-// src/components/common/DocToolbar.jsx
+// dashboard/src/components/common/DocToolbar.jsx - Enhanced with audit info
 import React from "react";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
-// Avatar is not used in this version of DocToolbar directly, but kept if you re-add title logic that uses it.
-// import { Avatar } from "primereact/avatar";
+import AuditInfo from "./AuditInfo";
 
 const DocToolbar = ({
-  title, // Optional title, though often page title is handled by LayoutContext
+  title,
   primaryActions = [],
   secondaryActions = [],
   onBack,
-  leftContent, // For custom content like Avatar and name/branch
+  leftContent,
   // New props for tabs
   tabs = [],
   activeTabIndex,
   onTabSelect,
+  // New prop for audit information
+  docData, // Pass document data to show audit info
+  showAuditInfo = true, // Toggle audit info display
 }) => {
   const menuRef = React.useRef(null);
 
   const moreActionsModel = secondaryActions
-    .filter((action) => action.visible !== false) // Filter out explicitly non-visible actions
+    .filter((action) => action.visible !== false)
     .map((action) => ({
       label: action.label,
       icon: action.icon,
@@ -27,7 +29,6 @@ const DocToolbar = ({
       disabled: action.disabled,
       className: action.className,
       style: action.style,
-      // item's visible prop is handled by the filter above, PrimeMenu model doesn't use 'visible' directly
     }));
 
   return (
@@ -35,8 +36,6 @@ const DocToolbar = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left side: Back button, Custom Left Content */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {" "}
-          {/* Changed flex-grow to flex-shrink-0 */}
           {onBack && (
             <Button
               icon="pi pi-arrow-left"
@@ -49,16 +48,23 @@ const DocToolbar = ({
               tooltipOptions={{ position: "bottom" }}
             />
           )}
-          {/* Custom content area (e.g., Avatar, name) */}
-          {leftContent && (
-            <div className="flex items-center gap-3">{leftContent}</div>
-          )}
-          {/* Optional Title - Render if provided and no custom leftContent */}
-          {title && !leftContent && (
-            <h2 className="text-xl font-semibold text-text-color m-0 truncate">
-              {title}
-            </h2>
-          )}
+
+          <div className="flex flex-col gap-1">
+            {/* Custom content area (e.g., Avatar, name) */}
+            {leftContent && (
+              <div className="flex items-center gap-3">{leftContent}</div>
+            )}
+
+            {/* Optional Title - Render if provided and no custom leftContent */}
+            {title && !leftContent && (
+              <h2 className="text-xl font-semibold text-text-color m-0 truncate">
+                {title}
+              </h2>
+            )}
+
+            {/* Audit Information */}
+            {showAuditInfo && docData && <AuditInfo docData={docData} />}
+          </div>
         </div>
 
         {/* Middle: Tabs (if any) */}
@@ -77,11 +83,11 @@ const DocToolbar = ({
                         ? tab.icon
                         : `pi ${tab.icon}`
                       : undefined
-                  } // Ensure 'pi' prefix for PrimeIcons
+                  }
                   className={`p-button-sm rounded-full whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 ${
                     index === activeTabIndex
-                      ? "bg-primary text-primary-contrast hover:bg-primary-emphasis" // Active tab style
-                      : "p-button-text text-text-color-secondary hover:bg-surface-hover hover:text-text-color" // Inactive tab style
+                      ? "bg-primary text-primary-contrast hover:bg-primary-emphasis"
+                      : "p-button-text text-text-color-secondary hover:bg-surface-hover hover:text-text-color"
                   }`}
                   onClick={() => onTabSelect(index, tab)}
                   disabled={tab.disabled}

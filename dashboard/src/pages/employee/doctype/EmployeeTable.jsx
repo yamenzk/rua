@@ -1,4 +1,4 @@
-// dashboard/src/components/employees/EmployeeTable.jsx
+// dashboard/src/pages/employee/doctype/EmployeeTable.jsx - Updated with audit fields
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,12 +9,12 @@ import {
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { RUA_EMPLOYEE_DOCTYPE } from "@/constants"; //
+import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
 
-import DynamicDataTable from "@/components/table/DynamicDataTable"; //
-import ConfirmDialog from "@/components/common/ConfirmDialog"; //
-import nationalities from "@/utils/nationalities.json"; //
-import { transformSchemaToColumnConfig } from "@/components/document/utils/schemaToColumns"; //
+import DynamicDataTable from "@/components/table/DynamicDataTable";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import nationalities from "@/utils/nationalities.json";
+import { transformSchemaToColumnConfig } from "@/components/document/utils/schemaToColumns";
 
 const EmployeeTable = () => {
   const navigate = useNavigate();
@@ -23,10 +23,10 @@ const EmployeeTable = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
-  // For Link field filters - e.g., User
+  // For Link field filters - e.g., User (now includes audit fields)
   const { data: usersList } = useFrappeGetDocList("User", {
     fields: ["name", "full_name"],
-    limit: 0, // Fetch all users for filter dropdown
+    limit: 0,
   });
 
   const userOptions = useMemo(() => {
@@ -48,44 +48,42 @@ const EmployeeTable = () => {
     isLoading: isLoadingSchema,
     error: schemaError,
   } = useFrappeGetCall(
-    "rua.apiv2.get_doctype_form_schema", //
-    { doctype_name: RUA_EMPLOYEE_DOCTYPE.name }, //
-    `doctype_schema_${RUA_EMPLOYEE_DOCTYPE.name}` //
+    "rua.apiv2.get_doctype_form_schema",
+    { doctype_name: RUA_EMPLOYEE_DOCTYPE.name },
+    `doctype_schema_${RUA_EMPLOYEE_DOCTYPE.name}`
   );
   const formSchema = schemaApiResponse?.message;
 
   const { deleteDoc, loading: deleteLoading } = useFrappeDeleteDoc();
-
-  // Using separate useEffect for delete operation feedback to avoid conflicts
-  useEffect(() => {
-    // This useEffect is just for observing delete operation.
-    // Actual delete success/error is handled by the deleteDoc promise in confirmDeleteEmployee
-  }, []);
 
   const employeeColumnsConfig = useMemo(() => {
     if (!formSchema) return [];
 
     const customArgs = {
       linkFieldFilterOptions: {
-        User: userOptions,
+        User: userOptions, // This now applies to owner, modified_by, and any other User links
       },
-      // Pass nationalityOptions to be used for a 'Select' field with fieldname 'nationality'
-      // This assumes transformSchemaToColumnConfig uses selectOverrides for such cases.
       selectOverrides: {
         nationality: nationalityOptions,
       },
+      includeAuditFields: true, // Enable audit fields
     };
-    return transformSchemaToColumnConfig(formSchema, customArgs); //
+    return transformSchemaToColumnConfig(formSchema, customArgs);
   }, [formSchema, userOptions, nationalityOptions]);
 
   const globalFilterFields = useMemo(() => {
     if (!formSchema || !formSchema.fields)
-      return ["name", "employee_name", "position", "email", "phone", "branch"]; // Default
+      return ["name", "employee_name", "position", "email", "phone", "branch"];
 
     const gfs = formSchema.fields
       .filter((f) => f.in_global_search === true)
       .map((f) => f.fieldname);
-    return gfs.length > 0 ? gfs : ["name", "employee_name"]; // Ensure some defaults if none are marked
+
+    // Add audit fields to global search
+    const auditSearchFields = ["owner", "modified_by"];
+    return gfs.length > 0
+      ? [...gfs, ...auditSearchFields]
+      : ["name", "employee_name", ...auditSearchFields];
   }, [formSchema]);
 
   const handleRowClick = (rowData) => {
@@ -104,7 +102,7 @@ const EmployeeTable = () => {
   const confirmDeleteEmployee = async () => {
     if (employeeToDelete) {
       try {
-        await deleteDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeToDelete.name); //
+        await deleteDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeToDelete.name);
         toast.current.show({
           severity: "success",
           summary: "Success",
@@ -145,7 +143,7 @@ const EmployeeTable = () => {
           employeeToDelete && handleDeleteEmployee(employeeToDelete),
       },
     ],
-    [employeeToDelete, handleRowClick, handleEditEmployee, handleDeleteEmployee] // Added dependencies
+    [employeeToDelete, handleRowClick, handleEditEmployee, handleDeleteEmployee]
   );
 
   const headerActions = (
@@ -154,7 +152,7 @@ const EmployeeTable = () => {
       icon="pi pi-plus"
       className="p-button-sm rounded-lg"
       onClick={() => {
-        navigate(`/${RUA_EMPLOYEE_DOCTYPE.route}/new`); //
+        navigate(`/${RUA_EMPLOYEE_DOCTYPE.route}/new`);
       }}
     />
   );
@@ -171,7 +169,7 @@ const EmployeeTable = () => {
     return (
       <div className="p-card p-4 m-4 rounded-lg bg-red-100 border border-red-400 text-red-700">
         <p className="font-bold">
-          Error loading schema for {RUA_EMPLOYEE_DOCTYPE.name}: {/* */}
+          Error loading schema for {RUA_EMPLOYEE_DOCTYPE.name}:
         </p>
         <p>{schemaError.message || JSON.stringify(schemaError)}</p>
       </div>
@@ -183,7 +181,7 @@ const EmployeeTable = () => {
       <div className="p-card p-4 m-4 rounded-lg">
         <p>
           No columns configured for display. Please check the DocType schema
-          configuration for '{RUA_EMPLOYEE_DOCTYPE.name}'. {/* */}
+          configuration for '{RUA_EMPLOYEE_DOCTYPE.name}'.
         </p>
       </div>
     );
@@ -193,9 +191,9 @@ const EmployeeTable = () => {
     <>
       <Toast ref={toast} />
       <DynamicDataTable
-        doctype={RUA_EMPLOYEE_DOCTYPE.name} //
+        doctype={RUA_EMPLOYEE_DOCTYPE.name}
         title={`${RUA_EMPLOYEE_DOCTYPE.title}s`}
-        uniqueTableKey={`rua_employee_list_${RUA_EMPLOYEE_DOCTYPE.name}`} //
+        uniqueTableKey={`rua_employee_list_${RUA_EMPLOYEE_DOCTYPE.name}`}
         columnsConfig={employeeColumnsConfig}
         onRowClick={handleRowClick}
         contextMenuItemsModel={contextMenuItemsModel}
@@ -211,7 +209,7 @@ const EmployeeTable = () => {
         message={`Are you sure you want to delete ${
           employeeToDelete?.employee_name || "this employee"
         }? This action cannot be undone.`}
-        confirmationText={employeeToDelete?.name} // For matching confirmation input
+        confirmationText={employeeToDelete?.name}
         confirmButtonLabel="Delete"
         confirmButtonIcon="pi pi-trash"
         loading={deleteLoading}

@@ -1,117 +1,197 @@
-// dashboard/src/components/document/utils/schemaToColumns.js
+// dashboard/src/components/document/utils/schemaToColumns.js - Enhanced with audit fields
 import { parseDescription } from "./schemaUtils";
-import nationalitiesData from "@/utils/nationalities.json"; // Import if Nationality filter options are built here
+import nationalitiesData from "@/utils/nationalities.json";
+
+// Define standard Frappe audit fields
+const AUDIT_FIELDS = [
+	{
+		fieldname: "creation",
+		fieldtype: "Datetime",
+		label: "Created On",
+		header: "Created On",
+		sortable: true,
+		filterable: true,
+		defaultVisible: false, // Hidden by default
+		minWidth: "160px",
+		description: JSON.stringify({
+			tooltip: "When this record was first created",
+		}),
+	},
+	{
+		fieldname: "owner",
+		fieldtype: "Link",
+		label: "Created By",
+		header: "Created By",
+		options: "User", // Links to User doctype
+		sortable: true,
+		filterable: true,
+		defaultVisible: false,
+		minWidth: "120px",
+		description: JSON.stringify({
+			tooltip: "Who created this record",
+		}),
+	},
+	{
+		fieldname: "modified",
+		fieldtype: "Datetime",
+		label: "Last Modified",
+		header: "Last Modified",
+		sortable: true,
+		filterable: true,
+		defaultVisible: false,
+		minWidth: "160px",
+		description: JSON.stringify({
+			tooltip: "When this record was last updated",
+		}),
+	},
+	{
+		fieldname: "modified_by",
+		fieldtype: "Link",
+		label: "Modified By",
+		header: "Modified By",
+		options: "User", // Links to User doctype
+		sortable: true,
+		filterable: true,
+		defaultVisible: false,
+		minWidth: "120px",
+		description: JSON.stringify({
+			tooltip: "Who last modified this record",
+		}),
+	},
+];
 
 export const transformSchemaToColumnConfig = (formSchema, customArgs = {}) => {
 	if (!formSchema || !formSchema.fields) return [];
 
 	const {
-		linkFieldFilterOptions = {}, // Object containing options for Link fields, keyed by Doctype
-		selectOverrides = {}, // Optional: For overriding Select options if needed, keyed by fieldname
+		linkFieldFilterOptions = {},
+		selectOverrides = {},
+		includeAuditFields = true, // New option to control audit fields
 	} = customArgs;
 
-	return formSchema.fields
-		.filter((field) => field.in_list_view === true) // Only include fields marked for list view
-		.map((field) => {
-			const descriptionData = parseDescription(field.description);
-			let processedFilterDropdownOptions = []; // Options for dropdown-based filters ({label, value})
+	let schemaColumns = [];
 
-			// --- Logic to prepare `processedFilterDropdownOptions` ---
-			if (selectOverrides[field.fieldname]?.length > 0) {
-				// Highest priority: Explicit overrides for this specific field's filter options
-				processedFilterDropdownOptions = selectOverrides[field.fieldname];
-			} else {
-				// No override, determine based on fieldtype
-				switch (field.fieldtype) {
-					case "Select":
-						if (
-							Array.isArray(field.select_options_data) &&
-							field.select_options_data.length > 0
-						) {
-							// Standard "Select" uses the pre-parsed `select_options_data` array from Frappe
-							processedFilterDropdownOptions = field.select_options_data.map(
-								(opt) => ({
-									label: String(opt),
-									value: opt,
-								})
-							);
-						}
-						break;
-					case "Autocomplete": // Your custom Autocomplete, which uses a searchable Dropdown
-						if (typeof field.options === "string" && field.options.trim() !== "") {
-							// Parses the newline-separated string from `field.options`
-							processedFilterDropdownOptions = field.options
-								.split("\n")
-								.map((opt) => opt.trim())
-								.filter((opt) => opt) // Remove empty strings
-								.map((opt) => ({ label: String(opt), value: opt }));
-						}
-						break;
-					case "Nationality":
-						// Nationality filter options come from the static JSON data
-						// This assumes your Nationality filter (e.g., MultiSelectTableFilter)
-						// expects {label, value} with flags in the label.
-						processedFilterDropdownOptions = nationalitiesData.map((n) => ({
-							label: `${n.flag} ${n.name}`,
-							value: n.name,
-						}));
-						break;
-					case "Link":
-						// For "Link" fields, filter options are often dynamic and fetched based on context.
-						// `linkFieldFilterOptions` (passed in customArgs) is the primary source here.
-						// These are typically pre-fetched distinct values or a smaller subset for filtering.
-						const linkedDoctype = field.options; // field.options contains the linked Doctype name
-						if (linkFieldFilterOptions[linkedDoctype]?.length > 0) {
-							processedFilterDropdownOptions = linkFieldFilterOptions[linkedDoctype];
-						}
-						// If linkFieldFilterOptions is empty for a Link, the filter might be a text input,
-						// or the DynamicDataTable would need to fetch them on demand (more complex).
-						// For now, we assume they are provided if a dropdown-style filter is desired.
-						break;
-					// Add other fieldtypes that might use dropdown-style filters here
-					default:
-						// For other fieldtypes, processedFilterDropdownOptions remains empty.
-						// Their filter elements (e.g., TextTableFilter, NumericRangeTableFilter)
-						// don't typically rely on pre-supplied options in this way.
-						break;
+	// Process schema fields
+	formSchema.fields.forEach((field) => {
+		let shouldInclude = field.in_list_view === true;
+
+		// Special handling for Attach Image fields
+		if (field.fieldtype === "Attach Image" && field.description) {
+			const descriptionData = parseDescription(field.description);
+
+			// Check for inTable property
+			if (descriptionData.inTable === "true" || descriptionData.inTable === "default") {
+				shouldInclude = true;
+				// Override defaultVisible based on inTable value
+				if (descriptionData.inTable === "default") {
+					field.defaultVisible = true;
 				}
 			}
+		}
 
-			const colConfig = {
-				fieldname: field.fieldname,
-				header:
-					field.label ||
-					field.fieldname.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-				fieldtype: field.fieldtype,
-				sortable: field.sortable !== undefined ? field.sortable : true, // Prefer schema definition, else true
-				filterable: field.is_filterable, // From Frappe schema (field.in_filter)
-				defaultVisible: field.in_standard_filter, // From Frappe schema
-				minWidth: field.width || (field.fieldtype === "Attach Image" ? "80px" : "150px"),
-				style: field.width ? { width: field.width } : {}, // Apply width if defined
+		if (!shouldInclude) return;
 
-				// --- Data for specific field type needs ---
-				linked_doctype: field.fieldtype === "Link" ? field.options : undefined, // For Link fields
+		const descriptionData = parseDescription(field.description);
+		let processedFilterDropdownOptions = [];
 
-				// --- Raw schema options (can be useful for some components/logic) ---
-				// It's good to have a consistent way to access the "source" of options
-				options_source_string:
-					field.fieldtype === "Select" ||
-					field.fieldtype === "Autocomplete" ||
-					field.fieldtype === "Nationality"
-						? field.options
-						: null,
-				options_source_array:
-					field.fieldtype === "Select" ? field.select_options_data : null,
+		// Existing option processing logic...
+		if (selectOverrides[field.fieldname]?.length > 0) {
+			processedFilterDropdownOptions = selectOverrides[field.fieldname];
+		} else {
+			switch (field.fieldtype) {
+				case "Select":
+					if (
+						Array.isArray(field.select_options_data) &&
+						field.select_options_data.length > 0
+					) {
+						processedFilterDropdownOptions = field.select_options_data.map((opt) => ({
+							label: String(opt),
+							value: opt,
+						}));
+					}
+					break;
+				case "Autocomplete":
+					if (typeof field.options === "string" && field.options.trim() !== "") {
+						processedFilterDropdownOptions = field.options
+							.split("\n")
+							.map((opt) => opt.trim())
+							.filter((opt) => opt)
+							.map((opt) => ({ label: String(opt), value: opt }));
+					}
+					break;
+				case "Nationality":
+					processedFilterDropdownOptions = nationalitiesData.map((n) => ({
+						label: `${n.flag} ${n.name}`,
+						value: n.name,
+					}));
+					break;
+				case "Link":
+					const linkedDoctype = field.options;
+					if (linkFieldFilterOptions[linkedDoctype]?.length > 0) {
+						processedFilterDropdownOptions = linkFieldFilterOptions[linkedDoctype];
+					}
+					break;
+				default:
+					break;
+			}
+		}
 
-				// --- For UI rendering and behavior ---
-				description: field.description, // Raw description for tooltips via parseDescription
-				displayProps: {
-					// Props derived from description for cell rendering
-					...parseDescription(field.description), // Spread all parsed properties
-				},
-				options: processedFilterDropdownOptions, // **CRUCIAL**: Processed {label, value} array for filter dropdowns
-				// This is what `colProps.options` will be in `tableFilterElement`
-			};
-			return colConfig;
-		});
+		const colConfig = {
+			fieldname: field.fieldname,
+			header:
+				field.label ||
+				field.fieldname.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+			fieldtype: field.fieldtype,
+			sortable: field.sortable !== undefined ? field.sortable : true,
+			filterable: field.is_filterable,
+			defaultVisible:
+				field.defaultVisible !== undefined
+					? field.defaultVisible
+					: field.in_standard_filter,
+			minWidth: field.width || (field.fieldtype === "Attach Image" ? "80px" : "150px"),
+			style: field.width ? { width: field.width } : {},
+			linked_doctype: field.fieldtype === "Link" ? field.options : undefined,
+			options_source_string:
+				field.fieldtype === "Select" ||
+				field.fieldtype === "Autocomplete" ||
+				field.fieldtype === "Nationality"
+					? field.options
+					: null,
+			options_source_array: field.fieldtype === "Select" ? field.select_options_data : null,
+			description: field.description,
+			displayProps: {
+				...parseDescription(field.description),
+			},
+			options: processedFilterDropdownOptions,
+		};
+
+		schemaColumns.push(colConfig);
+	});
+
+	// Add audit fields if requested
+	if (includeAuditFields) {
+		const auditColumns = AUDIT_FIELDS.map((auditField) => ({
+			fieldname: auditField.fieldname,
+			header: auditField.header,
+			fieldtype: auditField.fieldtype,
+			sortable: auditField.sortable,
+			filterable: auditField.filterable,
+			defaultVisible: auditField.defaultVisible,
+			minWidth: auditField.minWidth,
+			style: {},
+			linked_doctype: auditField.options, // For Link fields like owner, modified_by
+			description: auditField.description,
+			displayProps: parseDescription(auditField.description),
+			options:
+				auditField.fieldtype === "Link" && auditField.options === "User"
+					? linkFieldFilterOptions["User"] || []
+					: [],
+			isAuditField: true, // Mark as audit field for special handling
+		}));
+
+		// Add audit columns to the end
+		schemaColumns = [...schemaColumns, ...auditColumns];
+	}
+
+	return schemaColumns;
 };
