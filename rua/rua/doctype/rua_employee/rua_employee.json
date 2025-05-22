@@ -30,6 +30,8 @@
   "salary",
   "test_tab_tab",
   "date_of_birth",
+  "attach_field",
+  "text",
   "column_break_ffzo",
   "very_long_ass_text",
   "the_percentage_of_something",
@@ -250,12 +252,22 @@
    "fieldname": "what_does_this_do",
    "fieldtype": "Heading",
    "label": "what does this do"
+  },
+  {
+   "fieldname": "attach_field",
+   "fieldtype": "Attach",
+   "label": "Attach Field"
+  },
+  {
+   "fieldname": "text",
+   "fieldtype": "Text Editor",
+   "label": "Text"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-21 01:41:51.356992",
+ "modified": "2025-05-21 19:55:57.377809",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

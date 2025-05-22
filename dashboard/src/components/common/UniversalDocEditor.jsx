@@ -191,12 +191,24 @@ const UniversalDocEditor = forwardRef(
             formErrors[fieldname] ? "p-invalid" : ""
           } ${bold ? "font-bold" : ""}`,
           tooltip: descriptionData.tooltip,
-          tooltipOptions: { position: "top" },
-          onChange: (e) =>
-            handleInputChange(fieldname, e.target.value, fieldtype),
-          ...componentSpecificProps,
-        };
-        delete commonProps.valuePropName;
+          onChange: (e) => {
+            let newValue;
+            // Prefer e.value for PrimeReact components (like InputNumber, Calendar, Dropdown)
+            // Fallback to e.target.value for standard HTML inputs (like InputText)
+            if (e && typeof e === 'object' && 'value' in e) {
+                newValue = e.value;
+            } else if (e && typeof e === 'object' && e.target && 'value' in e.target) {
+                newValue = e.target.value;
+            } else {
+                // Last resort fallback, e.g., if e is the value itself for some very custom components
+                newValue = e;
+            }
+            handleInputChange(fieldname, newValue, fieldtype);
+          },
+           ...componentSpecificProps,
+         };
+         delete commonProps.valuePropName;
+
         const showLabel = descriptionData.hideLabel !== true;
         const asideLayout = descriptionData.aside;
         const finalLabelText = label || generateFallbackLabel(fieldname);

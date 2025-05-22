@@ -5,14 +5,14 @@ import nationalitiesData from "@/utils/nationalities.json"; // Assuming path for
 /**
  * Context object structure expected by adapter functions:
  * {
- *   formData: object,             // The current form data
- *   handleInputChange: function,  // (fieldname, value, fieldtype?) => void
- *   linkSuggestions: object,      // State for link field suggestions
- *   handleLinkSearch: function,   // (event, linkedDoctype, optionsSource, querySource) => Promise<void>
- *   isCreateMode: boolean,
- *   fieldSchema: object,          // The schema for the specific field being rendered (passed within fullContext)
- *   toast: RefObject<Toast>       // PrimeReact Toast ref
- *   openUploadModal: function,    // (fieldname) => void
+ * formData: object,             // The current form data
+ * handleInputChange: function,  // (fieldname, value, fieldtype?) => void
+ * linkSuggestions: object,      // State for link field suggestions
+ * handleLinkSearch: function,   // (event, linkedDoctype, optionsSource, querySource) => Promise<void>
+ * isCreateMode: boolean,
+ * fieldSchema: object,          // The schema for the specific field being rendered (passed within fullContext)
+ * toast: RefObject<Toast>       // PrimeReact Toast ref
+ * openUploadModal: function,    // (fieldname) => void
  * }
  */
 
@@ -63,15 +63,31 @@ const getDateTimeProps = (context) => {
 	const { fieldname, fieldtype } = context.fieldSchema;
 	const currentValue = context.formData[fieldname];
 	let componentValue = null;
+
 	if (currentValue) {
 		try {
-			const date = new Date(currentValue);
+			let parsableValue = currentValue;
+			if (
+				fieldtype === "Time" &&
+				typeof currentValue === "string" &&
+				currentValue.match(/^\d{2}:\d{2}(:\d{2})?$/)
+			) {
+				parsableValue = `2000-01-01T${currentValue}`; // Use a neutral date
+			}
+
+			const date = new Date(parsableValue);
 			if (!isNaN(date.getTime())) {
-				// Check if date is valid
 				componentValue = date;
+			} else {
+				console.warn(
+					`[FormFieldAdapter] Failed to parse date for field ${fieldname} (${fieldtype}). Value: ${currentValue}`
+				);
 			}
 		} catch (e) {
-			/* componentValue remains null */
+			console.error(
+				`[FormFieldAdapter] Error parsing date for field ${fieldname} (${fieldtype}). Value: ${currentValue}`,
+				e
+			);
 		}
 	}
 
@@ -89,15 +105,15 @@ const getDateTimeProps = (context) => {
 		calendarSpecificProps.timeOnly = true;
 		calendarSpecificProps.showSeconds = true;
 		serverFormatFunction = _formatters.formatServerTime;
-		delete calendarSpecificProps.dateFormat;
+		delete calendarSpecificProps.dateFormat; // Time-only doesn't need dateFormat
 	}
 
 	return {
-		value: componentValue,
+		value: componentValue, // This will now be a Date object or null
 		onChange: (e) =>
 			context.handleInputChange(
 				fieldname,
-				e.value ? serverFormatFunction(e.value) : null,
+				e.value ? serverFormatFunction(e.value) : null, // e.value from PrimeReact Calendar is a Date object
 				fieldtype
 			),
 		...calendarSpecificProps,
@@ -166,9 +182,7 @@ const getNumberInputProps = (context) => {
 			currentValue === undefined || currentValue === null || currentValue === ""
 				? null // InputNumber prefers null for empty
 				: Number(currentValue),
-		// onChange from commonProps in UniversalDocEditor should work if InputNumber event is {target: {name, value}}
-		// However, InputNumber's event is often {originalEvent, value, formattedValue}
-		// So, providing a specific onValueChange is safer.
+		// InputNumber's event is {originalEvent, value, formattedValue}
 		onValueChange: (e) => context.handleInputChange(fieldname, e.value, fieldtype), // e.value is the numeric value
 	};
 
@@ -179,7 +193,7 @@ const getNumberInputProps = (context) => {
 		props.currency = schemaOptions || "AED"; // Default currency from schema options or hardcoded
 		props.locale = "en-AE"; // Or from a global config
 	} else {
-		props.mode = "decimal"; // For Int, Float, Percent
+		props.mode = "decimal"; // For Int, Float, Percent, Duration
 	}
 
 	if (fieldtype === "Percent") props.suffix = "%";
@@ -312,6 +326,7 @@ export const getAdaptedProps = (fieldSchema, context) => {
 		case "Int":
 		case "Float":
 		case "Percent":
+		case "Duration": // <--- ADDED Duration here to use getNumberInputProps
 			return getNumberInputProps(fullContext);
 		case "Heading":
 			// HeadingField takes fieldSchemaItem directly. UniversalDocEditor's commonProps
@@ -339,11 +354,10 @@ export const getAdaptedProps = (fieldSchema, context) => {
 		case "Text":
 		case "Long Text":
 		case "Color": // ColorPickerFormField handles its own value/onChange for #
-		// but might receive default props like value from here.
-		// Consider if Color needs a specific adapter function or if
-		// ColorPickerFormField is self-sufficient with default props.
-		// For now, let it use default.
-		case "Duration": // Assuming InputText, if InputNumber, it needs getNumberInputProps
+			// but might receive default props like value from here.
+			// Consider if Color needs a specific adapter function or if
+			// ColorPickerFormField is self-sufficient with default props.
+			// For now, let it use default.
 			return getDefaultInputProps(fullContext);
 		default:
 			console.warn(
