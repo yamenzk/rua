@@ -9,11 +9,15 @@ export const useDocumentPageTitle = (
 	formSchema,
 	doctypeName,
 	isCreateMode = false,
-	viewOrEditPrefix = "View"
+	viewOrEditPrefix = "View",
+	disableAutoTitle = false // New parameter to disable automatic title setting
 ) => {
 	const { setPageTitle } = useLayout();
 
 	useEffect(() => {
+		// If auto title is disabled, don't override the page title
+		if (disableAutoTitle) return;
+
 		if (!formSchema && !docname) return; // Not enough info
 
 		let displayData = isCreateMode ? formData : docData;
@@ -60,5 +64,6 @@ export const useDocumentPageTitle = (
 		isCreateMode,
 		setPageTitle,
 		viewOrEditPrefix,
+		disableAutoTitle, // Add to dependencies
 	]);
 };

@@ -59,6 +59,7 @@
    "reqd": 1
   },
   {
+   "description": "The date they were born",
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
    "in_filter": 1,
@@ -296,7 +297,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-23 02:05:58.795596",
+ "modified": "2025-05-24 12:38:34.663313",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

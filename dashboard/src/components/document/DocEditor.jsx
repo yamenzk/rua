@@ -40,6 +40,7 @@ const DocEditor = forwardRef(
       customUIAugmentations,
       onTabsConfigChange,
       externalTabsEnabled = false,
+      disableAutoTitle = false,
     },
     ref
   ) => {
@@ -72,7 +73,8 @@ const DocEditor = forwardRef(
       formSchema,
       doctypeName,
       isCreateModeInitial,
-      "Edit"
+      "Edit",
+      disableAutoTitle
     );
 
     const { handleRendererTabsProcessed } = useExternalTabOrchestration(

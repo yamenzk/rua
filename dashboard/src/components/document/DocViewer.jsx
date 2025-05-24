@@ -27,6 +27,7 @@ const DocViewer = ({
   customUIAugmentations,
   onTabsConfigChange,
   externalTabsEnabled = false,
+  disableAutoTitle = false,
 }) => {
   const navigate = useNavigate();
   const { setPageTitle } = useLayout();
@@ -51,7 +52,8 @@ const DocViewer = ({
     formSchema,
     doctypeName,
     false,
-    "View"
+    "View",
+    disableAutoTitle
   );
 
   const { handleRendererTabsProcessed } = useExternalTabOrchestration(

@@ -1,13 +1,13 @@
-// Updated ViewEmployeePage.jsx with enhanced avatar for dynamic island
+// src/pages/employee/doc/ViewEmployeePage.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import DocViewer from "@/components/document/DocViewer";
-
-// Import both islands
-import LightDynamicIsland from "@/components/common/LightDynamicIsland";
-import BottomTabIsland from "@/components/common/BottomTabIsland";
-
+import { Button } from "primereact/button";
 import { Avatar } from "primereact/avatar";
+import { Menu } from "primereact/menu";
+import { Chip } from "primereact/chip";
+import { Badge } from "primereact/badge";
+import DocViewer from "@/components/document/DocViewer";
+import ModernTabNavigation from "@/components/common/ModernTabNavigation";
 import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useFrappeGetDoc } from "frappe-react-sdk";
@@ -15,67 +15,58 @@ import { useFrappeGetDoc } from "frappe-react-sdk";
 const ViewEmployeePage = () => {
   const { employeeId } = useParams();
   const navigate = useNavigate();
-  const { setBreadcrumbItems, setHomeLink } = useLayout();
+  const { setPageTitle, setBreadcrumbItems, setHomeLink } = useLayout();
+  const menuRef = React.useRef(null);
 
-  const [toolbarLeftContentData, setToolbarLeftContentData] = useState(null);
   const [docToolbarTabProps, setDocToolbarTabProps] = useState({
     tabs: [],
     activeIndex: 0,
     onTabSelect: null,
   });
 
-  // Fetch full employee data including audit fields
-  const { data: employeeFullData, isLoading: isLoadingFullData } =
-    useFrappeGetDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeId, {
+  // Fetch employee data
+  const { data: employeeData, isLoading } = useFrappeGetDoc(
+    RUA_EMPLOYEE_DOCTYPE.name,
+    employeeId,
+    {
       fields: ["*"],
       enabled: !!employeeId,
-    });
-
-  const { data: employeeMinimalData, isLoading: isLoadingMinimalData } =
-    useFrappeGetDoc(RUA_EMPLOYEE_DOCTYPE.name, employeeId, {
-      fields: ["employee_name", "image", "branch"],
-      enabled: !!employeeId,
-    });
-
-  useEffect(() => {
-    let employeeNameToDisplay = employeeId || "Employee";
-    if (employeeMinimalData) {
-      employeeNameToDisplay = employeeMinimalData.employee_name || employeeId;
-      setToolbarLeftContentData({
-        name: employeeMinimalData.employee_name,
-        image: employeeMinimalData.image,
-        branch: employeeMinimalData.branch,
-      });
-    } else if (employeeId && !isLoadingMinimalData) {
-      setToolbarLeftContentData({
-        name: employeeId,
-        image: null,
-        branch: null,
-      });
     }
+  );
 
-    // Set breadcrumbs
-    const breadcrumbPath = [
-      {
-        label: RUA_EMPLOYEE_DOCTYPE.pluralLabel,
-        url: `/${RUA_EMPLOYEE_DOCTYPE.route}`,
-      },
-      { label: employeeNameToDisplay },
-    ];
-    setBreadcrumbItems(breadcrumbPath);
+  // Set page title and breadcrumbs
+  useEffect(() => {
+    const employeeName =
+      employeeData?.employee_name || employeeId || "Employee";
+
+    // Set a custom page title component with badge on chip
+    setPageTitle(() => (
+      <div className="relative inline-block">
+        <Chip label={employeeName} image={employeeData?.image} />
+        <Badge
+          value={<i className="pi pi-eye text-sm"></i>}
+          severity="info"
+          className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center rounded-full"
+        />
+      </div>
+    ));
+
     setHomeLink({ icon: "pi pi-home", url: "/" });
+
+    setBreadcrumbItems([
+      {
+        label: "Employees",
+        url: "/employees",
+      },
+      {
+        label: employeeName,
+      },
+    ]);
 
     return () => {
       setBreadcrumbItems([]);
     };
-  }, [
-    employeeId,
-    employeeMinimalData,
-    isLoadingMinimalData,
-    setBreadcrumbItems,
-    setHomeLink,
-    RUA_EMPLOYEE_DOCTYPE,
-  ]);
+  }, [employeeId, employeeData, setBreadcrumbItems, setPageTitle, setHomeLink]);
 
   const handleTabsConfigFromViewer = useCallback((config) => {
     setDocToolbarTabProps(
@@ -87,129 +78,112 @@ const ViewEmployeePage = () => {
     navigate(`/employees/edit/${employeeId}`);
   };
 
-  const handleBack = () => {
-    navigate(`/${RUA_EMPLOYEE_DOCTYPE.route}`);
+  const handleDelete = () => {
+    console.log("Delete employee:", employeeId);
+    // Implement delete functionality
   };
 
-  const viewerPrimaryActions = [
+  const handleDuplicate = () => {
+    console.log("Duplicate employee:", employeeId);
+    // Implement duplicate functionality
+  };
+
+  const actionMenuItems = [
     {
-      id: "editEmployee",
       label: "Edit",
       icon: "pi pi-pencil",
       command: handleEdit,
-      tooltip: "Edit this employee's details",
     },
     {
-      id: "duplicateEmployee",
       label: "Duplicate",
       icon: "pi pi-copy",
-      command: () => console.log("Duplicate action"),
-      tooltip: "Create a copy of this employee",
+      command: handleDuplicate,
     },
-  ];
-
-  const viewerSecondaryActions = [
+    { separator: true },
     {
-      id: "deleteEmployee",
       label: "Delete",
       icon: "pi pi-trash",
-      command: () => console.log("Delete action for", employeeId),
-      tooltip: "Delete this employee",
-    },
-    {
-      id: "printEmployee",
-      label: "Print",
-      icon: "pi pi-print",
-      command: () => window.print(),
-      tooltip: "Print employee details",
-    },
-    {
-      id: "exportEmployee",
-      label: "Export",
-      icon: "pi pi-download",
-      command: () => console.log("Export action"),
-      tooltip: "Export employee data",
-    },
-    {
-      id: "shareEmployee",
-      label: "Share",
-      icon: "pi pi-share-alt",
-      command: () => console.log("Share action"),
-      tooltip: "Share employee profile",
+      command: handleDelete,
+      className: "text-red-600",
     },
   ];
 
-  // Create enhanced left content with bigger avatar for dynamic island
-  const customLeftContent = toolbarLeftContentData && (
-    <div className="flex items-center gap-3">
-      <Avatar
-        image={toolbarLeftContentData.image || undefined}
-        label={
-          !toolbarLeftContentData.image
-            ? toolbarLeftContentData.name?.[0]?.toUpperCase() || "E"
-            : undefined
-        }
-        shape="circle"
-        size="xlarge" // Changed from "large" to "xlarge" for bigger avatar
-        className="bg-primary-100 text-primary-600 border-2 border-primary-200 shadow-lg"
-        imageAlt={toolbarLeftContentData.name || "Employee"}
-        style={{
-          width: "48px",
-          height: "48px",
-          fontSize: "1.25rem", // Ensure text scales properly
-        }}
-      />
-      <div className="flex flex-col min-w-0">
-        {" "}
-        {/* Added min-w-0 for proper truncation */}
-        <span className="font-semibold text-base text-text-color truncate">
-          {toolbarLeftContentData.name || "Employee"}
-        </span>
-        {toolbarLeftContentData.branch && (
-          <span className="text-sm text-text-color-secondary truncate">
-            {toolbarLeftContentData.branch}
-          </span>
-        )}
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <i className="pi pi-spin pi-spinner text-2xl text-primary-color"></i>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="min-h-screen">
-      {/* Top Dynamic Island - Actions & Document Info */}
-      <div className="dynamic-island-container">
-        <LightDynamicIsland
-          onBack={handleBack}
-          primaryActions={viewerPrimaryActions}
-          secondaryActions={viewerSecondaryActions}
-          leftContent={customLeftContent}
-          docData={employeeFullData}
-          showAuditInfo={true}
-        />
-      </div>
+    <div className="space-y-6">
+      {/* Employee Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Avatar
+            image={employeeData?.image || undefined}
+            label={
+              !employeeData?.image
+                ? employeeData?.employee_name?.[0]?.toUpperCase() || "E"
+                : undefined
+            }
+            shape="circle"
+            size="xlarge"
+            className="bg-primary-100 text-primary-600 border-2 border-primary-200"
+          />
 
-      {/* Bottom Tab Island - Navigation */}
-      <div className="dynamic-island-container">
-        <BottomTabIsland
-          tabs={docToolbarTabProps.tabs}
-          activeTabIndex={docToolbarTabProps.activeIndex}
-          onTabSelect={docToolbarTabProps.onTabSelect}
-        />
+          <div>
+            <h2 className="text-xl font-semibold text-text-color">
+              {employeeData?.employee_name || "Employee"}
+            </h2>
+            {employeeData?.position && (
+              <p className="text-text-color-secondary">
+                {employeeData.position} -{" "}
+                {employeeData.branch || "No Branch Assigned"}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            label="Edit"
+            icon="pi pi-pencil"
+            onClick={handleEdit}
+            className="bg-primary-color text-primary-color-text hover:bg-primary-600"
+          />
+
+          <Menu model={actionMenuItems} popup ref={menuRef} className="mt-2" />
+          <Button
+            icon="pi pi-ellipsis-v"
+            text
+            rounded
+            onClick={(e) => menuRef.current?.toggle(e)}
+            className="text-text-color-secondary hover:text-text-color hover:bg-surface-hover"
+            tooltip="More Actions"
+          />
+        </div>
       </div>
 
       {/* Document Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="bg-surface-100 rounded-3xl overflow-hidden">
+        {docToolbarTabProps.tabs && docToolbarTabProps.tabs.length > 0 && (
+          <ModernTabNavigation
+            tabs={docToolbarTabProps.tabs}
+            activeIndex={docToolbarTabProps.activeIndex}
+            onTabSelect={docToolbarTabProps.onTabSelect}
+          />
+        )}
         <DocViewer
           doctypeName={RUA_EMPLOYEE_DOCTYPE.name}
           docname={employeeId}
           externalTabsEnabled={true}
           onTabsConfigChange={handleTabsConfigFromViewer}
-          externalDocData={employeeFullData}
+          externalDocData={employeeData}
+          disableAutoTitle={true}
         />
       </div>
-
-      {/* Bottom padding to prevent overlap with tab island */}
-      <div className="h-24" />
     </div>
   );
 };

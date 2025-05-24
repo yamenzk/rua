@@ -1,4 +1,4 @@
-// src/App.jsx - Using RouteRenderer component
+// src/App.jsx - Updated to use Modern Layout
 import React, { useRef } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useFrappeAuth } from "frappe-react-sdk";
@@ -10,7 +10,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { LayoutProvider } from "@/contexts/LayoutContext";
 
 // Routes
-import { routeConfig } from "./routes"; // Now importing from .js file
+import { routeConfig } from "./routes";
 
 // Components
 import RouteRenderer from "@/routes/RouteRenderer";
@@ -18,8 +18,8 @@ import RouteRenderer from "@/routes/RouteRenderer";
 // Pages
 import LoginPage from "@/pages/LoginPage";
 
-// Layout
-import MainLayout from "./layouts/MainLayout";
+// Updated Layout - Import the new modern layout
+import ModernMainLayout from "./layouts/ModernMainLayout";
 
 // Hooks
 import { useAuthHandler } from "./hooks/useAuthHandler";
@@ -48,7 +48,7 @@ function App() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-surface-ground">
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <ProgressSpinner
           style={{ width: "50px", height: "50px" }}
           strokeWidth="8"
@@ -95,9 +95,9 @@ function App() {
             element={
               currentUser ? (
                 <LayoutProvider>
-                  <MainLayout user={currentUser} onLogout={handleLogout}>
+                  <ModernMainLayout user={currentUser} onLogout={handleLogout}>
                     <RouteRenderer routes={routeConfig} />
-                  </MainLayout>
+                  </ModernMainLayout>
                 </LayoutProvider>
               ) : (
                 <Navigate to="/login" replace />

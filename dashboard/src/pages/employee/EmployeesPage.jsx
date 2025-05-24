@@ -1,15 +1,15 @@
-// dashboard/src/pages/EmployeesPage.jsx
+// src/pages/employee/EmployeesPage.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import EmployeeTable from "@/pages/employee/doctype/EmployeeTable"; // Adjust path as needed
-import { setCookie, getCookie } from "@/utils/cookies"; // Adjust path as needed
-import { useLayout } from "@/contexts/LayoutContext"; // Adjust path as needed
-
+import EmployeeTable from "@/pages/employee/doctype/EmployeeTable";
+import { setCookie, getCookie } from "@/utils/cookies";
+import { useLayout } from "@/contexts/LayoutContext";
+import { Button } from "primereact/button";
 
 const VIEW_MODE_COOKIE = "employee_view_mode";
 
 const EmployeesPage = () => {
   const { setPageTitle, setBreadcrumbItems, setHomeLink } = useLayout();
-  const [viewMode, setViewMode] = useState("list"); // Default view mode
+  const [viewMode, setViewMode] = useState("list");
 
   // Effect for initializing viewMode from cookie
   useEffect(() => {
@@ -22,58 +22,55 @@ const EmployeesPage = () => {
   const handleToggleView = useCallback((newViewMode) => {
     setViewMode(newViewMode);
     setCookie(VIEW_MODE_COOKIE, newViewMode, 30);
-  }, []); // Empty dependency array as setViewMode and setCookie are stable
+  }, []);
 
   // Effect for setting page title and breadcrumbs
   useEffect(() => {
-    setPageTitle("Employees Management");
+    setPageTitle("Employees");
     setHomeLink({ icon: "pi pi-home", url: "/" });
 
     const currentBreadcrumbItems = [
-      { label: "Employees", url: "/employees" }, // Or remove URL if it's the current page and should not be clickable
+      { label: "Employees", url: "/employees" },
       {
-        label: viewMode === "list" ? "List View" : "Grid View", // Fallback label for screen readers or if template doesn't render
+        label: viewMode === "list" ? "List View" : "Grid View",
         template: () => (
-          <div className="flex items-center">
-            <a
-              onClick={() => handleToggleView("list")}
-              className={`p-menuitem-link cursor-pointer ${
+          <div className="flex items-center gap-3">
+            <Button
+              icon="pi pi-list"
+              text
+              rounded
+              size="small"
+              className={`${
                 viewMode === "list"
-                  ? "text-primary-color font-semibold" // Example: highlight active view
-                  : "hover:text-primary-color"
+                  ? "text-primary-color bg-primary-50"
+                  : "text-text-color-secondary hover:text-text-color hover:bg-surface-hover"
               }`}
-              role="button"
-              tabIndex={0}
-              onKeyPress={(e) => e.key === "Enter" && handleToggleView("list")}
-              aria-label="Switch to List View"
-            >
-              <span className="pi pi-list mr-2" /> List
-            </a>
-            <span className="mx-2 text-text-color-secondary">/</span>
-            <a
-              onClick={() => handleToggleView("grid")}
-              className={`p-menuitem-link cursor-pointer ${
+              onClick={() => handleToggleView("list")}
+              tooltip="List View"
+              tooltipOptions={{ position: "bottom" }}
+            />
+            <Button
+              icon="pi pi-th-large"
+              text
+              rounded
+              size="small"
+              className={`${
                 viewMode === "grid"
-                  ? "text-primary-color font-semibold" // Example: highlight active view
-                  : "hover:text-primary-color"
+                  ? "text-primary-color bg-primary-50"
+                  : "text-text-color-secondary hover:text-text-color hover:bg-surface-hover"
               }`}
-              role="button"
-              tabIndex={0}
-              onKeyPress={(e) => e.key === "Enter" && handleToggleView("grid")}
-              aria-label="Switch to Grid View"
-            >
-              <span className="pi pi-th-large mr-2" /> Grid
-            </a>
+              onClick={() => handleToggleView("grid")}
+              tooltip="Grid View"
+              tooltipOptions={{ position: "bottom" }}
+            />
           </div>
         ),
       },
     ];
     setBreadcrumbItems(currentBreadcrumbItems);
 
-    // Cleanup function to clear breadcrumbs when the component unmounts
     return () => {
       setBreadcrumbItems([]);
-      // Optionally reset page title if needed, e.g., setPageTitle("Dashboard");
     };
   }, [
     setPageTitle,
@@ -84,24 +81,69 @@ const EmployeesPage = () => {
   ]);
 
   return (
-    <>
-      {/* AppBreadcrumb is no longer rendered here. It's in MainLayout > Header */}
-      {viewMode === "list" && (
-        <div class="max-w-[1500px] mx-auto">
-        <EmployeeTable />
-        </div>
-    )}
-      {viewMode === "grid" && (
-        <div className="p-card p-5 rounded-lg bg-surface-card shadow-md">
-          <h3 className="text-xl font-semibold text-text-color mb-2">
-            Grid View
-          </h3>
-          <p className="text-text-color-secondary">
-            Employee grid view (using DataView) will be implemented here.
+    <div className="space-y-6">
+      {/* View Toggle Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-text-color">
+            Employee {viewMode === "list" ? "List" : "Grid"}
+          </h2>
+          <p className="text-sm text-text-color-secondary">
+            Manage your employees and their information
           </p>
         </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            icon="pi pi-list"
+            text={viewMode !== "list"}
+            outlined={viewMode === "list"}
+            size="small"
+            className={
+              viewMode === "list"
+                ? "bg-primary-color text-primary-color-text"
+                : ""
+            }
+            onClick={() => handleToggleView("list")}
+            tooltip="List View"
+          />
+          <Button
+            icon="pi pi-th-large"
+            text={viewMode !== "grid"}
+            outlined={viewMode === "grid"}
+            size="small"
+            className={
+              viewMode === "grid"
+                ? "bg-primary-color text-primary-color-text"
+                : ""
+            }
+            onClick={() => handleToggleView("grid")}
+            tooltip="Grid View"
+          />
+        </div>
+      </div>
+
+      {/* Content Based on View Mode */}
+      {viewMode === "list" && (
+        <div className="bg-surface-card rounded-xl shadow-sm border border-surface-border overflow-hidden">
+          <EmployeeTable />
+        </div>
       )}
-    </>
+
+      {viewMode === "grid" && (
+        <div className="bg-surface-card rounded-xl shadow-sm border border-surface-border p-6">
+          <div className="text-center py-12">
+            <i className="pi pi-th-large text-4xl text-text-color-secondary mb-4 block"></i>
+            <h3 className="text-lg font-semibold text-text-color mb-2">
+              Grid View
+            </h3>
+            <p className="text-text-color-secondary">
+              Employee grid view (using DataView) will be implemented here.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

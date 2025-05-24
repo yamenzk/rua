@@ -70,14 +70,19 @@ const TableHeader = ({
     <div className="bg-white border-b border-surface-200 p-6 space-y-4">
       {/* Top Row - Title and Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-surface-900 m-0">
-            {title || doctype}
-            <Badge
-              value={tableDataLength}
-              className="ml-2 bg-primary-100 text-primary-700"
-            />
-          </h2>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex-1 max-w-md">
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search text-surface-400" />
+              <InputText
+                value={globalFilterValue}
+                onChange={onGlobalFilterChange}
+                placeholder={`Search All ${title}`}
+                aria-label={`Search ${title} records`}
+                className="w-full pl-10 pr-4 py-2 border-surface-300 rounded-3xl text-sm"
+              />
+            </IconField>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -107,19 +112,6 @@ const TableHeader = ({
       </div>
 
       {/* Second Row - Search */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex-1 max-w-md">
-          <IconField iconPosition="left">
-            <InputIcon className="pi pi-search text-surface-400" />
-            <InputText
-              value={globalFilterValue}
-              onChange={onGlobalFilterChange}
-              placeholder="Search across all columns..."
-              className="w-full pl-10 pr-4 py-2 border-surface-300 rounded-lg text-sm"
-            />
-          </IconField>
-        </div>
-      </div>
 
       {/* Third Row - Filter Presets */}
 
