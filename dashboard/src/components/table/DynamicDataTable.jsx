@@ -15,6 +15,7 @@ import { Column } from "primereact/column";
 import { ContextMenu } from "primereact/contextmenu";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import { ProgressSpinner } from "primereact/progressspinner";
+import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { ConfirmDialog } from "primereact/confirmdialog";
 
@@ -30,6 +31,7 @@ import PresetDialog from "@/components/table/dialogs/PresetDialog";
 import { useTableState } from "@/components/table/hooks/useTableState";
 import { useTableFilters } from "@/components/table/hooks/useTableFilters";
 import { usePresetManager } from "@/components/table/hooks/usePresetManager";
+import { useLinkFieldOptions } from "@/components/document/hooks/useLinkFieldOptions";
 import styles from "@/components/table/DynamicDataTable.module.css";
 
 const DynamicDataTable = ({
@@ -151,6 +153,10 @@ const DynamicDataTable = ({
 
   const dt = useRef(null);
   const cm = useRef(null);
+  const toast = useRef(null);
+
+  // Add link field options hook
+  const { fetchLinkOptions } = useLinkFieldOptions(toast);
 
   // Enhanced data loading with skeleton
   useEffect(() => {
@@ -383,7 +389,12 @@ const DynamicDataTable = ({
 
       const filterElementRenderer = fieldCfg.tableFilterElement
         ? (options) =>
-            fieldCfg.tableFilterElement(colConfig, colConfig.fieldname, options)
+            fieldCfg.tableFilterElement(
+              colConfig,
+              colConfig.fieldname,
+              options,
+              fetchLinkOptions
+            )
         : null;
 
       return (
@@ -420,7 +431,7 @@ const DynamicDataTable = ({
         />
       );
     });
-  }, [visibleColumns, columnsConfig, viewMode]);
+  }, [visibleColumns, columnsConfig, viewMode, fetchLinkOptions]);
 
   // Loading state with skeleton
   if (showSkeleton && !tableData.length) {
@@ -456,6 +467,9 @@ const DynamicDataTable = ({
     <div
       className={`${styles.dynamicDataTable} bg-white rounded-3xl shadow-none overflow-hidden`}
     >
+      {/* Toast for notifications */}
+      <Toast ref={toast} />
+
       {/* Context Menu */}
       {contextMenuItemsModel && (
         <ContextMenu

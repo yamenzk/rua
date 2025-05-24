@@ -19,7 +19,7 @@ import { useDocumentData } from "@/components/document/hooks/useDocumentData";
 import { useDocumentPageTitle } from "@/components/document/hooks/useDocumentPageTitle";
 import { useExternalTabOrchestration } from "@/components/document/injector/hooks/useExternalTabOrchestration";
 import { useFormHandler } from "@/components/document/hooks/useFormHandler";
-import { useLinkFieldSearch } from "@/components/document/hooks/useLinkFieldSearch";
+import { useLinkFieldOptions } from "@/components/document/hooks/useLinkFieldOptions";
 import { useDocEditorSubmissionAndFiles } from "@/components/document/hooks/useDocEditorSubmissionAndFiles";
 import { useLayout } from "@/contexts/LayoutContext.jsx";
 
@@ -94,7 +94,8 @@ const DocEditor = forwardRef(
       onTabsConfigChange
     );
 
-    const { linkSuggestions, handleLinkSearch } = useLinkFieldSearch(toast);
+    const { linkOptions, linkOptionsLoading, fetchLinkOptions } =
+      useLinkFieldOptions(toast);
 
     const {
       handleSubmit: triggerSubmitLogic,
@@ -166,14 +167,9 @@ const DocEditor = forwardRef(
         const adapterContext = {
           formData: currentFormData,
           handleInputChange,
-          linkSuggestions,
-          handleLinkSearch: (event, linkedDoctype) =>
-            handleLinkSearch(
-              event,
-              linkedDoctype,
-              fieldSchemaItem.options || fieldSchemaItem.target,
-              fieldSchemaItem.get_query
-            ),
+          linkOptions,
+          linkOptionsLoading,
+          fetchLinkOptions,
           isCreateMode: isCreateModeInitial,
           toast,
           openUploadModal,
@@ -207,19 +203,26 @@ const DocEditor = forwardRef(
           tooltip: descriptionData.tooltip,
           onChange: (e) => {
             let newValue;
-            // Prefer e.value for PrimeReact components (like InputNumber, Calendar, Dropdown)
-            // Fallback to e.target.value for standard HTML inputs (like InputText)
-            if (e && typeof e === "object" && "value" in e) {
-              newValue = e.value;
-            } else if (
-              e &&
-              typeof e === "object" &&
-              e.target &&
-              "value" in e.target
-            ) {
-              newValue = e.target.value;
+            // Handle different event structures from various PrimeReact components
+            if (e && typeof e === "object") {
+              // For most PrimeReact components like InputNumber, Calendar, Dropdown
+              if ("value" in e) {
+                newValue = e.value;
+              }
+              // For HTML-like events (InputText, TextArea)
+              else if (e.target && "value" in e.target) {
+                newValue = e.target.value;
+              }
+              // For custom components that might pass the event differently
+              else if (e.target && "checked" in e.target) {
+                newValue = e.target.checked;
+              }
+              // Fallback - treat the whole event as the value
+              else {
+                newValue = e;
+              }
             } else {
-              // Last resort fallback, e.g., if e is the value itself for some very custom components
+              // If e is not an object, it's probably the value itself
               newValue = e;
             }
             handleInputChange(fieldname, newValue, fieldtype);
@@ -280,8 +283,9 @@ const DocEditor = forwardRef(
         isCreateModeInitial,
         docnameProp,
         handleInputChange,
-        linkSuggestions,
-        handleLinkSearch,
+        linkOptions,
+        linkOptionsLoading,
+        fetchLinkOptions,
         openUploadModal,
         formErrors,
         generateFallbackLabel,

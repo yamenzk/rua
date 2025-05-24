@@ -23,18 +23,7 @@ const EmployeeTable = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
-  // For Link field filters - e.g., User (now includes audit fields)
-  const { data: usersList } = useFrappeGetDocList("User", {
-    fields: ["name", "full_name"],
-    limit: 0,
-  });
-
-  const userOptions = useMemo(() => {
-    return usersList
-      ? usersList.map((u) => ({ label: u.full_name || u.name, value: u.name }))
-      : [];
-  }, [usersList]);
-
+  // For static options like nationality
   const nationalityOptions = useMemo(() => {
     return nationalities.map((n) => ({
       label: `${n.flag} ${n.name}`,
@@ -60,16 +49,13 @@ const EmployeeTable = () => {
     if (!formSchema) return [];
 
     const customArgs = {
-      linkFieldFilterOptions: {
-        User: userOptions, // This now applies to owner, modified_by, and any other User links
-      },
       selectOverrides: {
         nationality: nationalityOptions,
       },
       includeAuditFields: true, // Enable audit fields
     };
     return transformSchemaToColumnConfig(formSchema, customArgs);
-  }, [formSchema, userOptions, nationalityOptions]);
+  }, [formSchema, nationalityOptions]);
 
   const globalFilterFields = useMemo(() => {
     if (!formSchema || !formSchema.fields)

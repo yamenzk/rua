@@ -1,4 +1,3 @@
-// dashboard/src/components/common/table-components/useTableFilters.js
 import { useState, useCallback, useEffect } from "react";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import { getFieldConfig } from "@/components/document/utils/fieldTypeConfigurations.jsx";
@@ -50,8 +49,9 @@ export const useTableFilters = (columnsConfig) => {
 					colConfig.fieldtype === "Link" ||
 					colConfig.fieldtype === "Nationality"
 				) {
+					// Ensure Link and Nationality fields always start with empty array
 					initialFilters[colConfig.fieldname] = {
-						value: null,
+						value: [], // Always initialize as empty array for MultiSelect components
 						matchMode,
 					};
 				} else {

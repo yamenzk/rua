@@ -1,5 +1,5 @@
 // src/components/document/utils/FormFieldAdapter.js
-import * as _formatters from "../../../utils/formatters.jsx"; // Ensure this path is correct
+import * as _formatters from "@/utils/formatters.jsx"; // Ensure this path is correct
 import nationalitiesData from "@/utils/nationalities.json"; // Assuming path for Nationality field
 
 /**
@@ -7,8 +7,9 @@ import nationalitiesData from "@/utils/nationalities.json"; // Assuming path for
  * {
  * formData: object,             // The current form data
  * handleInputChange: function,  // (fieldname, value, fieldtype?) => void
- * linkSuggestions: object,      // State for link field suggestions
- * handleLinkSearch: function,   // (event, linkedDoctype, optionsSource, querySource) => Promise<void>
+ * linkOptions: object,          // State for link field options (replaces linkSuggestions)
+ * linkOptionsLoading: object,   // Loading states for link fields
+ * fetchLinkOptions: function,   // Function to fetch link options
  * isCreateMode: boolean,
  * fieldSchema: object,          // The schema for the specific field being rendered (passed within fullContext)
  * toast: RefObject<Toast>       // PrimeReact Toast ref
@@ -125,24 +126,20 @@ const getLinkProps = (context) => {
 		fieldname,
 		options: linkedDoctypeFromOptions, // Typically the linked Doctype from schema's 'options'
 		target: linkedDoctypeFromTarget, // Fallback if 'options' is used differently
-		// get_query, // We are not directly using get_query in the current useLinkFieldSearch setup for filters
-		// Frappe's search_link API itself might respect a `get_query` defined on the doctype.
-		// If useLinkFieldSearch needed to pass `get_query` to the API call, it would need another param.
 		force_selection,
 		description, // The raw description string from fieldSchema
+		placeholder,
 	} = context.fieldSchema;
 
 	const actualLinkedDoctype = linkedDoctypeFromOptions || linkedDoctypeFromTarget;
 
 	if (!actualLinkedDoctype) {
 		console.warn(
-			`[FormFieldAdapter] No linked doctype determined for Link field: ${fieldname}. Suggestions might not work.`
+			`[FormFieldAdapter] No linked doctype determined for Link field: ${fieldname}. Options might not work.`
 		);
-		// Return minimal props to prevent further errors, or throw an error
 		return {
 			value: context.formData[fieldname] || null,
-			suggestions: [],
-			completeMethod: () => {}, // No-op
+			options: [],
 			disabled: true,
 			placeholder: "Link configuration error",
 			onChange: (e) => context.handleInputChange(fieldname, e.value, "Link"),
@@ -151,19 +148,17 @@ const getLinkProps = (context) => {
 
 	return {
 		value: context.formData[fieldname] || null,
-		suggestions: context.linkSuggestions[actualLinkedDoctype] || [],
-		completeMethod: (
-			e // `e` is the PrimeReact AutoComplete event
-		) =>
-			context.handleLinkSearch(
-				// Call the hook's function
-				e, // Pass the event
-				actualLinkedDoctype, // Pass the determined linked doctype
-				description // Pass the raw description string for parsing link_filters
-			),
-		dropdown: true,
-		forceSelection: force_selection || false,
-		onChange: (e) => context.handleInputChange(fieldname, e.value, "Link"),
+		linkedDoctype: actualLinkedDoctype,
+		fieldSchemaItem: context.fieldSchema,
+		fetchLinkOptions: context.fetchLinkOptions,
+		isLoading: context.linkOptionsLoading?.[actualLinkedDoctype] || false,
+		placeholder: placeholder || `Select ${actualLinkedDoctype}...`,
+		showClear: !force_selection,
+		// Use a simpler onChange that matches what the component expects
+		onChange: (e) => {
+			// The LinkFormField will provide the proper event structure
+			context.handleInputChange(fieldname, e.target.value, "Link");
+		},
 	};
 };
 

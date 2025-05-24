@@ -64,7 +64,6 @@ export const transformSchemaToColumnConfig = (formSchema, customArgs = {}) => {
 	if (!formSchema || !formSchema.fields) return [];
 
 	const {
-		linkFieldFilterOptions = {},
 		selectOverrides = {},
 		includeAuditFields = true, // New option to control audit fields
 	} = customArgs;
@@ -126,10 +125,9 @@ export const transformSchemaToColumnConfig = (formSchema, customArgs = {}) => {
 					}));
 					break;
 				case "Link":
-					const linkedDoctype = field.options;
-					if (linkFieldFilterOptions[linkedDoctype]?.length > 0) {
-						processedFilterDropdownOptions = linkFieldFilterOptions[linkedDoctype];
-					}
+					// For Link fields, we no longer pre-populate options here
+					// The LinkFilter component will fetch them dynamically
+					processedFilterDropdownOptions = [];
 					break;
 				default:
 					break;
@@ -182,10 +180,7 @@ export const transformSchemaToColumnConfig = (formSchema, customArgs = {}) => {
 			linked_doctype: auditField.options, // For Link fields like owner, modified_by
 			description: auditField.description,
 			displayProps: parseDescription(auditField.description),
-			options:
-				auditField.fieldtype === "Link" && auditField.options === "User"
-					? linkFieldFilterOptions["User"] || []
-					: [],
+			options: [], // Will be populated dynamically by LinkFilter
 			isAuditField: true, // Mark as audit field for special handling
 		}));
 

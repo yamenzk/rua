@@ -18,6 +18,7 @@ import TimeFormField from "@/components/formFields/TimeFormField.jsx";
 import GenericTextareaFormField from "@/components/formFields/GenericTextareaFormField.jsx";
 import TextEditorFormField from "@/components/formFields/TextEditorFormField.jsx";
 import NationalityFormField from "@/components/formFields/NationalityFormField.jsx";
+import LinkFormField from "@/components/formFields/LinkFormField.jsx";
 
 // --- Table Cell Components ---
 import AttachCell from "@/components/table/cells/AttachCell.jsx";
@@ -36,6 +37,7 @@ import DateFilter from "@/components/table/filters/DateFilter.jsx";
 import SelectFilter from "@/components/table/filters/SelectFilter.jsx";
 import MultiSelectFilter from "@/components/table/filters/MultiSelectFilter.jsx";
 import TriStateFilter from "@/components/table/filters/TriStateFilter.jsx";
+import LinkFilter from "@/components/table/filters/LinkFilter.jsx";
 
 // --- Formatters ---
 import * as formatters from "../../../utils/formatters.jsx";
@@ -134,7 +136,7 @@ export const fieldTypeConfigurations = {
 
   // --- Link Types ---
   Link: {
-    formComponent: (await import("primereact/autocomplete")).AutoComplete,
+    formComponent: LinkFormField,
     tableBodyComponent: (rowData, fieldname, displayProps) => (
       <SelectCell
         rowData={rowData}
@@ -142,12 +144,14 @@ export const fieldTypeConfigurations = {
         displayProps={displayProps}
       />
     ),
-    tableFilterElement: (colProps, fieldname, options) => (
-      <MultiSelectFilter
+    tableFilterElement: (colProps, fieldname, options, fetchLinkOptions) => (
+      <LinkFilter
         options={options}
-        selectOptions={colProps.options || []}
+        linkedDoctype={colProps.linked_doctype}
+        fieldDescription={colProps.description}
+        fetchLinkOptions={fetchLinkOptions}
         placeholder="Any"
-        maxSelectedLabels={3}
+        maxSelectedLabels={2}
       />
     ),
     sortable: true,
