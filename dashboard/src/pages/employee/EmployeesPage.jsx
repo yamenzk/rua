@@ -1,14 +1,24 @@
-// src/pages/employee/EmployeesPage.jsx
+// src/pages/employee/EmployeesPage.jsx - Updated to use layout actions
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import EmployeeTable from "@/pages/employee/doctype/EmployeeTable";
 import { setCookie, getCookie } from "@/utils/cookies";
 import { useLayout } from "@/contexts/LayoutContext";
-import { Button } from "primereact/button";
+import { RUA_EMPLOYEE_DOCTYPE } from "@/constants";
 
 const VIEW_MODE_COOKIE = "employee_view_mode";
 
 const EmployeesPage = () => {
-  const { setPageTitle, setBreadcrumbItems, setHomeLink } = useLayout();
+  const navigate = useNavigate();
+  const {
+    setPageTitle,
+    setBreadcrumbItems,
+    setHomeLink,
+    setPrimaryAction,
+    setSecondaryActions,
+    setMenuActions,
+    clearActions,
+  } = useLayout();
   const [viewMode, setViewMode] = useState("list");
 
   // Effect for initializing viewMode from cookie
@@ -24,7 +34,7 @@ const EmployeesPage = () => {
     setCookie(VIEW_MODE_COOKIE, newViewMode, 30);
   }, []);
 
-  // Effect for setting page title and breadcrumbs
+  // Effect for setting page title, breadcrumbs and actions
   useEffect(() => {
     setPageTitle("Employees");
     setHomeLink({ icon: "pi pi-home", url: "/" });
@@ -33,99 +43,74 @@ const EmployeesPage = () => {
       { label: "Employees", url: "/employees" },
       {
         label: viewMode === "list" ? "List View" : "Grid View",
-        template: () => (
-          <div className="flex items-center gap-3">
-            <Button
-              icon="pi pi-list"
-              text
-              rounded
-              size="small"
-              className={`${
-                viewMode === "list"
-                  ? "text-primary-color bg-primary-50"
-                  : "text-text-color-secondary hover:text-text-color hover:bg-surface-hover"
-              }`}
-              onClick={() => handleToggleView("list")}
-              tooltip="List View"
-              tooltipOptions={{ position: "bottom" }}
-            />
-            <Button
-              icon="pi pi-th-large"
-              text
-              rounded
-              size="small"
-              className={`${
-                viewMode === "grid"
-                  ? "text-primary-color bg-primary-50"
-                  : "text-text-color-secondary hover:text-text-color hover:bg-surface-hover"
-              }`}
-              onClick={() => handleToggleView("grid")}
-              tooltip="Grid View"
-              tooltipOptions={{ position: "bottom" }}
-            />
-          </div>
-        ),
       },
     ];
     setBreadcrumbItems(currentBreadcrumbItems);
 
+    // Set page actions
+    setPrimaryAction({
+      label: "New Employee",
+      icon: "pi pi-plus",
+      command: () => navigate(`/${RUA_EMPLOYEE_DOCTYPE.route}/new`),
+      showLabel: true,
+    });
+
+    setSecondaryActions([
+      {
+        label: "List View",
+        icon: "pi pi-list",
+        command: () => handleToggleView("list"),
+        className:
+          viewMode === "list" ? "text-primary-color bg-primary-50" : "",
+      },
+      {
+        label: "Grid View",
+        icon: "pi pi-th-large",
+        command: () => handleToggleView("grid"),
+        className:
+          viewMode === "grid" ? "text-primary-color bg-primary-50" : "",
+      },
+      {
+        label: "Refresh",
+        icon: "pi pi-refresh",
+        command: () => window.location.reload(),
+      },
+    ]);
+
+    setMenuActions([
+      {
+        label: "Export All",
+        icon: "pi pi-download",
+        command: () => console.log("Export all employees"),
+      },
+      {
+        label: "Import",
+        icon: "pi pi-upload",
+        command: () => console.log("Import employees"),
+      },
+      { separator: true },
+      {
+        label: "Settings",
+        icon: "pi pi-cog",
+        command: () => console.log("Employee settings"),
+      },
+    ]);
+
     return () => {
+      clearActions();
       setBreadcrumbItems([]);
     };
   }, [
-    setPageTitle,
-    setBreadcrumbItems,
-    setHomeLink,
     viewMode,
-    handleToggleView,
+    navigate,
+    // Layout setter functions are stable and don't need to be in dependencies
   ]);
 
   return (
     <div className="space-y-6">
-      {/* View Toggle Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-text-color">
-            Employee {viewMode === "list" ? "List" : "Grid"}
-          </h2>
-          <p className="text-sm text-text-color-secondary">
-            Manage your employees and their information
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            icon="pi pi-list"
-            text={viewMode !== "list"}
-            outlined={viewMode === "list"}
-            size="small"
-            className={
-              viewMode === "list"
-                ? "bg-primary-color text-primary-color-text"
-                : ""
-            }
-            onClick={() => handleToggleView("list")}
-            tooltip="List View"
-          />
-          <Button
-            icon="pi pi-th-large"
-            text={viewMode !== "grid"}
-            outlined={viewMode === "grid"}
-            size="small"
-            className={
-              viewMode === "grid"
-                ? "bg-primary-color text-primary-color-text"
-                : ""
-            }
-            onClick={() => handleToggleView("grid")}
-            tooltip="Grid View"
-          />
-        </div>
-      </div>
-
-      {/* Content Based on View Mode */}
+      {/* Content Based on View Mode - Removed local header */}
       {viewMode === "list" && (
-        <div className="bg-surface-card rounded-xl shadow-sm border border-surface-border overflow-hidden">
+        <div className="bg-surface-card rounded-3xl shadow-sm border border-surface-border overflow-hidden">
           <EmployeeTable />
         </div>
       )}

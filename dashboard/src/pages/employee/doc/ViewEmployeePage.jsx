@@ -1,9 +1,6 @@
-// src/pages/employee/doc/ViewEmployeePage.jsx
+// src/pages/employee/doc/ViewEmployeePage.jsx - Updated to use layout actions
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "primereact/button";
-import { Avatar } from "primereact/avatar";
-import { Menu } from "primereact/menu";
 import { Chip } from "primereact/chip";
 import { Badge } from "primereact/badge";
 import DocViewer from "@/components/document/DocViewer";
@@ -15,8 +12,15 @@ import { useFrappeGetDoc } from "frappe-react-sdk";
 const ViewEmployeePage = () => {
   const { employeeId } = useParams();
   const navigate = useNavigate();
-  const { setPageTitle, setBreadcrumbItems, setHomeLink } = useLayout();
-  const menuRef = React.useRef(null);
+  const {
+    setPageTitle,
+    setBreadcrumbItems,
+    setHomeLink,
+    setPrimaryAction,
+    setSecondaryActions,
+    setMenuActions,
+    clearActions,
+  } = useLayout();
 
   const [docToolbarTabProps, setDocToolbarTabProps] = useState({
     tabs: [],
@@ -34,19 +38,21 @@ const ViewEmployeePage = () => {
     }
   );
 
-  // Set page title and breadcrumbs
+  // Set page title, breadcrumbs and actions
   useEffect(() => {
     const employeeName =
       employeeData?.employee_name || employeeId || "Employee";
 
     // Set a custom page title component with badge on chip
     setPageTitle(() => (
-      <div className="relative inline-block">
+      <div className="relative p-2">
+        {" "}
+        {/* Added padding to make space for the badge */}
         <Chip label={employeeName} image={employeeData?.image} />
         <Badge
           value={<i className="pi pi-eye text-sm"></i>}
           severity="info"
-          className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center rounded-full"
+          className="absolute top-0 right-0 w-6 h-6 flex items-center justify-center rounded-full"
         />
       </div>
     ));
@@ -63,50 +69,68 @@ const ViewEmployeePage = () => {
       },
     ]);
 
+    // Set page actions
+    setPrimaryAction({
+      label: "Edit",
+      icon: "pi pi-pencil",
+      command: () => navigate(`/employees/edit/${employeeId}`),
+    });
+
+    setSecondaryActions([
+      {
+        label: "Refresh",
+        icon: "pi pi-refresh",
+        command: () => window.location.reload(),
+      },
+      {
+        label: "Share",
+        icon: "pi pi-share-alt",
+        command: () => console.log("Share employee:", employeeId),
+      },
+    ]);
+
+    setMenuActions([
+      {
+        label: "Duplicate",
+        icon: "pi pi-copy",
+        command: () => console.log("Duplicate employee:", employeeId),
+      },
+      {
+        label: "Export PDF",
+        icon: "pi pi-file-pdf",
+        command: () => console.log("Export PDF:", employeeId),
+      },
+      { separator: true },
+      {
+        label: "Archive",
+        icon: "pi pi-archive",
+        command: () => console.log("Archive employee:", employeeId),
+      },
+      {
+        label: "Delete",
+        icon: "pi pi-trash",
+        command: () => console.log("Delete employee:", employeeId),
+        className: "text-red-600",
+      },
+    ]);
+
+    // Cleanup function to clear actions when component unmounts
     return () => {
+      clearActions();
       setBreadcrumbItems([]);
     };
-  }, [employeeId, employeeData, setBreadcrumbItems, setPageTitle, setHomeLink]);
+  }, [
+    employeeId,
+    employeeData,
+    navigate,
+    // Layout setter functions are stable and don't need to be in dependencies
+  ]);
 
   const handleTabsConfigFromViewer = useCallback((config) => {
     setDocToolbarTabProps(
       config || { tabs: [], activeIndex: 0, onTabSelect: null }
     );
   }, []);
-
-  const handleEdit = () => {
-    navigate(`/employees/edit/${employeeId}`);
-  };
-
-  const handleDelete = () => {
-    console.log("Delete employee:", employeeId);
-    // Implement delete functionality
-  };
-
-  const handleDuplicate = () => {
-    console.log("Duplicate employee:", employeeId);
-    // Implement duplicate functionality
-  };
-
-  const actionMenuItems = [
-    {
-      label: "Edit",
-      icon: "pi pi-pencil",
-      command: handleEdit,
-    },
-    {
-      label: "Duplicate",
-      icon: "pi pi-copy",
-      command: handleDuplicate,
-    },
-    { separator: true },
-    {
-      label: "Delete",
-      icon: "pi pi-trash",
-      command: handleDelete,
-      className: "text-red-600",
-    },
-  ];
 
   if (isLoading) {
     return (
@@ -117,57 +141,9 @@ const ViewEmployeePage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Employee Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Avatar
-            image={employeeData?.image || undefined}
-            label={
-              !employeeData?.image
-                ? employeeData?.employee_name?.[0]?.toUpperCase() || "E"
-                : undefined
-            }
-            shape="circle"
-            size="xlarge"
-            className="bg-primary-100 text-primary-600 border-2 border-primary-200"
-          />
-
-          <div>
-            <h2 className="text-xl font-semibold text-text-color">
-              {employeeData?.employee_name || "Employee"}
-            </h2>
-            {employeeData?.position && (
-              <p className="text-text-color-secondary">
-                {employeeData.position} -{" "}
-                {employeeData.branch || "No Branch Assigned"}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            label="Edit"
-            icon="pi pi-pencil"
-            onClick={handleEdit}
-            className="bg-primary-color text-primary-color-text hover:bg-primary-600"
-          />
-
-          <Menu model={actionMenuItems} popup ref={menuRef} className="mt-2" />
-          <Button
-            icon="pi pi-ellipsis-v"
-            text
-            rounded
-            onClick={(e) => menuRef.current?.toggle(e)}
-            className="text-text-color-secondary hover:text-text-color hover:bg-surface-hover"
-            tooltip="More Actions"
-          />
-        </div>
-      </div>
-
-      {/* Document Content */}
-      <div className="bg-surface-100 rounded-3xl overflow-hidden">
+    <div className="space-y-6 h-full">
+      {/* Document Content - Removed local action header */}
+      <div className="bg-surface-0 h-full rounded-3xl overflow-hidden">
         {docToolbarTabProps.tabs && docToolbarTabProps.tabs.length > 0 && (
           <ModernTabNavigation
             tabs={docToolbarTabProps.tabs}

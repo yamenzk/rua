@@ -69,7 +69,9 @@ const TableHeader = ({
   return (
     <div className="bg-white border-b border-surface-200 p-6 space-y-4">
       {/* Top Row - Title and Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+
+      {/* Second Row - View Mode and Statistics */}
+      <div className="flex items-center justify-between pt-2 border-surface-100">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex-1 max-w-md">
             <IconField iconPosition="left">
@@ -84,39 +86,6 @@ const TableHeader = ({
             </IconField>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            icon="pi pi-refresh"
-            tooltip="Refresh Data"
-            tooltipOptions={{ position: "top" }}
-            className="p-button-text p-button-rounded"
-            onClick={mutate}
-          />
-
-          <Menu
-            model={settingsMenuItems}
-            popup
-            ref={settingsMenu}
-            id="settings_menu"
-          />
-          <Button
-            icon="pi pi-cog"
-            tooltip="Table Settings"
-            tooltipOptions={{ position: "top" }}
-            className="p-button-text p-button-rounded"
-            onClick={(event) => settingsMenu.current?.toggle(event)}
-          />
-          {headerActions}
-        </div>
-      </div>
-
-      {/* Second Row - Search */}
-
-      {/* Third Row - Filter Presets */}
-
-      {/* Fourth Row - View Mode and Statistics */}
-      <div className="flex items-center justify-between pt-2 border-surface-100">
         <div className="flex items-center gap-4">
           <Menu
             model={viewModeMenuItems}
@@ -154,7 +123,20 @@ const TableHeader = ({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 border-x mx-3 px-3">
+        <div className="flex items-center gap-2">
+          {activeFilterCount > 0 && (
+            <Chip
+              label={`${activeFilterCount} filter${
+                activeFilterCount > 1 ? "s" : ""
+              } active`}
+              icon="pi pi-filter"
+              className="bg-orange-100 text-orange-700 text-xs"
+              removable
+              onRemove={onClearFilters}
+            />
+          )}
+        </div>
+        <div className="flex items-center gap-2 border-l mx-3 px-3">
           {filterPresets.map((preset) => (
             <Chip
               key={preset.id}
@@ -180,19 +162,31 @@ const TableHeader = ({
           />
         </div>
 
-        {/* Active Filters Indicator */}
-        <div className="flex items-center gap-2">
-          {activeFilterCount > 0 && (
-            <Chip
-              label={`${activeFilterCount} filter${
-                activeFilterCount > 1 ? "s" : ""
-              } active`}
-              icon="pi pi-filter"
-              className="bg-orange-100 text-orange-700 text-xs"
-              removable
-              onRemove={onClearFilters}
+        <div className="flex flex-wrap items-center justify-between border-l gap-4">
+          <div className="flex items-center gap-2">
+            {/* <Button
+            icon="pi pi-refresh"
+            tooltip="Refresh Data"
+            tooltipOptions={{ position: "top" }}
+            className="p-button-text p-button-rounded"
+            onClick={mutate}
+          /> */}
+
+            <Menu
+              model={settingsMenuItems}
+              popup
+              ref={settingsMenu}
+              id="settings_menu"
             />
-          )}
+            <Button
+              icon="pi pi-cog"
+              tooltip="Table Settings"
+              tooltipOptions={{ position: "top" }}
+              className="p-button-text p-button-rounded"
+              onClick={(event) => settingsMenu.current?.toggle(event)}
+            />
+            {headerActions}
+          </div>
         </div>
       </div>
     </div>

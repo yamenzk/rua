@@ -198,7 +198,7 @@ const EmployeeTable = () => {
         onRowClick={handleRowClick}
         contextMenuItemsModel={contextMenuItemsModel}
         globalFilterFields={globalFilterFields}
-        headerActions={headerActions}
+        // headerActions={headerActions}
         dataKey="name"
       />
       <ConfirmDialog

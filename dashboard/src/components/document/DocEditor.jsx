@@ -37,6 +37,7 @@ const DocEditor = forwardRef(
       docname: docnameProp,
       onSaveSuccess,
       onSaveError,
+      onFormChange,
       customUIAugmentations,
       onTabsConfigChange,
       externalTabsEnabled = false,
@@ -62,9 +63,20 @@ const DocEditor = forwardRef(
       formData,
       setFormData,
       formErrors,
-      handleInputChange,
+      handleInputChange: originalHandleInputChange,
       validateForm,
     } = useFormHandler(formSchema, initialDocData, isCreateModeInitial);
+
+    const handleInputChange = useCallback(
+      (fieldname, value, fieldtype) => {
+        originalHandleInputChange(fieldname, value, fieldtype);
+        // Notify parent that form has changed
+        if (onFormChange) {
+          onFormChange();
+        }
+      },
+      [originalHandleInputChange, onFormChange]
+    );
 
     useDocumentPageTitle(
       initialDocData,
@@ -337,8 +349,8 @@ const DocEditor = forwardRef(
       <>
         <Toast ref={toast} />
         <Card
-          className="mt-0 shadow-none rounded-xl overflow-hidden bg-transparent"
-          pt={{ content: { className: "p-0" } }}
+          className="shadow-none overflow-hidden bg-transparent"
+          pt={{ body: { className: "p-0" } }}
         >
           <form
             onSubmit={(e) => {

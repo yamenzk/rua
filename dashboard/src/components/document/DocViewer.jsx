@@ -225,8 +225,8 @@ const DocViewer = ({
 
   return (
     <Card
-      className="mt-4 bg-transparent shadow-none overflow-hidden"
-      pt={{ content: { className: "p-0 " } }}
+      className="bg-transparent shadow-none overflow-hidden"
+      pt={{ body: { className: "p-0" } }}
     >
       {docData || !docname ? (
         <DocLayoutRenderer

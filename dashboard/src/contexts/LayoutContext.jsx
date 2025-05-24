@@ -1,4 +1,4 @@
-// src/contexts/LayoutContext.jsx
+// src/contexts/LayoutContext.jsx - Enhanced with actions
 import React, { createContext, useState, useContext } from "react";
 
 const LayoutContext = createContext();
@@ -6,7 +6,19 @@ const LayoutContext = createContext();
 export const LayoutProvider = ({ children }) => {
   const [pageTitle, setPageTitle] = useState("Dashboard");
   const [breadcrumbItems, setBreadcrumbItems] = useState([]);
-  const [homeLink, setHomeLink] = useState({ icon: "pi pi-home", url: "/" }); // Default home link
+  const [homeLink, setHomeLink] = useState({ icon: "pi pi-home", url: "/" });
+
+  // New action states
+  const [primaryAction, setPrimaryAction] = useState(null);
+  const [secondaryActions, setSecondaryActions] = useState([]);
+  const [menuActions, setMenuActions] = useState([]);
+
+  // Helper to clear all actions
+  const clearActions = () => {
+    setPrimaryAction(null);
+    setSecondaryActions([]);
+    setMenuActions([]);
+  };
 
   return (
     <LayoutContext.Provider
@@ -17,6 +29,14 @@ export const LayoutProvider = ({ children }) => {
         setBreadcrumbItems,
         homeLink,
         setHomeLink,
+        // Action management
+        primaryAction,
+        setPrimaryAction,
+        secondaryActions,
+        setSecondaryActions,
+        menuActions,
+        setMenuActions,
+        clearActions,
       }}
     >
       {children}
@@ -24,4 +44,10 @@ export const LayoutProvider = ({ children }) => {
   );
 };
 
-export const useLayout = () => useContext(LayoutContext);
+export const useLayout = () => {
+  const context = useContext(LayoutContext);
+  if (!context) {
+    throw new Error("useLayout must be used within a LayoutProvider");
+  }
+  return context;
+};

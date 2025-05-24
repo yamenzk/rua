@@ -1,11 +1,19 @@
-// src/layouts/ModernMainLayout.jsx
+// src/layouts/ModernMainLayout.jsx - Updated with PageActions
 import React from "react";
 import ModernSidebar from "./ModernSidebar";
 import ModernHeader from "./ModernHeader";
+import PageActions from "@/components/common/PageActions";
 import { useLayout } from "../contexts/LayoutContext";
 
 const ModernMainLayout = ({ children, user, onLogout }) => {
-  const { pageTitle, breadcrumbItems, homeLink } = useLayout();
+  const {
+    pageTitle,
+    breadcrumbItems,
+    homeLink,
+    primaryAction,
+    secondaryActions,
+    menuActions,
+  } = useLayout();
 
   return (
     <div className="min-h-screen bg-surface-ground">
@@ -22,7 +30,9 @@ const ModernMainLayout = ({ children, user, onLogout }) => {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               {/* Left: Page Title & Breadcrumbs */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
+                {" "}
+                {/* Added min-w-0 for text truncation */}
                 {breadcrumbItems && breadcrumbItems.length > 0 && (
                   <div className="flex items-center gap-2 text-sm text-text-color-secondary mb-3">
                     <i className="pi pi-home"></i>
@@ -37,6 +47,8 @@ const ModernMainLayout = ({ children, user, onLogout }) => {
                             >
                               {item.label}
                             </a>
+                          ) : item.template ? (
+                            <span>{item.template()}</span>
                           ) : (
                             <span className="text-text-color font-medium">
                               {item.label}
@@ -47,7 +59,6 @@ const ModernMainLayout = ({ children, user, onLogout }) => {
                     </div>
                   </div>
                 )}
-
                 {/* Page Title with Back Button */}
                 <div className="flex items-center gap-3">
                   {breadcrumbItems && breadcrumbItems.length > 1 && (
@@ -68,12 +79,21 @@ const ModernMainLayout = ({ children, user, onLogout }) => {
                     </button>
                   )}
 
-                  <h1 className="text-2xl font-bold text-text-color">
+                  <h1 className="text-2xl font-bold text-text-color truncate">
                     {typeof pageTitle === "function"
                       ? pageTitle()
                       : pageTitle || "Dashboard"}
                   </h1>
                 </div>
+              </div>
+
+              {/* Right: Page Actions */}
+              <div className="flex-shrink-0 ml-4">
+                <PageActions
+                  primaryAction={primaryAction}
+                  secondaryActions={secondaryActions}
+                  menuActions={menuActions}
+                />
               </div>
             </div>
           </div>
@@ -82,14 +102,14 @@ const ModernMainLayout = ({ children, user, onLogout }) => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Main Area - Takes 3 columns */}
             <div className="lg:col-span-3">
-              <div className="bg-surface-card rounded-3xl shadow-sm border border-surface-border p-8 overflow-y-auto h-[82vh] scrollbar-hide">
+              <div className="bg-surface-card rounded-3xl shadow-sm border border-surface-border p-8 overflow-y-auto h-[80vh] scrollbar-hide">
                 {children}
               </div>
             </div>
 
             {/* Side Area - Takes 1 column */}
             <div className="lg:col-span-1">
-              <div className="bg-surface-card rounded-3xl shadow-sm border border-surface-border p-6 overflow-y-auto h-[82vh] scrollbar-hide">
+              <div className="bg-surface-card rounded-3xl shadow-sm border border-surface-border p-6 overflow-y-auto h-[80vh] scrollbar-hide">
                 <div className="text-text-color-secondary text-sm text-center">
                   Side panel content
                 </div>

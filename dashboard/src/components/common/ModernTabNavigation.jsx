@@ -7,7 +7,7 @@ const ModernTabNavigation = ({ tabs = [], activeIndex = 0, onTabSelect }) => {
   return (
     <div className="relative">
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 p-5 bg-surface-100 rounded-3xl overflow-x-auto scrollbar-hide">
+      <div className="flex items-center gap-1 mb-5 bg-surface-0 rounded-3xl overflow-x-auto scrollbar-hide">
         {tabs.map((tab, index) => (
           <button
             key={tab.id || `tab-${index}`}
