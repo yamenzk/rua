@@ -15,8 +15,7 @@ const EnhancedSelectFilter = ({
     const { fieldtype, options_source_array, options_source_string } =
       colProps || {};
 
-    // Special handling for nationality field
-    if (fieldname === "nationality" || fieldtype === "Nationality") {
+    if (fieldname === "nationality") {
       return nationalitiesData.map((n) => ({
         label: `${n.flag} ${n.name}`,
         value: n.name,

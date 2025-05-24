@@ -1,4 +1,4 @@
-// src/components/formFields/DataFormField.jsx
+// src/components/formFields/DataFormField.jsx - Fixed version
 import React from "react";
 import { InputText } from "primereact/inputtext";
 
@@ -17,6 +17,9 @@ const DataFormField = ({
     }
   };
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   return (
     <InputText
       id={id}
@@ -25,7 +28,7 @@ const DataFormField = ({
       disabled={disabled}
       className={className}
       placeholder={placeholder}
-      {...otherProps}
+      {...safeOtherProps}
     />
   );
 };

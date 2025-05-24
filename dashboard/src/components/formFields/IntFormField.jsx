@@ -1,4 +1,4 @@
-// src/components/formFields/IntFormField.jsx
+// src/components/formFields/IntFormField.jsx - Fixed version
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 
@@ -26,6 +26,9 @@ const IntFormField = ({
     }
   };
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   return (
     <InputNumber
       id={id}
@@ -43,7 +46,7 @@ const IntFormField = ({
       maxFractionDigits={0}
       min={min}
       max={max}
-      {...otherProps}
+      {...safeOtherProps}
     />
   );
 };

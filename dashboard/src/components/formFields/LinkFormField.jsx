@@ -1,4 +1,4 @@
-// src/components/formFields/LinkFormField.jsx
+// src/components/formFields/LinkFormField.jsx - Fixed version
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
@@ -120,6 +120,7 @@ const LinkFormField = ({
       fieldSchemaItem: _fieldSchemaItem,
       linkedDoctype: _linkedDoctype,
       resetFilter: _resetFilter,
+      // Add any other custom props that shouldn't go to DOM
       ...safeOtherProps
     } = otherProps;
 

@@ -1,21 +1,24 @@
-// dashboard/src/components/formFields/HeadingField.jsx
+// dashboard/src/components/formFields/HeadingField.jsx - Fixed version
 import React from "react";
 import { parseDescription } from "@/components/document/utils/schemaUtils";
 
 // This component is intended for use as a formComponent for "Heading" fieldtype
 // to render visual headings within a form layout. It's not an input field.
-const HeadingField = (props) => {
-  // In the context of DocEditor, props will include:
-  // id, value (likely null/undefined for Heading), onChange (no-op), className,
-  // disabled, fieldSchemaItem, tooltip, placeholder, etc.
+const HeadingField = ({
+  id,
+  fieldSchemaItem,
+  className,
+  disabled, // Not used but might be passed
+  value, // Not used but might be passed
+  onChange, // Not used but might be passed
+  ...otherProps // Filter out other props that shouldn't be used
+}) => {
   // We primarily care about fieldSchemaItem and its label/description.
-  const { fieldSchemaItem } = props;
-
   if (!fieldSchemaItem) {
     return null; // Or some fallback if schema is missing
   }
 
-  const label = fieldSchemaItem.label || fieldSchemaItem.fieldname;
+  const label = fieldSchemaItem.label || fieldSchemaItem.fieldname || id;
   const descriptionData = parseDescription(fieldSchemaItem.description);
 
   // Allow overriding heading level via description, e.g., "level:h2" in description string
@@ -46,12 +49,15 @@ const HeadingField = (props) => {
 
   return (
     <HeadingTag
-      className={`${marginClass} ${textSizeClass} ${textColorClass} ${borderClass} ${customClasses} font-semibold leading-tight`}
+      className={`${marginClass} ${textSizeClass} ${textColorClass} ${borderClass} ${customClasses} ${
+        className || ""
+      } font-semibold leading-tight`}
       // If the DocEditor passes a tooltip via commonProps, it would be applied here.
-      // title={props.tooltip} // Example if props.tooltip is passed
+      title={descriptionData.tooltip || undefined}
     >
       {label}
     </HeadingTag>
   );
 };
+
 export default HeadingField;

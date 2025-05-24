@@ -1,4 +1,4 @@
-// src/components/formFields/FloatFormField.jsx
+// src/components/formFields/FloatFormField.jsx - Fixed version
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 
@@ -31,6 +31,9 @@ const FloatFormField = ({
   const minFractionDigits = isNaN(precisionNum) ? 2 : precisionNum;
   const maxFractionDigits = isNaN(precisionNum) ? 2 : precisionNum;
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   return (
     <InputNumber
       id={id}
@@ -48,7 +51,7 @@ const FloatFormField = ({
       maxFractionDigits={maxFractionDigits}
       min={min}
       max={max}
-      {...otherProps}
+      {...safeOtherProps}
     />
   );
 };

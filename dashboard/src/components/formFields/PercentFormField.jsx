@@ -1,4 +1,4 @@
-// src/components/formFields/PercentFormField.jsx
+// src/components/formFields/PercentFormField.jsx - Fixed version
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 
@@ -26,6 +26,9 @@ const PercentFormField = ({
     }
   };
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   return (
     <InputNumber
       id={id}
@@ -44,7 +47,7 @@ const PercentFormField = ({
       max={max}
       minFractionDigits={0}
       maxFractionDigits={2}
-      {...otherProps}
+      {...safeOtherProps}
     />
   );
 };

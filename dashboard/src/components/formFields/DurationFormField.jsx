@@ -1,4 +1,4 @@
-// src/components/formFields/DurationFormField.jsx
+// src/components/formFields/DurationFormField.jsx - Fixed version
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 
@@ -25,6 +25,9 @@ const DurationFormField = ({
     }
   };
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   return (
     <div className="flex items-center gap-2">
       <InputNumber
@@ -42,7 +45,7 @@ const DurationFormField = ({
         min={min}
         minFractionDigits={0}
         maxFractionDigits={0}
-        {...otherProps}
+        {...safeOtherProps}
       />
       <span className="text-xs text-text-color-secondary">seconds</span>
     </div>

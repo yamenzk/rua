@@ -1,4 +1,4 @@
-// dashboard/src/components/document/utils/fieldTypeConfigurations.jsx - Centralized with all custom components
+// dashboard/src/components/document/utils/fieldTypeConfigurations.jsx
 import React from "react";
 
 // --- Custom Form Field Components (Centralized) ---
@@ -124,7 +124,7 @@ export const fieldTypeConfigurations = {
     icon: "search",
   },
   Nationality: {
-    formComponent: SelectFormField, // Unified with other select fields
+    formComponent: SelectFormField,
     tableBodyComponent: (rowData, fieldname) => (
       <NationalityCell rowData={rowData} fieldname={fieldname} />
     ),
@@ -478,16 +478,10 @@ export const fieldTypeConfigurations = {
 
 // --- Helper function to get configuration ---
 export const getFieldConfig = (fieldType, fieldname, fieldSchema = null) => {
-  // Special handling for 'nationality' field
-  if (
-    fieldname === "nationality" &&
-    (fieldType === "Data" || fieldType === "Select") &&
-    fieldTypeConfigurations["Nationality"]
-  ) {
+  if (fieldname === "nationality" && fieldTypeConfigurations["Nationality"]) {
     return fieldTypeConfigurations["Nationality"];
   }
 
-  // Check for custom UI control hints in description
   if (fieldSchema && (fieldType === "Data" || fieldType === "Small Text")) {
     const desc = parseDescription(fieldSchema.description);
     if (desc.ui_control && fieldTypeConfigurations[desc.ui_control]) {

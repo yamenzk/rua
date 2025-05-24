@@ -1,4 +1,4 @@
-// dashboard/src/components/formFields/ColorPickerFormField.jsx
+// src/components/formFields/ColorPickerFormField.jsx - Fixed version
 import React from "react";
 import { ColorPicker } from "primereact/colorpicker";
 
@@ -45,6 +45,9 @@ const ColorPickerFormField = (props) => {
     }
   };
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem: _fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   return (
     <div className={`flex flex-col items-center ${className || ""}`}>
       <ColorPicker
@@ -60,7 +63,7 @@ const ColorPickerFormField = (props) => {
             // input: { className: 'w-full' }
           }
         }
-        {...otherProps} // Spread other props like tooltip
+        {...safeOtherProps} // Spread other props from FormFieldAdapter (now filtered)
       />
       {/* Display the current value with # for user confirmation */}
       <span className="text-sm text-text-color-secondary mt-1">

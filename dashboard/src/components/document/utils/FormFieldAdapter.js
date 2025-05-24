@@ -268,7 +268,6 @@ export const getAdaptedProps = (fieldSchema, context) => {
 
 		case "Select":
 		case "Autocomplete":
-		case "Nationality":
 			return getSelectProps(fullContext);
 
 		case "Text Editor":

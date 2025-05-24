@@ -33,26 +33,19 @@ export const useTableFilters = (columnsConfig) => {
 				) {
 					matchMode = FilterMatchMode.EQUALS;
 				} else if (
-					colConfig.fieldtype === "Link" ||
-					colConfig.fieldtype === "Nationality"
+					colConfig.fieldtype === "Link"
 				) {
 					matchMode = FilterMatchMode.IN;
 					operator = FilterOperator.OR;
+					initialFilters[colConfig.fieldname] = {
+						value: [],
+						matchMode,
+					};
 				}
-
 				if (fieldCfg.dataType === "numeric" || fieldCfg.dataType === "date") {
 					initialFilters[colConfig.fieldname] = {
 						operator: FilterOperator.AND,
 						constraints: [{ value: null, matchMode }],
-					};
-				} else if (
-					colConfig.fieldtype === "Link" ||
-					colConfig.fieldtype === "Nationality"
-				) {
-					// Ensure Link and Nationality fields always start with empty array
-					initialFilters[colConfig.fieldname] = {
-						value: [], // Always initialize as empty array for MultiSelect components
-						matchMode,
 					};
 				} else {
 					initialFilters[colConfig.fieldname] = {

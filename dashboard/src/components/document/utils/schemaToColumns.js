@@ -118,12 +118,6 @@ export const transformSchemaToColumnConfig = (formSchema, customArgs = {}) => {
 							.map((opt) => ({ label: String(opt), value: opt }));
 					}
 					break;
-				case "Nationality":
-					processedFilterDropdownOptions = nationalitiesData.map((n) => ({
-						label: `${n.flag} ${n.name}`,
-						value: n.name,
-					}));
-					break;
 				case "Link":
 					// For Link fields, we no longer pre-populate options here
 					// The LinkFilter component will fetch them dynamically
@@ -151,8 +145,7 @@ export const transformSchemaToColumnConfig = (formSchema, customArgs = {}) => {
 			linked_doctype: field.fieldtype === "Link" ? field.options : undefined,
 			options_source_string:
 				field.fieldtype === "Select" ||
-				field.fieldtype === "Autocomplete" ||
-				field.fieldtype === "Nationality"
+				field.fieldtype === "Autocomplete"
 					? field.options
 					: null,
 			options_source_array: field.fieldtype === "Select" ? field.select_options_data : null,

@@ -1,4 +1,4 @@
-// dashboard/src/components/formFields/CurrencyFormField.jsx
+// src/components/formFields/CurrencyFormField.jsx - Fixed version
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 
@@ -12,13 +12,16 @@ const CurrencyFormField = (props) => {
     ...rest
   } = props;
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem, ...safeRest } = rest;
+
   return (
     <div className={`p-inputgroup ${className || ""}`}>
       <span className="p-inputgroup-addon">
         <img src="/aed.svg" alt="AED" className="h-4 w-4" />
       </span>
       <InputNumber
-        {...rest}
+        {...safeRest}
         mode="decimal" // Changed from currency to decimal to avoid double currency symbols
         locale={locale}
         minFractionDigits={minFractionDigits}

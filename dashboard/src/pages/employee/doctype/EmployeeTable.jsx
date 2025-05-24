@@ -23,13 +23,6 @@ const EmployeeTable = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
-  // For static options like nationality
-  const nationalityOptions = useMemo(() => {
-    return nationalities.map((n) => ({
-      label: `${n.flag} ${n.name}`,
-      value: n.name,
-    }));
-  }, []);
 
   // Fetch the form schema for RUA Employee
   const {
@@ -49,13 +42,10 @@ const EmployeeTable = () => {
     if (!formSchema) return [];
 
     const customArgs = {
-      selectOverrides: {
-        nationality: nationalityOptions,
-      },
       includeAuditFields: true, // Enable audit fields
     };
     return transformSchemaToColumnConfig(formSchema, customArgs);
-  }, [formSchema, nationalityOptions]);
+  }, [formSchema]);
 
   const globalFilterFields = useMemo(() => {
     if (!formSchema || !formSchema.fields)

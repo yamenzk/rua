@@ -1,4 +1,4 @@
-// dashboard/src/components/formFields/CheckSwitchFormField.jsx
+// src/components/formFields/CheckSwitchFormField.jsx - Fixed version
 import React from "react";
 import { InputSwitch } from "primereact/inputswitch";
 import { Checkbox } from "primereact/checkbox";
@@ -24,8 +24,8 @@ const CheckSwitchFormField = (props) => {
 
   // The `onChange` prop from DocEditor's commonProps expects an event-like object.
   // Both InputSwitch and Checkbox provide the new boolean state differently.
-  // The FormFieldAdapter for "Check" should provide a tailored onChange.
-  // If not, this component needs to adapt.
+  // The FormFieldAdapter for "Check" should provide a specific onChange.
+  // If not, and we rely on the default commonProps.onChange, this is how to adapt:
 
   const handleChange = (e) => {
     if (onChange) {
@@ -48,6 +48,9 @@ const CheckSwitchFormField = (props) => {
     }
   };
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem: _fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   const commonInputProps = {
     inputId: id, // PrimeReact convention for associating label
     checked: !!checked, // Ensure boolean
@@ -55,7 +58,7 @@ const CheckSwitchFormField = (props) => {
     disabled: disabled,
     tooltip: tooltip, // Pass tooltip
     tooltipOptions: props.tooltipOptions || { position: "top" },
-    ...otherProps, // Spread other props from FormFieldAdapter
+    ...safeOtherProps, // Spread other props from FormFieldAdapter (now filtered)
   };
 
   if (descriptionData.asSwitch) {

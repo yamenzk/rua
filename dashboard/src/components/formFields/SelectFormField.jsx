@@ -1,4 +1,4 @@
-// src/components/formFields/SelectFormField.jsx
+// src/components/formFields/SelectFormField.jsx - Final Production Version
 import React, { useMemo } from "react";
 import { Dropdown } from "primereact/dropdown";
 import nationalitiesData from "@/utils/nationalities.json";
@@ -12,7 +12,7 @@ const SelectFormField = ({
   placeholder,
   fieldSchemaItem,
   showClear = true,
-  filter = false,
+  filter, // No default value - let shouldEnableFilter determine it
   ...otherProps
 }) => {
   // Generate options based on field configuration
@@ -24,8 +24,7 @@ const SelectFormField = ({
       select_options_data,
     } = fieldSchemaItem || {};
 
-    // Special handling for nationality field
-    if (fieldname === "nationality" || fieldtype === "Nationality") {
+    if (id === "nationality" || fieldname === "nationality") {
       return nationalitiesData.map((n) => ({
         label: `${n.flag} ${n.name}`,
         value: n.name,
@@ -53,21 +52,33 @@ const SelectFormField = ({
     }
 
     return [];
-  }, [fieldSchemaItem]);
+  }, [id, fieldSchemaItem]);
 
   // Determine if filtering should be enabled
   const shouldEnableFilter = useMemo(() => {
+    // If filter is explicitly set, use that value
     if (filter !== undefined) return filter;
 
-    const { fieldtype, fieldname } = fieldSchemaItem || {};
+    // Get fieldname and fieldtype from fieldSchemaItem, fallback to id for fieldname
+    const fieldname = fieldSchemaItem?.fieldname || id;
+    const fieldtype = fieldSchemaItem?.fieldtype;
 
-    // Enable filter for Autocomplete type or nationality field
-    return (
-      fieldtype === "Autocomplete" ||
-      fieldname === "nationality" ||
-      options.length > 10
-    );
-  }, [filter, fieldSchemaItem, options.length]);
+    if (id === "nationality" || fieldname === "nationality") {
+      return true;
+    }
+
+    // Enable filter for Autocomplete type fields
+    if (fieldtype === "Autocomplete") {
+      return true;
+    }
+
+    // Enable filter for fields with many options (>10)
+    if (options.length > 10) {
+      return true;
+    }
+
+    return false;
+  }, [filter, id, fieldSchemaItem, options.length]);
 
   // Handle change event
   const handleChange = (e) => {
@@ -83,6 +94,9 @@ const SelectFormField = ({
     }
   };
 
+  // Filter out non-DOM props before spreading
+  const { fieldSchemaItem: _fieldSchemaItem, ...safeOtherProps } = otherProps;
+
   return (
     <Dropdown
       id={id}
@@ -97,7 +111,7 @@ const SelectFormField = ({
       filterBy="label"
       filterPlaceholder={shouldEnableFilter ? "Search..." : undefined}
       emptyMessage="No options available"
-      {...otherProps}
+      {...safeOtherProps}
     />
   );
 };
