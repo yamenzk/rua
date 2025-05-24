@@ -1,21 +1,40 @@
 // src/components/document/utils/FormFieldAdapter.js
-import * as _formatters from "@/utils/formatters.jsx"; // Ensure this path is correct
-import nationalitiesData from "@/utils/nationalities.json"; // Assuming path for Nationality field
+import * as _formatters from "@/utils/formatters.jsx";
 
 /**
- * Context object structure expected by adapter functions:
- * {
- * formData: object,             // The current form data
- * handleInputChange: function,  // (fieldname, value, fieldtype?) => void
- * linkOptions: object,          // State for link field options (replaces linkSuggestions)
- * linkOptionsLoading: object,   // Loading states for link fields
- * fetchLinkOptions: function,   // Function to fetch link options
- * isCreateMode: boolean,
- * fieldSchema: object,          // The schema for the specific field being rendered (passed within fullContext)
- * toast: RefObject<Toast>       // PrimeReact Toast ref
- * openUploadModal: function,    // (fieldname) => void
- * }
+ * Centralized Form Field Adapter
+ * Now all field types use dedicated form components with consistent interfaces
  */
+
+const getStandardProps = (context) => {
+	const { fieldname, placeholder, fieldtype } = context.fieldSchema;
+	const generateFallbackLabel = (fn) =>
+		fn.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+
+	return {
+		id: fieldname,
+		value: context.formData[fieldname],
+		placeholder: placeholder || `Enter ${generateFallbackLabel(fieldname)}`,
+		onChange: (e) => {
+			// Handle different event structures
+			let newValue;
+			if (e && typeof e === "object") {
+				if ("value" in e) {
+					newValue = e.value;
+				} else if (e.target && "value" in e.target) {
+					newValue = e.target.value;
+				} else if (e.target && "checked" in e.target) {
+					newValue = e.target.checked;
+				} else {
+					newValue = e;
+				}
+			} else {
+				newValue = e;
+			}
+			context.handleInputChange(fieldname, newValue, fieldtype);
+		},
+	};
+};
 
 const getCheckProps = (context) => {
 	const { fieldname } = context.fieldSchema;
@@ -27,36 +46,35 @@ const getCheckProps = (context) => {
 	} else if (typeof currentValue === "number") {
 		checkedValue = currentValue === 1;
 	} else {
-		checkedValue = !!currentValue; // Fallback, handles undefined, null, empty strings as false
+		checkedValue = !!currentValue;
 	}
 
 	return {
+		...getStandardProps(context),
 		checked: checkedValue,
-		// The onChange from commonProps in DocEditor is already:
-		// (e) => handleInputChange(fieldname, e.target.value, fieldtype)
-		// Our CheckSwitchFormField's internal handleChange adapts its own event to this structure.
-		// So, the default commonProps.onChange can be used if CheckSwitchFormField does the adaptation.
-		// If we want the adapter to be fully responsible:
+		fieldSchemaItem: context.fieldSchema,
 		onChange: (eventFromComponent) => {
-			// eventFromComponent is from Checkbox/InputSwitch
 			let newBooleanValue = false;
 			if (eventFromComponent && typeof eventFromComponent === "object") {
 				if (typeof eventFromComponent.checked === "boolean")
-					newBooleanValue = eventFromComponent.checked; // Checkbox
+					newBooleanValue = eventFromComponent.checked;
 				else if (typeof eventFromComponent.value === "boolean")
-					newBooleanValue = eventFromComponent.value; // InputSwitch
+					newBooleanValue = eventFromComponent.value;
 				else if (
 					eventFromComponent.target &&
 					typeof eventFromComponent.target.checked === "boolean"
 				)
-					newBooleanValue = eventFromComponent.target.checked; // HTML input
-				else newBooleanValue = !!eventFromComponent; // Fallback
+					newBooleanValue = eventFromComponent.target.checked;
+				else newBooleanValue = !!eventFromComponent;
 			} else {
 				newBooleanValue = !!eventFromComponent;
 			}
-			context.handleInputChange(fieldname, newBooleanValue ? 1 : 0, "Check"); // Store as 0/1
+			context.handleInputChange(
+				context.fieldSchema.fieldname,
+				newBooleanValue ? 1 : 0,
+				"Check"
+			);
 		},
-		fieldSchemaItem: context.fieldSchema, // For CheckSwitchFormField to read description
 	};
 };
 
@@ -73,16 +91,12 @@ const getDateTimeProps = (context) => {
 				typeof currentValue === "string" &&
 				currentValue.match(/^\d{2}:\d{2}(:\d{2})?$/)
 			) {
-				parsableValue = `2000-01-01T${currentValue}`; // Use a neutral date
+				parsableValue = `2000-01-01T${currentValue}`;
 			}
 
 			const date = new Date(parsableValue);
 			if (!isNaN(date.getTime())) {
 				componentValue = date;
-			} else {
-				console.warn(
-					`[FormFieldAdapter] Failed to parse date for field ${fieldname} (${fieldtype}). Value: ${currentValue}`
-				);
 			}
 		} catch (e) {
 			console.error(
@@ -106,15 +120,16 @@ const getDateTimeProps = (context) => {
 		calendarSpecificProps.timeOnly = true;
 		calendarSpecificProps.showSeconds = true;
 		serverFormatFunction = _formatters.formatServerTime;
-		delete calendarSpecificProps.dateFormat; // Time-only doesn't need dateFormat
+		delete calendarSpecificProps.dateFormat;
 	}
 
 	return {
-		value: componentValue, // This will now be a Date object or null
+		...getStandardProps(context),
+		value: componentValue,
 		onChange: (e) =>
 			context.handleInputChange(
 				fieldname,
-				e.value ? serverFormatFunction(e.value) : null, // e.value from PrimeReact Calendar is a Date object
+				e.value ? serverFormatFunction(e.value) : null,
 				fieldtype
 			),
 		...calendarSpecificProps,
@@ -124,10 +139,9 @@ const getDateTimeProps = (context) => {
 const getLinkProps = (context) => {
 	const {
 		fieldname,
-		options: linkedDoctypeFromOptions, // Typically the linked Doctype from schema's 'options'
-		target: linkedDoctypeFromTarget, // Fallback if 'options' is used differently
+		options: linkedDoctypeFromOptions,
+		target: linkedDoctypeFromTarget,
 		force_selection,
-		description, // The raw description string from fieldSchema
 		placeholder,
 	} = context.fieldSchema;
 
@@ -135,144 +149,58 @@ const getLinkProps = (context) => {
 
 	if (!actualLinkedDoctype) {
 		console.warn(
-			`[FormFieldAdapter] No linked doctype determined for Link field: ${fieldname}. Options might not work.`
+			`[FormFieldAdapter] No linked doctype determined for Link field: ${fieldname}`
 		);
 		return {
-			value: context.formData[fieldname] || null,
+			...getStandardProps(context),
 			options: [],
 			disabled: true,
 			placeholder: "Link configuration error",
-			onChange: (e) => context.handleInputChange(fieldname, e.value, "Link"),
 		};
 	}
 
 	return {
-		value: context.formData[fieldname] || null,
+		...getStandardProps(context),
 		linkedDoctype: actualLinkedDoctype,
 		fieldSchemaItem: context.fieldSchema,
 		fetchLinkOptions: context.fetchLinkOptions,
 		isLoading: context.linkOptionsLoading?.[actualLinkedDoctype] || false,
 		placeholder: placeholder || `Select ${actualLinkedDoctype}...`,
 		showClear: !force_selection,
-		// Use a simpler onChange that matches what the component expects
-		onChange: (e) => {
-			// The LinkFormField will provide the proper event structure
-			context.handleInputChange(fieldname, e.target.value, "Link");
-		},
 	};
 };
 
-const getNumberInputProps = (context) => {
-	const {
-		fieldname,
-		fieldtype,
-		options: schemaOptions,
-		precision,
-		non_negative,
-	} = context.fieldSchema;
-
-	const currentValue = context.formData[fieldname];
+const getNumericProps = (context) => {
+	const { fieldname, fieldtype, precision, non_negative } = context.fieldSchema;
 	const props = {
-		value:
-			currentValue === undefined || currentValue === null || currentValue === ""
-				? null // InputNumber prefers null for empty
-				: Number(currentValue),
-		// InputNumber's event is {originalEvent, value, formattedValue}
-		onValueChange: (e) => context.handleInputChange(fieldname, e.value, fieldtype), // e.value is the numeric value
+		...getStandardProps(context),
+		min: non_negative ? 0 : undefined,
 	};
 
-	if (non_negative) props.min = 0;
-
-	if (fieldtype === "Currency") {
-		props.mode = "currency";
-		props.currency = schemaOptions || "AED"; // Default currency from schema options or hardcoded
-		props.locale = "en-AE"; // Or from a global config
-	} else {
-		props.mode = "decimal"; // For Int, Float, Percent, Duration
+	if (fieldtype === "Float") {
+		props.precision = precision;
 	}
-
-	if (fieldtype === "Percent") props.suffix = "%";
-
-	const defaultPrecision = fieldtype === "Float" || fieldtype === "Currency" ? 2 : 0;
-	const precisionNum = parseInt(precision, 10);
-
-	props.minFractionDigits =
-		fieldtype === "Int" ? 0 : isNaN(precisionNum) ? defaultPrecision : precisionNum;
-	props.maxFractionDigits =
-		fieldtype === "Int" ? 0 : isNaN(precisionNum) ? defaultPrecision : precisionNum;
 
 	return props;
 };
 
-const getSelectBasedProps = (context) => {
-	// Renamed from getSelectProps for clarity
-	const { fieldname, fieldtype, options, select_options_data, placeholder } =
-		context.fieldSchema;
-	let parsedOptions = [];
-
-	if (
-		fieldtype === "Select" &&
-		Array.isArray(select_options_data) &&
-		select_options_data.length > 0
-	) {
-		parsedOptions = select_options_data.map((opt) => ({ label: String(opt), value: opt }));
-	} else if (
-		fieldtype === "Autocomplete" &&
-		typeof options === "string" &&
-		options.trim() !== ""
-	) {
-		// "Autocomplete" type uses fieldSchema.options (newline-separated string)
-		parsedOptions = options
-			.split("\n")
-			.map((opt) => opt.trim())
-			.filter((opt) => opt)
-			.map((opt) => ({ label: String(opt), value: opt }));
-	}
-	// Note: "Nationality" is handled by its own adapter function now.
-
-	// Determine if filtering should be enabled for the Dropdown component
-	const enableFilter = fieldtype === "Autocomplete"; // Only "Autocomplete" gets search by default here
-
+const getSelectProps = (context) => {
 	return {
-		value: context.formData[fieldname] ?? null, // Dropdown prefers null for no selection
-		options: parsedOptions,
-		onChange: (e) => context.handleInputChange(fieldname, e.value, fieldtype), // e.value is the selected option's value
+		...getStandardProps(context),
+		fieldSchemaItem: context.fieldSchema,
 		showClear: true,
-		placeholder: placeholder || "Select an option...",
-		filter: enableFilter ? true : undefined,
-		filterBy: enableFilter ? "label" : undefined,
-		filterPlaceholder: enableFilter ? "Search..." : undefined,
-	};
-};
-
-const getNationalityProps = (context) => {
-	const { fieldname, placeholder } = context.fieldSchema;
-	const nationalityOptions = nationalitiesData.map((n) => ({
-		label: `${n.flag} ${n.name}`,
-		value: n.name,
-	}));
-	return {
-		value: context.formData[fieldname] ?? null,
-		options: nationalityOptions,
-		onChange: (e) => context.handleInputChange(fieldname, e.value, "Nationality"),
-		showClear: true,
-		filter: true, // Nationalities list is long, so filter is good
-		filterBy: "label",
-		placeholder: placeholder || "Select Nationality...",
-		// itemTemplate: (option) => <span>{option.label}</span>, // This should be handled by NationalityFormField
-		// fieldSchemaItem: context.fieldSchema, // Pass if NationalityFormField needs it for more complex logic
 	};
 };
 
 const getTextEditorProps = (context) => {
-	const { fieldname, options } = context.fieldSchema; // 'options' can be used for height e.g. "200px"
-	let height = "200px"; // Default height
+	const { fieldname, options } = context.fieldSchema;
+	let height = "200px";
 	if (options && String(options).match(/^\d+px$/)) {
 		height = options;
 	}
 	return {
 		value: context.formData[fieldname] || "",
-		onTextChange: (e) => context.handleInputChange(fieldname, e.htmlValue, "Text Editor"), // e.htmlValue for rich text
+		onTextChange: (e) => context.handleInputChange(fieldname, e.htmlValue, "Text Editor"),
 		style: { height: height },
 	};
 };
@@ -280,11 +208,10 @@ const getTextEditorProps = (context) => {
 const getAttachmentProps = (context) => {
 	const { fieldname } = context.fieldSchema;
 	return {
-		value: context.formData[fieldname] || "", // URL or "Pending: filename.txt"
+		value: context.formData[fieldname] || "",
 		fieldname: fieldname,
 		onFileUploadTrigger: () => {
 			if (typeof context.openUploadModal === "function") {
-				// Pass fieldname to openUploadModal so it knows which field is uploading
 				context.openUploadModal(fieldname);
 			} else {
 				console.warn(
@@ -292,15 +219,21 @@ const getAttachmentProps = (context) => {
 				);
 			}
 		},
-		fieldSchemaItem: context.fieldSchema, // Pass to AttachmentFormField if it needs more schema details
+		fieldSchemaItem: context.fieldSchema,
 	};
 };
 
-const getDefaultInputProps = (context) => {
-	const { fieldname, fieldtype } = context.fieldSchema; // Added fieldtype
+const getColorProps = (context) => {
 	return {
-		value: context.formData[fieldname] || "",
-		onChange: (e) => context.handleInputChange(fieldname, e.target.value, fieldtype), // Pass fieldtype
+		...getStandardProps(context),
+		fieldSchemaItem: context.fieldSchema,
+	};
+};
+
+const getHeadingProps = (context) => {
+	return {
+		label: context.fieldSchema.label,
+		fieldSchemaItem: context.fieldSchema,
 	};
 };
 
@@ -311,53 +244,52 @@ export const getAdaptedProps = (fieldSchema, context) => {
 	switch (fieldtype) {
 		case "Check":
 			return getCheckProps(fullContext);
+
 		case "Date":
 		case "Datetime":
 		case "Time":
 			return getDateTimeProps(fullContext);
+
 		case "Link":
 			return getLinkProps(fullContext);
+
 		case "Currency":
+			return {
+				...getNumericProps(fullContext),
+				currency: fieldSchema.options || "AED",
+				locale: "en-AE",
+			};
+
 		case "Int":
 		case "Float":
 		case "Percent":
-		case "Duration": // <--- ADDED Duration here to use getNumberInputProps
-			return getNumberInputProps(fullContext);
-		case "Heading":
-			// HeadingField takes fieldSchemaItem directly. DocEditor's commonProps
-			// will pass fieldSchemaItem if the formComponent is HeadingField.
-			// We just need to ensure it gets the label.
-			return { label: fieldSchema.label, fieldSchemaItem: fieldSchema }; // Or let commonProps handle fieldSchemaItem
+		case "Duration":
+			return getNumericProps(fullContext);
 
-		// Types using Dropdown, handled by getSelectBasedProps
 		case "Select":
-		case "Autocomplete": // Will get filter:true from getSelectBasedProps
-			return getSelectBasedProps(fullContext);
-
+		case "Autocomplete":
 		case "Nationality":
-			return getNationalityProps(fullContext); // Dedicated adapter for Nationality
+			return getSelectProps(fullContext);
 
 		case "Text Editor":
 			return getTextEditorProps(fullContext);
+
 		case "Attach":
 		case "Attach Image":
 			return getAttachmentProps(fullContext);
 
-		// Simple text-based inputs
+		case "Color":
+			return getColorProps(fullContext);
+
+		case "Heading":
+			return getHeadingProps(fullContext);
+
+		// Text-based fields
 		case "Data":
 		case "Small Text":
 		case "Text":
 		case "Long Text":
-		case "Color": // ColorPickerFormField handles its own value/onChange for #
-			// but might receive default props like value from here.
-			// Consider if Color needs a specific adapter function or if
-			// ColorPickerFormField is self-sufficient with default props.
-			// For now, let it use default.
-			return getDefaultInputProps(fullContext);
 		default:
-			console.warn(
-				`[FormFieldAdapter] No specific adapter for fieldtype: "${fieldtype}". Using default input props.`
-			);
-			return getDefaultInputProps(fullContext);
+			return getStandardProps(fullContext);
 	}
 };
