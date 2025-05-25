@@ -160,35 +160,6 @@
   padding: 0.25rem 0.5rem !important;
 }
 
-/* Enhanced MultiSelect */
-.dynamicDataTable :global(.p-multiselect) {
-  border-radius: 6px !important;
-  transition: all 0.2s ease;
-}
-
-.dynamicDataTable :global(.p-multiselect:not(.p-disabled):hover) {
-  border-color: var(--primary-color) !important;
-}
-
-.dynamicDataTable :global(.p-multiselect-token) {
-  background: var(--primary-50) !important;
-  color: var(--primary-700) !important;
-  border-radius: 4px !important;
-  padding: 0.125rem 0.5rem !important;
-  margin: 0.125rem !important;
-  font-size: 0.75rem !important;
-}
-
-/* Enhanced Dropdown */
-.dynamicDataTable :global(.p-dropdown) {
-  border-radius: 6px !important;
-  transition: all 0.2s ease;
-}
-
-.dynamicDataTable :global(.p-dropdown:not(.p-disabled):hover) {
-  border-color: var(--primary-color) !important;
-}
-
 /* Context Menu Enhancements */
 .dynamicDataTable :global(.p-contextmenu) {
   border: none !important;
@@ -241,31 +212,6 @@
   border-radius: 4px !important;
 }
 
-/* Enhanced Input Focus States */
-.dynamicDataTable :global(.p-inputtext:enabled:focus),
-.dynamicDataTable :global(.p-dropdown:not(.p-disabled).p-focus),
-.dynamicDataTable :global(.p-multiselect:not(.p-disabled).p-focus) {
-  outline: none !important;
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2) !important;
-}
-
-/* Enhanced Button States */
-.dynamicDataTable :global(.p-button) {
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  transition: all 0.15s ease !important;
-}
-
-.dynamicDataTable :global(.p-button:enabled:hover) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.dynamicDataTable :global(.p-button.p-button-text:enabled:hover) {
-  transform: none;
-  box-shadow: none !important;
-}
 
 /* Enhanced Icons */
 .dynamicDataTable :global(.pi) {

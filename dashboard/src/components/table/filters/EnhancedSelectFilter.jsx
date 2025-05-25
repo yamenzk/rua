@@ -1,7 +1,5 @@
 // src/components/table/filters/EnhancedSelectFilter.jsx - Fixed Version
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { MultiSelect } from "primereact/multiselect"; // Still imported but not used directly for the final component
-import { VirtualScroller } from "primereact/virtualscroller"; // Still imported
 import { Dropdown } from "primereact/dropdown"; // This is what we're using
 import nationalitiesData from "@/utils/nationalities.json";
 
@@ -10,7 +8,6 @@ const EnhancedSelectFilter = ({
   colProps,
   fieldname,
   placeholder = "Any",
-  maxSelectedLabels = 3, // This prop is typically for MultiSelect, less relevant for Dropdown
 }) => {
   const [filteredOptions, setFilteredOptions] = useState([]);
 
@@ -129,8 +126,8 @@ const EnhancedSelectFilter = ({
     return <span>{option.label}</span>;
   };
 
-  const multiSelectProps = {
-    // Renamed to dropdownProps for clarity, but you can keep multiSelectProps if you prefer
+  const dropdownProps = {
+    // Renamed to dropdownProps for clarity, but you can keep dropdownProps if you prefer
     value: selectedValue, // Pass the single selected value here
     options: displayOptions,
     onChange: handleSelectionChange,
@@ -158,7 +155,7 @@ const EnhancedSelectFilter = ({
       : undefined,
   };
 
-  return <Dropdown {...multiSelectProps} />;
+  return <Dropdown {...dropdownProps} />;
 };
 
 export default EnhancedSelectFilter;

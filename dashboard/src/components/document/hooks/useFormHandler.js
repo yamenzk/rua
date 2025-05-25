@@ -82,7 +82,7 @@ export const useFormHandler = (formSchema, initialDocData, isCreateMode) => {
 					(typeof formData[field.fieldname] === "string" &&
 						String(formData[field.fieldname]).trim() === "") ||
 					(Array.isArray(formData[field.fieldname]) &&
-						formData[field.fieldname].length === 0) || // For empty table/multiselect
+						formData[field.fieldname].length === 0) ||
 					(typeof formData[field.fieldname] === "string" && // Check for pending attachments
 						String(formData[field.fieldname]).startsWith("Pending:")))
 			) {
