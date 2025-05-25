@@ -19,7 +19,7 @@ export const useTableFilters = (columnsConfig) => {
 				if (fieldCfg.filterable === false) return;
 
 				let matchMode = FilterMatchMode.CONTAINS;
-				let operator = FilterOperator.AND;
+				let operator = FilterOperator.AND; // Default to AND for constraints
 
 				if (fieldCfg.dataType === "numeric") {
 					matchMode = FilterMatchMode.EQUALS;
@@ -32,16 +32,16 @@ export const useTableFilters = (columnsConfig) => {
 					colConfig.fieldtype === "Autocomplete"
 				) {
 					matchMode = FilterMatchMode.EQUALS;
-				} else if (
-					colConfig.fieldtype === "Link"
-				) {
-					matchMode = FilterMatchMode.IN;
-					operator = FilterOperator.OR;
+				} else if (colConfig.fieldtype === "Link") {
+					matchMode = FilterMatchMode.EQUALS; 
 					initialFilters[colConfig.fieldname] = {
-						value: [],
+						value: null, 
 						matchMode,
 					};
+					return; 
 				}
+
+				// Generic constraint initialization for other field types
 				if (fieldCfg.dataType === "numeric" || fieldCfg.dataType === "date") {
 					initialFilters[colConfig.fieldname] = {
 						operator: FilterOperator.AND,

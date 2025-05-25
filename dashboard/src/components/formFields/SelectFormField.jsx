@@ -1,6 +1,7 @@
-// src/components/formFields/SelectFormField.jsx - Final Production Version
-import React, { useMemo } from "react";
+// src/components/formFields/SelectFormField.jsx - Enhanced with Virtual Scrolling
+import React, { useMemo, useState, useCallback } from "react";
 import { Dropdown } from "primereact/dropdown";
+import { VirtualScroller } from "primereact/virtualscroller";
 import nationalitiesData from "@/utils/nationalities.json";
 
 const SelectFormField = ({
@@ -12,9 +13,11 @@ const SelectFormField = ({
   placeholder,
   fieldSchemaItem,
   showClear = true,
-  filter, // No default value - let shouldEnableFilter determine it
+  filter,
   ...otherProps
 }) => {
+  const [filteredOptions, setFilteredOptions] = useState([]);
+
   // Generate options based on field configuration
   const options = useMemo(() => {
     const {
@@ -28,6 +31,7 @@ const SelectFormField = ({
       return nationalitiesData.map((n) => ({
         label: `${n.flag} ${n.name}`,
         value: n.name,
+        searchText: n.name.toLowerCase(), // For faster filtering
       }));
     }
 
@@ -36,6 +40,7 @@ const SelectFormField = ({
       return select_options_data.map((opt) => ({
         label: String(opt),
         value: opt,
+        searchText: String(opt).toLowerCase(),
       }));
     }
 
@@ -48,6 +53,7 @@ const SelectFormField = ({
         .map((opt) => ({
           label: String(opt),
           value: opt,
+          searchText: String(opt).toLowerCase(),
         }));
     }
 
@@ -56,10 +62,8 @@ const SelectFormField = ({
 
   // Determine if filtering should be enabled
   const shouldEnableFilter = useMemo(() => {
-    // If filter is explicitly set, use that value
     if (filter !== undefined) return filter;
 
-    // Get fieldname and fieldtype from fieldSchemaItem, fallback to id for fieldname
     const fieldname = fieldSchemaItem?.fieldname || id;
     const fieldtype = fieldSchemaItem?.fieldtype;
 
@@ -67,12 +71,10 @@ const SelectFormField = ({
       return true;
     }
 
-    // Enable filter for Autocomplete type fields
     if (fieldtype === "Autocomplete") {
       return true;
     }
 
-    // Enable filter for fields with many options (>10)
     if (options.length > 10) {
       return true;
     }
@@ -94,26 +96,78 @@ const SelectFormField = ({
     }
   };
 
+  // Custom filter function for better performance
+  const handleFilter = useCallback(
+    (e) => {
+      const query = e.filter.toLowerCase();
+      if (!query) {
+        setFilteredOptions(options);
+        return;
+      }
+
+      // Use the pre-computed searchText for faster filtering
+      const filtered = options.filter((option) =>
+        option.searchText.includes(query)
+      );
+      setFilteredOptions(filtered);
+    },
+    [options]
+  );
+
+  // Initialize filtered options
+  React.useEffect(() => {
+    setFilteredOptions(options);
+  }, [options]);
+
+  // Custom item template for virtual scrolling (only for nationality)
+  const itemTemplate = (option) => {
+    if (id === "nationality" || fieldSchemaItem?.fieldname === "nationality") {
+      return (
+        <div className="flex align-items-center gap-2 p-1">
+          <span style={{ fontSize: "1.2em" }}>
+            {option.label.split(" ")[0]}
+          </span>
+          <span>{option.label.substring(option.label.indexOf(" ") + 1)}</span>
+        </div>
+      );
+    }
+    return <span>{option.label}</span>;
+  };
+
+  // Use virtual scrolling for large datasets (nationality)
+  const isLargeDataset = options.length > 50;
+  const displayOptions = shouldEnableFilter ? filteredOptions : options;
+
   // Filter out non-DOM props before spreading
   const { fieldSchemaItem: _fieldSchemaItem, ...safeOtherProps } = otherProps;
 
-  return (
-    <Dropdown
-      id={id}
-      value={value || null}
-      options={options}
-      onChange={handleChange}
-      disabled={disabled}
-      className={className}
-      placeholder={placeholder || "Select an option..."}
-      showClear={showClear}
-      filter={shouldEnableFilter}
-      filterBy="label"
-      filterPlaceholder={shouldEnableFilter ? "Search..." : undefined}
-      emptyMessage="No options available"
-      {...safeOtherProps}
-    />
-  );
+  const dropdownProps = {
+    id,
+    value: value || null,
+    options: displayOptions,
+    onChange: handleChange,
+    disabled,
+    className,
+    placeholder: placeholder || "Select an option...",
+    showClear,
+    filter: shouldEnableFilter,
+    filterBy: shouldEnableFilter ? undefined : "label", // Use custom filter for large datasets
+    onFilter: shouldEnableFilter && isLargeDataset ? handleFilter : undefined,
+    filterPlaceholder: shouldEnableFilter ? "Search..." : undefined,
+    emptyMessage: "No options available",
+    itemTemplate: isLargeDataset ? itemTemplate : undefined,
+    virtualScrollerOptions: isLargeDataset
+      ? {
+          itemSize: 38, // Height of each item in pixels
+          scrollHeight: "200px", // Max height of dropdown
+          lazy: false,
+          showSpacer: false,
+        }
+      : undefined,
+    ...safeOtherProps,
+  };
+
+  return <Dropdown {...dropdownProps} />;
 };
 
 export default SelectFormField;
