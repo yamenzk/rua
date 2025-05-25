@@ -3,68 +3,278 @@ import React from "react";
 import { useMemo } from "react";
 
 /**
- * Central Form Field Styles System
- * Provides consistent styling across all form components with PrimeReact PassThrough support
+ * =============================================================================
+ * CENTRALIZED DESIGN TOKENS
+ * =============================================================================
+ * All design tokens for form fields - modify these to change styling uniformly
  */
 
-// Base design tokens
-export const FORM_FIELD_TOKENS = {
-  // Spacing & Sizing
-  padding: {
-    input: "px-4 py-3",
-    compact: "px-3 py-2",
-    large: "px-5 py-4",
+// Core Design Tokens - Modify these to change all form field styling
+export const DESIGN_TOKENS = {
+  // === SPACING & SIZING ===
+  spacing: {
+    // Input padding
+    input: {
+      compact: "px-3 py-2",
+      base: "px-4 py-3",
+      large: "px-5 py-4",
+    },
+    // Panel/Container spacing
+    panel: {
+      padding: "p-4",
+      margin: "mt-2",
+    },
+    // Component spacing
+    gap: {
+      small: "gap-2",
+      base: "gap-4",
+    },
+    // Icon/addon spacing
+    addon: {
+      padding: "px-4 py-3",
+      gap: "ml-2",
+    },
   },
 
-  // Border Radius
+  // === BORDER RADIUS ===
   radius: {
-    base: "rounded-2xl",
     small: "rounded-xl",
+    base: "rounded-2xl",
     large: "rounded-3xl",
+    full: "rounded-full",
   },
 
-  // Typography
+  // === TYPOGRAPHY ===
   typography: {
+    // Base text styling
     base: "text-sm font-medium",
+    large: "text-lg font-bold",
+    xl: "text-xl font-bold",
+
+    // Placeholder styling
     placeholder: "placeholder:text-text-color-secondary/60",
+
+    // Error text
     error: "text-xs text-red-600 font-medium",
+
+    // Secondary text
+    secondary: "text-text-color-secondary font-medium text-sm",
   },
 
-  // Colors
+  // === COLORS ===
   colors: {
+    // Border colors
     border: {
       default: "border-surface-100",
-      hover: "border-primary-400",
-      focus: "border-primary-400",
+      hover: "border-primary-100",
+      focus: "!border-primary-400",
       error: "border-red-300",
       disabled: "border-none",
+      transparent: "border-transparent",
     },
+
+    // Background colors
     background: {
       default: "",
-      focus: "",
+      surface: "bg-surface-0",
+      surfaceAlt: "bg-surface-50",
+      surfaceDisabled: "bg-surface-100",
+      addonBg: "bg-surface-0",
+      addonHover: "bg-surface-50",
+      addonFocus: "bg-primary-50/30",
+      primary: "bg-primary-500",
+      primaryHover: "bg-primary-600",
+      primaryLight: "bg-primary-50",
+      primaryLighter: "bg-primary-100",
       error: "bg-red-50/30",
-      disabled: "bg-surface-100",
+      transparent: "bg-transparent",
+      white: "bg-white",
+      hover: {
+        primary: "hover:bg-primary-50",
+        primaryStrong: "hover:bg-primary-600",
+        surface: "hover:bg-surface-100",
+        surfaceAlt: "hover:bg-surface-400",
+      },
     },
+
+    // Text colors
     text: {
       default: "text-text-color",
-      disabled: "text-text-color-secondary",
+      secondary: "text-text-color-secondary",
+      primary: "text-primary-700",
+      primaryStrong: "text-primary-600",
       error: "text-red-600",
+      white: "text-white",
+      disabled: "text-text-color-secondary",
+      hover: {
+        primary: "hover:text-text-color",
+        primaryStrong: "hover:text-primary-500",
+      },
     },
   },
 
-  // Transitions
-  transitions: "transition-all duration-200 ease-out",
-
-  // Effects
+  // === EFFECTS & ANIMATIONS ===
   effects: {
-    focusRing:
-      "absolute inset-0 border-2 border-primary-400 rounded-2xl pointer-events-none opacity-30 animate-pulse",
-    hoverGradient:
-      "absolute inset-0 bg-gradient-to-br from-primary-50/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
-    focusShine:
-      "absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent rounded-2xl opacity-60",
+    // Transitions
+    transition: "transition-all duration-200 ease-out",
+    transitionColors: "transition-colors duration-200",
+
+    // Shadows
+    shadow: {
+      base: "shadow-sm",
+      strong: "shadow-lg",
+      xl: "shadow-xl",
+    },
+
+    // Focus states
+    focus: {
+      ring: "focus:outline-none focus:ring-2 focus:ring-primary-200",
+      ringError: "focus:ring-red-200",
+    },
+
+    // Special effects
+    // focusRing:
+    //   "absolute inset-0 border-2 border-primary-400 rounded-2xl pointer-events-none opacity-30 animate-pulse",
+    // hoverGradient:
+    //   "absolute inset-0 bg-gradient-to-br from-primary-50/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+    // focusShine:
+    //   "absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent rounded-2xl opacity-60",
+
+    // Animations
+    slideIn: "animate-in slide-in-from-top-1 duration-200",
+    scaleIn: "scale-100",
+    scaleOut: "scale-75",
+    opacity: {
+      visible: "opacity-100",
+      hidden: "opacity-0",
+      disabled: "opacity-50",
+      subtle: "opacity-60",
+    },
+  },
+
+  // === SIZING ===
+  sizing: {
+    // Icon sizes
+    icon: {
+      compact: "w-4 h-4",
+      base: "w-5 h-5",
+      large: "w-6 h-6",
+      xl: "w-8 h-8",
+      xxl: "w-10 h-10",
+    },
+
+    // Component sizes
+    component: {
+      minWidth: "min-w-[2.5rem]",
+      fullWidth: "w-full",
+      maxWidth: "max-w-full",
+      flexShrink: "flex-shrink-0",
+    },
+
+    // Spacing sizes
+    space: {
+      tiny: "w-1 h-1",
+      small: "w-1.5 h-1.5",
+    },
+  },
+
+  // === LAYOUT ===
+  layout: {
+    // Flexbox utilities
+    flex: {
+      center: "flex items-center justify-center",
+      between: "flex items-center justify-between",
+      col: "flex flex-col",
+      colCenter: "flex items-center flex-col",
+      inline: "inline-flex",
+      inlineCenter: "inline-flex items-center",
+      wrap: "flex-wrap",
+    },
+
+    // Positioning
+    position: {
+      relative: "relative",
+      absolute: "absolute",
+      inset: "inset-0",
+      topHalf: "top-1/2 -translate-y-1/2",
+      rightCenter: "right-3 top-1/2 -translate-y-1/2",
+    },
+
+    // Overflow
+    overflow: {
+      hidden: "overflow-hidden",
+      visible: "overflow-visible",
+    },
+
+    // Display
+    display: {
+      hidden: "hidden",
+      block: "block",
+      inlineBlock: "inline-block",
+    },
+  },
+
+  // === INTERACTIONS ===
+  interactions: {
+    cursor: {
+      pointer: "cursor-pointer",
+      notAllowed: "cursor-not-allowed",
+      default: "cursor-default",
+    },
+
+    pointerEvents: {
+      none: "pointer-events-none",
+      auto: "pointer-events-auto",
+    },
+
+    userSelect: {
+      none: "select-none",
+      text: "select-text",
+    },
+  },
+
+  // === BORDERS ===
+  borders: {
+    width: {
+      none: "border-none",
+      base: "border",
+      thick: "border-2",
+    },
+
+    sides: {
+      top: "border-t",
+      right: "border-r",
+      bottom: "border-b",
+      left: "border-l",
+      none: {
+        top: "border-t-0",
+        right: "border-r-0",
+        bottom: "border-b-0",
+        left: "border-l-0",
+      },
+    },
   },
 };
+
+// Legacy tokens for backward compatibility
+export const FORM_FIELD_TOKENS = {
+  padding: DESIGN_TOKENS.spacing.input,
+  radius: DESIGN_TOKENS.radius,
+  typography: DESIGN_TOKENS.typography,
+  colors: DESIGN_TOKENS.colors,
+  transitions: DESIGN_TOKENS.effects.transition,
+  effects: {
+    focusRing: DESIGN_TOKENS.effects.focusRing,
+    hoverGradient: DESIGN_TOKENS.effects.hoverGradient,
+    focusShine: DESIGN_TOKENS.effects.focusShine,
+  },
+};
+
+/**
+ * =============================================================================
+ * COMPONENT LOGIC & HOOKS
+ * =============================================================================
+ */
 
 /**
  * Hook to generate consistent input classes based on state
@@ -75,50 +285,45 @@ export const useFormFieldClasses = (state = {}) => {
     isHovered = false,
     disabled = false,
     error = false,
-    size = "base", // 'compact', 'base', 'large'
+    size = "base",
     className = "",
-    excludePadding = false, // New flag for components with internal padding
+    excludePadding = false,
   } = state;
 
   return useMemo(() => {
-    const tokens = FORM_FIELD_TOKENS;
+    const t = DESIGN_TOKENS; // Shorthand for tokens
 
     const classes = [
       // Base styling
-      "w-full",
-      // Only add padding if not excluded (for components like Dropdown)
-      !excludePadding && (tokens.padding[size] || tokens.padding.input),
-      tokens.typography.base,
-      tokens.radius.base,
-      "border",
-      tokens.typography.placeholder,
-      tokens.transitions,
+      t.sizing.component.fullWidth,
+      !excludePadding && t.spacing.input[size],
+      t.typography.base,
+      t.radius.base,
+      t.borders.width.base,
+      t.typography.placeholder,
+      t.effects.transition,
 
       // Default colors
-      tokens.colors.text.default,
-      tokens.colors.border.default,
-      tokens.colors.background.default,
+      t.colors.text.default,
+      t.colors.border.default,
+      t.colors.background.default,
 
       // Focus states
-      isFocused && !disabled && [tokens.colors.border.focus, "shadow-none"],
+      isFocused && !disabled && [t.colors.border.focus, "shadow-none"],
 
       // Hover states (only when not focused)
-      !isFocused && isHovered && !disabled && [tokens.colors.border.hover],
+      !isFocused && isHovered && !disabled && [t.colors.border.hover],
 
       // Disabled states
       disabled && [
-        tokens.colors.background.disabled,
-        tokens.colors.border.disabled,
-        tokens.colors.text.disabled,
-        "cursor-not-allowed",
+        t.colors.background.surfaceDisabled,
+        t.colors.border.disabled,
+        t.colors.text.disabled,
+        t.interactions.cursor.notAllowed,
       ],
 
       // Error states
-      error &&
-        !disabled && [
-          tokens.colors.border.error,
-          tokens.colors.background.error,
-        ],
+      error && !disabled && [t.colors.border.error, t.colors.background.error],
 
       // Custom className
       className,
@@ -148,7 +353,7 @@ export const getFormFieldPT = (state = {}) => {
 
   return {
     root: {
-      className: "relative group",
+      className: `${DESIGN_TOKENS.layout.position.relative} group`,
       ...customPT.root,
     },
     input: {
@@ -164,46 +369,58 @@ export const getFormFieldPT = (state = {}) => {
  */
 export const getAddonStyles = (state, position = "right") => {
   const { isFocused, isHovered, disabled } = state;
-  const tokens = FORM_FIELD_TOKENS;
+  const t = DESIGN_TOKENS;
 
   const baseStyles = [
-    "px-4 py-3 border transition-all duration-200 ease-out",
-    tokens.typography.base,
+    t.spacing.addon.padding,
+    t.borders.width.base,
+    t.effects.transition,
+    t.typography.base,
   ];
 
   // Handle border radius based on position
   if (position === "left") {
-    baseStyles.push("rounded-l-2xl border-r-0");
+    baseStyles.push(
+      `${t.radius.base.replace("rounded-", "rounded-l-")} ${
+        t.borders.sides.none.right
+      }`
+    );
   } else if (position === "right") {
-    baseStyles.push("rounded-r-2xl border-l-0");
+    baseStyles.push(
+      `${t.radius.base.replace("rounded-", "rounded-r-")} ${
+        t.borders.sides.none.left
+      }`
+    );
   } else if (position === "middle") {
-    baseStyles.push("rounded-none border-l-0 border-r-0");
+    baseStyles.push(
+      `rounded-none ${t.borders.sides.none.left} ${t.borders.sides.none.right}`
+    );
   }
 
   if (disabled) {
     baseStyles.push(
-      tokens.colors.background.disabled,
-      tokens.colors.border.disabled,
-      tokens.colors.text.disabled,
-      "cursor-not-allowed"
+      t.colors.background.surfaceDisabled,
+      t.colors.border.disabled,
+      t.colors.text.disabled,
+      t.interactions.cursor.notAllowed
     );
   } else if (isFocused) {
     baseStyles.push(
-      tokens.colors.border.focus,
-      "bg-primary-50/30",
-      tokens.colors.text.default
+      t.colors.border.focus,
+      t.colors.background.addonFocus,
+      t.colors.text.default
     );
   } else if (isHovered) {
     baseStyles.push(
-      tokens.colors.border.hover,
-      "bg-surface-0",
-      tokens.colors.text.default
+      t.colors.border.hover,
+      t.colors.background.addonHover,
+      t.colors.text.default
     );
   } else {
     baseStyles.push(
-      tokens.colors.border.default,
-      "bg-surface-0",
-      tokens.colors.text.default
+      t.colors.border.default,
+      t.colors.background.addonBg,
+      t.colors.text.default
     );
   }
 
@@ -212,13 +429,14 @@ export const getAddonStyles = (state, position = "right") => {
 
 export const getAddonIconStyles = (state) => {
   const { isFocused, disabled } = state;
+  const t = DESIGN_TOKENS;
 
   if (disabled) {
-    return "text-text-color-secondary";
+    return t.colors.text.secondary;
   } else if (isFocused) {
-    return "text-primary-600 transition-colors duration-200";
+    return `${t.colors.text.primaryStrong} ${t.effects.transitionColors}`;
   } else {
-    return "text-text-color-secondary hover:text-primary-500 transition-colors duration-200";
+    return `${t.colors.text.secondary} ${t.colors.text.hover.primaryStrong} ${t.effects.transitionColors}`;
   }
 };
 
@@ -237,25 +455,32 @@ export const FormFieldWrapper = ({
   onMouseLeave,
   className = "",
 }) => {
+  const t = DESIGN_TOKENS;
+
   return (
-    <div className={`relative group ${className}`}>
+    <div className={`${t.layout.position.relative} group ${className}`}>
       {/* Input Container */}
       <div
-        className="relative"
+        className={t.layout.position.relative}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
         {children}
 
         {/* Focus Ring Enhancement */}
-        {isFocused && !disabled && (
-          <div className={FORM_FIELD_TOKENS.effects.focusRing} />
-        )}
+        {isFocused && !disabled && <div className={t.effects.focusRing} />}
 
         {/* Required Indicator */}
         {required && !disabled && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <div className="w-1.5 h-1.5 bg-red-400 rounded-full opacity-60" />
+          <div className={t.layout.position.rightCenter}>
+            <div
+              className={`${
+                t.sizing.space.small
+              } ${t.colors.background.error.replace(
+                "bg-red-50/30",
+                "bg-red-400"
+              )} ${t.radius.full} ${t.effects.opacity.subtle}`}
+            />
           </div>
         )}
       </div>
@@ -264,24 +489,26 @@ export const FormFieldWrapper = ({
       {error && (
         <div
           id={`${id}-error`}
-          className="mt-2 text-xs text-red-600 font-medium flex items-center gap-2 animate-in slide-in-from-top-1 duration-200"
+          className={`${t.spacing.panel.margin} ${t.typography.error} ${t.layout.flex.center} ${t.spacing.gap.small} ${t.effects.slideIn}`}
         >
-          <div className="w-1 h-1 bg-red-500 rounded-full flex-shrink-0" />
+          <div
+            className={`${t.sizing.space.tiny} bg-red-500 ${t.radius.full} ${t.sizing.component.flexShrink}`}
+          />
           {error}
         </div>
       )}
 
       {/* Subtle Enhancement Indicators */}
-      <div className="absolute inset-0 rounded-2xl pointer-events-none">
+      <div
+        className={`${t.layout.position.absolute} ${t.layout.position.inset} ${t.radius.base} ${t.interactions.pointerEvents.none}`}
+      >
         {/* Gradient overlay on hover */}
         {isHovered && !isFocused && !disabled && (
-          <div className={FORM_FIELD_TOKENS.effects.hoverGradient} />
+          <div className={t.effects.hoverGradient} />
         )}
 
         {/* Shine effect on focus */}
-        {isFocused && !disabled && (
-          <div className={FORM_FIELD_TOKENS.effects.focusShine} />
-        )}
+        {isFocused && !disabled && <div className={t.effects.focusShine} />}
       </div>
     </div>
   );
@@ -331,8 +558,11 @@ export const useFormFieldState = (initialProps = {}) => {
 };
 
 /**
- * Specific PrimeReact component PT configurations
+ * =============================================================================
+ * PRIMEREACT PASSTHROUGH CONFIGURATIONS
+ * =============================================================================
  */
+
 export const PRIMEREACT_PT_CONFIGS = {
   // InputText, InputTextarea, etc.
   inputText: (state) => ({
@@ -342,349 +572,422 @@ export const PRIMEREACT_PT_CONFIGS = {
   }),
 
   // InputNumber (Int, Float, Currency, etc.)
-  inputNumber: (state) => ({
-    root: {
-      className:
-        "w-full inline-flex bg-transparent border-none p-0 shadow-none", // Neutralize wrapper completely
-    },
-    input: {
+  inputNumber: (state) => {
+    const t = DESIGN_TOKENS;
+    return {
       root: {
-        className: useFormFieldClasses({
-          ...state,
-          // The input.root gets all our styling
-          className: `${state.className || ""}`,
-        }),
+        className: `${t.sizing.component.fullWidth} ${t.layout.flex.inline} ${t.colors.background.transparent} ${t.borders.width.none} p-0 shadow-none`,
       },
-    },
-    // Style the increment/decrement buttons
-    incrementButton: {
-      className: "hidden", // Hide the default buttons for cleaner look
-    },
-    decrementButton: {
-      className: "hidden", // Hide the default buttons for cleaner look
-    },
-    buttonGroup: {
-      className: "hidden", // Hide the entire button group
-    },
-  }),
+      input: {
+        root: {
+          className: useFormFieldClasses({
+            ...state,
+            className: `${state.className || ""}`,
+          }),
+        },
+      },
+      incrementButton: { className: t.layout.display.hidden },
+      decrementButton: { className: t.layout.display.hidden },
+      buttonGroup: { className: t.layout.display.hidden },
+    };
+  },
 
   // InputNumber with Addons (Currency, Percent, Duration, etc.)
-  inputNumberWithAddon: (state, addonPosition = "right") => ({
-    root: {
-      className:
-        "w-full inline-flex bg-transparent border-none p-0 shadow-none", // Neutralize wrapper completely
-    },
-    input: {
+  inputNumberWithAddon: (state, addonPosition = "right") => {
+    const t = DESIGN_TOKENS;
+
+    const getBorderClass = (position) => {
+      switch (position) {
+        case "left":
+          return `rounded-l-none ${t.borders.sides.none.left}`;
+        case "right":
+          return `rounded-r-none ${t.borders.sides.none.right}`;
+        case "both":
+          return `rounded-none ${t.borders.sides.none.left} ${t.borders.sides.none.right}`;
+        default:
+          return "";
+      }
+    };
+
+    return {
       root: {
-        className: useFormFieldClasses({
-          ...state,
-          className: `${state.className || ""} ${
-            addonPosition === "left"
-              ? "rounded-l-none border-l-0"
-              : addonPosition === "right"
-              ? "rounded-r-none border-r-0"
-              : addonPosition === "both"
-              ? "rounded-none border-l-0 border-r-0"
-              : ""
-          }`,
-        }),
+        className: `${t.sizing.component.fullWidth} ${t.layout.flex.inline} ${t.colors.background.transparent} ${t.borders.width.none} p-0 shadow-none`,
       },
-    },
-    // Hide increment/decrement buttons for cleaner look
-    incrementButton: {
-      className: "hidden",
-    },
-    decrementButton: {
-      className: "hidden",
-    },
-    buttonGroup: {
-      className: "hidden",
-    },
-  }),
+      input: {
+        root: {
+          className: useFormFieldClasses({
+            ...state,
+            className: `${state.className || ""} ${getBorderClass(
+              addonPosition
+            )}`,
+          }),
+        },
+      },
+      incrementButton: { className: t.layout.display.hidden },
+      decrementButton: { className: t.layout.display.hidden },
+      buttonGroup: { className: t.layout.display.hidden },
+    };
+  },
 
   // InputText with Addons (for color picker, etc.)
-  inputTextWithAddon: (state, addonPosition = "right") => ({
-    root: {
-      className: useFormFieldClasses({
-        ...state,
-        className: `${state.className || ""} ${
-          addonPosition === "left"
-            ? "rounded-l-none border-l-0"
-            : addonPosition === "right"
-            ? "rounded-r-none border-r-0"
-            : addonPosition === "both"
-            ? "rounded-none border-l-0 border-r-0"
-            : ""
-        }`,
-      }),
-    },
-  }),
+  inputTextWithAddon: (state, addonPosition = "right") => {
+    const t = DESIGN_TOKENS;
 
-  // Calendar (Date, DateTime, Time) - Now with addon-style trigger
-  calendar: (state) => ({
-    root: {
-      className: "inline-flex max-w-full relative w-full",
-    },
-    input: {
+    const getBorderClass = (position) => {
+      switch (position) {
+        case "left":
+          return `rounded-l-none ${t.borders.sides.none.left}`;
+        case "right":
+          return `rounded-r-none ${t.borders.sides.none.right}`;
+        case "both":
+          return `rounded-none ${t.borders.sides.none.left} ${t.borders.sides.none.right}`;
+        default:
+          return "";
+      }
+    };
+
+    return {
       root: {
         className: useFormFieldClasses({
           ...state,
-          className: `${state.className || ""} ${
-            !state.disabled ? "rounded-r-none border-r-0" : ""
-          }`,
+          className: `${state.className || ""} ${getBorderClass(
+            addonPosition
+          )}`,
         }),
       },
-    },
-    dropdownButton: {
+    };
+  },
+
+  // Calendar (Date, DateTime, Time) - Now with addon-style trigger
+  calendar: (state) => {
+    const t = DESIGN_TOKENS;
+
+    return {
       root: {
-        className: getAddonStyles(
-          {
+        className: `${t.layout.flex.inline} ${t.sizing.component.maxWidth} ${t.layout.position.relative} ${t.sizing.component.fullWidth}`,
+      },
+      input: {
+        root: {
+          className: useFormFieldClasses({
+            ...state,
+            className: `${state.className || ""} ${
+              !state.disabled
+                ? `rounded-r-none ${t.borders.sides.none.right}`
+                : ""
+            }`,
+          }),
+        },
+      },
+      dropdownButton: {
+        root: {
+          className: getAddonStyles(
+            {
+              isFocused: state.isFocused,
+              isHovered: state.isHovered,
+              disabled: state.disabled,
+            },
+            "right"
+          ),
+        },
+        icon: {
+          className: getAddonIconStyles({
             isFocused: state.isFocused,
-            isHovered: state.isHovered,
             disabled: state.disabled,
-          },
-          "right"
-        ),
+          }),
+        },
       },
-      icon: {
-        className: getAddonIconStyles({
-          isFocused: state.isFocused,
-          disabled: state.disabled,
-        }),
+      panel: {
+        className: `${t.colors.background.surface} ${t.borders.width.none} ${t.effects.shadow.xl} ${t.radius.base} ${t.spacing.panel.margin} ${t.layout.overflow.hidden} backdrop-blur-sm`,
       },
-    },
-    panel: {
-      className:
-        "bg-surface-0 border-none shadow-xl rounded-2xl mt-2 overflow-hidden backdrop-blur-sm",
-    },
-    header: {
-      className:
-        "flex items-center justify-between p-4 text-text-color bg-surface-0 font-semibold border-b border-surface-100",
-    },
-    previousButton: {
-      className:
-        "flex items-center justify-center cursor-pointer w-8 h-8 text-text-color-secondary border-0 bg-transparent rounded-xl transition-all duration-200 hover:text-text-color hover:bg-surface-100",
-    },
-    nextButton: {
-      className:
-        "flex items-center justify-center cursor-pointer w-8 h-8 text-text-color-secondary border-0 bg-transparent rounded-xl transition-all duration-200 hover:text-text-color hover:bg-surface-100",
-    },
-    title: {
-      className: "leading-8 mx-auto font-medium text-text-color",
-    },
-    monthTitle: {
-      className:
-        "text-text-color transition duration-200 font-medium p-2 mr-2 hover:text-primary-500 rounded-lg hover:bg-primary-50",
-    },
-    yearTitle: {
-      className:
-        "text-text-color transition duration-200 font-medium p-2 hover:text-primary-500 rounded-lg hover:bg-primary-50",
-    },
-    table: {
-      className: "border-collapse w-full my-2",
-    },
-    tableHeaderCell: {
-      className: "p-2",
-    },
-    weekday: {
-      className: "text-text-color-secondary font-medium text-sm",
-    },
-    day: {
-      className: "p-1",
-    },
-    dayLabel: {
-      className:
-        "w-10 h-10 rounded-xl transition-all duration-200 border-transparent border flex items-center justify-center mx-auto overflow-hidden relative focus:outline-none focus:ring-2 focus:ring-primary-200 cursor-pointer text-text-color hover:bg-primary-50 data-[p-highlight=true]:text-primary-700 data-[p-highlight=true]:bg-primary-100 data-[p-highlight=true]:hover:bg-primary-200",
-    },
-    monthPicker: {
-      className: "my-2 p-2",
-    },
-    month: {
-      className:
-        "w-1/3 inline-flex items-center justify-center cursor-pointer overflow-hidden relative p-3 transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-text-color hover:bg-primary-50 data-[p-highlight=true]:text-primary-700 data-[p-highlight=true]:bg-primary-100",
-    },
-    yearPicker: {
-      className: "my-2 p-2",
-    },
-    year: {
-      className:
-        "w-1/2 inline-flex items-center justify-center cursor-pointer overflow-hidden relative p-3 transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-text-color hover:bg-primary-50 data-[p-highlight=true]:text-primary-700 data-[p-highlight=true]:bg-primary-100",
-    },
-    // Time picker specific styling (for DateTime and Time fields)
-    timePicker: {
-      className:
-        "flex justify-center items-center border-t border-surface-100 p-4 bg-surface-50",
-    },
-    separatorContainer: {
-      className: "flex items-center flex-col px-2",
-    },
-    separator: {
-      className: "text-xl font-bold text-text-color-secondary",
-    },
-    hourPicker: {
-      className: "flex items-center flex-col px-2",
-    },
-    minutePicker: {
-      className: "flex items-center flex-col px-2",
-    },
-    secondPicker: {
-      className: "flex items-center flex-col px-2",
-    },
-    ampmPicker: {
-      className: "flex items-center flex-col px-2",
-    },
-    incrementButton: {
-      className:
-        "flex items-center justify-center cursor-pointer w-8 h-8 text-text-color-secondary border-0 bg-transparent rounded-xl transition-all duration-200 hover:text-text-color hover:bg-surface-100",
-    },
-    decrementButton: {
-      className:
-        "flex items-center justify-center cursor-pointer w-8 h-8 text-text-color-secondary border-0 bg-transparent rounded-xl transition-all duration-200 hover:text-text-color hover:bg-surface-100",
-    },
-    // Time display styling
-    hour: {
-      className:
-        "text-xl font-bold text-text-color bg-surface-100 rounded-xl px-3 py-2 min-w-[2.5rem] text-center",
-    },
-    minute: {
-      className:
-        "text-xl font-bold text-text-color bg-surface-100 rounded-xl px-3 py-2 min-w-[2.5rem] text-center",
-    },
-    second: {
-      className:
-        "text-xl font-bold text-text-color bg-surface-100 rounded-xl px-3 py-2 min-w-[2.5rem] text-center",
-    },
-    ampm: {
-      className:
-        "text-lg font-bold text-text-color bg-primary-100 text-primary-700 rounded-xl px-3 py-2 min-w-[2.5rem] text-center",
-    },
-  }),
+      header: {
+        className: `${t.layout.flex.between} ${t.spacing.panel.padding} ${t.colors.text.default} ${t.colors.background.surface} font-semibold ${t.borders.sides.bottom} ${t.colors.border.default}`,
+      },
+      previousButton: {
+        className: `${t.layout.flex.center} ${t.interactions.cursor.pointer} ${t.sizing.icon.xl} ${t.colors.text.secondary} ${t.borders.width.none} ${t.colors.background.transparent} ${t.radius.small} ${t.effects.transition} ${t.colors.text.hover.primary} ${t.colors.background.hover.surface}`,
+      },
+      nextButton: {
+        className: `${t.layout.flex.center} ${t.interactions.cursor.pointer} ${t.sizing.icon.xl} ${t.colors.text.secondary} ${t.borders.width.none} ${t.colors.background.transparent} ${t.radius.small} ${t.effects.transition} ${t.colors.text.hover.primary} ${t.colors.background.hover.surface}`,
+      },
+      title: {
+        className: `leading-8 mx-auto font-medium ${t.colors.text.default}`,
+      },
+      monthTitle: {
+        className: `${t.colors.text.default} ${
+          t.effects.transition
+        } font-medium p-2 mr-2 ${
+          t.colors.text.hover.primaryStrong
+        } ${t.radius.base.replace("2xl", "lg")} ${
+          t.colors.background.hover.primary
+        }`,
+      },
+      yearTitle: {
+        className: `${t.colors.text.default} ${
+          t.effects.transition
+        } font-medium p-2 ${
+          t.colors.text.hover.primaryStrong
+        } ${t.radius.base.replace("2xl", "lg")} ${
+          t.colors.background.hover.primary
+        }`,
+      },
+      table: {
+        className: "border-collapse w-full my-2",
+      },
+      tableHeaderCell: {
+        className: "p-2",
+      },
+      weekday: {
+        className: `${t.colors.text.secondary} font-medium ${
+          t.typography.secondary.split(" ")[0]
+        }`,
+      },
+      day: {
+        className: "p-1",
+      },
+      dayLabel: {
+        className: `${t.sizing.icon.xxl} ${t.radius.small} ${t.effects.transition} ${t.colors.border.transparent} ${t.borders.width.base} ${t.layout.flex.center} mx-auto ${t.layout.overflow.hidden} ${t.layout.position.relative} ${t.effects.focus.ring} ${t.interactions.cursor.pointer} ${t.colors.text.default} ${t.colors.background.hover.primary} data-[p-highlight=true]:${t.colors.text.primary} data-[p-highlight=true]:${t.colors.background.primaryLight} data-[p-highlight=true]:hover:${t.colors.background.primaryLighter}`,
+      },
+      monthPicker: {
+        className: "my-2 p-2",
+      },
+      month: {
+        className: `w-1/3 ${t.layout.flex.center} ${t.interactions.cursor.pointer} ${t.layout.overflow.hidden} ${t.layout.position.relative} p-3 ${t.effects.transition} ${t.radius.small} ${t.effects.focus.ring} ${t.colors.text.default} ${t.colors.background.hover.primary} data-[p-highlight=true]:${t.colors.text.primary} data-[p-highlight=true]:${t.colors.background.primaryLight}`,
+      },
+      yearPicker: {
+        className: "my-2 p-2",
+      },
+      year: {
+        className: `w-1/2 ${t.layout.flex.center} ${t.interactions.cursor.pointer} ${t.layout.overflow.hidden} ${t.layout.position.relative} p-3 ${t.effects.transition} ${t.radius.small} ${t.effects.focus.ring} ${t.colors.text.default} ${t.colors.background.hover.primary} data-[p-highlight=true]:${t.colors.text.primary} data-[p-highlight=true]:${t.colors.background.primaryLight}`,
+      },
+      // Time picker specific styling
+      timePicker: {
+        className: `${t.layout.flex.center} ${t.borders.sides.top} ${t.colors.border.default} ${t.spacing.panel.padding} ${t.colors.background.surfaceAlt}`,
+      },
+      separatorContainer: {
+        className: `${t.layout.flex.colCenter} px-2`,
+      },
+      separator: {
+        className: `${t.typography.xl} ${t.colors.text.secondary}`,
+      },
+      hourPicker: {
+        className: `${t.layout.flex.colCenter} px-2`,
+      },
+      minutePicker: {
+        className: `${t.layout.flex.colCenter} px-2`,
+      },
+      secondPicker: {
+        className: `${t.layout.flex.colCenter} px-2`,
+      },
+      ampmPicker: {
+        className: `${t.layout.flex.colCenter} px-2`,
+      },
+      incrementButton: {
+        className: `${t.layout.flex.center} ${t.interactions.cursor.pointer} ${t.sizing.icon.xl} ${t.colors.text.secondary} ${t.borders.width.none} ${t.colors.background.transparent} ${t.radius.small} ${t.effects.transition} ${t.colors.text.hover.primary} ${t.colors.background.hover.surface}`,
+      },
+      decrementButton: {
+        className: `${t.layout.flex.center} ${t.interactions.cursor.pointer} ${t.sizing.icon.xl} ${t.colors.text.secondary} ${t.borders.width.none} ${t.colors.background.transparent} ${t.radius.small} ${t.effects.transition} ${t.colors.text.hover.primary} ${t.colors.background.hover.surface}`,
+      },
+      // Time display styling
+      hour: {
+        className: `${t.typography.xl} ${t.colors.text.default} ${t.colors.background.surfaceDisabled} ${t.radius.small} px-3 py-2 ${t.sizing.component.minWidth} text-center`,
+      },
+      minute: {
+        className: `${t.typography.xl} ${t.colors.text.default} ${t.colors.background.surfaceDisabled} ${t.radius.small} px-3 py-2 ${t.sizing.component.minWidth} text-center`,
+      },
+      second: {
+        className: `${t.typography.xl} ${t.colors.text.default} ${t.colors.background.surfaceDisabled} ${t.radius.small} px-3 py-2 ${t.sizing.component.minWidth} text-center`,
+      },
+      ampm: {
+        className: `${t.typography.large} ${t.colors.text.default} ${t.colors.background.primaryLighter} ${t.colors.text.primary} ${t.radius.small} px-3 py-2 ${t.sizing.component.minWidth} text-center`,
+      },
+    };
+  },
 
   // Dropdown (Select, Link, etc.)
-  dropdown: (state) => ({
-    root: {
-      className: useFormFieldClasses({
-        ...state,
-        excludePadding: true, // Dropdown has internal padding structure
-        className: `${state.className || ""} cursor-pointer flex items-center`,
-      }),
-    },
-    input: {
-      className:
-        "outline-none bg-transparent border-none w-full text-sm font-medium placeholder:text-text-color-secondary/60",
-    },
-    trigger: {
-      className:
-        "text-text-color-secondary hover:text-primary-500 transition-colors flex-shrink-0 ml-2",
-    },
-    panel: {
-      className: "border-none shadow-lg rounded-2xl mt-2 overflow-hidden",
-    },
-    list: {
-      className: "p-0",
-    },
-    item: {
-      className:
-        "px-4 py-3 hover:bg-primary-50 transition-colors cursor-pointer border-none",
-    },
-  }),
+  dropdown: (state) => {
+    const t = DESIGN_TOKENS;
+
+    return {
+      root: {
+        className: useFormFieldClasses({
+          ...state,
+          excludePadding: true,
+          className: `${state.className || ""} ${
+            t.interactions.cursor.pointer
+          } ${t.layout.flex.center}`,
+        }),
+      },
+      input: {
+        className: `outline-none ${t.colors.background.transparent} ${t.borders.width.none} ${t.sizing.component.fullWidth} ${t.typography.base} ${t.typography.placeholder}`,
+      },
+      trigger: {
+        className: `${t.colors.text.secondary} ${t.colors.text.hover.primaryStrong} ${t.effects.transitionColors} ${t.sizing.component.flexShrink} ${t.spacing.addon.gap}`,
+      },
+      panel: {
+        className: `${t.borders.width.none} ${t.effects.shadow.strong} ${t.radius.base} ${t.spacing.panel.margin} ${t.layout.overflow.hidden}`,
+      },
+      list: {
+        className: "p-0",
+      },
+      item: {
+        className: `${t.spacing.addon.padding} ${t.colors.background.hover.primary} ${t.effects.transitionColors} ${t.interactions.cursor.pointer} ${t.borders.width.none}`,
+      },
+    };
+  },
 
   // ColorPicker
-  colorPicker: (state) => ({
-    root: {
-      className: "flex flex-col items-center",
-    },
-    input: {
-      className: useFormFieldClasses(state),
-    },
-    panel: {
-      className: "border-none shadow-lg rounded-2xl mt-2",
-    },
-  }),
+  colorPicker: (state) => {
+    const t = DESIGN_TOKENS;
+
+    return {
+      root: {
+        className: `${t.layout.flex.colCenter}`,
+      },
+      input: {
+        className: useFormFieldClasses(state),
+      },
+      panel: {
+        className: `${t.borders.width.none} ${t.effects.shadow.strong} ${t.radius.base} ${t.spacing.panel.margin}`,
+      },
+    };
+  },
 
   // InputSwitch - Enhanced styling
-  inputSwitch: (state) => ({
-    root: {
-      className: `
-        relative inline-flex items-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-200 rounded-full
-        ${state.disabled ? "opacity-50 cursor-not-allowed" : ""}
-        ${state.error ? "ring-2 ring-red-200" : ""}
-      `,
-    },
-    slider: {
-      className: `
-        transition-all duration-200 rounded-full
-        ${
-          state.disabled
-            ? "bg-surface-300"
-            : state.checked || state.value
-            ? "bg-primary-500 hover:bg-primary-600"
-            : "bg-surface-300 hover:bg-surface-400"
-        }
-      `,
-    },
-    handle: {
-      className: `
-        transition-all duration-200 rounded-full shadow-lg border-2 border-white bg-white transform
-        ${
-          state.size === "large"
-            ? "w-6 h-6"
-            : state.size === "compact"
-            ? "w-4 h-4"
-            : "w-5 h-5"
-        }
-        ${state.checked || state.value ? "translate-x-full" : "translate-x-0"}
-      `,
-    },
-  }),
+  inputSwitch: (state) => {
+    const t = DESIGN_TOKENS;
+
+    return {
+      root: {
+        className: `
+          ${t.layout.position.relative} ${t.layout.flex.inlineCenter} ${
+          t.interactions.cursor.pointer
+        } ${t.effects.transition} ${t.effects.focus.ring} ${t.radius.full}
+          ${
+            state.disabled
+              ? `${t.effects.opacity.disabled} ${t.interactions.cursor.notAllowed}`
+              : ""
+          }
+          ${
+            state.error
+              ? `${t.effects.focus.ringError.replace("focus:", "")}`
+              : ""
+          }
+        `,
+      },
+      slider: {
+        className: `
+          ${t.effects.transition} ${t.radius.full}
+          ${
+            state.disabled
+              ? t.colors.background.surfaceAlt.replace(
+                  "bg-surface-50",
+                  "bg-surface-300"
+                )
+              : state.checked || state.value
+              ? `${t.colors.background.primary} ${t.colors.background.hover.primaryStrong}`
+              : `${t.colors.background.surfaceAlt.replace(
+                  "bg-surface-50",
+                  "bg-surface-300"
+                )} ${t.colors.background.hover.surfaceAlt}`
+          }
+        `,
+      },
+      handle: {
+        className: `
+          ${t.effects.transition} ${t.radius.full} ${t.effects.shadow.strong} ${
+          t.borders.width.thick
+        } border-white ${t.colors.background.white} transform
+          ${
+            state.size === "large"
+              ? t.sizing.icon.large
+              : state.size === "compact"
+              ? t.sizing.icon.compact
+              : t.sizing.icon.base
+          }
+          ${state.checked || state.value ? "translate-x-full" : "translate-x-0"}
+        `,
+      },
+    };
+  },
 
   // Checkbox - Enhanced styling
-  checkbox: (state) => ({
-    root: {
-      className: "relative inline-flex items-center",
-    },
-    box: {
-      className: `
-        transition-all duration-200 border-2 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary-200 cursor-pointer
-        ${
-          state.size === "large"
-            ? "w-6 h-6"
-            : state.size === "compact"
-            ? "w-4 h-4"
-            : "w-5 h-5"
-        }
-        ${
-          state.error
-            ? "border-red-300 focus:ring-red-200"
-            : state.disabled
-            ? "border-surface-200 bg-surface-100 cursor-not-allowed"
-            : state.checked || state.value
-            ? "border-primary-500 bg-primary-500 hover:border-primary-600 hover:bg-primary-600 shadow-sm"
-            : "border-surface-300 bg-surface-0 hover:border-primary-400 hover:shadow-sm"
-        }
-      `,
-    },
-    icon: {
-      className: `
-        transition-all duration-200 text-white font-bold
-        ${
-          state.size === "large"
-            ? "text-sm"
-            : state.size === "compact"
-            ? "text-xs"
-            : "text-sm"
-        }
-        ${
-          state.checked || state.value
-            ? "opacity-100 scale-100"
-            : "opacity-0 scale-75"
-        }
-      `,
-    },
-  }),
+  checkbox: (state) => {
+    const t = DESIGN_TOKENS;
+
+    return {
+      root: {
+        className: `${t.layout.position.relative} ${t.layout.flex.inlineCenter}`,
+      },
+      box: {
+        className: `
+          ${t.effects.transition} ${
+          t.borders.width.thick
+        } ${t.radius.base.replace("2xl", "lg")} ${t.layout.flex.center} ${
+          t.effects.focus.ring
+        } ${t.interactions.cursor.pointer}
+          ${
+            state.size === "large"
+              ? t.sizing.icon.large
+              : state.size === "compact"
+              ? t.sizing.icon.compact
+              : t.sizing.icon.base
+          }
+          ${
+            state.error
+              ? `${t.colors.border.error} ${t.effects.focus.ringError}`
+              : state.disabled
+              ? `${t.colors.border.default.replace(
+                  "border-surface-100",
+                  "border-surface-200"
+                )} ${t.colors.background.surfaceDisabled} ${
+                  t.interactions.cursor.notAllowed
+                }`
+              : state.checked || state.value
+              ? `${t.colors.border.focus.replace(
+                  "border-primary-400",
+                  "border-primary-500"
+                )} ${
+                  t.colors.background.primary
+                } ${t.colors.border.hover.replace(
+                  "border-primary-400",
+                  "hover:border-primary-600"
+                )} ${t.colors.background.hover.primaryStrong} ${
+                  t.effects.shadow.base
+                }`
+              : `${t.colors.border.default.replace(
+                  "border-surface-100",
+                  "border-surface-300"
+                )} ${t.colors.background.surface} ${
+                  t.colors.border.hover
+                } ${t.effects.shadow.base.replace(
+                  "shadow-sm",
+                  "hover:shadow-sm"
+                )}`
+          }
+        `,
+      },
+      icon: {
+        className: `
+          ${t.effects.transition} ${t.colors.text.white} font-bold
+          ${
+            state.size === "large"
+              ? t.typography.base.replace("text-sm", "text-sm")
+              : state.size === "compact"
+              ? t.typography.base.replace("text-sm", "text-xs")
+              : t.typography.base
+          }
+          ${
+            state.checked || state.value
+              ? `${t.effects.opacity.visible} ${t.effects.scaleIn}`
+              : `${t.effects.opacity.hidden} ${t.effects.scaleOut}`
+          }
+        `,
+      },
+    };
+  },
 };
 
 export default {
+  DESIGN_TOKENS,
   FORM_FIELD_TOKENS,
   useFormFieldClasses,
   getFormFieldPT,
