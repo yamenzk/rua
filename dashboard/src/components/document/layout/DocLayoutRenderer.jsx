@@ -85,7 +85,7 @@ const DocLayoutRendererInternal = ({
     const firstTabFallback = trulyFinalTabsConfig[0];
     if (firstTabFallback) {
       return (
-        <div className="tab-content-wrapper">
+        <div className="tab-content-wrapper overflow-y-auto">
           {" "}
           {/* Default padding, can be configured via props if needed */}
           <TabContentOrchestrator
@@ -110,7 +110,7 @@ const DocLayoutRendererInternal = ({
   }
 
   return (
-    <div className="tab-content-wrapper">
+    <div className="tab-content-wrapper overflow-y-auto">
       {" "}
       {/* Default padding, can be configured via props if needed */}
       <TabContentOrchestrator

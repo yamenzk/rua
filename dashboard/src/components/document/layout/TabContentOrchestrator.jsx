@@ -200,7 +200,7 @@ const TabContentOrchestratorInternal = ({
   // console.log(`[TCO] AFTER useMemo. Tab "${tab?.label}" will render ${tabRenderableItems.length} items.`); // Optional
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 overflow-y-auto">
       {tabRenderableItems.length === 0 && (
         <div className="p-4 text-sm text-text-color-secondary italic">
           No content has been defined or generated for this tab: "{tab?.label}"

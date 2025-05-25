@@ -1,6 +1,12 @@
-// src/components/formFields/PercentFormField.jsx - Fixed version
+// src/components/formFields/PercentFormField.jsx - Refactored with Central Styles
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
+import {
+  FormFieldWrapper,
+  useFormFieldState,
+  PRIMEREACT_PT_CONFIGS,
+  getAddonStyles,
+} from "./styles/formFieldStyles";
 
 const PercentFormField = ({
   id,
@@ -9,10 +15,24 @@ const PercentFormField = ({
   disabled,
   className,
   placeholder,
+  tooltip,
+  required,
+  error,
+  size = "base",
   min = 0,
   max = 100,
   ...otherProps
 }) => {
+  // Use central state management
+  const {
+    isFocused,
+    isHovered,
+    handleFocus,
+    handleBlur,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useFormFieldState();
+
   const handleChange = (e) => {
     if (onChange) {
       const syntheticEvent = {
@@ -27,28 +47,97 @@ const PercentFormField = ({
   };
 
   // Filter out non-DOM props before spreading
-  const { fieldSchemaItem, ...safeOtherProps } = otherProps;
+  const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
+
+  // Get PrimeReact PassThrough config for InputNumber with percent styling
+  const ptConfig = {
+    ...PRIMEREACT_PT_CONFIGS.inputNumber({
+      isFocused,
+      isHovered,
+      disabled,
+      error: !!error,
+      size,
+      className,
+    }),
+    // Override root to accommodate the percent suffix
+    root: {
+      className:
+        "w-full inline-flex bg-transparent border-none p-0 shadow-none rounded-2xl overflow-hidden items-center",
+    },
+    input: {
+      root: {
+        className: `${
+          PRIMEREACT_PT_CONFIGS.inputNumber({
+            isFocused,
+            isHovered,
+            disabled,
+            error: !!error,
+            size,
+            className,
+          }).input.root.className
+        } rounded-r-none border-r-0`,
+      },
+    },
+  };
 
   return (
-    <InputNumber
+    <FormFieldWrapper
       id={id}
-      value={
-        value !== undefined && value !== null && value !== ""
-          ? Number(value)
-          : null
-      }
-      onValueChange={handleChange}
+      error={error}
+      required={required}
       disabled={disabled}
-      className={className}
-      placeholder={placeholder}
-      mode="decimal"
-      suffix="%"
-      min={min}
-      max={max}
-      minFractionDigits={0}
-      maxFractionDigits={2}
-      {...safeOtherProps}
-    />
+      isFocused={isFocused}
+      isHovered={isHovered}
+      onMouseEnter={() => handleMouseEnter(disabled)}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="p-inputgroup w-full">
+        {/* Input Number */}
+        <InputNumber
+          id={id}
+          value={
+            value !== undefined && value !== null && value !== ""
+              ? Number(value)
+              : null
+          }
+          onValueChange={handleChange}
+          onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
+          onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
+          disabled={disabled}
+          placeholder={placeholder || "0"}
+          mode="decimal"
+          min={min}
+          max={max}
+          minFractionDigits={0}
+          maxFractionDigits={2}
+          pt={{
+            ...ptConfig,
+            // Special styling for percent input to connect with addon
+            input: {
+              root: {
+                className: `${ptConfig.input.root.className} rounded-r-none border-r-0`,
+              },
+            },
+          }}
+          title={tooltip}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
+          {...safeOtherProps}
+        />
+
+        {/* Percent Symbol Addon */}
+        <span
+          className={`p-inputgroup-addon flex items-center justify-center min-w-[3rem] ${getAddonStyles(
+            { isFocused, isHovered, disabled },
+            "right"
+          )}`}
+        >
+          <span className="text-sm font-medium text-text-color-secondary">
+            %
+          </span>
+        </span>
+      </div>
+    </FormFieldWrapper>
   );
 };
 

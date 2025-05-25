@@ -1,6 +1,12 @@
-// src/components/formFields/DataFormField.jsx - Fixed version
+// src/components/formFields/DataFormField.jsx - Refactored with Central Styles
 import React from "react";
 import { InputText } from "primereact/inputtext";
+import {
+  FormFieldWrapper,
+  useFormFieldState,
+  useFormFieldClasses,
+  PRIMEREACT_PT_CONFIGS,
+} from "./styles/formFieldStyles";
 
 const DataFormField = ({
   id,
@@ -9,8 +15,22 @@ const DataFormField = ({
   disabled,
   className,
   placeholder,
+  tooltip,
+  required,
+  error,
+  size = "base", // 'compact', 'base', 'large'
   ...otherProps
 }) => {
+  // Use central state management
+  const {
+    isFocused,
+    isHovered,
+    handleFocus,
+    handleBlur,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useFormFieldState();
+
   const handleChange = (e) => {
     if (onChange) {
       onChange(e); // Pass through the event as-is for InputText
@@ -18,18 +38,44 @@ const DataFormField = ({
   };
 
   // Filter out non-DOM props before spreading
-  const { fieldSchemaItem, ...safeOtherProps } = otherProps;
+  const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
+
+  // Get consistent classes from central system
+  const inputClasses = useFormFieldClasses({
+    isFocused,
+    isHovered,
+    disabled,
+    error: !!error,
+    size,
+    className,
+  });
 
   return (
-    <InputText
+    <FormFieldWrapper
       id={id}
-      value={value || ""}
-      onChange={handleChange}
+      error={error}
+      required={required}
       disabled={disabled}
-      className={className}
-      placeholder={placeholder}
-      {...safeOtherProps}
-    />
+      isFocused={isFocused}
+      isHovered={isHovered}
+      onMouseEnter={() => handleMouseEnter(disabled)}
+      onMouseLeave={handleMouseLeave}
+    >
+      <InputText
+        id={id}
+        value={value || ""}
+        onChange={handleChange}
+        onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
+        onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
+        disabled={disabled}
+        placeholder={placeholder}
+        className={inputClasses}
+        title={tooltip}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
+        {...safeOtherProps}
+      />
+    </FormFieldWrapper>
   );
 };
 

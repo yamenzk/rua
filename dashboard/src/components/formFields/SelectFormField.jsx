@@ -1,24 +1,42 @@
-// src/components/formFields/SelectFormField.jsx - Enhanced with Virtual Scrolling
+// src/components/formFields/SelectFormField.jsx - Refactored with Central Styles
 import React, { useMemo, useState, useCallback } from "react";
 import { Dropdown } from "primereact/dropdown";
-import { VirtualScroller } from "primereact/virtualscroller";
+import {
+  FormFieldWrapper,
+  useFormFieldState,
+  PRIMEREACT_PT_CONFIGS,
+} from "./styles/formFieldStyles";
 import nationalitiesData from "@/utils/nationalities.json";
 
 const SelectFormField = ({
-  id, // fieldname
+  id,
   value,
   onChange,
   disabled,
   className,
   placeholder,
+  tooltip,
+  required,
+  error,
+  size = "base",
   fieldSchemaItem,
-  showClear = true,
+  showClear = false,
   filter,
   ...otherProps
 }) => {
   const [filteredOptions, setFilteredOptions] = useState([]);
 
-  // Generate options based on field configuration
+  // Use central state management
+  const {
+    isFocused,
+    isHovered,
+    handleFocus,
+    handleBlur,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useFormFieldState();
+
+  // Generate options based on field configuration (same logic as before)
   const options = useMemo(() => {
     const {
       fieldname,
@@ -31,11 +49,10 @@ const SelectFormField = ({
       return nationalitiesData.map((n) => ({
         label: `${n.flag} ${n.name}`,
         value: n.name,
-        searchText: n.name.toLowerCase(), // For faster filtering
+        searchText: n.name.toLowerCase(),
       }));
     }
 
-    // Handle Select field with select_options_data
     if (Array.isArray(select_options_data) && select_options_data.length > 0) {
       return select_options_data.map((opt) => ({
         label: String(opt),
@@ -44,7 +61,6 @@ const SelectFormField = ({
       }));
     }
 
-    // Handle Autocomplete field with newline-separated options
     if (typeof fieldOptions === "string" && fieldOptions.trim() !== "") {
       return fieldOptions
         .split("\n")
@@ -63,26 +79,17 @@ const SelectFormField = ({
   // Determine if filtering should be enabled
   const shouldEnableFilter = useMemo(() => {
     if (filter !== undefined) return filter;
-
     const fieldname = fieldSchemaItem?.fieldname || id;
     const fieldtype = fieldSchemaItem?.fieldtype;
 
-    if (id === "nationality" || fieldname === "nationality") {
-      return true;
-    }
-
-    if (fieldtype === "Autocomplete") {
-      return true;
-    }
-
-    if (options.length > 10) {
-      return true;
-    }
-
-    return false;
+    return (
+      id === "nationality" ||
+      fieldname === "nationality" ||
+      fieldtype === "Autocomplete" ||
+      options.length > 10
+    );
   }, [filter, id, fieldSchemaItem, options.length]);
 
-  // Handle change event
   const handleChange = (e) => {
     if (onChange) {
       const syntheticEvent = {
@@ -104,8 +111,6 @@ const SelectFormField = ({
         setFilteredOptions(options);
         return;
       }
-
-      // Use the pre-computed searchText for faster filtering
       const filtered = options.filter((option) =>
         option.searchText.includes(query)
       );
@@ -119,7 +124,7 @@ const SelectFormField = ({
     setFilteredOptions(options);
   }, [options]);
 
-  // Custom item template for virtual scrolling (only for nationality)
+  // Custom item template for nationality
   const itemTemplate = (option) => {
     if (id === "nationality" || fieldSchemaItem?.fieldname === "nationality") {
       return (
@@ -134,40 +139,103 @@ const SelectFormField = ({
     return <span>{option.label}</span>;
   };
 
-  // Use virtual scrolling for large datasets (nationality)
   const isLargeDataset = options.length > 50;
   const displayOptions = shouldEnableFilter ? filteredOptions : options;
 
-  // Filter out non-DOM props before spreading
-  const { fieldSchemaItem: _fieldSchemaItem, ...safeOtherProps } = otherProps;
+  // Filter out non-DOM props
+  const {
+    fieldSchemaItem: _fieldSchemaItem,
+    onFocus,
+    onBlur,
+    ...safeOtherProps
+  } = otherProps;
 
-  const dropdownProps = {
-    id,
-    value: value || null,
-    options: displayOptions,
-    onChange: handleChange,
-    disabled,
-    className,
-    placeholder: placeholder || "Select an option...",
-    showClear,
-    filter: shouldEnableFilter,
-    filterBy: shouldEnableFilter ? undefined : "label", // Use custom filter for large datasets
-    onFilter: shouldEnableFilter && isLargeDataset ? handleFilter : undefined,
-    filterPlaceholder: shouldEnableFilter ? "Search..." : undefined,
-    emptyMessage: "No options available",
-    itemTemplate: isLargeDataset ? itemTemplate : undefined,
-    virtualScrollerOptions: isLargeDataset
-      ? {
-          itemSize: 38, // Height of each item in pixels
-          scrollHeight: "200px", // Max height of dropdown
-          lazy: false,
-          showSpacer: false,
-        }
-      : undefined,
-    ...safeOtherProps,
+  // Get PrimeReact PassThrough config with enhanced dropdown styling
+  const ptConfig = {
+    ...PRIMEREACT_PT_CONFIGS.dropdown({
+      isFocused,
+      isHovered,
+      disabled,
+      error: !!error,
+      size,
+      className,
+    }),
+    // Enhanced panel styling for elegant dropdown
+    panel: {
+      className:
+        "border-none shadow-xl rounded-2xl mt-2 overflow-hidden bg-surface-0 backdrop-blur-sm",
+    },
+    list: {
+      className: "p-2",
+    },
+    item: {
+      className:
+        "px-3 py-2 mx-1 rounded-xl hover:bg-primary-50 transition-all duration-150 cursor-pointer border-none text-sm",
+    },
+    itemGroup: {
+      className:
+        "px-3 py-2 font-semibold text-text-color-secondary text-xs uppercase tracking-wider",
+    },
+    filterContainer: {
+      className: "p-3 border-b border-surface-100",
+    },
+    filterInput: {
+      className:
+        "w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:border-primary-400 focus:outline-none transition-colors",
+    },
+    // Hide the clear button completely
+    clearIcon: {
+      className: "hidden",
+    },
   };
 
-  return <Dropdown {...dropdownProps} />;
+  return (
+    <FormFieldWrapper
+      id={id}
+      error={error}
+      required={required}
+      disabled={disabled}
+      isFocused={isFocused}
+      isHovered={isHovered}
+      onMouseEnter={() => handleMouseEnter(disabled)}
+      onMouseLeave={handleMouseLeave}
+    >
+      <Dropdown
+        id={id}
+        value={value || null}
+        options={displayOptions}
+        onChange={handleChange}
+        onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
+        onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
+        disabled={disabled}
+        placeholder={placeholder || "Select an option..."}
+        showClear={false}
+        filter={shouldEnableFilter}
+        filterBy={shouldEnableFilter ? undefined : "label"}
+        onFilter={
+          shouldEnableFilter && isLargeDataset ? handleFilter : undefined
+        }
+        filterPlaceholder={shouldEnableFilter ? "Search..." : undefined}
+        emptyMessage="No options available"
+        itemTemplate={isLargeDataset ? itemTemplate : undefined}
+        virtualScrollerOptions={
+          isLargeDataset
+            ? {
+                itemSize: 38,
+                scrollHeight: "200px",
+                lazy: false,
+                showSpacer: false,
+              }
+            : undefined
+        }
+        pt={ptConfig}
+        title={tooltip}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
+        {...safeOtherProps}
+      />
+    </FormFieldWrapper>
+  );
 };
 
 export default SelectFormField;

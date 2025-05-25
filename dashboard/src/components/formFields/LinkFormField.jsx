@@ -1,8 +1,13 @@
-// src/components/formFields/LinkFormField.jsx - Fixed version
+// src/components/formFields/LinkFormField.jsx - Refactored with Central Styles
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import { ProgressSpinner } from "primereact/progressspinner";
+import {
+  FormFieldWrapper,
+  useFormFieldState,
+  PRIMEREACT_PT_CONFIGS,
+} from "./styles/formFieldStyles";
 
 const LinkFormField = ({
   id, // fieldname
@@ -11,17 +16,31 @@ const LinkFormField = ({
   disabled,
   className,
   placeholder,
+  tooltip,
+  required,
+  error,
+  size = "base",
   fieldSchemaItem,
   linkedDoctype,
   fetchLinkOptions,
   isLoading = false,
-  showClear = true,
+  showClear = false, // Default to false for consistency
   ...otherProps
 }) => {
   const [options, setOptions] = useState([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Use central state management
+  const {
+    isFocused,
+    isHovered,
+    handleFocus,
+    handleBlur,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useFormFieldState();
 
   // Debounced search term for API calls
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -112,88 +131,135 @@ const LinkFormField = ({
     loadOptions(searchTerm, false, true); // Force refresh
   }, [loadOptions, searchTerm]);
 
-  // Memoized dropdown props
-  const dropdownProps = useMemo(() => {
-    // Filter out props that shouldn't be passed to DOM elements
-    const {
-      fetchLinkOptions: _fetchLinkOptions,
-      fieldSchemaItem: _fieldSchemaItem,
-      linkedDoctype: _linkedDoctype,
-      resetFilter: _resetFilter,
-      // Add any other custom props that shouldn't go to DOM
-      ...safeOtherProps
-    } = otherProps;
+  // Filter out props that shouldn't be passed to DOM elements
+  const {
+    fetchLinkOptions: _fetchLinkOptions,
+    fieldSchemaItem: _fieldSchemaItem,
+    linkedDoctype: _linkedDoctype,
+    onFocus,
+    onBlur,
+    ...safeOtherProps
+  } = otherProps;
 
-    return {
-      id,
-      value: value || null,
-      options,
-      onChange: handleChange,
-      disabled: disabled || isLoading,
-      className: `${className || ""} ${
-        isLoadingOptions ? "p-dropdown-loading" : ""
-      }`,
-      placeholder: isLoadingOptions
-        ? "Loading options..."
-        : placeholder || `Select ${linkedDoctype || "option"}...`,
-      showClear: showClear && !disabled,
-      filter: true,
-      filterBy: "label",
-      filterPlaceholder: `Search ${linkedDoctype || "options"}...`,
-      onFilter: handleFilter,
-      onShow: handleDropdownShow,
-      onHide: handleDropdownHide,
-      emptyMessage: isLoadingOptions
-        ? "Loading..."
-        : searchTerm
-        ? `No ${linkedDoctype || "options"} found matching "${searchTerm}"`
-        : `No ${linkedDoctype || "options"} available`,
-      // Don't pass resetFilter to the DOM element
-      ...safeOtherProps,
-    };
-  }, [
-    id,
-    value,
-    options,
-    handleChange,
-    disabled,
-    isLoading,
-    className,
-    isLoadingOptions,
-    placeholder,
-    linkedDoctype,
-    showClear,
-    handleFilter,
-    handleDropdownShow,
-    handleDropdownHide,
-    searchTerm,
-    otherProps,
-  ]);
+  // Get PrimeReact PassThrough config with enhanced dropdown styling
+  const ptConfig = {
+    ...PRIMEREACT_PT_CONFIGS.dropdown({
+      isFocused,
+      isHovered,
+      disabled,
+      error: !!error,
+      size,
+      className,
+    }),
+    // Enhanced panel styling for elegant dropdown
+    panel: {
+      className:
+        "border-none shadow-xl rounded-2xl mt-2 overflow-hidden bg-surface-0 backdrop-blur-sm",
+    },
+    list: {
+      className: "p-2",
+    },
+    item: {
+      className:
+        "px-3 py-2 mx-1 rounded-xl hover:bg-primary-50 transition-all duration-150 cursor-pointer border-none text-sm",
+    },
+    filterContainer: {
+      className: "p-3 border-b border-surface-100",
+    },
+    filterInput: {
+      className:
+        "w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:border-primary-400 focus:outline-none transition-colors",
+    },
+    // Hide the clear button completely
+    clearIcon: {
+      className: "hidden",
+    },
+    // Loading state styling
+    loadingIcon: {
+      className: "text-primary-500",
+    },
+  };
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 relative">
-        <Dropdown {...dropdownProps} />
-        {isLoadingOptions && (
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
-            <ProgressSpinner size="16" strokeWidth="4" />
-          </div>
-        )}
-      </div>
+    <FormFieldWrapper
+      id={id}
+      error={error}
+      required={required}
+      disabled={disabled}
+      isFocused={isFocused}
+      isHovered={isHovered}
+      onMouseEnter={() => handleMouseEnter(disabled)}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="flex items-center gap-2">
+        <div className="flex-1 relative">
+          <Dropdown
+            id={id}
+            value={value || null}
+            options={options}
+            onChange={handleChange}
+            onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
+            onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
+            disabled={disabled || isLoading}
+            placeholder={
+              isLoadingOptions
+                ? "Loading options..."
+                : placeholder || `Select ${linkedDoctype || "option"}...`
+            }
+            showClear={false}
+            filter={true}
+            filterBy="label"
+            filterPlaceholder={`Search ${linkedDoctype || "options"}...`}
+            onFilter={handleFilter}
+            onShow={handleDropdownShow}
+            onHide={handleDropdownHide}
+            emptyMessage={
+              isLoadingOptions
+                ? "Loading..."
+                : searchTerm
+                ? `No ${
+                    linkedDoctype || "options"
+                  } found matching "${searchTerm}"`
+                : `No ${linkedDoctype || "options"} available`
+            }
+            pt={ptConfig}
+            title={tooltip}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            {...safeOtherProps}
+          />
 
-      {/* Refresh button */}
-      <Button
-        icon="pi pi-refresh"
-        text
-        rounded
-        size="small"
-        onClick={handleRefresh}
-        disabled={disabled || isLoadingOptions}
-        tooltip="Refresh options"
-        tooltipOptions={{ position: "top" }}
-        className="p-button-sm flex-shrink-0"
-      />
-    </div>
+          {/* Loading spinner overlay */}
+          {isLoadingOptions && (
+            <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
+              <ProgressSpinner size="16" strokeWidth="4" />
+            </div>
+          )}
+        </div>
+
+        {/* Refresh button */}
+        <Button
+          icon="pi pi-refresh"
+          text
+          rounded
+          size="small"
+          onClick={handleRefresh}
+          disabled={disabled || isLoadingOptions}
+          tooltip="Refresh options"
+          tooltipOptions={{ position: "top" }}
+          className="p-button-sm flex-shrink-0 text-text-color-secondary hover:text-primary-500 hover:bg-primary-50 transition-all duration-200"
+          pt={{
+            root: {
+              className:
+                "w-8 h-8 rounded-xl border border-surface-200 hover:border-primary-300 transition-all duration-200",
+            },
+            icon: {
+              className: "text-sm",
+            },
+          }}
+        />
+      </div>
+    </FormFieldWrapper>
   );
 };
 

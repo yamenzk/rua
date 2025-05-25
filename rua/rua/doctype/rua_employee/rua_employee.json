@@ -16,6 +16,8 @@
   "position",
   "branch",
   "joining_date",
+  "integer_field",
+  "float_field",
   "column_break_ouxq",
   "naming_series",
   "image",
@@ -292,12 +294,24 @@
    "fieldname": "tab_1",
    "fieldtype": "Tab Break",
    "label": "\ud83d\ude0e Personal Information"
+  },
+  {
+   "fieldname": "integer_field",
+   "fieldtype": "Int",
+   "label": "Integer Field",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "float_field",
+   "fieldtype": "Float",
+   "label": "Float Field",
+   "precision": "1"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-24 12:38:34.663313",
+ "modified": "2025-05-25 13:21:12.179546",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",
