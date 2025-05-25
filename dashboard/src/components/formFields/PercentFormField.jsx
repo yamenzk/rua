@@ -1,4 +1,4 @@
-// src/components/formFields/PercentFormField.jsx - Refactored with Central Styles
+// src/components/formFields/PercentFormField.jsx - Fixed Addon Continuity
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import {
@@ -49,36 +49,18 @@ const PercentFormField = ({
   // Filter out non-DOM props before spreading
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get PrimeReact PassThrough config for InputNumber with percent styling
-  const ptConfig = {
-    ...PRIMEREACT_PT_CONFIGS.inputNumber({
+  // Get PrimeReact PassThrough config for InputNumber with percent addon
+  const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumberWithAddon(
+    {
       isFocused,
       isHovered,
       disabled,
       error: !!error,
       size,
       className,
-    }),
-    // Override root to accommodate the percent suffix
-    root: {
-      className:
-        "w-full inline-flex bg-transparent border-none p-0 shadow-none rounded-2xl overflow-hidden items-center",
     },
-    input: {
-      root: {
-        className: `${
-          PRIMEREACT_PT_CONFIGS.inputNumber({
-            isFocused,
-            isHovered,
-            disabled,
-            error: !!error,
-            size,
-            className,
-          }).input.root.className
-        } rounded-r-none border-r-0`,
-      },
-    },
-  };
+    "right"
+  ); // Percent addon is on the right
 
   return (
     <FormFieldWrapper
@@ -110,15 +92,7 @@ const PercentFormField = ({
           max={max}
           minFractionDigits={0}
           maxFractionDigits={2}
-          pt={{
-            ...ptConfig,
-            // Special styling for percent input to connect with addon
-            input: {
-              root: {
-                className: `${ptConfig.input.root.className} rounded-r-none border-r-0`,
-              },
-            },
-          }}
+          pt={ptConfig}
           title={tooltip}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}

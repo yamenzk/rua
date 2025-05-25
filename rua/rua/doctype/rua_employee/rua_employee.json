@@ -236,7 +236,6 @@
   },
   {
    "default": "0",
-   "description": "{\n\"aside\" : \"right\",\n\"asSwitch\" : true\n}",
    "fieldname": "is_it_enabled",
    "fieldtype": "Check",
    "in_filter": 1,
@@ -311,7 +310,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-25 13:21:12.179546",
+ "modified": "2025-05-25 14:00:03.752389",
  "modified_by": "Administrator",
  "module": "Rua",
  "name": "RUA Employee",

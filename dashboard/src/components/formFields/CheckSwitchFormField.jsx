@@ -1,96 +1,323 @@
-// src/components/formFields/CheckSwitchFormField.jsx - Fixed version
+// src/components/formFields/CheckSwitchFormField.jsx - Redesigned with Central Styles
 import React from "react";
 import { InputSwitch } from "primereact/inputswitch";
 import { Checkbox } from "primereact/checkbox";
+import {
+  FormFieldWrapper,
+  useFormFieldState,
+  PRIMEREACT_PT_CONFIGS,
+} from "./styles/formFieldStyles";
 import { parseDescription } from "@/components/document/utils/schemaUtils";
 
-const CheckSwitchFormField = (props) => {
-  // Props from DocEditor's commonProps & componentSpecificProps:
-  // id, checked, onChange (which is handleInputChange wrapper), disabled, className,
-  // fieldSchemaItem, tooltip, etc.
+const CheckSwitchFormField = ({
+  id,
+  checked,
+  onChange,
+  disabled,
+  className,
+  tooltip,
+  required,
+  error,
+  size = "base",
+  fieldSchemaItem,
+  variant = "auto", // "auto", "switch", "checkbox"
+  label, // Optional inline label for the control
+  labelPosition = "right", // "left", "right", "top", "bottom"
+  showLabel = true, // Whether to show inline label
+  ...otherProps
+}) => {
+  // Use central state management
   const {
-    id, // fieldname
-    checked, // This is correctly passed as currentFormData[fieldname] due to valuePropName logic
-    onChange, // This is effectively (e) => handleInputChange(id, e.target.value, "Check")
-    disabled,
-    className, // Applied by DocEditor to wrapper, not directly used here unless needed
-    fieldSchemaItem,
-    tooltip, // From commonProps
-    ...otherProps // Any other specific props from FormFieldAdapter
-  } = props;
+    isFocused,
+    isHovered,
+    handleFocus,
+    handleBlur,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useFormFieldState();
 
+  // Parse field description for UI hints
   const descriptionData = parseDescription(fieldSchemaItem?.description || "");
-  const label = fieldSchemaItem?.label || ""; // For Checkbox label if needed and not handled by editor
 
-  // The `onChange` prop from DocEditor's commonProps expects an event-like object.
-  // Both InputSwitch and Checkbox provide the new boolean state differently.
-  // The FormFieldAdapter for "Check" should provide a specific onChange.
-  // If not, and we rely on the default commonProps.onChange, this is how to adapt:
+  // Determine which control to use
+  const shouldUseSwitch =
+    variant === "switch" ||
+    (variant === "auto" &&
+      (descriptionData.asSwitch || descriptionData.ui_control === "switch"));
+
+  // Get label text
+  const displayLabel =
+    label ||
+    descriptionData.inputLabel ||
+    (shouldUseSwitch ? null : fieldSchemaItem?.label) ||
+    "";
 
   const handleChange = (e) => {
     if (onChange) {
       let newCheckedState;
-      if (descriptionData.asSwitch) {
-        newCheckedState = e.value; // InputSwitch puts new boolean state in e.value
+
+      if (shouldUseSwitch) {
+        newCheckedState = e.value; // InputSwitch uses e.value
       } else {
-        newCheckedState = e.checked; // Checkbox puts new boolean state in e.checked
+        newCheckedState = e.checked; // Checkbox uses e.checked
       }
 
-      // Construct the event-like object that the default commonProps.onChange expects
-      const simulatedEvent = {
+      // Create event structure expected by form handler
+      const syntheticEvent = {
         target: {
-          name: id, // fieldname
+          name: id,
           value: newCheckedState,
         },
-        // originalEvent: e.originalEvent // if needed
+        originalEvent: e.originalEvent || e,
       };
-      onChange(simulatedEvent);
+      onChange(syntheticEvent);
     }
   };
 
-  // Filter out non-DOM props before spreading
-  const { fieldSchemaItem: _fieldSchemaItem, ...safeOtherProps } = otherProps;
+  // Filter out non-DOM props
+  const {
+    fieldSchemaItem: _fieldSchemaItem,
+    onFocus,
+    onBlur,
+    ...safeOtherProps
+  } = otherProps;
 
-  const commonInputProps = {
-    inputId: id, // PrimeReact convention for associating label
-    checked: !!checked, // Ensure boolean
-    onChange: handleChange, // Use our adapted handler
-    disabled: disabled,
-    tooltip: tooltip, // Pass tooltip
-    tooltipOptions: props.tooltipOptions || { position: "top" },
-    ...safeOtherProps, // Spread other props from FormFieldAdapter (now filtered)
+  // Common props for both switch and checkbox
+  const commonProps = {
+    inputId: id,
+    checked: !!checked,
+    onChange: handleChange,
+    onFocus: (e) => handleFocus(e, safeOtherProps.onFocus),
+    onBlur: (e) => handleBlur(e, safeOtherProps.onBlur),
+    disabled,
+    title: tooltip,
+    "aria-invalid": !!error,
+    "aria-describedby": error ? `${id}-error` : undefined,
+    ...safeOtherProps,
   };
 
-  if (descriptionData.asSwitch) {
-    return (
+  // Render Switch
+  if (shouldUseSwitch) {
+    const switchPT = {
+      ...PRIMEREACT_PT_CONFIGS.inputSwitch({
+        isFocused,
+        isHovered,
+        disabled,
+        error: !!error,
+        size,
+      }),
+      root: {
+        className: `
+          relative inline-flex items-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-200 rounded-full
+          ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+          ${error ? "ring-2 ring-red-200" : ""}
+          ${className || ""}
+        `,
+      },
+      slider: {
+        className: `
+          transition-all duration-200 rounded-full
+          ${
+            disabled
+              ? "bg-surface-300"
+              : checked
+              ? "bg-primary-500 hover:bg-primary-600"
+              : "bg-surface-300 hover:bg-surface-400"
+          }
+        `,
+      },
+      handle: {
+        className: `
+          transition-all duration-200 rounded-full shadow-sm border-2 border-white
+          ${
+            size === "large"
+              ? "w-6 h-6"
+              : size === "compact"
+              ? "w-4 h-4"
+              : "w-5 h-5"
+          }
+          ${checked ? "bg-white" : "bg-white"}
+        `,
+      },
+    };
+
+    const switchControl = (
       <InputSwitch
-        {...commonInputProps}
-        // className for InputSwitch itself, if needed, different from wrapper
-        // className={otherProps.inputClassName || ""}
+        {...commonProps}
+        pt={switchPT}
+        className={`
+          ${
+            size === "large"
+              ? "w-14 h-8"
+              : size === "compact"
+              ? "w-10 h-6"
+              : "w-12 h-7"
+          }
+        `}
       />
+    );
+
+    return (
+      <FormFieldWrapper
+        id={id}
+        error={error}
+        required={required}
+        disabled={disabled}
+        isFocused={isFocused}
+        isHovered={isHovered}
+        onMouseEnter={() => handleMouseEnter(disabled)}
+        onMouseLeave={handleMouseLeave}
+        className={className}
+      >
+        {renderControlWithLabel(
+          switchControl,
+          displayLabel,
+          labelPosition,
+          showLabel,
+          id,
+          required
+        )}
+      </FormFieldWrapper>
     );
   }
 
-  // For Checkbox, PrimeReact often expects a label beside it.
-  // The DocEditor's label is typically above or beside the whole field.
-  // If a label specific to the checkbox input itself is desired (e.g., "Agree to terms"),
-  // it can be parsed from description or fieldSchemaItem.
-  const checkboxLabel =
-    descriptionData.inputLabel ||
-    (fieldSchemaItem?.options === "true" ? label : null);
+  // Render Checkbox
+  const checkboxPT = {
+    ...PRIMEREACT_PT_CONFIGS.checkbox({
+      isFocused,
+      isHovered,
+      disabled,
+      error: !!error,
+      size,
+    }),
+    root: {
+      className: "relative inline-flex items-center",
+    },
+    box: {
+      className: `
+        transition-all duration-200 border-2 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary-200
+        ${
+          size === "large"
+            ? "w-6 h-6"
+            : size === "compact"
+            ? "w-4 h-4"
+            : "w-5 h-5"
+        }
+        ${
+          error
+            ? "border-red-300 focus:ring-red-200"
+            : disabled
+            ? "border-surface-200 bg-surface-100"
+            : checked
+            ? "border-primary-500 bg-primary-500 hover:border-primary-600 hover:bg-primary-600"
+            : "border-surface-300 bg-surface-0 hover:border-primary-400"
+        }
+      `,
+    },
+    icon: {
+      className: `
+        transition-all duration-200 text-white
+        ${
+          size === "large"
+            ? "text-sm"
+            : size === "compact"
+            ? "text-xs"
+            : "text-sm"
+        }
+        ${checked ? "opacity-100 scale-100" : "opacity-0 scale-75"}
+      `,
+    },
+  };
+
+  const checkboxControl = <Checkbox {...commonProps} pt={checkboxPT} />;
 
   return (
-    <div className="flex align-items-center">
-      <Checkbox
-        {...commonInputProps}
-        // className for Checkbox itself
-        // className={otherProps.inputClassName || ""}
-      />
-      {checkboxLabel && (
-        <label htmlFor={id} className="ml-2 text-sm text-text-color">
-          {checkboxLabel}
-        </label>
+    <FormFieldWrapper
+      id={id}
+      error={error}
+      required={required}
+      disabled={disabled}
+      isFocused={isFocused}
+      isHovered={isHovered}
+      onMouseEnter={() => handleMouseEnter(disabled)}
+      onMouseLeave={handleMouseLeave}
+      className={className}
+    >
+      {renderControlWithLabel(
+        checkboxControl,
+        displayLabel,
+        labelPosition,
+        showLabel,
+        id,
+        required
       )}
+    </FormFieldWrapper>
+  );
+};
+
+// Helper function to render control with label in different positions
+const renderControlWithLabel = (
+  control,
+  displayLabel,
+  labelPosition,
+  showLabel,
+  id,
+  required
+) => {
+  if (!showLabel || !displayLabel) {
+    return control;
+  }
+
+  const labelElement = (
+    <label
+      htmlFor={id}
+      className={`
+        text-sm text-text-color cursor-pointer transition-colors duration-200 hover:text-primary-600
+        ${labelPosition === "top" || labelPosition === "bottom" ? "block" : ""}
+        ${required ? "after:content-['*'] after:text-red-500 after:ml-1" : ""}
+      `}
+    >
+      {displayLabel}
+    </label>
+  );
+
+  const spacing =
+    labelPosition === "top" || labelPosition === "bottom"
+      ? "space-y-2"
+      : "space-x-3";
+
+  if (labelPosition === "top") {
+    return (
+      <div className={`flex flex-col ${spacing}`}>
+        {labelElement}
+        {control}
+      </div>
+    );
+  }
+
+  if (labelPosition === "bottom") {
+    return (
+      <div className={`flex flex-col ${spacing}`}>
+        {control}
+        {labelElement}
+      </div>
+    );
+  }
+
+  if (labelPosition === "left") {
+    return (
+      <div className={`flex items-center ${spacing}`}>
+        {labelElement}
+        {control}
+      </div>
+    );
+  }
+
+  // Default: right
+  return (
+    <div className={`flex items-center ${spacing}`}>
+      {control}
+      {labelElement}
     </div>
   );
 };

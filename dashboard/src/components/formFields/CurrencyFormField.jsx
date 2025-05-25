@@ -1,4 +1,4 @@
-// src/components/formFields/CurrencyFormField.jsx - Refactored with Central Styles
+// src/components/formFields/CurrencyFormField.jsx - Fixed Addon Continuity
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import {
@@ -53,22 +53,18 @@ const CurrencyFormField = ({
   // Filter out non-DOM props before spreading
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get PrimeReact PassThrough config for InputNumber with currency styling
-  const ptConfig = {
-    ...PRIMEREACT_PT_CONFIGS.inputNumber({
+  // Get PrimeReact PassThrough config for InputNumber with currency addon
+  const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumberWithAddon(
+    {
       isFocused,
       isHovered,
       disabled,
       error: !!error,
       size,
       className,
-    }),
-    // Override root to accommodate the currency addon
-    root: {
-      className:
-        "w-full inline-flex bg-transparent border-none p-0 shadow-none rounded-2xl overflow-hidden", // Add overflow-hidden for clean edges
     },
-  };
+    "left"
+  ); // Currency addon is on the left
 
   return (
     <FormFieldWrapper
@@ -111,15 +107,7 @@ const CurrencyFormField = ({
           maxFractionDigits={maxFractionDigits}
           min={min}
           max={max}
-          pt={{
-            ...ptConfig,
-            // Special styling for currency input to connect with addon
-            input: {
-              root: {
-                className: `${ptConfig.input.root.className} rounded-l-none border-l-0`,
-              },
-            },
-          }}
+          pt={ptConfig}
           title={tooltip}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
