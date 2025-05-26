@@ -1,4 +1,4 @@
-// src/components/formFields/PercentFormField.jsx - Fixed Addon Continuity
+// src/components/formFields/PercentFormField.jsx - Enhanced with Unified States
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import {
@@ -6,6 +6,8 @@ import {
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
   getAddonStyles,
+  getAddonIconStyles,
+  DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 
 const PercentFormField = ({
@@ -19,37 +21,34 @@ const PercentFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated",
   min = 0,
   max = 100,
   ...otherProps
 }) => {
-  // Use central state management
   const {
     isFocused,
     isHovered,
-    handleFocus,
-    handleBlur,
-    handleMouseEnter,
-    handleMouseLeave,
+    handleFieldGroupFocus,
+    handleFieldGroupBlur,
+    handleFieldGroupMouseEnter,
+    handleFieldGroupMouseLeave,
   } = useFormFieldState();
+
+  const t = DESIGN_TOKENS;
 
   const handleChange = (e) => {
     if (onChange) {
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: e.value,
-        },
+        target: { name: id, value: e.value },
         originalEvent: e.originalEvent,
       };
       onChange(syntheticEvent);
     }
   };
 
-  // Filter out non-DOM props before spreading
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get PrimeReact PassThrough config for InputNumber with percent addon
   const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumberWithAddon(
     {
       isFocused,
@@ -59,8 +58,9 @@ const PercentFormField = ({
       size,
       className,
     },
-    "right"
-  ); // Percent addon is on the right
+    "right",
+    preset
+  );
 
   return (
     <FormFieldWrapper
@@ -70,11 +70,22 @@ const PercentFormField = ({
       disabled={disabled}
       isFocused={isFocused}
       isHovered={isHovered}
-      onMouseEnter={() => handleMouseEnter(disabled)}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+      onMouseLeave={handleFieldGroupMouseLeave}
+      preset={preset}
     >
-      <div className="p-inputgroup w-full">
-        {/* Input Number */}
+      {/* Field Group Container - Unified behavior */}
+      <div
+        className={`
+          p-inputgroup w-full ${t.layout.position.relative}
+          ${!disabled ? "cursor-text" : ""}
+        `}
+        onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+        onMouseLeave={handleFieldGroupMouseLeave}
+        onFocus={handleFieldGroupFocus}
+        onBlur={handleFieldGroupBlur}
+      >
+        {/* Input Number - Left side */}
         <InputNumber
           id={id}
           value={
@@ -83,8 +94,8 @@ const PercentFormField = ({
               : null
           }
           onValueChange={handleChange}
-          onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
-          onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
+          onFocus={(e) => handleFieldGroupFocus(e, safeOtherProps.onFocus)}
+          onBlur={(e) => handleFieldGroupBlur(e, safeOtherProps.onBlur)}
           disabled={disabled}
           placeholder={placeholder || "0"}
           mode="decimal"
@@ -99,14 +110,29 @@ const PercentFormField = ({
           {...safeOtherProps}
         />
 
-        {/* Percent Symbol Addon */}
+        {/* Percent Symbol Addon - Right side, perfectly connected */}
         <span
-          className={`p-inputgroup-addon flex items-center justify-center min-w-[3rem] ${getAddonStyles(
-            { isFocused, isHovered, disabled },
-            "right"
-          )}`}
+          className={`
+            p-inputgroup-addon ${t.layout.flex.center} min-w-[3rem]
+            ${getAddonStyles(
+              { isFocused, isHovered, disabled },
+              "right",
+              preset
+            )}
+          `}
+          onClick={() => {
+            // Focus the input when addon is clicked
+            const input = document.getElementById(id);
+            if (input && !disabled) {
+              input.focus();
+            }
+          }}
         >
-          <span className="text-sm font-medium text-text-color-secondary">
+          <span
+            className={`${t.typography.sm} ${
+              t.typography.weight.medium
+            } ${getAddonIconStyles({ isFocused, disabled }, preset)}`}
+          >
             %
           </span>
         </span>
@@ -114,5 +140,4 @@ const PercentFormField = ({
     </FormFieldWrapper>
   );
 };
-
 export default PercentFormField;

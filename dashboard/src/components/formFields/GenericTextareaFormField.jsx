@@ -1,4 +1,4 @@
-// src/components/formFields/GenericTextareaFormField.jsx - Redesigned with Central Styles
+// src/components/formFields/GenericTextareaFormField.jsx - Enhanced with Presets
 import React, { useState, useRef, useEffect } from "react";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Button } from "primereact/button";
@@ -6,6 +6,8 @@ import {
   FormFieldWrapper,
   useFormFieldState,
   useFormFieldClasses,
+  DESIGN_TOKENS,
+  getInteractionPreset,
 } from "./styles/formFieldStyles";
 
 const GenericTextareaFormField = ({
@@ -19,21 +21,21 @@ const GenericTextareaFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated", // New preset support!
   rows = 3,
   maxRows = 10,
   minRows = 2,
   maxLength,
   showCharacterCount = false,
   autoResize = true,
-  resizeMode = "both", // "both", "vertical", "horizontal", "none"
-  showToolbar = false, // Show formatting toolbar
+  resizeMode = "both",
+  showToolbar = false,
   ...otherProps
 }) => {
   const textareaRef = useRef(null);
   const [characterCount, setCharacterCount] = useState(0);
   const [isFocusedInternal, setIsFocusedInternal] = useState(false);
 
-  // Use central state management
   const {
     isFocused,
     isHovered,
@@ -43,7 +45,9 @@ const GenericTextareaFormField = ({
     handleMouseLeave,
   } = useFormFieldState();
 
-  // Update character count
+  const t = DESIGN_TOKENS;
+  const interactions = getInteractionPreset("input", preset) || {};
+
   useEffect(() => {
     const text = value || "";
     setCharacterCount(text.length);
@@ -51,12 +55,11 @@ const GenericTextareaFormField = ({
 
   const handleChange = (e) => {
     if (onChange) {
-      onChange(e); // Pass through the event as-is for InputTextarea
+      onChange(e);
     }
   };
 
   const handleKeyDown = (e) => {
-    // Allow tab indentation
     if (e.key === "Tab" && !e.shiftKey) {
       e.preventDefault();
       const start = e.target.selectionStart;
@@ -66,16 +69,12 @@ const GenericTextareaFormField = ({
 
       if (onChange) {
         const syntheticEvent = {
-          target: {
-            name: id,
-            value: newValue,
-          },
+          target: { name: id, value: newValue },
           originalEvent: e,
         };
         onChange(syntheticEvent);
       }
 
-      // Set cursor position after tab
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.setSelectionRange(start + 1, start + 1);
@@ -83,13 +82,11 @@ const GenericTextareaFormField = ({
       }, 0);
     }
 
-    // Call original keyDown handler if provided
     if (otherProps.onKeyDown) {
       otherProps.onKeyDown(e);
     }
   };
 
-  // Formatting functions for toolbar
   const formatText = (type) => {
     if (!textareaRef.current) return;
 
@@ -139,17 +136,13 @@ const GenericTextareaFormField = ({
 
       if (onChange) {
         const syntheticEvent = {
-          target: {
-            name: id,
-            value: newValue,
-          },
+          target: { name: id, value: newValue },
         };
         onChange(syntheticEvent);
       }
     }
   };
 
-  // Filter out non-DOM props
   const {
     fieldSchemaItem,
     onFocus,
@@ -163,13 +156,13 @@ const GenericTextareaFormField = ({
     ...safeOtherProps
   } = otherProps;
 
-  // Get consistent classes from central system
   const textareaClasses = useFormFieldClasses({
     isFocused,
     isHovered,
     disabled,
     error: !!error,
     size,
+    preset, // Apply preset!
     className: `${className || ""} ${
       resizeMode === "none"
         ? "resize-none"
@@ -181,10 +174,9 @@ const GenericTextareaFormField = ({
     }`,
   });
 
-  // Enhanced PassThrough configuration
   const textareaPT = {
     root: {
-      className: `${textareaClasses} transition-all duration-200 leading-relaxed`,
+      className: `${textareaClasses} ${t.effects.transition.base} leading-relaxed`,
       style: {
         minHeight: `${minRows * 1.5}rem`,
         maxHeight: maxRows ? `${maxRows * 1.5}rem` : undefined,
@@ -202,12 +194,23 @@ const GenericTextareaFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
+      preset={preset}
     >
-      <div className="space-y-2">
-        {/* Formatting Toolbar */}
+      <div className={`${t.spacing.gap.small} ${t.layout.flex.col}`}>
+        {/* Enhanced Formatting Toolbar */}
         {showToolbar && !disabled && (
-          <div className="flex items-center gap-1 p-2 bg-surface-50 rounded-xl border border-surface-200">
-            <div className="flex items-center gap-1">
+          <div
+            className={`
+              ${t.layout.flex.center} ${t.spacing.gap.tiny} ${
+              t.spacing.panel.paddingSmall
+            } 
+              ${t.colors.background.surfaceAlt} ${t.radius.base} ${
+              t.colors.border.default
+            } ${t.borders.width.base}
+              ${preset === "elevated" ? t.effects.shadow.base : ""}
+            `}
+          >
+            <div className={`${t.layout.flex.center} ${t.spacing.gap.tiny}`}>
               <Button
                 type="button"
                 icon="pi pi-bold"
@@ -215,7 +218,7 @@ const GenericTextareaFormField = ({
                 size="small"
                 text
                 rounded
-                className="w-8 h-8 text-text-color-secondary hover:text-text-color hover:bg-surface-100"
+                className={`${t.sizing.icon.xl} ${t.colors.text.secondary} hover:${t.colors.text.default} hover:${t.colors.background.hover.surface}`}
                 tooltip="Bold (Ctrl+B)"
                 tooltipOptions={{ position: "top" }}
               />
@@ -226,7 +229,7 @@ const GenericTextareaFormField = ({
                 size="small"
                 text
                 rounded
-                className="w-8 h-8 text-text-color-secondary hover:text-text-color hover:bg-surface-100"
+                className={`${t.sizing.icon.xl} ${t.colors.text.secondary} hover:${t.colors.text.default} hover:${t.colors.background.hover.surface}`}
                 tooltip="Italic (Ctrl+I)"
                 tooltipOptions={{ position: "top" }}
               />
@@ -237,15 +240,17 @@ const GenericTextareaFormField = ({
                 size="small"
                 text
                 rounded
-                className="w-8 h-8 text-text-color-secondary hover:text-text-color hover:bg-surface-100"
+                className={`${t.sizing.icon.xl} ${t.colors.text.secondary} hover:${t.colors.text.default} hover:${t.colors.background.hover.surface}`}
                 tooltip="Code"
                 tooltipOptions={{ position: "top" }}
               />
             </div>
 
-            <div className="w-px h-6 bg-surface-300 mx-1"></div>
+            <div
+              className={`w-px h-6 ${t.colors.background.surfaceStrong} ${t.spacing.margin.tiny}`}
+            />
 
-            <div className="flex items-center gap-1">
+            <div className={`${t.layout.flex.center} ${t.spacing.gap.tiny}`}>
               <Button
                 type="button"
                 icon="pi pi-list"
@@ -253,7 +258,7 @@ const GenericTextareaFormField = ({
                 size="small"
                 text
                 rounded
-                className="w-8 h-8 text-text-color-secondary hover:text-text-color hover:bg-surface-100"
+                className={`${t.sizing.icon.xl} ${t.colors.text.secondary} hover:${t.colors.text.default} hover:${t.colors.background.hover.surface}`}
                 tooltip="Bullet List"
                 tooltipOptions={{ position: "top" }}
               />
@@ -264,7 +269,7 @@ const GenericTextareaFormField = ({
                 size="small"
                 text
                 rounded
-                className="w-8 h-8 text-text-color-secondary hover:text-text-color hover:bg-surface-100"
+                className={`${t.sizing.icon.xl} ${t.colors.text.secondary} hover:${t.colors.text.default} hover:${t.colors.background.hover.surface}`}
                 tooltip="Quote"
                 tooltipOptions={{ position: "top" }}
               />
@@ -272,8 +277,8 @@ const GenericTextareaFormField = ({
           </div>
         )}
 
-        {/* Textarea */}
-        <div className="relative">
+        {/* Enhanced Textarea */}
+        <div className={t.layout.position.relative}>
           <InputTextarea
             ref={textareaRef}
             id={id}
@@ -300,25 +305,36 @@ const GenericTextareaFormField = ({
             {...safeOtherProps}
           />
 
-          {/* Character Count Badge */}
+          {/* Enhanced Character Count Badge */}
           {showCharacterCount && (
-            <div className="absolute bottom-2 right-2 pointer-events-none">
+            <div
+              className={`${t.layout.position.absolute} bottom-2 right-2 ${t.interactions.pointerEvents.none}`}
+            >
               <div
                 className={`
-                  text-xs px-2 py-1 rounded-lg backdrop-blur-sm transition-all duration-200
+                  ${t.typography.xs} px-2 py-1 ${
+                  t.radius.small
+                } backdrop-blur-sm ${t.effects.transition.base}
                   ${
                     maxLength && characterCount > maxLength * 0.9
                       ? characterCount >= maxLength
-                        ? "bg-red-100 text-red-700 border border-red-200"
-                        : "bg-orange-100 text-orange-700 border border-orange-200"
-                      : "bg-surface-100/80 text-text-color-secondary border border-surface-200/50"
+                        ? `${t.colors.background.error.replace(
+                            "bg-red-50/30",
+                            "bg-red-100"
+                          )} ${t.colors.text.error} ${t.colors.border.error} ${
+                            t.borders.width.base
+                          }`
+                        : `${t.colors.background.warning} ${t.colors.text.warning} border border-orange-200`
+                      : `${t.colors.background.surfaceDisabled} ${t.colors.text.secondary} ${t.colors.border.light} ${t.borders.width.base}`
                   }
                 `}
               >
                 {characterCount}
                 {maxLength && (
                   <>
-                    <span className="text-text-color-secondary/50 mx-1">/</span>
+                    <span className={`${t.colors.text.secondary}/50 mx-1`}>
+                      /
+                    </span>
                     {maxLength}
                   </>
                 )}
@@ -326,19 +342,25 @@ const GenericTextareaFormField = ({
             </div>
           )}
 
-          {/* Focus Enhancement Ring */}
-          {isFocusedInternal && !disabled && (
-            <div className="absolute inset-0 border-2 border-primary-400 rounded-2xl pointer-events-none opacity-20 animate-pulse" />
+          {/* Enhanced Focus Ring */}
+          {isFocusedInternal && !disabled && preset === "dynamic" && (
+            <div
+              className={`${t.layout.position.absolute} ${t.layout.position.inset} ${t.colors.border.focus} ${t.borders.width.thick} ${t.radius.base} ${t.interactions.pointerEvents.none} ${t.effects.opacity.subtle} animate-pulse`}
+            />
           )}
         </div>
 
-        {/* Helper Text */}
+        {/* Enhanced Helper Text */}
         {!error && (showCharacterCount || showToolbar) && (
-          <div className="flex items-center justify-between text-xs text-text-color-secondary">
-            <div className="flex items-center gap-4">
+          <div
+            className={`${t.layout.flex.between} ${t.typography.xs} ${t.colors.text.secondary}`}
+          >
+            <div className={`${t.layout.flex.center} ${t.spacing.gap.base}`}>
               {showToolbar && (
-                <span className="flex items-center gap-1">
-                  <i className="pi pi-info-circle text-xs"></i>
+                <span
+                  className={`${t.layout.flex.center} ${t.spacing.gap.tiny}`}
+                >
+                  <i className={`pi pi-info-circle ${t.typography.xs}`} />
                   Select text to format • Tab to indent
                 </span>
               )}
@@ -346,7 +368,7 @@ const GenericTextareaFormField = ({
             {showCharacterCount && maxLength && (
               <span
                 className={`${
-                  characterCount > maxLength * 0.9 ? "text-orange-600" : ""
+                  characterCount > maxLength * 0.9 ? t.colors.text.warning : ""
                 }`}
               >
                 {maxLength - characterCount} characters remaining

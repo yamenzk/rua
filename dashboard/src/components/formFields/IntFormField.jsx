@@ -1,4 +1,4 @@
-// src/components/formFields/IntFormField.jsx - Refactored with Central Styles
+// src/components/formFields/IntFormField.jsx - Enhanced with Presets
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import {
@@ -18,11 +18,11 @@ const IntFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated", // New preset support!
   min,
   max,
   ...otherProps
 }) => {
-  // Use central state management
   const {
     isFocused,
     isHovered,
@@ -35,28 +35,26 @@ const IntFormField = ({
   const handleChange = (e) => {
     if (onChange) {
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: e.value,
-        },
+        target: { name: id, value: e.value },
         originalEvent: e.originalEvent,
       };
       onChange(syntheticEvent);
     }
   };
 
-  // Filter out non-DOM props before spreading
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get PrimeReact PassThrough config for InputNumber
-  const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumber({
-    isFocused,
-    isHovered,
-    disabled,
-    error: !!error,
-    size,
-    className,
-  });
+  const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumber(
+    {
+      isFocused,
+      isHovered,
+      disabled,
+      error: !!error,
+      size,
+      className,
+    },
+    preset // Pass preset
+  );
 
   return (
     <FormFieldWrapper
@@ -68,6 +66,7 @@ const IntFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
+      preset={preset}
     >
       <InputNumber
         id={id}

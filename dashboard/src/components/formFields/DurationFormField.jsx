@@ -1,4 +1,4 @@
-// src/components/formFields/DurationFormField.jsx - Refactored with Central Styles
+// src/components/formFields/DurationFormField.jsx - Enhanced with Unified States
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import {
@@ -6,6 +6,8 @@ import {
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
   getAddonStyles,
+  getAddonIconStyles,
+  DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 
 const DurationFormField = ({
@@ -19,34 +21,32 @@ const DurationFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated",
   min = 0,
-  displayFormat = "seconds", // "seconds", "minutes", "hours" - what to show in the addon
+  displayFormat = "seconds",
   ...otherProps
 }) => {
-  // Use central state management
   const {
     isFocused,
     isHovered,
-    handleFocus,
-    handleBlur,
-    handleMouseEnter,
-    handleMouseLeave,
+    handleFieldGroupFocus,
+    handleFieldGroupBlur,
+    handleFieldGroupMouseEnter,
+    handleFieldGroupMouseLeave,
   } = useFormFieldState();
+
+  const t = DESIGN_TOKENS;
 
   const handleChange = (e) => {
     if (onChange) {
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: e.value,
-        },
+        target: { name: id, value: e.value },
         originalEvent: e.originalEvent,
       };
       onChange(syntheticEvent);
     }
   };
 
-  // Filter out non-DOM props before spreading
   const {
     fieldSchemaItem,
     onFocus,
@@ -55,7 +55,6 @@ const DurationFormField = ({
     ...safeOtherProps
   } = otherProps;
 
-  // Get display text and placeholder based on format
   const getDisplayInfo = () => {
     switch (displayFormat) {
       case "minutes":
@@ -82,7 +81,6 @@ const DurationFormField = ({
 
   const displayInfo = getDisplayInfo();
 
-  // Get PrimeReact PassThrough config for InputNumber with duration styling
   const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumberWithAddon(
     {
       isFocused,
@@ -92,8 +90,9 @@ const DurationFormField = ({
       size,
       className,
     },
-    "right"
-  ); // Duration addon is on the right
+    "right",
+    preset
+  );
 
   return (
     <FormFieldWrapper
@@ -103,11 +102,22 @@ const DurationFormField = ({
       disabled={disabled}
       isFocused={isFocused}
       isHovered={isHovered}
-      onMouseEnter={() => handleMouseEnter(disabled)}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+      onMouseLeave={handleFieldGroupMouseLeave}
+      preset={preset}
     >
-      <div className="p-inputgroup w-full">
-        {/* Input Number */}
+      {/* Field Group Container - Unified behavior */}
+      <div
+        className={`
+          p-inputgroup w-full ${t.layout.position.relative}
+          ${!disabled ? "cursor-text" : ""}
+        `}
+        onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+        onMouseLeave={handleFieldGroupMouseLeave}
+        onFocus={handleFieldGroupFocus}
+        onBlur={handleFieldGroupBlur}
+      >
+        {/* Input Number - Left side */}
         <InputNumber
           id={id}
           value={
@@ -116,8 +126,8 @@ const DurationFormField = ({
               : null
           }
           onValueChange={handleChange}
-          onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
-          onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
+          onFocus={(e) => handleFieldGroupFocus(e, safeOtherProps.onFocus)}
+          onBlur={(e) => handleFieldGroupBlur(e, safeOtherProps.onBlur)}
           disabled={disabled}
           placeholder={displayInfo.placeholder}
           mode="decimal"
@@ -131,31 +141,54 @@ const DurationFormField = ({
           {...safeOtherProps}
         />
 
-        {/* Duration Unit Addon */}
+        {/* Duration Unit Addon - Right side, perfectly connected */}
         <span
-          className={`p-inputgroup-addon flex items-center justify-center min-w-[4rem] ${getAddonStyles(
-            { isFocused, isHovered, disabled },
-            "right"
-          )}`}
+          className={`
+            p-inputgroup-addon ${t.layout.flex.center} ${
+            t.sizing.component.minWidth
+          }
+            ${getAddonStyles(
+              { isFocused, isHovered, disabled },
+              "right",
+              preset
+            )}
+          `}
+          onClick={() => {
+            // Focus the input when addon is clicked
+            const input = document.getElementById(id);
+            if (input && !disabled) {
+              input.focus();
+            }
+          }}
         >
-          <div className="flex items-center gap-1">
-            <i className="pi pi-clock text-xs text-text-color-secondary"></i>
-            <span className="text-sm font-medium text-text-color-secondary">
+          <div className={`${t.layout.flex.center} ${t.spacing.gap.tiny}`}>
+            <i
+              className={`pi pi-clock ${t.typography.xs} ${getAddonIconStyles(
+                { isFocused, disabled },
+                preset
+              )}`}
+            />
+            <span
+              className={`${t.typography.sm} ${
+                t.typography.weight.medium
+              } ${getAddonIconStyles({ isFocused, disabled }, preset)}`}
+            >
               {displayInfo.unit}
             </span>
           </div>
         </span>
       </div>
 
-      {/* Helper text for clarity */}
+      {/* Enhanced helper text */}
       {!error && !disabled && (
-        <div className="mt-1 text-xs text-text-color-secondary flex items-center gap-1">
-          <i className="pi pi-info-circle text-xs"></i>
+        <div
+          className={`${t.spacing.panel.margin} ${t.typography.helper} ${t.layout.flex.center} ${t.spacing.gap.tiny}`}
+        >
+          <i className={`pi pi-info-circle ${t.typography.xs}`} />
           <span>Enter duration in {displayInfo.helperText}</span>
         </div>
       )}
     </FormFieldWrapper>
   );
 };
-
 export default DurationFormField;

@@ -1,10 +1,11 @@
-// src/components/formFields/DateTimeFormField.jsx - Simplified with Central Config
+// src/components/formFields/DateTimeFormField.jsx - Enhanced with Unified Field Group
 import React from "react";
 import { Calendar } from "primereact/calendar";
 import {
   FormFieldWrapper,
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
+  DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 
 const DateTimeFormField = ({
@@ -18,36 +19,40 @@ const DateTimeFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated",
   ...otherProps
 }) => {
-  // Use central state management
+  // Use enhanced field group state management
   const {
     isFocused,
     isHovered,
-    handleFocus,
-    handleBlur,
-    handleMouseEnter,
-    handleMouseLeave,
+    handleFieldGroupFocus,
+    handleFieldGroupBlur,
+    handleFieldGroupMouseEnter,
+    handleFieldGroupMouseLeave,
   } = useFormFieldState();
+
+  const t = DESIGN_TOKENS;
 
   const handleChange = (e) => {
     if (onChange) {
-      onChange(e); // Calendar passes the event correctly
+      onChange(e);
     }
   };
 
-  // Filter out non-DOM props before spreading
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get centralized Calendar PassThrough configuration
-  const ptConfig = PRIMEREACT_PT_CONFIGS.calendar({
-    isFocused,
-    isHovered,
-    disabled,
-    error: !!error,
-    size,
-    className,
-  });
+  const ptConfig = PRIMEREACT_PT_CONFIGS.calendar(
+    {
+      isFocused,
+      isHovered,
+      disabled,
+      error: !!error,
+      size,
+      className,
+    },
+    preset
+  );
 
   return (
     <FormFieldWrapper
@@ -57,29 +62,41 @@ const DateTimeFormField = ({
       disabled={disabled}
       isFocused={isFocused}
       isHovered={isHovered}
-      onMouseEnter={() => handleMouseEnter(disabled)}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+      onMouseLeave={handleFieldGroupMouseLeave}
+      preset={preset}
     >
-      <Calendar
-        id={id}
-        value={value}
-        onChange={handleChange}
-        onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
-        onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
-        disabled={disabled}
-        placeholder={placeholder || "dd/mm/yyyy hh:mm:ss"}
-        dateFormat="dd/mm/yy"
-        showTime
-        showSeconds
-        showIcon
-        pt={ptConfig}
-        title={tooltip}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : undefined}
-        {...safeOtherProps}
-      />
+      {/* Field Group Container for unified behavior */}
+      <div
+        className={`
+          ${t.layout.position.relative} ${t.sizing.component.fullWidth}
+          ${!disabled ? "cursor-text" : ""}
+        `}
+        onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+        onMouseLeave={handleFieldGroupMouseLeave}
+        onFocus={handleFieldGroupFocus}
+        onBlur={handleFieldGroupBlur}
+      >
+        <Calendar
+          id={id}
+          value={value}
+          onChange={handleChange}
+          onFocus={(e) => handleFieldGroupFocus(e, safeOtherProps.onFocus)}
+          onBlur={(e) => handleFieldGroupBlur(e, safeOtherProps.onBlur)}
+          disabled={disabled}
+          placeholder={placeholder || "dd/mm/yyyy hh:mm:ss"}
+          dateFormat="dd/mm/yy"
+          showTime
+          showSeconds
+          showIcon
+          pt={ptConfig}
+          title={tooltip}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
+          {...safeOtherProps}
+        />
+      </div>
     </FormFieldWrapper>
   );
 };
-
 export default DateTimeFormField;

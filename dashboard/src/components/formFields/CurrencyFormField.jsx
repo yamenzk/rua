@@ -1,4 +1,4 @@
-// src/components/formFields/CurrencyFormField.jsx - Fixed Addon Continuity
+// src/components/formFields/CurrencyFormField.jsx - Enhanced with Unified States
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import {
@@ -6,6 +6,7 @@ import {
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
   getAddonStyles,
+  DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 
 const CurrencyFormField = ({
@@ -19,6 +20,7 @@ const CurrencyFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated",
   currency = "AED",
   locale = "en-AE",
   minFractionDigits = 2,
@@ -27,33 +29,29 @@ const CurrencyFormField = ({
   max,
   ...otherProps
 }) => {
-  // Use central state management
   const {
     isFocused,
     isHovered,
-    handleFocus,
-    handleBlur,
-    handleMouseEnter,
-    handleMouseLeave,
+    handleFieldGroupFocus,
+    handleFieldGroupBlur,
+    handleFieldGroupMouseEnter,
+    handleFieldGroupMouseLeave,
   } = useFormFieldState();
+
+  const t = DESIGN_TOKENS;
 
   const handleChange = (e) => {
     if (onChange) {
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: e.value,
-        },
+        target: { name: id, value: e.value },
         originalEvent: e.originalEvent,
       };
       onChange(syntheticEvent);
     }
   };
 
-  // Filter out non-DOM props before spreading
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get PrimeReact PassThrough config for InputNumber with currency addon
   const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumberWithAddon(
     {
       isFocused,
@@ -63,8 +61,9 @@ const CurrencyFormField = ({
       size,
       className,
     },
-    "left"
-  ); // Currency addon is on the left
+    "left",
+    preset
+  );
 
   return (
     <FormFieldWrapper
@@ -74,21 +73,43 @@ const CurrencyFormField = ({
       disabled={disabled}
       isFocused={isFocused}
       isHovered={isHovered}
-      onMouseEnter={() => handleMouseEnter(disabled)}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+      onMouseLeave={handleFieldGroupMouseLeave}
+      preset={preset}
     >
-      <div className="p-inputgroup w-full">
-        {/* Currency Symbol Addon */}
+      {/* Field Group Container - This creates unified hover/focus behavior */}
+      <div
+        className={`
+          p-inputgroup w-full ${t.layout.position.relative}
+          ${!disabled ? "cursor-text" : ""}
+        `}
+        onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
+        onMouseLeave={handleFieldGroupMouseLeave}
+        onFocus={handleFieldGroupFocus}
+        onBlur={handleFieldGroupBlur}
+      >
+        {/* Currency Symbol Addon - Perfectly connected */}
         <span
-          className={`p-inputgroup-addon flex items-center ${getAddonStyles(
-            { isFocused, isHovered, disabled },
-            "left"
-          )}`}
+          className={`
+            p-inputgroup-addon flex items-center
+            ${getAddonStyles(
+              { isFocused, isHovered, disabled },
+              "left",
+              preset
+            )}
+          `}
+          onClick={() => {
+            // Focus the input when addon is clicked
+            const input = document.getElementById(id);
+            if (input && !disabled) {
+              input.focus();
+            }
+          }}
         >
           <img src="/aed.svg" alt="AED" className="h-4 w-4" />
         </span>
 
-        {/* Input Number */}
+        {/* Input Number - Perfectly connected */}
         <InputNumber
           id={id}
           value={
@@ -97,11 +118,11 @@ const CurrencyFormField = ({
               : null
           }
           onValueChange={handleChange}
-          onFocus={(e) => handleFocus(e, safeOtherProps.onFocus)}
-          onBlur={(e) => handleBlur(e, safeOtherProps.onBlur)}
+          onFocus={(e) => handleFieldGroupFocus(e, safeOtherProps.onFocus)}
+          onBlur={(e) => handleFieldGroupBlur(e, safeOtherProps.onBlur)}
           disabled={disabled}
           placeholder={placeholder || "0.00"}
-          mode="decimal" // Use decimal instead of currency to avoid double symbols
+          mode="decimal"
           locale={locale}
           minFractionDigits={minFractionDigits}
           maxFractionDigits={maxFractionDigits}
@@ -117,5 +138,4 @@ const CurrencyFormField = ({
     </FormFieldWrapper>
   );
 };
-
 export default CurrencyFormField;

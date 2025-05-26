@@ -1,13 +1,18 @@
-// src/components/formFields/AttachmentFormField.jsx - Refactored with Central Styles
+// src/components/formFields/AttachmentFormField.jsx - Enhanced with Presets
 import React from "react";
 import { Button } from "primereact/button";
-import { FormFieldWrapper, useFormFieldState } from "./styles/formFieldStyles";
+import {
+  FormFieldWrapper,
+  useFormFieldState,
+  DESIGN_TOKENS,
+  getInteractionPreset,
+} from "./styles/formFieldStyles";
 
 const AttachmentFormField = ({
-  id, // fieldname
-  fieldname, // Alternative fieldname prop (for backward compatibility)
-  value, // Current file URL/path from formData or "Pending: filename.txt"
-  onFileUploadTrigger, // This will be context.openUploadModal via FormFieldAdapter
+  id,
+  fieldname,
+  value,
+  onFileUploadTrigger,
   disabled,
   className,
   placeholder,
@@ -15,15 +20,16 @@ const AttachmentFormField = ({
   required,
   error,
   size = "base",
-  fieldSchemaItem, // We receive this but don't need to use it in styling
-  ...otherProps // Other props that shouldn't be spread to DOM elements
+  preset = "elevated", // New preset support!
+  fieldSchemaItem,
+  ...otherProps
 }) => {
-  // Use central state management
   const { isFocused, isHovered, handleMouseEnter, handleMouseLeave } =
     useFormFieldState();
 
-  // Use id first, fallback to fieldname for backward compatibility
   const actualFieldname = id || fieldname;
+  const t = DESIGN_TOKENS;
+  const interactions = getInteractionPreset("input", preset);
 
   // Check if the value is a URL or pending upload
   const isUrl =
@@ -46,56 +52,92 @@ const AttachmentFormField = ({
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
       className={className}
+      preset={preset}
     >
-      <div className="space-y-3">
-        {/* File Display Area */}
+      <div className={`${t.spacing.gap.base} ${t.layout.flex.col}`}>
+        {/* Enhanced File Display Area */}
         {hasFile && (
-          <div className="bg-surface-50 border border-surface-200 rounded-2xl p-4 transition-all duration-200">
-            <div className="flex items-center gap-3">
-              {/* File Icon */}
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
-                  <i className="pi pi-file text-primary-600 text-lg"></i>
+          <div
+            className={`
+              ${t.colors.background.surfaceAlt} ${t.colors.border.default} ${
+              t.borders.width.base
+            } 
+              ${t.radius.base} ${t.spacing.panel.padding} ${
+              t.effects.transition.base
+            }
+              ${interactions.hover || t.presets.hover.background.subtle}
+            `}
+          >
+            <div className={`${t.layout.flex.center} ${t.spacing.gap.base}`}>
+              {/* Enhanced File Icon */}
+              <div className={t.sizing.component.flexShrink}>
+                <div
+                  className={`
+                    ${t.sizing.icon.xxl} ${t.radius.small} ${
+                    t.colors.background.primaryLight
+                  } 
+                    ${t.layout.flex.center} ${t.effects.transition.base}
+                    ${preset === "dynamic" ? "hover:scale-105" : ""}
+                  `}
+                >
+                  <i
+                    className={`pi pi-file ${t.colors.text.primary} ${t.typography.lg}`}
+                  />
                 </div>
               </div>
 
-              {/* File Info */}
-              <div className="flex-1 min-w-0">
+              {/* Enhanced File Info */}
+              <div className={`${t.sizing.component.flexGrow} min-w-0`}>
                 {isUrl ? (
                   <a
                     href={value}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline break-all transition-colors duration-200"
+                    className={`
+                      ${t.typography.sm} ${t.typography.weight.medium} ${t.colors.text.primary} 
+                      hover:${t.colors.text.primaryDark} hover:underline break-all 
+                      ${t.effects.transition.colors}
+                    `}
                     aria-label={`View ${actualFieldname}`}
                   >
                     {filename}
                   </a>
                 ) : (
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium text-text-color-secondary break-all">
+                  <div className={`${t.spacing.gap.tiny} ${t.layout.flex.col}`}>
+                    <div
+                      className={`${t.typography.sm} ${t.typography.weight.medium} ${t.colors.text.secondary} break-all`}
+                    >
                       {filename}
                     </div>
-                    <div className="text-xs text-orange-600 bg-orange-50 inline-block px-2 py-1 rounded-lg">
+                    <div
+                      className={`
+                        ${t.typography.xs} ${t.colors.text.warning} ${t.colors.background.warning} 
+                        inline-block px-2 py-1 ${t.radius.small}
+                      `}
+                    >
                       Pending Upload
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* File Size or Status */}
-              <div className="flex-shrink-0">
+              {/* Enhanced Status Icon */}
+              <div className={t.sizing.component.flexShrink}>
                 {isUrl ? (
-                  <i className="pi pi-external-link text-text-color-secondary text-sm"></i>
+                  <i
+                    className={`pi pi-external-link ${t.colors.text.secondary} ${t.typography.sm}`}
+                  />
                 ) : (
-                  <i className="pi pi-clock text-orange-500 text-sm"></i>
+                  <i
+                    className={`pi pi-clock ${t.colors.text.warning} ${t.typography.sm}`}
+                  />
                 )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Upload Button */}
+        {/* Enhanced Upload Button */}
         <Button
           type="button"
           label={hasFile ? "Change File" : "Choose File"}
@@ -103,24 +145,36 @@ const AttachmentFormField = ({
           onClick={onFileUploadTrigger}
           disabled={disabled}
           className={`
-            w-full justify-center rounded-2xl border-2 border-dashed transition-all duration-200
+            ${t.sizing.component.fullWidth} justify-center ${t.radius.base} 
+            ${t.borders.width.thick} border-dashed ${t.effects.transition.base}
             ${
               disabled
-                ? "border-surface-200 bg-surface-100 text-text-color-secondary cursor-not-allowed"
+                ? `${t.colors.border.medium} ${t.colors.background.surfaceDisabled} ${t.colors.text.disabled} ${t.interactions.cursor.notAllowed}`
                 : hasFile
-                ? "border-primary-300 bg-primary-50 text-primary-700 hover:border-primary-400 hover:bg-primary-100"
-                : "border-surface-300 bg-surface-0 text-text-color hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600"
+                ? `${t.colors.border.focus} ${
+                    t.colors.background.primaryLight
+                  } ${t.colors.text.primary} ${
+                    interactions.hover ||
+                    "hover:border-primary-400 hover:bg-primary-100"
+                  }`
+                : `${t.colors.border.medium} ${t.colors.background.surface} ${
+                    t.colors.text.default
+                  } ${
+                    interactions.hover ||
+                    "hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600"
+                  }`
             }
+            ${preset === "dynamic" ? "hover:scale-[1.02]" : ""}
           `}
           pt={{
             root: {
-              className: "p-4 font-medium",
+              className: `${t.spacing.panel.padding} ${t.typography.weight.medium}`,
             },
             icon: {
-              className: "mr-2 text-base",
+              className: `mr-2 ${t.typography.base}`,
             },
             label: {
-              className: "text-sm",
+              className: t.typography.sm,
             },
           }}
           aria-label={
@@ -129,9 +183,11 @@ const AttachmentFormField = ({
           title={tooltip}
         />
 
-        {/* Upload Hint */}
+        {/* Enhanced Upload Hint */}
         {!hasFile && !disabled && (
-          <div className="text-xs text-text-color-secondary text-center">
+          <div
+            className={`${t.typography.xs} ${t.colors.text.secondary} text-center ${t.effects.transition.colors}`}
+          >
             Click to browse or drag & drop your file here
           </div>
         )}

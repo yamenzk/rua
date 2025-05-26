@@ -1,58 +1,54 @@
-// dashboard/src/components/formFields/HeadingField.jsx - Fixed version
+// src/components/formFields/HeadingField.jsx - Enhanced with Design Tokens
 import React from "react";
 import { parseDescription } from "@/components/document/utils/schemaUtils";
+import { DESIGN_TOKENS } from "./styles/formFieldStyles";
 
-// This component is intended for use as a formComponent for "Heading" fieldtype
-// to render visual headings within a form layout. It's not an input field.
 const HeadingField = ({
   id,
   fieldSchemaItem,
   className,
-  disabled, // Not used but might be passed
-  value, // Not used but might be passed
-  onChange, // Not used but might be passed
-  ...otherProps // Filter out other props that shouldn't be used
+  disabled,
+  value,
+  onChange,
+  ...otherProps
 }) => {
-  // We primarily care about fieldSchemaItem and its label/description.
   if (!fieldSchemaItem) {
-    return null; // Or some fallback if schema is missing
+    return null;
   }
 
+  const t = DESIGN_TOKENS;
   const label = fieldSchemaItem.label || fieldSchemaItem.fieldname || id;
   const descriptionData = parseDescription(fieldSchemaItem.description);
 
-  // Allow overriding heading level via description, e.g., "level:h2" in description string
-  const headingLevel = descriptionData.level || "h3"; // Default to h3
-  const HeadingTag = headingLevel; // Renders as <h[1-6]>
+  const headingLevel = descriptionData.level || "h3";
+  const HeadingTag = headingLevel;
 
   const textSizeMap = {
-    h1: "text-3xl sm:text-4xl", // Adjusted for responsiveness
-    h2: "text-2xl sm:text-3xl",
-    h3: "text-xl sm:text-2xl",
-    h4: "text-lg sm:text-xl",
-    h5: "text-base sm:text-lg",
-    h6: "text-base", // Base text size
+    h1: `${t.typography.xxl} sm:text-4xl`,
+    h2: `${t.typography.xl} sm:text-3xl`,
+    h3: `${t.typography.lg} sm:${t.typography.xl}`,
+    h4: `${t.typography.base} sm:${t.typography.lg}`,
+    h5: `${t.typography.sm} sm:${t.typography.base}`,
+    h6: t.typography.sm,
   };
 
-  const textColorClass = descriptionData.colorClass || "text-text-color"; // e.g., "colorClass:text-primary-500"
+  const textColorClass = descriptionData.colorClass || t.colors.text.default;
   const marginClass = descriptionData.noMargin
     ? ""
-    : descriptionData.marginClass || "mt-6 mb-3"; // e.g., "noMargin:true" or "marginClass:mt-8 mb-4"
+    : descriptionData.marginClass || "mt-6 mb-3";
   const borderClass = descriptionData.borderBottom
-    ? "border-b border-surface-300 pb-1"
-    : ""; // e.g., "borderBottom:true"
+    ? `${t.borders.sides.bottom} ${t.colors.border.medium} pb-1`
+    : "";
 
-  const textSizeClass = textSizeMap[headingLevel] || textSizeMap.h5; // Default to a reasonable size
-
-  // Other props from descriptionData could be icon, alignment, etc.
+  const textSizeClass = textSizeMap[headingLevel] || textSizeMap.h5;
   const customClasses = descriptionData.className || "";
 
   return (
     <HeadingTag
-      className={`${marginClass} ${textSizeClass} ${textColorClass} ${borderClass} ${customClasses} ${
-        className || ""
-      } font-semibold leading-tight`}
-      // If the DocEditor passes a tooltip via commonProps, it would be applied here.
+      className={`
+        ${marginClass} ${textSizeClass} ${textColorClass} ${borderClass} ${customClasses} 
+        ${className || ""} ${t.typography.weight.semibold} leading-tight
+      `}
       title={descriptionData.tooltip || undefined}
     >
       {label}

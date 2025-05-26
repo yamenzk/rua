@@ -1,9 +1,11 @@
-// src/components/formFields/TextEditorFormField.jsx - Refactored with Central Styles
+// src/components/formFields/TextEditorFormField.jsx - Enhanced with Presets
 import React from "react";
 import { Editor } from "primereact/editor";
-import { 
-  FormFieldWrapper, 
-  useFormFieldState 
+import {
+  FormFieldWrapper,
+  useFormFieldState,
+  DESIGN_TOKENS,
+  getInteractionPreset,
 } from "./styles/formFieldStyles";
 
 const TextEditorFormField = ({
@@ -16,11 +18,11 @@ const TextEditorFormField = ({
   tooltip,
   required,
   error,
-  size = 'base',
+  size = "base",
+  preset = "elevated", // New preset support!
   style,
   ...otherProps
 }) => {
-  // Use central state management
   const {
     isFocused,
     isHovered,
@@ -30,77 +32,93 @@ const TextEditorFormField = ({
     handleMouseLeave,
   } = useFormFieldState();
 
+  const t = DESIGN_TOKENS;
+  const interactions = getInteractionPreset("input", preset) || {};
+
   const handleChange = (e) => {
     if (onChange) {
-      // Editor uses onTextChange with e.htmlValue
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: e.htmlValue,
-        },
+        target: { name: id, value: e.htmlValue },
         originalEvent: e,
       };
       onChange(syntheticEvent);
     }
   };
 
-  // Filter out non-DOM props before spreading
-  const { fieldSchemaItem, onFocus, onBlur, onTextChange, ...safeOtherProps } = otherProps;
+  const { fieldSchemaItem, onFocus, onBlur, onTextChange, ...safeOtherProps } =
+    otherProps;
 
-  // Default height can be overridden by props
   const defaultStyle = { height: "200px" };
   const finalStyle = { ...defaultStyle, ...style };
 
-  // Editor PassThrough configuration
   const ptConfig = {
     root: {
       className: `
-        w-full rounded-2xl border transition-all duration-200 ease-out overflow-hidden
-        ${isFocused && !disabled 
-          ? 'border-primary-400 shadow-none' 
-          : !isFocused && isHovered && !disabled
-          ? 'border-primary-400'
-          : disabled
-          ? 'bg-surface-100 border-surface-200'
-          : 'border-surface-100'
+        ${t.sizing.component.fullWidth} ${t.radius.base} ${
+        t.borders.width.base
+      } 
+        ${t.effects.transition.base} ${t.layout.overflow.hidden}
+        ${interactions.base || ""}
+        ${
+          isFocused && !disabled
+            ? `${t.colors.border.focus} shadow-none`
+            : !isFocused && isHovered && !disabled
+            ? t.colors.border.hover
+            : disabled
+            ? `${t.colors.background.surfaceDisabled} ${t.colors.border.disabled}`
+            : t.colors.border.default
         }
-        ${error && !disabled ? 'border-red-300 bg-red-50/30' : ''}
-        ${className || ''}
+        ${
+          error && !disabled
+            ? `${t.colors.border.error} ${t.colors.background.error}`
+            : ""
+        }
+        ${preset === "elevated" ? t.effects.shadow.base : ""}
+        ${className || ""}
       `,
     },
     toolbar: {
       className: `
-        border-b border-surface-200 bg-surface-50 px-4 py-3 flex flex-wrap gap-1
-        ${disabled ? 'opacity-50 pointer-events-none' : ''}
+        ${t.borders.sides.bottom} ${t.colors.border.medium} ${
+        t.colors.background.surfaceAlt
+      } 
+        px-4 py-3 ${t.layout.flex.wrap} ${t.spacing.gap.tiny}
+        ${
+          disabled
+            ? `${t.effects.opacity.disabled} ${t.interactions.pointerEvents.none}`
+            : ""
+        }
       `,
     },
     formats: {
-      className: "flex flex-wrap gap-1",
+      className: `${t.layout.flex.wrap} ${t.spacing.gap.tiny}`,
     },
     header: {
-      className: "border-b border-surface-200 bg-surface-50",
+      className: `${t.borders.sides.bottom} ${t.colors.border.medium} ${t.colors.background.surfaceAlt}`,
     },
     content: {
       className: `
-        min-h-[150px] p-4 bg-surface-0 text-text-color text-sm
-        focus:outline-none
-        ${disabled ? 'bg-surface-100 text-text-color-secondary cursor-not-allowed' : ''}
+        min-h-[150px] ${t.spacing.panel.padding} ${
+        t.colors.background.surface
+      } ${t.colors.text.default} ${t.typography.sm}
+        ${t.effects.focusRing}
+        ${
+          disabled
+            ? `${t.colors.background.surfaceDisabled} ${t.colors.text.disabled} ${t.interactions.cursor.notAllowed}`
+            : ""
+        }
       `,
-      style: {
-        ...finalStyle,
-      }
+      style: finalStyle,
     },
-    // Style toolbar buttons
     bold: {
-      className: "w-8 h-8 rounded-lg border-0 bg-transparent hover:bg-surface-200 text-text-color-secondary hover:text-text-color transition-colors duration-200",
+      className: `${t.sizing.icon.xl} ${t.radius.small} ${t.borders.width.none} ${t.colors.background.transparent} hover:${t.colors.background.surfaceStrong} ${t.colors.text.secondary} hover:${t.colors.text.default} ${t.effects.transition.colors}`,
     },
     italic: {
-      className: "w-8 h-8 rounded-lg border-0 bg-transparent hover:bg-surface-200 text-text-color-secondary hover:text-text-color transition-colors duration-200",
+      className: `${t.sizing.icon.xl} ${t.radius.small} ${t.borders.width.none} ${t.colors.background.transparent} hover:${t.colors.background.surfaceStrong} ${t.colors.text.secondary} hover:${t.colors.text.default} ${t.effects.transition.colors}`,
     },
     underline: {
-      className: "w-8 h-8 rounded-lg border-0 bg-transparent hover:bg-surface-200 text-text-color-secondary hover:text-text-color transition-colors duration-200",
+      className: `${t.sizing.icon.xl} ${t.radius.small} ${t.borders.width.none} ${t.colors.background.transparent} hover:${t.colors.background.surfaceStrong} ${t.colors.text.secondary} hover:${t.colors.text.default} ${t.effects.transition.colors}`,
     },
-    // Add styling for other toolbar elements as needed
   };
 
   return (
@@ -113,8 +131,9 @@ const TextEditorFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
+      preset={preset}
     >
-      <div className="w-full">
+      <div className={t.sizing.component.fullWidth}>
         <Editor
           id={id}
           value={value || ""}

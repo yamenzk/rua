@@ -1,4 +1,4 @@
-// src/components/formFields/ColorPickerFormField.jsx - Redesigned with Central Styles
+// src/components/formFields/ColorPickerFormField.jsx - Enhanced with Presets
 import React, { useState, useRef } from "react";
 import { ColorPicker } from "primereact/colorpicker";
 import { Button } from "primereact/button";
@@ -9,7 +9,9 @@ import {
   useFormFieldState,
   useFormFieldClasses,
   getAddonStyles,
+  getAddonIconStyles,
   PRIMEREACT_PT_CONFIGS,
+  DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 
 const ColorPickerFormField = ({
@@ -23,17 +25,17 @@ const ColorPickerFormField = ({
   required,
   error,
   size = "base",
-  format = "hex", // hex, rgb, hsl
-  inline = false, // Show picker inline or in overlay
-  showPreview = true, // Show color preview chip
-  showInput = true, // Show text input alongside
-  presetColors = [], // Array of preset colors to show
+  preset = "elevated", // New preset support!
+  format = "hex",
+  inline = false,
+  showPreview = true,
+  showInput = true,
+  presetColors = [],
   ...otherProps
 }) => {
   const overlayRef = useRef(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-  // Use central state management
   const {
     isFocused,
     isHovered,
@@ -43,7 +45,8 @@ const ColorPickerFormField = ({
     handleMouseLeave,
   } = useFormFieldState();
 
-  // Normalize color value (ensure # prefix for hex)
+  const t = DESIGN_TOKENS;
+
   const normalizeColorValue = (colorVal) => {
     if (!colorVal) return "";
     const str = String(colorVal);
@@ -59,19 +62,9 @@ const ColorPickerFormField = ({
 
   const handleColorChange = (e) => {
     if (onChange) {
-      let newValue = "";
-
-      if (format === "hex") {
-        newValue = `#${e.value}`;
-      } else {
-        newValue = e.value;
-      }
-
+      let newValue = format === "hex" ? `#${e.value}` : e.value;
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: newValue,
-        },
+        target: { name: id, value: newValue },
         originalEvent: e.originalEvent,
       };
       onChange(syntheticEvent);
@@ -81,17 +74,11 @@ const ColorPickerFormField = ({
   const handleInputChange = (e) => {
     if (onChange) {
       let inputValue = e.target.value;
-
-      // Auto-add # for hex values if missing
       if (format === "hex" && inputValue && !inputValue.startsWith("#")) {
         inputValue = `#${inputValue}`;
       }
-
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: inputValue,
-        },
+        target: { name: id, value: inputValue },
         originalEvent: e,
       };
       onChange(syntheticEvent);
@@ -101,20 +88,15 @@ const ColorPickerFormField = ({
   const handlePresetSelect = (presetColor) => {
     if (onChange) {
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: presetColor,
-        },
+        target: { name: id, value: presetColor },
       };
       onChange(syntheticEvent);
     }
     overlayRef.current?.hide();
   };
 
-  // Filter out non-DOM props
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get consistent input styling for text input
   const inputTextPT = PRIMEREACT_PT_CONFIGS.inputTextWithAddon(
     {
       isFocused,
@@ -124,10 +106,10 @@ const ColorPickerFormField = ({
       size,
       className,
     },
-    showPreview ? "both" : "right"
-  ); // Both addons if preview shown, right only if not
+    showPreview ? "both" : "right",
+    preset // Pass preset
+  );
 
-  // Default preset colors if none provided
   const defaultPresets = [
     "#FF6B6B",
     "#4ECDC4",
@@ -152,7 +134,7 @@ const ColorPickerFormField = ({
   ];
   const colorsToShow = presetColors.length > 0 ? presetColors : defaultPresets;
 
-  // Inline picker (always visible)
+  // Enhanced inline picker
   if (inline) {
     return (
       <FormFieldWrapper
@@ -164,10 +146,10 @@ const ColorPickerFormField = ({
         isHovered={isHovered}
         onMouseEnter={() => handleMouseEnter(disabled)}
         onMouseLeave={handleMouseLeave}
+        preset={preset}
       >
-        <div className="space-y-4">
-          {/* Color Picker */}
-          <div className="flex justify-center">
+        <div className={`${t.spacing.gap.base} ${t.layout.flex.col}`}>
+          <div className={t.layout.flex.center}>
             <ColorPicker
               id={id}
               value={displayValue}
@@ -179,18 +161,14 @@ const ColorPickerFormField = ({
               inline
               pt={{
                 root: {
-                  className:
-                    "border border-surface-200 rounded-2xl overflow-hidden bg-surface-0 shadow-sm",
+                  className: `${t.borders.width.base} ${t.colors.border.default} ${t.radius.base} ${t.layout.overflow.hidden} ${t.colors.background.surface} ${t.effects.shadow.base}`,
                 },
-                panel: {
-                  className: "p-4",
-                },
+                panel: { className: t.spacing.panel.padding },
                 colorSelector: {
-                  className:
-                    "rounded-xl overflow-hidden border border-surface-100",
+                  className: `${t.radius.small} ${t.layout.overflow.hidden} ${t.borders.width.base} ${t.colors.border.light}`,
                 },
                 hue: {
-                  className: "mt-3 rounded-lg overflow-hidden",
+                  className: `mt-3 ${t.radius.small} ${t.layout.overflow.hidden}`,
                 },
               }}
               title={tooltip}
@@ -198,7 +176,6 @@ const ColorPickerFormField = ({
             />
           </div>
 
-          {/* Text Input */}
           {showInput && (
             <InputText
               value={normalizedValue}
@@ -211,18 +188,23 @@ const ColorPickerFormField = ({
                 disabled,
                 error: !!error,
                 size,
+                preset,
                 className,
               })}
             />
           )}
 
-          {/* Preset Colors */}
+          {/* Enhanced preset colors */}
           {colorsToShow.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-text-color-secondary uppercase tracking-wider">
+            <div className={`${t.spacing.gap.small} ${t.layout.flex.col}`}>
+              <label
+                className={`${t.typography.xs} ${t.typography.weight.medium} ${t.colors.text.secondary} uppercase tracking-wider`}
+              >
                 Preset Colors
               </label>
-              <div className="grid grid-cols-10 gap-2">
+              <div
+                className={`${t.layout.grid.cols10} ${t.layout.grid.gapSmall}`}
+              >
                 {colorsToShow.map((color, index) => (
                   <button
                     key={index}
@@ -230,16 +212,22 @@ const ColorPickerFormField = ({
                     onClick={() => handlePresetSelect(color)}
                     disabled={disabled}
                     className={`
-                      w-8 h-8 rounded-xl border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary-400
+                      ${t.sizing.icon.xl} ${t.radius.small} ${
+                      t.borders.width.thick
+                    } ${t.effects.transition.base} 
+                      hover:${t.effects.scale.subtle} ${t.effects.focusRing}
                       ${
                         normalizedValue === color
-                          ? "border-text-color shadow-lg"
-                          : "border-surface-200 hover:border-surface-300"
+                          ? `${t.colors.border.default.replace(
+                              "border-surface-100",
+                              "border-text-color"
+                            )} ${t.effects.shadow.strong}`
+                          : `${t.colors.border.default} hover:${t.colors.border.medium}`
                       }
                       ${
                         disabled
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer"
+                          ? `${t.effects.opacity.disabled} ${t.interactions.cursor.notAllowed}`
+                          : t.interactions.cursor.pointer
                       }
                     `}
                     style={{ backgroundColor: color }}
@@ -254,7 +242,7 @@ const ColorPickerFormField = ({
     );
   }
 
-  // Compact picker with overlay (default)
+  // Enhanced compact picker with overlay
   return (
     <FormFieldWrapper
       id={id}
@@ -265,28 +253,29 @@ const ColorPickerFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
+      preset={preset}
     >
       <div className="p-inputgroup w-full">
-        {/* Color Preview & Text Input */}
         {showInput ? (
           <>
-            {/* Color Preview Chip */}
             {showPreview && (
               <span
-                className={`p-inputgroup-addon flex items-center justify-center min-w-[3rem] ${getAddonStyles(
+                className={`p-inputgroup-addon ${
+                  t.layout.flex.center
+                } min-w-[3rem] ${getAddonStyles(
                   { isFocused, isHovered, disabled },
-                  "left"
+                  "left",
+                  preset
                 )}`}
               >
                 <div
-                  className="w-6 h-6 rounded-lg border-2 border-surface-200 transition-all duration-200"
+                  className={`${t.sizing.icon.large} ${t.radius.small} ${t.borders.width.thick} ${t.colors.border.light} ${t.effects.transition.base}`}
                   style={{ backgroundColor: normalizedValue || "#FFFFFF" }}
                   title={normalizedValue || "No color selected"}
                 />
               </span>
             )}
 
-            {/* Text Input */}
             <InputText
               value={normalizedValue}
               onChange={handleInputChange}
@@ -301,7 +290,6 @@ const ColorPickerFormField = ({
             />
           </>
         ) : (
-          /* Color Preview Only */
           <div
             className={useFormFieldClasses({
               isFocused,
@@ -309,21 +297,24 @@ const ColorPickerFormField = ({
               disabled,
               error: !!error,
               size,
-              className: "cursor-pointer flex items-center gap-3",
+              preset,
+              className: `${t.interactions.cursor.pointer} ${t.layout.flex.center} ${t.spacing.gap.base}`,
             })}
             onClick={(e) => !disabled && overlayRef.current?.toggle(e)}
           >
             <div
-              className="w-8 h-8 rounded-xl border-2 border-surface-200 flex-shrink-0 transition-all duration-200"
+              className={`${t.sizing.icon.xl} ${t.radius.small} ${t.borders.width.thick} ${t.colors.border.light} ${t.sizing.component.flexShrink} ${t.effects.transition.base}`}
               style={{ backgroundColor: normalizedValue || "#FFFFFF" }}
             />
-            <span className="text-sm font-medium text-text-color">
+            <span
+              className={`${t.typography.sm} ${t.typography.weight.medium} ${t.colors.text.default}`}
+            >
               {normalizedValue || "Select color"}
             </span>
           </div>
         )}
 
-        {/* Color Picker Trigger Button */}
+        {/* Enhanced trigger button */}
         <Button
           type="button"
           icon="pi pi-palette"
@@ -331,67 +322,74 @@ const ColorPickerFormField = ({
           disabled={disabled}
           className={`${getAddonStyles(
             { isFocused, isHovered, disabled },
-            "right"
-          )} !px-3 !py-3 hover:text-primary-600`}
+            "right",
+            preset
+          )} !px-3 !py-3`}
           pt={{
             root: {
-              className:
-                "border-0 bg-transparent text-text-color-secondary hover:text-primary-600 transition-colors duration-200",
+              className: `${t.borders.width.none} ${
+                t.colors.background.transparent
+              } ${getAddonIconStyles({ isFocused, disabled }, preset)} ${
+                t.effects.transition.colors
+              }`,
             },
-            icon: {
-              className: "text-lg",
-            },
+            icon: { className: t.typography.lg },
           }}
           aria-label="Open color picker"
         />
       </div>
 
-      {/* Color Picker Overlay */}
+      {/* Enhanced overlay panel */}
       <OverlayPanel ref={overlayRef} className="w-80" dismissable>
-        <div className="space-y-4">
-          {/* Main Color Picker */}
+        <div className={`${t.spacing.gap.base} ${t.layout.flex.col}`}>
           <ColorPicker
             value={displayValue}
             onChange={handleColorChange}
             format={format}
             inline
             pt={{
-              root: {
-                className: "w-full",
-              },
-              panel: {
-                className: "p-0",
-              },
+              root: { className: t.sizing.component.fullWidth },
+              panel: { className: "p-0" },
               colorSelector: {
-                className:
-                  "rounded-xl overflow-hidden border border-surface-100 mb-3",
+                className: `${t.radius.small} ${t.layout.overflow.hidden} ${t.borders.width.base} ${t.colors.border.light} mb-3`,
               },
               hue: {
-                className: "rounded-lg overflow-hidden",
+                className: `${t.radius.small} ${t.layout.overflow.hidden}`,
               },
             }}
           />
 
-          {/* Preset Colors */}
           {colorsToShow.length > 0 && (
-            <div className="space-y-3">
-              <div className="border-t border-surface-100 pt-3">
-                <label className="text-xs font-medium text-text-color-secondary uppercase tracking-wider">
+            <div className={`${t.spacing.gap.base} ${t.layout.flex.col}`}>
+              <div
+                className={`${t.borders.sides.top} ${t.colors.border.light} pt-3`}
+              >
+                <label
+                  className={`${t.typography.xs} ${t.typography.weight.medium} ${t.colors.text.secondary} uppercase tracking-wider`}
+                >
                   Quick Colors
                 </label>
               </div>
-              <div className="grid grid-cols-8 gap-2">
+              <div
+                className={`${t.layout.grid.cols8} ${t.layout.grid.gapSmall}`}
+              >
                 {colorsToShow.slice(0, 16).map((color, index) => (
                   <button
                     key={index}
                     type="button"
                     onClick={() => handlePresetSelect(color)}
                     className={`
-                      w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-400
+                      ${t.sizing.icon.xl} ${t.radius.small} ${
+                      t.borders.width.thick
+                    } ${t.effects.transition.base} 
+                      hover:${t.effects.scale.subtle} ${t.effects.focusRing}
                       ${
                         normalizedValue === color
-                          ? "border-text-color shadow-md"
-                          : "border-surface-200 hover:border-surface-300"
+                          ? `${t.colors.border.default.replace(
+                              "border-surface-100",
+                              "border-text-color"
+                            )} ${t.effects.shadow.base}`
+                          : `${t.colors.border.light} hover:${t.colors.border.medium}`
                       }
                     `}
                     style={{ backgroundColor: color }}
@@ -402,15 +400,21 @@ const ColorPickerFormField = ({
             </div>
           )}
 
-          {/* Current Color Display */}
-          <div className="flex items-center justify-between pt-3 border-t border-surface-100">
-            <span className="text-sm text-text-color-secondary">Current:</span>
-            <div className="flex items-center gap-2">
+          {/* Current color display */}
+          <div
+            className={`${t.layout.flex.between} pt-3 ${t.borders.sides.top} ${t.colors.border.light}`}
+          >
+            <span className={`${t.typography.sm} ${t.colors.text.secondary}`}>
+              Current:
+            </span>
+            <div className={`${t.layout.flex.center} ${t.spacing.gap.small}`}>
               <div
-                className="w-6 h-6 rounded-lg border border-surface-200"
+                className={`${t.sizing.icon.base} ${t.radius.small} ${t.borders.width.base} ${t.colors.border.light}`}
                 style={{ backgroundColor: normalizedValue || "#FFFFFF" }}
               />
-              <code className="text-xs font-mono text-text-color bg-surface-100 px-2 py-1 rounded">
+              <code
+                className={`${t.typography.xs} font-mono ${t.colors.text.default} ${t.colors.background.surfaceAlt} px-2 py-1 ${t.radius.tiny}`}
+              >
                 {normalizedValue || "#FFFFFF"}
               </code>
             </div>
@@ -420,5 +424,4 @@ const ColorPickerFormField = ({
     </FormFieldWrapper>
   );
 };
-
 export default ColorPickerFormField;

@@ -1,4 +1,4 @@
-// src/components/formFields/FloatFormField.jsx - Refactored with Central Styles
+// src/components/formFields/FloatFormField.jsx - Enhanced with Presets
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import {
@@ -18,6 +18,7 @@ const FloatFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated", // New preset support!
   precision = 2,
   min,
   max,
@@ -54,15 +55,18 @@ const FloatFormField = ({
   // Filter out non-DOM props before spreading
   const { fieldSchemaItem, onFocus, onBlur, ...safeOtherProps } = otherProps;
 
-  // Get PrimeReact PassThrough config for InputNumber
-  const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumber({
-    isFocused,
-    isHovered,
-    disabled,
-    error: !!error,
-    size,
-    className,
-  });
+  // Get PrimeReact PassThrough config for InputNumber with preset
+  const ptConfig = PRIMEREACT_PT_CONFIGS.inputNumber(
+    {
+      isFocused,
+      isHovered,
+      disabled,
+      error: !!error,
+      size,
+      className,
+    },
+    preset // Pass preset
+  );
 
   return (
     <FormFieldWrapper
@@ -74,6 +78,7 @@ const FloatFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
+      preset={preset}
     >
       <InputNumber
         id={id}

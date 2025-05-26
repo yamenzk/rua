@@ -1,4 +1,4 @@
-// src/components/formFields/CheckSwitchFormField.jsx - Redesigned with Central Styles
+// src/components/formFields/CheckSwitchFormField.jsx - Enhanced with Presets
 import React from "react";
 import { InputSwitch } from "primereact/inputswitch";
 import { Checkbox } from "primereact/checkbox";
@@ -6,6 +6,8 @@ import {
   FormFieldWrapper,
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
+  DESIGN_TOKENS,
+  getInteractionPreset,
 } from "./styles/formFieldStyles";
 import { parseDescription } from "@/components/document/utils/schemaUtils";
 
@@ -19,14 +21,14 @@ const CheckSwitchFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated", // New preset support!
   fieldSchemaItem,
-  variant = "auto", // "auto", "switch", "checkbox"
-  label, // Optional inline label for the control
-  labelPosition = "right", // "left", "right", "top", "bottom"
-  showLabel = true, // Whether to show inline label
+  variant = "auto",
+  label,
+  labelPosition = "right",
+  showLabel = true,
   ...otherProps
 }) => {
-  // Use central state management
   const {
     isFocused,
     isHovered,
@@ -35,6 +37,9 @@ const CheckSwitchFormField = ({
     handleMouseEnter,
     handleMouseLeave,
   } = useFormFieldState();
+
+  const t = DESIGN_TOKENS;
+  const interactions = getInteractionPreset("input", preset);
 
   // Parse field description for UI hints
   const descriptionData = parseDescription(fieldSchemaItem?.description || "");
@@ -57,12 +62,11 @@ const CheckSwitchFormField = ({
       let newCheckedState;
 
       if (shouldUseSwitch) {
-        newCheckedState = e.value; // InputSwitch uses e.value
+        newCheckedState = e.value;
       } else {
-        newCheckedState = e.checked; // Checkbox uses e.checked
+        newCheckedState = e.checked;
       }
 
-      // Create event structure expected by form handler
       const syntheticEvent = {
         target: {
           name: id,
@@ -74,7 +78,6 @@ const CheckSwitchFormField = ({
     }
   };
 
-  // Filter out non-DOM props
   const {
     fieldSchemaItem: _fieldSchemaItem,
     onFocus,
@@ -82,7 +85,6 @@ const CheckSwitchFormField = ({
     ...safeOtherProps
   } = otherProps;
 
-  // Common props for both switch and checkbox
   const commonProps = {
     inputId: id,
     checked: !!checked,
@@ -96,47 +98,65 @@ const CheckSwitchFormField = ({
     ...safeOtherProps,
   };
 
-  // Render Switch
+  // Enhanced Switch Rendering
   if (shouldUseSwitch) {
     const switchPT = {
-      ...PRIMEREACT_PT_CONFIGS.inputSwitch({
-        isFocused,
-        isHovered,
-        disabled,
-        error: !!error,
-        size,
-      }),
+      ...PRIMEREACT_PT_CONFIGS.inputSwitch(
+        {
+          isFocused,
+          isHovered,
+          disabled,
+          error: !!error,
+          size,
+        },
+        preset // Pass preset
+      ),
       root: {
         className: `
-          relative inline-flex items-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-200 rounded-full
-          ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-          ${error ? "ring-2 ring-red-200" : ""}
+          ${t.layout.position.relative} ${t.layout.flex.inlineCenter} ${
+          t.interactions.cursor.pointer
+        } 
+          ${t.effects.transition.base} ${t.effects.focusRing} ${t.radius.full}
+          ${
+            disabled
+              ? `${t.effects.opacity.disabled} ${t.interactions.cursor.notAllowed}`
+              : interactions.base || ""
+          }
+          ${error ? t.effects.shadow.error : ""}
           ${className || ""}
+          ${preset === "dynamic" ? "hover:scale-105" : ""}
         `,
       },
       slider: {
         className: `
-          transition-all duration-200 rounded-full
+          ${t.effects.transition.base} ${t.radius.full}
           ${
             disabled
-              ? "bg-surface-300"
+              ? t.colors.background.surfaceStrong
               : checked
-              ? "bg-primary-500 hover:bg-primary-600"
-              : "bg-surface-300 hover:bg-surface-400"
+              ? `${t.colors.background.primary} ${t.presets.hover.background.primaryStrong}`
+              : `${t.colors.background.surfaceStrong} ${t.presets.hover.background.medium}`
           }
+          ${preset === "elevated" ? t.effects.shadow.base : ""}
         `,
       },
       handle: {
         className: `
-          transition-all duration-200 rounded-full shadow-sm border-2 border-white
+          ${t.effects.transition.base} ${t.radius.full} ${
+          t.effects.shadow.base
+        } 
+          ${t.borders.width.thick} border-white ${
+          t.colors.background.white
+        } transform
           ${
             size === "large"
-              ? "w-6 h-6"
+              ? `${t.sizing.icon.large} w-7 h-7`
               : size === "compact"
-              ? "w-4 h-4"
-              : "w-5 h-5"
+              ? `${t.sizing.icon.compact} w-4 h-4`
+              : `${t.sizing.icon.base} w-5 h-5`
           }
-          ${checked ? "bg-white" : "bg-white"}
+          ${checked ? "translate-x-full" : "translate-x-0"}
+          ${preset === "elevated" ? t.effects.shadow.strong : ""}
         `,
       },
     };
@@ -148,7 +168,7 @@ const CheckSwitchFormField = ({
         className={`
           ${
             size === "large"
-              ? "w-14 h-8"
+              ? "w-16 h-9"
               : size === "compact"
               ? "w-10 h-6"
               : "w-12 h-7"
@@ -168,6 +188,7 @@ const CheckSwitchFormField = ({
         onMouseEnter={() => handleMouseEnter(disabled)}
         onMouseLeave={handleMouseLeave}
         className={className}
+        preset={preset}
       >
         {renderControlWithLabel(
           switchControl,
@@ -175,56 +196,73 @@ const CheckSwitchFormField = ({
           labelPosition,
           showLabel,
           id,
-          required
+          required,
+          preset
         )}
       </FormFieldWrapper>
     );
   }
 
-  // Render Checkbox
+  // Enhanced Checkbox Rendering
   const checkboxPT = {
-    ...PRIMEREACT_PT_CONFIGS.checkbox({
-      isFocused,
-      isHovered,
-      disabled,
-      error: !!error,
-      size,
-    }),
+    ...PRIMEREACT_PT_CONFIGS.checkbox(
+      {
+        isFocused,
+        isHovered,
+        disabled,
+        error: !!error,
+        size,
+      },
+      preset // Pass preset
+    ),
     root: {
-      className: "relative inline-flex items-center",
+      className: `${t.layout.position.relative} ${t.layout.flex.inlineCenter}`,
     },
     box: {
       className: `
-        transition-all duration-200 border-2 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary-200
+        ${t.effects.transition.base} ${t.borders.width.thick} ${t.radius.small} 
+        ${t.layout.flex.center} ${t.effects.focusRing} ${
+        t.interactions.cursor.pointer
+      }
         ${
           size === "large"
-            ? "w-6 h-6"
+            ? `${t.sizing.icon.large} w-7 h-7`
             : size === "compact"
-            ? "w-4 h-4"
-            : "w-5 h-5"
+            ? `${t.sizing.icon.compact} w-4 h-4`
+            : `${t.sizing.icon.base} w-5 h-5`
         }
         ${
           error
-            ? "border-red-300 focus:ring-red-200"
+            ? `${t.colors.border.error} ${t.effects.shadow.error}`
             : disabled
-            ? "border-surface-200 bg-surface-100"
+            ? `${t.colors.border.medium} ${t.colors.background.surfaceDisabled} ${t.interactions.cursor.notAllowed}`
             : checked
-            ? "border-primary-500 bg-primary-500 hover:border-primary-600 hover:bg-primary-600"
-            : "border-surface-300 bg-surface-0 hover:border-primary-400"
+            ? `${t.colors.border.focusStrong} ${t.colors.background.primary} ${t.presets.hover.background.primaryStrong} ${t.effects.shadow.base}`
+            : `${t.colors.border.medium} ${t.colors.background.surface} ${
+                interactions.hover || t.presets.hover.background.subtle
+              } ${t.effects.shadow.base}`
         }
+        ${preset === "elevated" ? t.effects.shadow.base : ""}
+        ${preset === "dynamic" ? "hover:scale-105" : ""}
       `,
     },
     icon: {
       className: `
-        transition-all duration-200 text-white
+        ${t.effects.transition.base} ${t.colors.text.white} ${
+        t.typography.weight.bold
+      }
         ${
           size === "large"
-            ? "text-sm"
+            ? t.typography.base
             : size === "compact"
-            ? "text-xs"
-            : "text-sm"
+            ? t.typography.xs
+            : t.typography.sm
         }
-        ${checked ? "opacity-100 scale-100" : "opacity-0 scale-75"}
+        ${
+          checked
+            ? `${t.effects.opacity.visible} ${t.effects.scale.none}`
+            : `${t.effects.opacity.hidden} ${t.effects.scale.down}`
+        }
       `,
     },
   };
@@ -242,6 +280,7 @@ const CheckSwitchFormField = ({
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
       className={className}
+      preset={preset}
     >
       {renderControlWithLabel(
         checkboxControl,
@@ -249,21 +288,26 @@ const CheckSwitchFormField = ({
         labelPosition,
         showLabel,
         id,
-        required
+        required,
+        preset
       )}
     </FormFieldWrapper>
   );
 };
 
-// Helper function to render control with label in different positions
+// Enhanced helper function with preset support
 const renderControlWithLabel = (
   control,
   displayLabel,
   labelPosition,
   showLabel,
   id,
-  required
+  required,
+  preset = "elevated"
 ) => {
+  const t = DESIGN_TOKENS;
+  const interactions = getInteractionPreset("input", preset);
+
   if (!showLabel || !displayLabel) {
     return control;
   }
@@ -272,9 +316,13 @@ const renderControlWithLabel = (
     <label
       htmlFor={id}
       className={`
-        text-sm text-text-color cursor-pointer transition-colors duration-200 hover:text-primary-600
+        ${t.typography.sm} ${t.colors.text.default} ${
+        t.interactions.cursor.pointer
+      } 
+        ${t.effects.transition.colors} hover:${t.colors.text.primary}
         ${labelPosition === "top" || labelPosition === "bottom" ? "block" : ""}
         ${required ? "after:content-['*'] after:text-red-500 after:ml-1" : ""}
+        ${preset === "dynamic" ? "hover:scale-[1.02] transform" : ""}
       `}
     >
       {displayLabel}
@@ -283,12 +331,12 @@ const renderControlWithLabel = (
 
   const spacing =
     labelPosition === "top" || labelPosition === "bottom"
-      ? "space-y-2"
-      : "space-x-3";
+      ? t.spacing.gap.small.replace("gap-", "space-y-")
+      : t.spacing.gap.base.replace("gap-", "space-x-");
 
   if (labelPosition === "top") {
     return (
-      <div className={`flex flex-col ${spacing}`}>
+      <div className={`${t.layout.flex.col} ${spacing}`}>
         {labelElement}
         {control}
       </div>
@@ -297,7 +345,7 @@ const renderControlWithLabel = (
 
   if (labelPosition === "bottom") {
     return (
-      <div className={`flex flex-col ${spacing}`}>
+      <div className={`${t.layout.flex.col} ${spacing}`}>
         {control}
         {labelElement}
       </div>
@@ -306,7 +354,7 @@ const renderControlWithLabel = (
 
   if (labelPosition === "left") {
     return (
-      <div className={`flex items-center ${spacing}`}>
+      <div className={`${t.layout.flex.center} ${spacing}`}>
         {labelElement}
         {control}
       </div>
@@ -315,7 +363,7 @@ const renderControlWithLabel = (
 
   // Default: right
   return (
-    <div className={`flex items-center ${spacing}`}>
+    <div className={`${t.layout.flex.center} ${spacing}`}>
       {control}
       {labelElement}
     </div>

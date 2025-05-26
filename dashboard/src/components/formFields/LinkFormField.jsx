@@ -1,4 +1,4 @@
-// src/components/formFields/LinkFormField.jsx - Refactored with Central Styles
+// src/components/formFields/LinkFormField.jsx - Enhanced with Presets
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
@@ -7,12 +7,13 @@ import {
   FormFieldWrapper,
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
+  DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 
 const LinkFormField = ({
-  id, // fieldname
-  value, // current selected value
-  onChange, // callback function
+  id,
+  value,
+  onChange,
   disabled,
   className,
   placeholder,
@@ -20,11 +21,12 @@ const LinkFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated", // New preset support!
   fieldSchemaItem,
   linkedDoctype,
   fetchLinkOptions,
   isLoading = false,
-  showClear = false, // Default to false for consistency
+  showClear = false,
   ...otherProps
 }) => {
   const [options, setOptions] = useState([]);
@@ -32,7 +34,6 @@ const LinkFormField = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Use central state management
   const {
     isFocused,
     isHovered,
@@ -42,19 +43,16 @@ const LinkFormField = ({
     handleMouseLeave,
   } = useFormFieldState();
 
-  // Debounced search term for API calls
+  const t = DESIGN_TOKENS;
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-  // Debounce the search term
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 300);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch options when component mounts or when search term changes
   const loadOptions = useCallback(
     async (search = "", isInitialLoad = false) => {
       if (!linkedDoctype || !fetchLinkOptions) return;
@@ -77,22 +75,18 @@ const LinkFormField = ({
     [linkedDoctype, fetchLinkOptions, fieldSchemaItem?.description]
   );
 
-  // Load initial options when component mounts
   useEffect(() => {
     loadOptions("", true);
   }, [loadOptions]);
 
-  // Load options when debounced search term changes
   useEffect(() => {
     if (isDropdownOpen) {
       loadOptions(debouncedSearchTerm);
     }
   }, [debouncedSearchTerm, loadOptions, isDropdownOpen]);
 
-  // Handle dropdown show/hide
   const handleDropdownShow = useCallback(() => {
     setIsDropdownOpen(true);
-    // Reload options when dropdown opens to get fresh data
     loadOptions(searchTerm);
   }, [loadOptions, searchTerm]);
 
@@ -101,18 +95,11 @@ const LinkFormField = ({
     setSearchTerm("");
   }, []);
 
-  // Handle selection change
   const handleChange = useCallback(
     (e) => {
       if (onChange) {
-        // For PrimeReact Dropdown, the event structure is different
-        // We need to create the expected event structure for the form handler
         const syntheticEvent = {
-          target: {
-            name: id,
-            value: e.value,
-          },
-          // Include the original event for reference if needed
+          target: { name: id, value: e.value },
           originalEvent: e.originalEvent,
         };
         onChange(syntheticEvent);
@@ -121,17 +108,14 @@ const LinkFormField = ({
     [onChange, id]
   );
 
-  // Handle search/filter
   const handleFilter = useCallback((e) => {
     setSearchTerm(e.filter || "");
   }, []);
 
-  // Refresh button handler
   const handleRefresh = useCallback(() => {
-    loadOptions(searchTerm, false, true); // Force refresh
+    loadOptions(searchTerm, false, true);
   }, [loadOptions, searchTerm]);
 
-  // Filter out props that shouldn't be passed to DOM elements
   const {
     fetchLinkOptions: _fetchLinkOptions,
     fieldSchemaItem: _fieldSchemaItem,
@@ -141,43 +125,33 @@ const LinkFormField = ({
     ...safeOtherProps
   } = otherProps;
 
-  // Get PrimeReact PassThrough config with enhanced dropdown styling
   const ptConfig = {
-    ...PRIMEREACT_PT_CONFIGS.dropdown({
-      isFocused,
-      isHovered,
-      disabled,
-      error: !!error,
-      size,
-      className,
-    }),
-    // Enhanced panel styling for elegant dropdown
+    ...PRIMEREACT_PT_CONFIGS.dropdown(
+      {
+        isFocused,
+        isHovered,
+        disabled,
+        error: !!error,
+        size,
+        className,
+      },
+      preset // Pass preset
+    ),
     panel: {
-      className:
-        "border-none shadow-xl rounded-2xl mt-2 overflow-hidden bg-surface-0 backdrop-blur-sm",
+      className: `${t.borders.width.none} ${t.effects.shadow.xl} ${t.radius.base} ${t.spacing.panel.margin} ${t.layout.overflow.hidden} ${t.colors.background.surface} backdrop-blur-sm`,
     },
-    list: {
-      className: "p-2",
-    },
+    list: { className: t.spacing.panel.paddingSmall },
     item: {
-      className:
-        "px-3 py-2 mx-1 rounded-xl hover:bg-primary-50 transition-all duration-150 cursor-pointer border-none text-sm",
+      className: `px-3 py-2 mx-1 ${t.radius.small} hover:bg-primary-50 ${t.effects.transition.colors} ${t.interactions.cursor.pointer} ${t.borders.width.none} ${t.typography.sm}`,
     },
     filterContainer: {
-      className: "p-3 border-b border-surface-100",
+      className: `${t.spacing.panel.padding} ${t.borders.sides.bottom} ${t.colors.border.light}`,
     },
     filterInput: {
-      className:
-        "w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:border-primary-400 focus:outline-none transition-colors",
+      className: `${t.sizing.component.fullWidth} px-3 py-2 ${t.typography.sm} ${t.borders.width.base} ${t.colors.border.medium} ${t.radius.small} focus:${t.colors.border.focus} ${t.effects.focusRing} ${t.effects.transition.colors}`,
     },
-    // Hide the clear button completely
-    clearIcon: {
-      className: "hidden",
-    },
-    // Loading state styling
-    loadingIcon: {
-      className: "text-primary-500",
-    },
+    clearIcon: { className: t.layout.display.hidden },
+    loadingIcon: { className: t.colors.text.primary },
   };
 
   return (
@@ -190,9 +164,12 @@ const LinkFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
+      preset={preset}
     >
-      <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
+      <div className={`${t.layout.flex.center} ${t.spacing.gap.small}`}>
+        <div
+          className={`${t.sizing.component.flexGrow} ${t.layout.position.relative}`}
+        >
           <Dropdown
             id={id}
             value={value || null}
@@ -229,15 +206,16 @@ const LinkFormField = ({
             {...safeOtherProps}
           />
 
-          {/* Loading spinner overlay */}
           {isLoadingOptions && (
-            <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
+            <div
+              className={`${t.layout.position.absolute} right-8 ${t.layout.position.topHalf} ${t.interactions.pointerEvents.none}`}
+            >
               <ProgressSpinner size="16" strokeWidth="4" />
             </div>
           )}
         </div>
 
-        {/* Refresh button */}
+        {/* Enhanced Refresh Button */}
         <Button
           icon="pi pi-refresh"
           text
@@ -247,20 +225,16 @@ const LinkFormField = ({
           disabled={disabled || isLoadingOptions}
           tooltip="Refresh options"
           tooltipOptions={{ position: "top" }}
-          className="p-button-sm flex-shrink-0 text-text-color-secondary hover:text-primary-500 hover:bg-primary-50 transition-all duration-200"
+          className={`${t.sizing.component.flexShrink} ${t.colors.text.secondary} hover:${t.colors.text.primary} hover:${t.colors.background.primaryLight} ${t.effects.transition.base}`}
           pt={{
             root: {
-              className:
-                "w-8 h-8 rounded-xl border border-surface-200 hover:border-primary-300 transition-all duration-200",
+              className: `${t.sizing.icon.xl} ${t.radius.small} ${t.borders.width.base} ${t.colors.border.medium} hover:${t.colors.border.focus} ${t.effects.transition.base}`,
             },
-            icon: {
-              className: "text-sm",
-            },
+            icon: { className: t.typography.sm },
           }}
         />
       </div>
     </FormFieldWrapper>
   );
 };
-
 export default LinkFormField;

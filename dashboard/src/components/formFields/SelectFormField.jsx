@@ -1,10 +1,11 @@
-// src/components/formFields/SelectFormField.jsx - Refactored with Central Styles
+// src/components/formFields/SelectFormField.jsx - Enhanced with Presets
 import React, { useMemo, useState, useCallback } from "react";
 import { Dropdown } from "primereact/dropdown";
 import {
   FormFieldWrapper,
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
+  DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 import nationalitiesData from "@/utils/nationalities.json";
 
@@ -19,6 +20,7 @@ const SelectFormField = ({
   required,
   error,
   size = "base",
+  preset = "elevated", // New preset support!
   fieldSchemaItem,
   showClear = false,
   filter,
@@ -26,7 +28,6 @@ const SelectFormField = ({
 }) => {
   const [filteredOptions, setFilteredOptions] = useState([]);
 
-  // Use central state management
   const {
     isFocused,
     isHovered,
@@ -36,7 +37,8 @@ const SelectFormField = ({
     handleMouseLeave,
   } = useFormFieldState();
 
-  // Generate options based on field configuration (same logic as before)
+  const t = DESIGN_TOKENS;
+
   const options = useMemo(() => {
     const {
       fieldname,
@@ -76,7 +78,6 @@ const SelectFormField = ({
     return [];
   }, [id, fieldSchemaItem]);
 
-  // Determine if filtering should be enabled
   const shouldEnableFilter = useMemo(() => {
     if (filter !== undefined) return filter;
     const fieldname = fieldSchemaItem?.fieldname || id;
@@ -93,17 +94,13 @@ const SelectFormField = ({
   const handleChange = (e) => {
     if (onChange) {
       const syntheticEvent = {
-        target: {
-          name: id,
-          value: e.value,
-        },
+        target: { name: id, value: e.value },
         originalEvent: e.originalEvent,
       };
       onChange(syntheticEvent);
     }
   };
 
-  // Custom filter function for better performance
   const handleFilter = useCallback(
     (e) => {
       const query = e.filter.toLowerCase();
@@ -119,16 +116,14 @@ const SelectFormField = ({
     [options]
   );
 
-  // Initialize filtered options
   React.useEffect(() => {
     setFilteredOptions(options);
   }, [options]);
 
-  // Custom item template for nationality
   const itemTemplate = (option) => {
     if (id === "nationality" || fieldSchemaItem?.fieldname === "nationality") {
       return (
-        <div className="flex align-items-center gap-2 p-1">
+        <div className={`${t.layout.flex.center} ${t.spacing.gap.small} p-1`}>
           <span style={{ fontSize: "1.2em" }}>
             {option.label.split(" ")[0]}
           </span>
@@ -142,7 +137,6 @@ const SelectFormField = ({
   const isLargeDataset = options.length > 50;
   const displayOptions = shouldEnableFilter ? filteredOptions : options;
 
-  // Filter out non-DOM props
   const {
     fieldSchemaItem: _fieldSchemaItem,
     onFocus,
@@ -150,43 +144,35 @@ const SelectFormField = ({
     ...safeOtherProps
   } = otherProps;
 
-  // Get PrimeReact PassThrough config with enhanced dropdown styling
   const ptConfig = {
-    ...PRIMEREACT_PT_CONFIGS.dropdown({
-      isFocused,
-      isHovered,
-      disabled,
-      error: !!error,
-      size,
-      className,
-    }),
-    // Enhanced panel styling for elegant dropdown
+    ...PRIMEREACT_PT_CONFIGS.dropdown(
+      {
+        isFocused,
+        isHovered,
+        disabled,
+        error: !!error,
+        size,
+        className,
+      },
+      preset // Pass preset
+    ),
     panel: {
-      className:
-        "border-none shadow-xl rounded-2xl mt-2 overflow-hidden bg-surface-0 backdrop-blur-sm",
+      className: `${t.borders.width.none} ${t.effects.shadow.xl} ${t.radius.base} ${t.spacing.panel.margin} ${t.layout.overflow.hidden} ${t.colors.background.surface} backdrop-blur-sm`,
     },
-    list: {
-      className: "p-2",
-    },
+    list: { className: t.spacing.panel.paddingSmall },
     item: {
-      className:
-        "px-3 py-2 mx-1 rounded-xl hover:bg-primary-50 transition-all duration-150 cursor-pointer border-none text-sm",
+      className: `px-3 py-2 mx-1 ${t.radius.small} hover:bg-primary-50 ${t.effects.transition.colors} ${t.interactions.cursor.pointer} ${t.borders.width.none} ${t.typography.sm}`,
     },
     itemGroup: {
-      className:
-        "px-3 py-2 font-semibold text-text-color-secondary text-xs uppercase tracking-wider",
+      className: `px-3 py-2 ${t.typography.weight.semibold} ${t.colors.text.secondary} ${t.typography.xs} uppercase tracking-wider`,
     },
     filterContainer: {
-      className: "p-3 border-b border-surface-100",
+      className: `${t.spacing.panel.padding} ${t.borders.sides.bottom} ${t.colors.border.light}`,
     },
     filterInput: {
-      className:
-        "w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:border-primary-400 focus:outline-none transition-colors",
+      className: `${t.sizing.component.fullWidth} px-3 py-2 ${t.typography.sm} ${t.borders.width.base} ${t.colors.border.medium} ${t.radius.small} focus:${t.colors.border.focus} ${t.effects.focusRing} ${t.effects.transition.colors}`,
     },
-    // Hide the clear button completely
-    clearIcon: {
-      className: "hidden",
-    },
+    clearIcon: { className: t.layout.display.hidden },
   };
 
   return (
@@ -199,6 +185,7 @@ const SelectFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
+      preset={preset}
     >
       <Dropdown
         id={id}
@@ -237,5 +224,4 @@ const SelectFormField = ({
     </FormFieldWrapper>
   );
 };
-
 export default SelectFormField;
