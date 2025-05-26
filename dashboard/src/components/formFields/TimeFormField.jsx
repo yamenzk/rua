@@ -7,6 +7,7 @@ import {
   PRIMEREACT_PT_CONFIGS,
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const TimeFormField = ({
   id,
@@ -19,10 +20,11 @@ const TimeFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated",
+  preset,
   ...otherProps
 }) => {
-  // Use enhanced field group state management
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const {
     isFocused,
     isHovered,
@@ -51,7 +53,7 @@ const TimeFormField = ({
       size,
       className,
     },
-    preset
+    activePreset
   );
 
   return (
@@ -64,7 +66,7 @@ const TimeFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
       onMouseLeave={handleFieldGroupMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       {/* Field Group Container for unified behavior */}
       <div

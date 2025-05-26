@@ -9,6 +9,7 @@ import {
   getAddonIconStyles,
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const DurationFormField = ({
   id,
@@ -21,11 +22,13 @@ const DurationFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated",
+  preset,
   min = 0,
   displayFormat = "seconds",
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const {
     isFocused,
     isHovered,
@@ -91,7 +94,7 @@ const DurationFormField = ({
       className,
     },
     "right",
-    preset
+    activePreset
   );
 
   return (
@@ -104,7 +107,7 @@ const DurationFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
       onMouseLeave={handleFieldGroupMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       {/* Field Group Container - Unified behavior */}
       <div
@@ -150,7 +153,7 @@ const DurationFormField = ({
             ${getAddonStyles(
               { isFocused, isHovered, disabled },
               "right",
-              preset
+              activePreset
             )}
           `}
           onClick={() => {
@@ -165,13 +168,13 @@ const DurationFormField = ({
             <i
               className={`pi pi-clock ${t.typography.xs} ${getAddonIconStyles(
                 { isFocused, disabled },
-                preset
+                activePreset
               )}`}
             />
             <span
               className={`${t.typography.sm} ${
                 t.typography.weight.medium
-              } ${getAddonIconStyles({ isFocused, disabled }, preset)}`}
+              } ${getAddonIconStyles({ isFocused, disabled }, activePreset)}`}
             >
               {displayInfo.unit}
             </span>

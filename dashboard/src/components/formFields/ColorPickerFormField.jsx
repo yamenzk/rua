@@ -13,6 +13,7 @@ import {
   PRIMEREACT_PT_CONFIGS,
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const ColorPickerFormField = ({
   id,
@@ -25,7 +26,7 @@ const ColorPickerFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset, // New preset support!
   format = "hex",
   inline = false,
   showPreview = true,
@@ -33,6 +34,8 @@ const ColorPickerFormField = ({
   presetColors = [],
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset; 
   const overlayRef = useRef(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
@@ -107,7 +110,7 @@ const ColorPickerFormField = ({
       className,
     },
     showPreview ? "both" : "right",
-    preset // Pass preset
+    activePreset // Pass preset
   );
 
   const defaultPresets = [
@@ -146,7 +149,7 @@ const ColorPickerFormField = ({
         isHovered={isHovered}
         onMouseEnter={() => handleMouseEnter(disabled)}
         onMouseLeave={handleMouseLeave}
-        preset={preset}
+        preset={activePreset}
       >
         <div className={`${t.spacing.gap.base} ${t.layout.flex.col}`}>
           <div className={t.layout.flex.center}>
@@ -188,7 +191,7 @@ const ColorPickerFormField = ({
                 disabled,
                 error: !!error,
                 size,
-                preset,
+                preset: activePreset,
                 className,
               })}
             />
@@ -253,7 +256,7 @@ const ColorPickerFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       <div className="p-inputgroup w-full">
         {showInput ? (
@@ -265,7 +268,7 @@ const ColorPickerFormField = ({
                 } min-w-[3rem] ${getAddonStyles(
                   { isFocused, isHovered, disabled },
                   "left",
-                  preset
+                  activePreset
                 )}`}
               >
                 <div
@@ -297,7 +300,7 @@ const ColorPickerFormField = ({
               disabled,
               error: !!error,
               size,
-              preset,
+              preset: activePreset,
               className: `${t.interactions.cursor.pointer} ${t.layout.flex.center} ${t.spacing.gap.base}`,
             })}
             onClick={(e) => !disabled && overlayRef.current?.toggle(e)}
@@ -323,13 +326,13 @@ const ColorPickerFormField = ({
           className={`${getAddonStyles(
             { isFocused, isHovered, disabled },
             "right",
-            preset
+            activePreset
           )} !px-3 !py-3`}
           pt={{
             root: {
               className: `${t.borders.width.none} ${
                 t.colors.background.transparent
-              } ${getAddonIconStyles({ isFocused, disabled }, preset)} ${
+              } ${getAddonIconStyles({ isFocused, disabled }, activePreset)} ${
                 t.effects.transition.colors
               }`,
             },

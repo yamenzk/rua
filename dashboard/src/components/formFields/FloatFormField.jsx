@@ -6,6 +6,7 @@ import {
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const FloatFormField = ({
   id,
@@ -18,13 +19,14 @@ const FloatFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset,
   precision = 2,
   min,
   max,
   ...otherProps
 }) => {
-  // Use central state management
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const {
     isFocused,
     isHovered,
@@ -65,7 +67,7 @@ const FloatFormField = ({
       size,
       className,
     },
-    preset // Pass preset
+    activePreset // Pass preset
   );
 
   return (
@@ -78,7 +80,7 @@ const FloatFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       <InputNumber
         id={id}

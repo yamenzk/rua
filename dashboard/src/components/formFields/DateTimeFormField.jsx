@@ -7,6 +7,7 @@ import {
   PRIMEREACT_PT_CONFIGS,
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const DateTimeFormField = ({
   id,
@@ -19,9 +20,11 @@ const DateTimeFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated",
+  preset,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   // Use enhanced field group state management
   const {
     isFocused,
@@ -51,7 +54,7 @@ const DateTimeFormField = ({
       size,
       className,
     },
-    preset
+    activePreset
   );
 
   return (
@@ -64,7 +67,7 @@ const DateTimeFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
       onMouseLeave={handleFieldGroupMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       {/* Field Group Container for unified behavior */}
       <div

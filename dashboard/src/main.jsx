@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { FrappeProvider } from "frappe-react-sdk";
 import { PrimeReactProvider } from "primereact/api";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import "./index.css";
 
 function getFrappeSiteName() {
@@ -36,7 +37,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         siteName={siteNameValue}
         socketPort={socketPortValue}
       >
-        <App />
+        <ThemeProvider theme="elevated">
+          <App />
+        </ThemeProvider>
       </FrappeProvider>
     </PrimeReactProvider>
   </React.StrictMode>

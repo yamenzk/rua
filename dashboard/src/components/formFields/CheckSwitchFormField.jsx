@@ -1,4 +1,4 @@
-// src/components/formFields/CheckSwitchFormField.jsx - Enhanced with Presets
+// src/components/formFields/CheckSwitchFormField.jsx - Enhanced with Theme Integration
 import React from "react";
 import { InputSwitch } from "primereact/inputswitch";
 import { Checkbox } from "primereact/checkbox";
@@ -10,6 +10,7 @@ import {
   getInteractionPreset,
 } from "./styles/formFieldStyles";
 import { parseDescription } from "@/components/document/utils/schemaUtils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const CheckSwitchFormField = ({
   id,
@@ -21,7 +22,7 @@ const CheckSwitchFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset, // ← No default value, let theme take over
   fieldSchemaItem,
   variant = "auto",
   label,
@@ -29,6 +30,10 @@ const CheckSwitchFormField = ({
   showLabel = true,
   ...otherProps
 }) => {
+  // Theme integration
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
+
   const {
     isFocused,
     isHovered,
@@ -39,7 +44,7 @@ const CheckSwitchFormField = ({
   } = useFormFieldState();
 
   const t = DESIGN_TOKENS;
-  const interactions = getInteractionPreset("input", preset);
+  const interactions = getInteractionPreset("input", activePreset) || {}; // ← Use activePreset
 
   // Parse field description for UI hints
   const descriptionData = parseDescription(fieldSchemaItem?.description || "");
@@ -109,7 +114,7 @@ const CheckSwitchFormField = ({
           error: !!error,
           size,
         },
-        preset // Pass preset
+        activePreset // ← Use activePreset
       ),
       root: {
         className: `
@@ -124,7 +129,7 @@ const CheckSwitchFormField = ({
           }
           ${error ? t.effects.shadow.error : ""}
           ${className || ""}
-          ${preset === "dynamic" ? "hover:scale-105" : ""}
+          ${activePreset === "dynamic" ? "hover:scale-105" : ""}
         `,
       },
       slider: {
@@ -134,10 +139,10 @@ const CheckSwitchFormField = ({
             disabled
               ? t.colors.background.surfaceStrong
               : checked
-              ? `${t.colors.background.primary} ${t.presets.hover.background.primaryStrong}`
-              : `${t.colors.background.surfaceStrong} ${t.presets.hover.background.medium}`
+              ? `${t.colors.background.primary} hover:${t.colors.background.primaryDark}`
+              : `${t.colors.background.surfaceStrong} hover:${t.colors.background.surfaceAlt}`
           }
-          ${preset === "elevated" ? t.effects.shadow.base : ""}
+          ${activePreset === "elevated" ? t.effects.shadow.base : ""}
         `,
       },
       handle: {
@@ -156,7 +161,7 @@ const CheckSwitchFormField = ({
               : `${t.sizing.icon.base} w-5 h-5`
           }
           ${checked ? "translate-x-full" : "translate-x-0"}
-          ${preset === "elevated" ? t.effects.shadow.strong : ""}
+          ${activePreset === "elevated" ? t.effects.shadow.strong : ""}
         `,
       },
     };
@@ -188,7 +193,7 @@ const CheckSwitchFormField = ({
         onMouseEnter={() => handleMouseEnter(disabled)}
         onMouseLeave={handleMouseLeave}
         className={className}
-        preset={preset}
+        preset={activePreset} // ← Use activePreset
       >
         {renderControlWithLabel(
           switchControl,
@@ -197,7 +202,7 @@ const CheckSwitchFormField = ({
           showLabel,
           id,
           required,
-          preset
+          activePreset // ← Use activePreset
         )}
       </FormFieldWrapper>
     );
@@ -213,7 +218,7 @@ const CheckSwitchFormField = ({
         error: !!error,
         size,
       },
-      preset // Pass preset
+      activePreset // ← Use activePreset
     ),
     root: {
       className: `${t.layout.position.relative} ${t.layout.flex.inlineCenter}`,
@@ -237,13 +242,13 @@ const CheckSwitchFormField = ({
             : disabled
             ? `${t.colors.border.medium} ${t.colors.background.surfaceDisabled} ${t.interactions.cursor.notAllowed}`
             : checked
-            ? `${t.colors.border.focusStrong} ${t.colors.background.primary} ${t.presets.hover.background.primaryStrong} ${t.effects.shadow.base}`
+            ? `${t.colors.border.focusStrong} ${t.colors.background.primary} hover:${t.colors.background.primaryDark} ${t.effects.shadow.base}`
             : `${t.colors.border.medium} ${t.colors.background.surface} ${
-                interactions.hover || t.presets.hover.background.subtle
+                interactions.hover || "hover:bg-surface-100"
               } ${t.effects.shadow.base}`
         }
-        ${preset === "elevated" ? t.effects.shadow.base : ""}
-        ${preset === "dynamic" ? "hover:scale-105" : ""}
+        ${activePreset === "elevated" ? t.effects.shadow.base : ""}
+        ${activePreset === "dynamic" ? "hover:scale-105" : ""}
       `,
     },
     icon: {
@@ -280,7 +285,7 @@ const CheckSwitchFormField = ({
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
       className={className}
-      preset={preset}
+      preset={activePreset} // ← Use activePreset
     >
       {renderControlWithLabel(
         checkboxControl,
@@ -289,7 +294,7 @@ const CheckSwitchFormField = ({
         showLabel,
         id,
         required,
-        preset
+        activePreset // ← Use activePreset
       )}
     </FormFieldWrapper>
   );
@@ -303,10 +308,10 @@ const renderControlWithLabel = (
   showLabel,
   id,
   required,
-  preset = "elevated"
+  activePreset // ← Use activePreset parameter name for clarity
 ) => {
   const t = DESIGN_TOKENS;
-  const interactions = getInteractionPreset("input", preset);
+  const interactions = getInteractionPreset("input", activePreset) || {}; // ← Use activePreset
 
   if (!showLabel || !displayLabel) {
     return control;
@@ -322,7 +327,7 @@ const renderControlWithLabel = (
         ${t.effects.transition.colors} hover:${t.colors.text.primary}
         ${labelPosition === "top" || labelPosition === "bottom" ? "block" : ""}
         ${required ? "after:content-['*'] after:text-red-500 after:ml-1" : ""}
-        ${preset === "dynamic" ? "hover:scale-[1.02] transform" : ""}
+        ${activePreset === "dynamic" ? "hover:scale-[1.02] transform" : ""}
       `}
     >
       {displayLabel}

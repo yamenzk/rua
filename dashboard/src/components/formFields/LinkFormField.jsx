@@ -9,6 +9,7 @@ import {
   PRIMEREACT_PT_CONFIGS,
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const LinkFormField = ({
   id,
@@ -21,7 +22,7 @@ const LinkFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset,
   fieldSchemaItem,
   linkedDoctype,
   fetchLinkOptions,
@@ -29,6 +30,8 @@ const LinkFormField = ({
   showClear = false,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const [options, setOptions] = useState([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -135,7 +138,7 @@ const LinkFormField = ({
         size,
         className,
       },
-      preset // Pass preset
+      activePreset // Pass preset
     ),
     panel: {
       className: `${t.borders.width.none} ${t.effects.shadow.xl} ${t.radius.base} ${t.spacing.panel.margin} ${t.layout.overflow.hidden} ${t.colors.background.surface} backdrop-blur-sm`,
@@ -164,7 +167,7 @@ const LinkFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       <div className={`${t.layout.flex.center} ${t.spacing.gap.small}`}>
         <div

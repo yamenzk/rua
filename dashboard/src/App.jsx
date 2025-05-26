@@ -8,6 +8,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 
 // Context
 import { LayoutProvider } from "@/contexts/LayoutContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 // Routes
 import { routeConfig } from "./routes";

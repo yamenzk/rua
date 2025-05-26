@@ -9,6 +9,7 @@ import {
   DESIGN_TOKENS,
   getInteractionPreset,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const GenericTextareaFormField = ({
   id,
@@ -21,7 +22,7 @@ const GenericTextareaFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset,
   rows = 3,
   maxRows = 10,
   minRows = 2,
@@ -32,6 +33,8 @@ const GenericTextareaFormField = ({
   showToolbar = false,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const textareaRef = useRef(null);
   const [characterCount, setCharacterCount] = useState(0);
   const [isFocusedInternal, setIsFocusedInternal] = useState(false);
@@ -46,7 +49,7 @@ const GenericTextareaFormField = ({
   } = useFormFieldState();
 
   const t = DESIGN_TOKENS;
-  const interactions = getInteractionPreset("input", preset) || {};
+  const interactions = getInteractionPreset("input", activePreset) || {};
 
   useEffect(() => {
     const text = value || "";
@@ -162,7 +165,7 @@ const GenericTextareaFormField = ({
     disabled,
     error: !!error,
     size,
-    preset, // Apply preset!
+    preset: activePreset,
     className: `${className || ""} ${
       resizeMode === "none"
         ? "resize-none"
@@ -194,7 +197,7 @@ const GenericTextareaFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       <div className={`${t.spacing.gap.small} ${t.layout.flex.col}`}>
         {/* Enhanced Formatting Toolbar */}
@@ -207,7 +210,7 @@ const GenericTextareaFormField = ({
               ${t.colors.background.surfaceAlt} ${t.radius.base} ${
               t.colors.border.default
             } ${t.borders.width.base}
-              ${preset === "elevated" ? t.effects.shadow.base : ""}
+              ${activePreset === "elevated" ? t.effects.shadow.base : ""}
             `}
           >
             <div className={`${t.layout.flex.center} ${t.spacing.gap.tiny}`}>
@@ -343,7 +346,7 @@ const GenericTextareaFormField = ({
           )}
 
           {/* Enhanced Focus Ring */}
-          {isFocusedInternal && !disabled && preset === "dynamic" && (
+          {isFocusedInternal && !disabled && activePreset === "dynamic" && (
             <div
               className={`${t.layout.position.absolute} ${t.layout.position.inset} ${t.colors.border.focus} ${t.borders.width.thick} ${t.radius.base} ${t.interactions.pointerEvents.none} ${t.effects.opacity.subtle} animate-pulse`}
             />

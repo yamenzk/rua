@@ -1,4 +1,4 @@
-// src/components/formFields/TextEditorFormField.jsx - Enhanced with Presets
+// src/components/formFields/TextEditorFormField.jsx - Enhanced with Theme Integration
 import React from "react";
 import { Editor } from "primereact/editor";
 import {
@@ -7,6 +7,7 @@ import {
   DESIGN_TOKENS,
   getInteractionPreset,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const TextEditorFormField = ({
   id,
@@ -19,10 +20,14 @@ const TextEditorFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset, // ← Removed default value to let theme take over
   style,
   ...otherProps
 }) => {
+  // Theme integration
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
+
   const {
     isFocused,
     isHovered,
@@ -33,7 +38,7 @@ const TextEditorFormField = ({
   } = useFormFieldState();
 
   const t = DESIGN_TOKENS;
-  const interactions = getInteractionPreset("input", preset) || {};
+  const interactions = getInteractionPreset("input", activePreset) || {}; // ← Use activePreset
 
   const handleChange = (e) => {
     if (onChange) {
@@ -73,7 +78,7 @@ const TextEditorFormField = ({
             ? `${t.colors.border.error} ${t.colors.background.error}`
             : ""
         }
-        ${preset === "elevated" ? t.effects.shadow.base : ""}
+        ${activePreset === "elevated" ? t.effects.shadow.base : ""} 
         ${className || ""}
       `,
     },
@@ -131,7 +136,7 @@ const TextEditorFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset} // ← Use activePreset
     >
       <div className={t.sizing.component.fullWidth}>
         <Editor

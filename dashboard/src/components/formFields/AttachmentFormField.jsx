@@ -7,6 +7,7 @@ import {
   DESIGN_TOKENS,
   getInteractionPreset,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const AttachmentFormField = ({
   id,
@@ -20,16 +21,18 @@ const AttachmentFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset,
   fieldSchemaItem,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset; 
   const { isFocused, isHovered, handleMouseEnter, handleMouseLeave } =
     useFormFieldState();
 
   const actualFieldname = id || fieldname;
   const t = DESIGN_TOKENS;
-  const interactions = getInteractionPreset("input", preset);
+  const interactions = getInteractionPreset("input", activePreset);
 
   // Check if the value is a URL or pending upload
   const isUrl =
@@ -52,7 +55,7 @@ const AttachmentFormField = ({
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
       className={className}
-      preset={preset}
+      preset={activePreset}
     >
       <div className={`${t.spacing.gap.base} ${t.layout.flex.col}`}>
         {/* Enhanced File Display Area */}
@@ -77,7 +80,7 @@ const AttachmentFormField = ({
                     t.colors.background.primaryLight
                   } 
                     ${t.layout.flex.center} ${t.effects.transition.base}
-                    ${preset === "dynamic" ? "hover:scale-105" : ""}
+                    ${activePreset === "dynamic" ? "hover:scale-105" : ""}
                   `}
                 >
                   <i
@@ -164,7 +167,7 @@ const AttachmentFormField = ({
                     "hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600"
                   }`
             }
-            ${preset === "dynamic" ? "hover:scale-[1.02]" : ""}
+            ${activePreset === "dynamic" ? "hover:scale-[1.02]" : ""}
           `}
           pt={{
             root: {

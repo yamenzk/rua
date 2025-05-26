@@ -8,6 +8,7 @@ import {
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
 import nationalitiesData from "@/utils/nationalities.json";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const SelectFormField = ({
   id,
@@ -20,12 +21,14 @@ const SelectFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset,
   fieldSchemaItem,
   showClear = false,
   filter,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const [filteredOptions, setFilteredOptions] = useState([]);
 
   const {
@@ -154,7 +157,7 @@ const SelectFormField = ({
         size,
         className,
       },
-      preset // Pass preset
+      activePreset // Pass preset
     ),
     panel: {
       className: `${t.borders.width.none} ${t.effects.shadow.xl} ${t.radius.base} ${t.spacing.panel.margin} ${t.layout.overflow.hidden} ${t.colors.background.surface} backdrop-blur-sm`,
@@ -185,7 +188,7 @@ const SelectFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       <Dropdown
         id={id}

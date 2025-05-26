@@ -6,6 +6,7 @@ import {
   useFormFieldState,
   useFormFieldClasses,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const DataFormField = ({
   id,
@@ -18,9 +19,11 @@ const DataFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset; // Use preset from theme or default to 'elevated'
   const {
     isFocused,
     isHovered,
@@ -45,7 +48,7 @@ const DataFormField = ({
     disabled,
     error: !!error,
     size,
-    preset, // Apply preset!
+    preset: activePreset,
     className,
   });
 
@@ -59,7 +62,7 @@ const DataFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       <InputText
         id={id}

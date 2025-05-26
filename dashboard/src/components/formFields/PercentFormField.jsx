@@ -9,6 +9,7 @@ import {
   getAddonIconStyles,
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const PercentFormField = ({
   id,
@@ -21,11 +22,13 @@ const PercentFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated",
+  preset,
   min = 0,
   max = 100,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const {
     isFocused,
     isHovered,
@@ -59,7 +62,7 @@ const PercentFormField = ({
       className,
     },
     "right",
-    preset
+    activePreset
   );
 
   return (
@@ -72,7 +75,7 @@ const PercentFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
       onMouseLeave={handleFieldGroupMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       {/* Field Group Container - Unified behavior */}
       <div
@@ -117,7 +120,7 @@ const PercentFormField = ({
             ${getAddonStyles(
               { isFocused, isHovered, disabled },
               "right",
-              preset
+              activePreset
             )}
           `}
           onClick={() => {
@@ -131,7 +134,7 @@ const PercentFormField = ({
           <span
             className={`${t.typography.sm} ${
               t.typography.weight.medium
-            } ${getAddonIconStyles({ isFocused, disabled }, preset)}`}
+            } ${getAddonIconStyles({ isFocused, disabled }, activePreset)}`}
           >
             %
           </span>

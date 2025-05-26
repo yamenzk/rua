@@ -8,6 +8,7 @@ import {
   getAddonStyles,
   DESIGN_TOKENS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const CurrencyFormField = ({
   id,
@@ -20,7 +21,7 @@ const CurrencyFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated",
+  preset,
   currency = "AED",
   locale = "en-AE",
   minFractionDigits = 2,
@@ -29,6 +30,8 @@ const CurrencyFormField = ({
   max,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const {
     isFocused,
     isHovered,
@@ -62,7 +65,7 @@ const CurrencyFormField = ({
       className,
     },
     "left",
-    preset
+    activePreset
   );
 
   return (
@@ -75,7 +78,7 @@ const CurrencyFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleFieldGroupMouseEnter(disabled)}
       onMouseLeave={handleFieldGroupMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       {/* Field Group Container - This creates unified hover/focus behavior */}
       <div
@@ -95,7 +98,7 @@ const CurrencyFormField = ({
             ${getAddonStyles(
               { isFocused, isHovered, disabled },
               "left",
-              preset
+              activePreset
             )}
           `}
           onClick={() => {

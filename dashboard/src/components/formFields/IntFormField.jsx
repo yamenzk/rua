@@ -6,6 +6,7 @@ import {
   useFormFieldState,
   PRIMEREACT_PT_CONFIGS,
 } from "./styles/formFieldStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const IntFormField = ({
   id,
@@ -18,11 +19,13 @@ const IntFormField = ({
   required,
   error,
   size = "base",
-  preset = "elevated", // New preset support!
+  preset,
   min,
   max,
   ...otherProps
 }) => {
+  const theme = useTheme();
+  const activePreset = preset || theme.preset;
   const {
     isFocused,
     isHovered,
@@ -53,7 +56,7 @@ const IntFormField = ({
       size,
       className,
     },
-    preset // Pass preset
+    activePreset // Pass preset
   );
 
   return (
@@ -66,7 +69,7 @@ const IntFormField = ({
       isHovered={isHovered}
       onMouseEnter={() => handleMouseEnter(disabled)}
       onMouseLeave={handleMouseLeave}
-      preset={preset}
+      preset={activePreset}
     >
       <InputNumber
         id={id}
